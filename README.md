@@ -1,2 +1,2 @@
 # futaba
-A Discord Mod for the Programming server
+A Discord Mod bot for the Programming server
