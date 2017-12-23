@@ -11,3 +11,7 @@ debug-channel: ~
 
 # The prefix used by the bot
 prefix: 'sudo '
+
+# List of owners discord ids
+owners:
+  - 

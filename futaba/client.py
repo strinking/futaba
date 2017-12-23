@@ -21,7 +21,7 @@ import os
 import discord
 from discord.ext import commands
 
-from .utils import Reloader
+from . import utils
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ class Bot(commands.AutoShardedBot):
         else:
             self.debug_chan = self.get_channel(int(self.config['debug-channel']))
 
-        self.add_cog(Reloader(self))
+        self.add_cog(utils.Reloader(self))
         logger.info('Loaded cog: Reloader')
 
         def _cog_ok(cog):
@@ -104,24 +104,21 @@ class Bot(commands.AutoShardedBot):
         logger.info('------')
         logger.info('Ready!')
 
+    async def on_command_error(self, ctx, error):
+        '''
+        Deals with errors when a command is invoked.
+        '''
+
+        if isinstance(error, commands.errors.CommandNotFound):
+            # Ignore no command found as we don't care if it wasn't one of our commands
+            pass
+
+        elif isinstance(error, commands.errors.CheckFailure):
+            # Tell the user they don't have the permission to tun the command
+            await utils.react(ctx.message, utils.Reactions.DENY)
+
     async def _send(self, *args, **kwargs):
         if self.debug_chan is None:
             logger.warning('No debug channel set!')
         else:
             await self.debug_chan.send(*args, **kwargs)
-
-    async def _react_complete(self, message: discord.Message):
-        '''
-        React to the user message with :white_check_mark:
-        This shows the user the command was completed successfully
-        '''
-
-        await message.add_reaction('✅')
-
-    async def _react_not_complete(self, message: discord.Message):
-        '''
-        React to the user message with :x:
-        This shows the user the command was not completed successfully
-        '''
-
-        await message.add_reaction('❌')
