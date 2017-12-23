@@ -34,13 +34,13 @@ class Bot(commands.AutoShardedBot):
         'config',
         'logger',
         'start_time',
-        'output_chan',
+        'debug_chan',
     )
 
     def __init__(self, config):
         self.config = config
         self.start_time = datetime.datetime.utcnow()
-        self.output_chan = None
+        self.debug_chan = None
         super().__init__(command_prefix=config['prefix'],
                          description='futaba - A discord mod bot',
                          pm_help=True)
@@ -59,8 +59,7 @@ class Bot(commands.AutoShardedBot):
         '''
 
         if not self.config['token']:
-            err_msg = 'Token is empty. Please open the config file and add your token!'
-            logger.critical(err_msg)
+            logger.critical('Token is empty. Please open the config file and add the bot\'s token!')
         else:
             return self.run(self.config['token'])
 
@@ -71,10 +70,10 @@ class Bot(commands.AutoShardedBot):
         Then load cogs
         '''
 
-        if self.config['output-channel'] is None:
-            logger.warning('No output channel set in config.')
+        if self.config['debug-channel'] is None:
+            logger.warning('No debug channel set in config.')
         else:
-            self.output_chan = self.get_channel(int(self.config['output-channel']))
+            self.debug_chan = self.get_channel(int(self.config['debug-channel']))
 
         self.add_cog(Reloader(self))
         logger.info('Loaded cog: Reloader')
@@ -106,10 +105,10 @@ class Bot(commands.AutoShardedBot):
         logger.info('Ready!')
 
     async def _send(self, *args, **kwargs):
-        if self.output_chan is None:
-            logger.warning('No output channel set!')
+        if self.debug_chan is None:
+            logger.warning('No debug channel set!')
         else:
-            await self.output_chan.send(*args, **kwargs)
+            await self.debug_chan.send(*args, **kwargs)
 
     async def _react_complete(self, message: discord.Message):
         '''

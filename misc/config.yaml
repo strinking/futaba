@@ -7,7 +7,7 @@ token: 'your-bot-token-here'
 # information if the bot errors from a command.
 #
 # Be warned this channel can and will get spammed!
-output-channel: ~
+debug-channel: ~
 
 # The prefix used by the bot
 prefix: 'sudo '
