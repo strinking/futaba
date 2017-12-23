@@ -1,0 +1,21 @@
+# Ignore virtual environment
+venv/
+
+# Ignore vscode files
+.vscode/
+
+# Configuration
+/config*.yaml
+
+# Artifacts
+__pycache__
+*.py[cdo]
+
+# Logging
+*.log
+
+# Misc
+.*.swp
+*.bak
+*~
+*#

@@ -1,0 +1,13 @@
+---
+
+# Bot's token
+token: 'your-bot-token-here'
+
+# The "output channel", used for dumping traceback
+# information if the bot errors from a command.
+#
+# Be warned this channel can and will get spammed!
+debug-channel: ~
+
+# The prefix used by the bot
+prefix: 'sudo '
