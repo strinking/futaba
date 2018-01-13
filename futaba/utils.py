@@ -12,9 +12,12 @@
 
 import logging
 import unicodedata
+from enum import Enum
 
 import discord
 from discord.ext import commands
+
+from . import permissions
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +26,13 @@ COGS_DIR = 'futaba.cogs.'
 __all__ = [
     'Reloader',
     'normalize_caseless',
+    'Reactions',
 ]
+
+class Reactions(Enum):
+    SUCCESS = '✅'
+    FAIL = '❌'
+    DENY = '🚫'
 
 class Reloader:
 
@@ -41,6 +50,7 @@ class Reloader:
         self.bot.unload_extension(cogname)
 
     @commands.command()
+    @permissions.check_owner()
     async def load(self, ctx, cogname: str):
         ''' Loads the cog given '''
 
@@ -52,18 +62,19 @@ class Reloader:
         except Exception as error:
             logger.error('Load failed')
             logger.debug('Reason:', exc_info=error)
-            await self.bot._react_not_complete(ctx.message)
+            await react(ctx.message, Reactions.FAIL)
             embed = discord.Embed(color=discord.Color.red(), description=f'```{error}```')
             embed.set_author(name='Load failed')
             await self.bot._send(embed=embed)
         else:
             logger.info(f'Loaded cog: {cogname}')
-            await self.bot._react_complete(ctx.message)
+            await react(ctx.message, Reactions.SUCCESS)
             embed = discord.Embed(color=discord.Color.green(), description=f'```{cogname}```')
             embed.set_author(name='Loaded')
             await self.bot._send(embed=embed)
 
     @commands.command()
+    @permissions.check_owner()
     async def unload(self, ctx, cogname: str):
         ''' Unloads the cog given '''
 
@@ -75,18 +86,19 @@ class Reloader:
         except Exception as error:
             logger.error('Unload failed')
             logger.debug('Reason:', exc_info=error)
-            await self.bot._react_not_complete(ctx.message)
+            await react(ctx.message, Reactions.FAIL)
             embed = discord.Embed(color=discord.Color.red(), description=f'```{error}```')
             embed.set_author(name='Unload failed')
             await self.bot._send(embed=embed)
         else:
             logger.info(f'Unloaded cog: {cogname}')
-            await self.bot._react_complete(ctx.message)
+            await react(ctx.message, Reactions.SUCCESS)
             embed = discord.Embed(color=discord.Color.green(), description=f'```{cogname}```')
             embed.set_author(name='Unloaded')
             await self.bot._send(embed=embed)
 
     @commands.command()
+    @permissions.check_owner()
     async def reload(self, ctx, cogname: str):
         ''' Reloads the cog given '''
 
@@ -99,17 +111,41 @@ class Reloader:
         except Exception as error:
             logger.error('Reload failed')
             logger.debug('Reason:', exc_info=error)
-            await self.bot._react_not_complete(ctx.message)
+            await react(ctx.message, Reactions.FAIL)
             embed = discord.Embed(color=discord.Color.red(), description=f'```{error}```')
             embed.set_author(name='Reload failed')
             await self.bot._send(embed=embed)
         else:
             logger.info(f'Reloaded cog: {cogname}')
-            await self.bot._react_complete(ctx.message)
+            await react(ctx.message, Reactions.SUCCESS)
             embed = discord.Embed(color=discord.Color.green(), description=f'```{cogname}```')
             embed.set_author(name='Reloaded')
             await self.bot._send(embed=embed)
 
+    @commands.command()
+    async def listcogs(self, ctx):
+        '''
+        List the cogs that are currently loaded
+        '''
+
+        msg = '```yaml\nCogs Loaded:\n'
+
+        if self.bot.cogs:
+            for cog in self.bot.cogs:
+                msg += f' - {cog}\n'
+        else:
+            msg += ' - None\n'
+
+        msg += '```'
+
+        await ctx.send(msg)
+
 def normalize_caseless(s):
     return unicodedata.normalize('NFKD', s.casefold())
-    
+
+async def react(message: discord.Message, emoji: Reactions):
+    '''
+    React to a message with a reaction
+    '''
+
+    await message.add_reaction(emoji.value)
