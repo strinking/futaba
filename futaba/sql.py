@@ -19,10 +19,10 @@ logger = logging.getLogger(__name__)
 
 class SQLHandler:
 
-    def __init__(self):
-        self.db = create_engine('sqlite:///futaba.db')
+    def __init__(self, db_path: str = 'sqlite:///futaba.db'):
+        self.db = create_engine(db_path)
         self.conn = self.db.connect()
-        logger.info('Connected to database!')
+        logger.info(f'Connected to {db_path}')
         self.meta = MetaData(self.db)
         self.tables = {}
 
