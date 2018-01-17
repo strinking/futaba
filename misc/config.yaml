@@ -3,6 +3,9 @@
 # Bot's token
 token: 'your-bot-token-here'
 
+# The database path
+db_path: 'sqlite:///futaba.db'
+
 # The "output channel", used for dumping traceback
 # information if the bot errors from a command.
 #

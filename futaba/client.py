@@ -22,6 +22,7 @@ import discord
 from discord.ext import commands
 
 from . import utils
+from .sql import SQLHandler
 
 logger = logging.getLogger(__name__)
 
@@ -35,12 +36,14 @@ class Bot(commands.AutoShardedBot):
         'logger',
         'start_time',
         'debug_chan',
+        'sql',
     )
 
     def __init__(self, config):
         self.config = config
         self.start_time = datetime.datetime.utcnow()
         self.debug_chan = None
+        self.sql = SQLHandler(config['db_path'])
         super().__init__(command_prefix=config['prefix'],
                          description='futaba - A discord mod bot',
                          pm_help=True)
