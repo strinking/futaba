@@ -1,11 +1,12 @@
-# Ignore virtual environment
+# Ignore virtual environments
 venv/
 
-# Ignore vscode files
+# Ignore editor files
 .vscode/
+.*.swp
 
 # Configuration
-/config*.yaml
+/config*.toml
 
 # Artifacts
 __pycache__
@@ -15,10 +16,9 @@ __pycache__
 *.log
 
 # Misc
-.*.swp
 *.bak
 *~
 *#
 
-# Databases
+# SQLite databases
 *.db

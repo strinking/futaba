@@ -18,9 +18,10 @@ import logging
 import argparse
 import sys
 
-import yaml
+from toml import TomlDecodeError
 
 from . import client
+from .config import InvalidConfigError, load_config
 
 LOG_FILE = 'futaba.log'
 LOG_FILE_MODE = 'w'
@@ -29,7 +30,7 @@ LOG_DATE_FORMAT = '[%d/%m/%Y %H:%M]'
 
 if __name__ == '__main__':
     # Parse arguments
-    argparser = argparse.ArgumentParser(description='maware\'s self-bot')
+    argparser = argparse.ArgumentParser(description='moderation bot for programming')
     argparser.add_argument('-q', '--quiet', '--no-stdout',
                            dest='stdout', action='store_false',
                            help="Don't output to standard out.")
@@ -37,7 +38,7 @@ if __name__ == '__main__':
                            dest='debug', action='store_true',
                            help="Set logging level to debug for the selfbot.")
     argparser.add_argument('-D', '--discord',
-                           dest='dis_log', action='store_true',
+                           dest='discord_log', action='store_true',
                            help="Adds the Discord logger to the log file.")
     argparser.add_argument('config_file',
                            help="Specify a configuration file to use. Keep it secret!")
@@ -45,34 +46,33 @@ if __name__ == '__main__':
 
     # Set up logging
     log_fmtr = logging.Formatter(LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
-    log_hndl = logging.FileHandler(filename=LOG_FILE,
-                                   encoding='utf-8', mode=LOG_FILE_MODE)
+    log_hndl = logging.FileHandler(filename=LOG_FILE, encoding='utf-8', mode=LOG_FILE_MODE)
     log_hndl.setFormatter(log_fmtr)
 
     log_level = logging.DEBUG if args.debug else logging.INFO
-
     logger = logging.getLogger(__package__)
     logger.setLevel(level=log_level)
     logger.addHandler(log_hndl)
 
-    if args.dis_log:
-        dis_logger = logging.getLogger('discord')
-        dis_logger.setLevel(level=logging.INFO)
-        dis_logger.addHandler(log_hndl)
+    if args.discord_log:
+        discord_logger = logging.getLogger('discord')
+        discord_logger.setLevel(level=logging.INFO)
+        discord_logger.addHandler(log_hndl)
 
     if args.stdout:
         log_hndl = logging.StreamHandler(sys.stdout)
         log_hndl.setFormatter(log_fmtr)
         logger.addHandler(log_hndl)
-        if args.dis_log:
-            dis_logger.addHandler(log_hndl)
+        if args.discord_log:
+            discord_logger.addHandler(log_hndl)
 
     try:
-        # Load config
-        with open(args.config_file, 'r') as fh:
-            config = yaml.safe_load(fh)
-    except (yaml.YAMLError, IOError) as err:
-        logger.error("Configuration file was invalid.")
+        config = load_config(args.config_file)
+    except (TomlDecodeError, IOError) as err:
+        logger.error("Unable to read configuration file.", exc_info=err)
+        exit(1)
+    except InvalidConfigError as err:
+        logger.error("Error when processing configuration file: %s", err)
         exit(1)
 
     # Open and run client

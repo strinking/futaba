@@ -22,7 +22,7 @@ class SQLHandler:
     def __init__(self, db_path: str = 'sqlite:///futaba.db'):
         self.db = create_engine(db_path)
         self.conn = self.db.connect()
-        logger.info(f'Connected to {db_path}')
+        logger.info("Connected to '%s'...", db_path)
         self.meta = MetaData(self.db)
         self.tables = {}
 
@@ -32,6 +32,6 @@ class SQLHandler:
         except KeyError:
             table = Table(name, self.meta, *args, **kwargs)
             table.create(checkfirst=True)
-            logger.debug(f'Table Created: {name}')
+            logger.debug("Table Created: %s", name)
             self.tables[name] = table
             return table

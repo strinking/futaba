@@ -24,9 +24,10 @@ logger = logging.getLogger(__name__)
 COGS_DIR = 'futaba.cogs.'
 
 __all__ = [
+    'Reactions',
     'Reloader',
     'normalize_caseless',
-    'Reactions',
+    'plural',
 ]
 
 class Reactions(Enum):
@@ -35,7 +36,6 @@ class Reactions(Enum):
     DENY = '🚫'
 
 class Reloader:
-
     def __init__(self, bot):
         self.bot = bot
 
@@ -52,22 +52,22 @@ class Reloader:
     @commands.command()
     @permissions.check_owner()
     async def load(self, ctx, cogname: str):
-        ''' Loads the cog given '''
+        ''' Loads the given cog '''
 
-        logger.info(f'Cog load requested: {cogname}')
+        logger.info("Cog load requested: %s", cogname)
 
         # Load cog
         try:
             self.load_cog(cogname)
         except Exception as error:
-            logger.error('Load failed')
-            logger.debug('Reason:', exc_info=error)
+            logger.error("Load failed")
+            logger.debug("Reason:", exc_info=error)
             await react(ctx.message, Reactions.FAIL)
             embed = discord.Embed(color=discord.Color.red(), description=f'```{error}```')
             embed.set_author(name='Load failed')
             await self.bot._send(embed=embed)
         else:
-            logger.info(f'Loaded cog: {cogname}')
+            logger.info("Loaded cog: %s", cogname)
             await react(ctx.message, Reactions.SUCCESS)
             embed = discord.Embed(color=discord.Color.green(), description=f'```{cogname}```')
             embed.set_author(name='Loaded')
@@ -78,20 +78,20 @@ class Reloader:
     async def unload(self, ctx, cogname: str):
         ''' Unloads the cog given '''
 
-        logger.info(f'Cog unload requested: {cogname}')
+        logger.info("Cog unload requested: %s", cogname)
 
         # Load cog
         try:
             self.unload_cog(cogname)
         except Exception as error:
-            logger.error('Unload failed')
-            logger.debug('Reason:', exc_info=error)
+            logger.error("Unload failed")
+            logger.debug("Reason:", exc_info=error)
             await react(ctx.message, Reactions.FAIL)
             embed = discord.Embed(color=discord.Color.red(), description=f'```{error}```')
             embed.set_author(name='Unload failed')
             await self.bot._send(embed=embed)
         else:
-            logger.info(f'Unloaded cog: {cogname}')
+            logger.info("Unloaded cog: %s", cogname)
             await react(ctx.message, Reactions.SUCCESS)
             embed = discord.Embed(color=discord.Color.green(), description=f'```{cogname}```')
             embed.set_author(name='Unloaded')
@@ -102,21 +102,21 @@ class Reloader:
     async def reload(self, ctx, cogname: str):
         ''' Reloads the cog given '''
 
-        logger.info(f'Cog reload requested: {cogname}')
+        logger.info("Cog reload requested: %s", cogname)
 
         # Load cog
         try:
             self.unload_cog(cogname)
             self.load_cog(cogname)
         except Exception as error:
-            logger.error('Reload failed')
-            logger.debug('Reason:', exc_info=error)
+            logger.error("Reload failed")
+            logger.debug("Reason:", exc_info=error)
             await react(ctx.message, Reactions.FAIL)
             embed = discord.Embed(color=discord.Color.red(), description=f'```{error}```')
             embed.set_author(name='Reload failed')
             await self.bot._send(embed=embed)
         else:
-            logger.info(f'Reloaded cog: {cogname}')
+            logger.info("Reloaded cog: %s", cogname)
             await react(ctx.message, Reactions.SUCCESS)
             embed = discord.Embed(color=discord.Color.green(), description=f'```{cogname}```')
             embed.set_author(name='Reloaded')
@@ -128,20 +128,22 @@ class Reloader:
         List the cogs that are currently loaded
         '''
 
-        msg = '```yaml\nCogs Loaded:\n'
+        lines = ["```yaml\nCogs loaded:"]
 
         if self.bot.cogs:
             for cog in self.bot.cogs:
-                msg += f' - {cog}\n'
+                lines.append(f" - {cog}")
         else:
-            msg += ' - None\n'
+            lines.append(" - (none)")
 
-        msg += '```'
-
-        await ctx.send(msg)
+        lines.append("```")
+        await ctx.send('\n'.join(lines))
 
 def normalize_caseless(s):
     return unicodedata.normalize('NFKD', s.casefold())
+
+def plural(num):
+    return '' if num == 1 else 's'
 
 async def react(message: discord.Message, emoji: Reactions):
     '''

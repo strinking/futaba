@@ -1,0 +1,22 @@
+[bot]
+
+# The bot's API token. Keep this secret!
+token = "your-bot-token-here"
+
+# List of owners by user ID
+owners = ["98633956773093376", "130012001236811776"]
+
+# Default bot command prefix
+prefix = "!"
+
+# The "output channel", used for dumping traceback
+# information if the bot errors from a command.
+# This is not the logging channel, you can set that
+# using an in-client command.
+#
+# Set to empty string or exclude to disable.
+# Be warned this channel will get spammed!
+debug-channel = ""
+
+[database]
+url = "sqlite:///futaba.db"

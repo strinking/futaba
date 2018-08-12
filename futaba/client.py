@@ -22,7 +22,9 @@ import discord
 from discord.ext import commands
 
 from . import utils
+from .config import Configuration
 from .sql import SQLHandler
+from .utils import plural
 
 logger = logging.getLogger(__name__)
 
@@ -39,12 +41,12 @@ class Bot(commands.AutoShardedBot):
         'sql',
     )
 
-    def __init__(self, config):
+    def __init__(self, config: Configuration):
         self.config = config
         self.start_time = datetime.datetime.utcnow()
         self.debug_chan = None
-        self.sql = SQLHandler(config['db_path'])
-        super().__init__(command_prefix=config['prefix'],
+        self.sql = SQLHandler(config.database_url)
+        super().__init__(command_prefix=config.default_prefix,
                          description='futaba - A discord mod bot',
                          pm_help=True)
 
@@ -61,10 +63,11 @@ class Bot(commands.AutoShardedBot):
         If the token is empty or incorrect raises LoginError
         '''
 
-        if not self.config['token']:
-            logger.critical('Token is empty. Please open the config file and add the bot\'s token!')
+        if not self.config.token:
+            logger.critical("Token is empty. Please open the config file and add the bot's token!")
+            exit(1)
         else:
-            return self.run(self.config['token'])
+            self.run(self.config.token)
 
     async def on_ready(self):
         '''
@@ -73,19 +76,19 @@ class Bot(commands.AutoShardedBot):
         Then load cogs
         '''
 
-        if self.config['debug-channel'] is None:
+        if self.config.debug_channel_id is None:
             logger.warning('No debug channel set in config.')
         else:
-            self.debug_chan = self.get_channel(int(self.config['debug-channel']))
+            self.debug_chan = self.get_channel(int(self.config.debug_channel_id))
 
         self.add_cog(utils.Reloader(self))
         logger.info('Loaded cog: Reloader')
 
         def _cog_ok(cog):
-            return cog[0] != '_' and os.path.isdir(f'futaba/cogs/{cog}')
+            return not cog.startswith('_') and os.path.isdir(f'futaba/cogs/{cog}')
 
         files = [cog for cog in os.listdir('futaba/cogs') if _cog_ok(cog)]
-        logger.debug(f'Cogs found: {files}')
+        logger.info("Cogs found: %s", ', '.join(files))
 
         for file in files:
             try:
@@ -93,24 +96,26 @@ class Bot(commands.AutoShardedBot):
             except Exception as error:
                 # Something made the loading fail
                 # So log it with reason and tell user to check it
-                logger.debug(f'Load failed: {file}', exc_info=error)
+                logger.debug("Load failed: %s", file, exc_info=error)
                 continue
             else:
-                logger.info(f'Loaded cog: {file}')
+                logger.info("Loaded cog: %s", file)
 
-        channels = sum(1 for _ in self.get_all_channels())
-        logger.info(f'Logged in as {self.user.name} ({self.user.id})')
-        logger.info('Connected to:')
-        logger.info(f'* {len(self.guilds)} guilds')
-        logger.info(f'* {channels} channels')
-        logger.info(f'* {len(self.users)} users')
-        logger.info('------')
-        logger.info('Ready!')
+        logger.info("Logged in as %s (%d)", self.user.name, self.user.id)
+        logger.info("Connected to:")
+        logger.info("* %d guild%s", len(self.guilds), plural(len(self.guilds)))
+        logger.info("* %d channels", sum(1 for _ in self.get_all_channels()))
+        logger.info("* %d users", len(self.users))
+        logger.info("------")
+        logger.info("Ready!")
 
     async def on_command_error(self, ctx, error):
         '''
         Deals with errors when a command is invoked.
         '''
+
+        # Complains about "context" vs "ctx".
+        # pylint: disable=arguments-differ
 
         if isinstance(error, commands.errors.CommandNotFound):
             # Ignore no command found as we don't care if it wasn't one of our commands
@@ -121,7 +126,5 @@ class Bot(commands.AutoShardedBot):
             await utils.react(ctx.message, utils.Reactions.DENY)
 
     async def _send(self, *args, **kwargs):
-        if self.debug_chan is None:
-            logger.warning('No debug channel set!')
-        else:
+        if self.debug_chan is not None:
             await self.debug_chan.send(*args, **kwargs)
