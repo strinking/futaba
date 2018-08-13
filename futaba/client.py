@@ -23,16 +23,12 @@ from discord.ext import commands
 
 from . import utils
 from .config import Configuration
-from .sql import SQLHandler
+from .sql import SqlHandler
 from .utils import plural
 
 logger = logging.getLogger(__name__)
 
 class Bot(commands.AutoShardedBot):
-    '''
-    The custom discord ext bot
-    '''
-
     __slots__ = (
         'config',
         'logger',
@@ -45,10 +41,20 @@ class Bot(commands.AutoShardedBot):
         self.config = config
         self.start_time = datetime.datetime.utcnow()
         self.debug_chan = None
-        self.sql = SQLHandler(config.database_url)
-        super().__init__(command_prefix=config.default_prefix,
+        self.sql = SqlHandler(config.database_url)
+        super().__init__(command_prefix=self.get_prefix_sql,
                          description='futaba - A discord mod bot',
                          pm_help=True)
+
+    def get_prefix_sql(self, message):
+        prefix = None
+
+        if message.guild is not None:
+            with self.sql.transaction() as trans:
+                prefix = self.sql.settings.get_prefix(trans, message.guild)
+
+        prefix = prefix or self.config.default_prefix
+        return commands.when_mentioned_or(prefix)(self, message)
 
     @property
     def uptime(self):
@@ -77,12 +83,12 @@ class Bot(commands.AutoShardedBot):
         '''
 
         if self.config.debug_channel_id is None:
-            logger.warning('No debug channel set in config.')
+            logger.warning("No debug channel set in config.")
         else:
             self.debug_chan = self.get_channel(int(self.config.debug_channel_id))
 
         self.add_cog(utils.Reloader(self))
-        logger.info('Loaded cog: Reloader')
+        logger.info("Loaded cog: Reloader")
 
         def _cog_ok(cog):
             return not cog.startswith('_') and os.path.isdir(f'futaba/cogs/{cog}')
