@@ -1,5 +1,5 @@
 #
-# sql.py
+# sql/__init__.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017 Jake Richardson, Ammon Smith, jackylam5
@@ -10,28 +10,40 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+'''
+Module for abstractly interfacing with the RDBMS.
+'''
+
 import logging
 
 from sqlalchemy import create_engine, MetaData
-from sqlalchemy import Table
+
+from .settings import SettingsModel
 
 logger = logging.getLogger(__name__)
 
-class SQLHandler:
+__all__ = [
+    'SqlHandler',
+]
 
-    def __init__(self, db_path: str = 'sqlite:///futaba.db'):
+class SqlHandler:
+    __slots__ = (
+        'db',
+        'conn',
+
+        'settings',
+    )
+
+    def __init__(self, db_path: str):
         self.db = create_engine(db_path)
         self.conn = self.db.connect()
         logger.info("Connected to '%s'...", db_path)
-        self.meta = MetaData(self.db)
-        self.tables = {}
+        meta = MetaData(self.db)
 
-    def create_table(self, name, *args, **kwargs):
-        try:
-            return self.tables[name]
-        except KeyError:
-            table = Table(name, self.meta, *args, **kwargs)
-            table.create(checkfirst=True)
-            logger.debug("Table Created: %s", name)
-            self.tables[name] = table
-            return table
+        self.settings = SettingsModel(meta)
+
+        meta.create_all(self.db)
+        logger.info("Created all tables.")
+
+    def transaction(self, trans_logger=logger):
+        return Transaction(self.conn, trans_logger)
