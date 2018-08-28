@@ -32,6 +32,7 @@ UNICODE_SPACES_REGEX = re.compile(''.join((
 
 class Filter:
     __slots__ = (
+        'text',
         'regex',
     )
 
@@ -58,12 +59,14 @@ class Filter:
 
         pattern = ''.join(parts)
         logger.debug("Generated pattern: %r", pattern)
+
+        self.text = text
         self.regex = re.compile(pattern, re.IGNORECASE)
 
-    def matches(self, text):
-        texts = (
-            text,
-            UNICODE_SPACES_REGEX.sub('', text),
+    def matches(self, content):
+        contents = (
+            content,
+            UNICODE_SPACES_REGEX.sub('', content),
         )
 
-        return bool(any(map(self.regex.search, texts)))
+        return bool(any(map(self.regex.search, contents)))
