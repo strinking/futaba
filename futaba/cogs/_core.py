@@ -10,6 +10,8 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+# pylint: skip-file
+
 '''
 <description>
 '''
@@ -21,7 +23,7 @@ from discord.ext import commands
 
 logger = logging.getLogger(__package__)
 
-class <Classname>:
+class ClassnameCog:
     '''
     <description>
     '''
