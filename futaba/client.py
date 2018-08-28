@@ -47,14 +47,14 @@ class Bot(commands.AutoShardedBot):
                          pm_help=True)
 
     @staticmethod
-    def get_prefix_sql(self, message):
+    def get_prefix_sql(bot, message):
         prefix = None
 
         if message.guild is not None:
-            prefix = self.sql.settings.get_prefix(message.guild)
+            prefix = bot.sql.settings.get_prefix(message.guild)
 
-        prefix = prefix or self.config.default_prefix
-        return commands.when_mentioned_or(prefix)(self, message)
+        prefix = prefix or bot.config.default_prefix
+        return commands.when_mentioned_or(prefix)(bot, message)
 
     @property
     def uptime(self):
