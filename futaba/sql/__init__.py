@@ -19,6 +19,7 @@ import logging
 from sqlalchemy import create_engine, MetaData
 
 from .settings import SettingsModel
+from .transaction import Transaction
 
 logger = logging.getLogger(__name__)
 
@@ -29,21 +30,28 @@ __all__ = [
 class SqlHandler:
     __slots__ = (
         'db',
-        'conn',
+        'raw_conn',
+        'trans',
 
         'settings',
     )
 
     def __init__(self, db_path: str):
         self.db = create_engine(db_path)
-        self.conn = self.db.connect()
+        self.raw_conn = self.db.connect()
+        self.trans = None
         logger.info("Connected to '%s'...", db_path)
         meta = MetaData(self.db)
 
-        self.settings = SettingsModel(meta)
+        self.settings = SettingsModel(self, meta)
 
         meta.create_all(self.db)
         logger.info("Created all tables.")
 
+    @property
+    def conn(self):
+        return self.trans or self.raw_conn
+
     def transaction(self, trans_logger=logger):
-        return Transaction(self.conn, trans_logger)
+        assert self.trans is None
+        self.trans = Transaction(self, self.raw_conn, trans_logger)

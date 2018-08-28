@@ -21,8 +21,6 @@ from sqlalchemy import BigInteger, Column, Table, Unicode
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.sql import select
 
-from .transaction import Transaction
-
 '''
 _DESCRIPTION_HERE_
 '''
