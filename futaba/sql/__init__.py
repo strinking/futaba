@@ -52,6 +52,9 @@ class SqlHandler:
     def conn(self):
         return self.trans or self.raw_conn
 
+    def execute(self, *args, **kwargs):
+        return self.conn.execute(*args, **kwargs)
+
     def transaction(self, trans_logger=logger):
         assert self.trans is None
         self.trans = Transaction(self, self.raw_conn, trans_logger)
