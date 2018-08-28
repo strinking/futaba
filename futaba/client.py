@@ -46,6 +46,7 @@ class Bot(commands.AutoShardedBot):
                          description='futaba - A discord mod bot',
                          pm_help=True)
 
+    @staticmethod
     def get_prefix_sql(self, message):
         prefix = None
 
