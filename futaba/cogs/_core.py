@@ -1,5 +1,5 @@
 #
-# cogs/<Cog Folder Name>/core.py
+# cogs/<cog folder name>/core.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017 Jake Richardson, Ammon Smith, jackylam5
