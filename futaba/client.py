@@ -50,8 +50,7 @@ class Bot(commands.AutoShardedBot):
         prefix = None
 
         if message.guild is not None:
-            with self.sql.transaction() as trans:
-                prefix = self.sql.settings.get_prefix(trans, message.guild)
+            prefix = self.sql.settings.get_prefix(message.guild)
 
         prefix = prefix or self.config.default_prefix
         return commands.when_mentioned_or(prefix)(self, message)

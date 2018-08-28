@@ -16,16 +16,16 @@ __all__ = [
 
 class Transaction:
     __slots__ = (
+        'sql',
         'conn',
         'logger',
-        'trans',
         'ok',
     )
 
-    def __init__(self, conn, logger):
+    def __init__(self, sql, conn, logger):
+        self.sql = sql
         self.conn = conn
         self.logger = logger
-        self.trans = None
         self.ok = True
 
     def __enter__(self):
@@ -43,11 +43,21 @@ class Transaction:
             self.ok = False
             self.trans.rollback()
 
+        self.trans = None
+
     async def __aenter__(self):
         self.__enter__()
 
     async def __aexit__(self, type, value, traceback):
         self.__exit__(type, value, traceback)
+
+    @property
+    def trans(self):
+        return self.sql.trans
+
+    @trans.setter
+    def trans(self, value):
+        self.sql.trans = value
 
     def execute(self, *args, **kwargs):
         return self.conn.execute(*args, **kwargs)
