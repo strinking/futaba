@@ -18,7 +18,7 @@ import logging
 
 from sqlalchemy import create_engine, MetaData
 
-from .settings import SettingsModel
+from .models.settings import SettingsModel
 from .transaction import Transaction
 
 logger = logging.getLogger(__name__)

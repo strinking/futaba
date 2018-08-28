@@ -1,5 +1,5 @@
 #
-# sql/settings.py
+# sql/models/settings.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017 Jake Richardson, Ammon Smith, jackylam5

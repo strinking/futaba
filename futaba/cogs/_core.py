@@ -1,5 +1,5 @@
 #
-# cogs/settings.py
+# cogs/<cog folder name>/core.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017 Jake Richardson, Ammon Smith, jackylam5
@@ -11,5 +11,20 @@
 #
 
 '''
-Cog for all commands that change bot settings.
+<description>
 '''
+import asyncio
+import logging
+
+import discord
+from discord.ext import commands
+
+logger = logging.getLogger(__package__)
+
+class <Classname>:
+    '''
+    <description>
+    '''
+
+    def __init__(self, bot):
+        self.bot = bot
