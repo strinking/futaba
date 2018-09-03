@@ -87,6 +87,9 @@ class FilterCog:
         Adds the words to the server-wide filter. If a message with
         this content is found, it is deleted and the contents of
         the message are sent to the user.
+
+        The entire argument, complete with spaces, is interpreted as
+        a single word to add to the filter.
         '''
 
         # TODO
