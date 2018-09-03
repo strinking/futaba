@@ -31,9 +31,10 @@ __all__ = [
 ]
 
 class Reactions(Enum):
-    SUCCESS = '✅'
-    FAIL = '❌'
-    DENY = '🚫'
+    SUCCESS = '\N{WHITE HEAVY CHECK MARK}'
+    WARNING = '\N{WARNING SIGN}'
+    FAIL = '\N{CROSS MARK}'
+    DENY = '\N{NO ENTRY SIGN}'
 
 class Reloader:
     def __init__(self, bot):

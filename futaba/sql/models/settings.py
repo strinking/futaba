@@ -10,6 +10,10 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+'''
+Has the model for managing persistent bot settings.
+'''
+
 import functools
 import logging
 
@@ -19,10 +23,6 @@ from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.sql import select
 
 from .hooks import on_guild_join, on_guild_leave
-
-'''
-Has the model for managing persistent bot settings.
-'''
 
 Column = functools.partial(Column, nullable=False)
 logger = logging.getLogger(__name__)
@@ -67,18 +67,22 @@ class SettingsModel:
         del self.prefix_cache[guild]
 
     def get_prefix(self, guild):
+        logger.debug("Getting prefix for guild '%s' (%d)", guild.name, guild.id)
         if guild in self.prefix_cache:
+            logger.trace("Prefix was found in cache, returning")
             return self.prefix_cache[guild]
 
-        sel = select([self.tb_prefixes]) \
-            .where(self.tb_prefixes.c.guild_id == guild.id)
+        sel = select([self.tb_prefixes.c.prefix]) \
+                .where(self.tb_prefixes.c.guild_id == guild.id)
         result = self.sql.execute(sel)
 
         if result.rowcount:
-            _, prefix = result.fetchone()
-            return prefix
+            prefix, = result.fetchone()
         else:
-            return None
+            prefix = None
+
+        self.prefix_cache[guild] = prefix
+        return prefix
 
     def set_prefix(self, guild, prefix):
         upd = self.tb_prefixes \

@@ -18,6 +18,7 @@ import logging
 
 from sqlalchemy import create_engine, MetaData
 
+from .models.filter import FilterModel
 from .models.settings import SettingsModel
 from .transaction import Transaction
 
@@ -33,6 +34,7 @@ class SqlHandler:
         'raw_conn',
         'trans',
 
+        'filter',
         'settings',
     )
 
@@ -43,6 +45,7 @@ class SqlHandler:
         logger.info("Connected to '%s'...", db_path)
         meta = MetaData(self.db)
 
+        self.filter = FilterModel(self, meta)
         self.settings = SettingsModel(self, meta)
 
         meta.create_all(self.db)

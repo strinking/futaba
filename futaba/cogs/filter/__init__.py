@@ -11,6 +11,7 @@
 #
 
 from .core import FilterCog
+from .filter import Filter, FilterType
 
 def setup(bot):
     '''
