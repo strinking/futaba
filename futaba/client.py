@@ -22,8 +22,9 @@ import discord
 from discord.ext import commands
 
 from .config import Configuration
+from .enums import Reactions
 from .sql import SqlHandler
-from .utils import Reactions, Reloader, plural, react
+from .utils import Reloader, plural
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +129,7 @@ class Bot(commands.AutoShardedBot):
 
         elif isinstance(error, commands.errors.CheckFailure):
             # Tell the user they don't have the permission to tun the command
-            await react(ctx.message, Reactions.DENY)
+            await Reactions.DENY.add(ctx.message)
 
     async def _send(self, *args, **kwargs):
         if self.debug_chan is not None:

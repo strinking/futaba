@@ -15,9 +15,20 @@ from enum import Enum, unique
 import discord
 
 __all__ = [
+    'Reactions',
     'FilterType',
     'LocationType',
 ]
+
+@unique
+class Reactions(Enum):
+    SUCCESS = '\N{WHITE HEAVY CHECK MARK}'
+    WARNING = '\N{WARNING SIGN}'
+    FAIL = '\N{CROSS MARK}'
+    DENY = '\N{NO ENTRY SIGN}'
+
+    async def add(self, message: discord.Message):
+        await message.add_reaction(self.value)
 
 @unique
 class FilterType(Enum):

@@ -17,6 +17,9 @@
 _DESCRIPTION_HERE_
 '''
 
+# False positive when using SQLAlchemy decorators
+# pylint: disable=no-value-for-parameter
+
 import functools
 import logging
 

@@ -22,7 +22,7 @@ import discord
 from discord.ext import commands
 
 from futaba import permissions
-from futaba.utils import Reactions, react
+from futaba.enums import Reactions
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ class Miscellaneous:
         ms = duration.microseconds / 1000
 
         await asyncio.gather(
-            react(ctx.message, Reactions.SUCCESS),
+            Reactions.SUCCESS.add(ctx.message),
             ctx.send(content=f"Pong! (`{ms} ms`)")
         )
 
@@ -59,5 +59,5 @@ class Miscellaneous:
         Shuts down the bot. Only able to be run by an owner.
         '''
 
-        await react(ctx.message, Reactions.SUCCESS)
+        await Reactions.SUCCESS.add(ctx.message)
         exit()

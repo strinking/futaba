@@ -23,7 +23,7 @@ import discord
 from discord.ext import commands
 
 from futaba import permissions
-from futaba.utils import Reactions
+from futaba.enums import Reactions
 from .filter import Filter, FilterType
 
 logger = logging.getLogger(__name__)
@@ -55,10 +55,10 @@ class Filtering:
                     self.bot.sql.filter.update_filter(location, level, text)
         except Exception as error:
             logger.error("Error adding filter", exc_info=error)
-            await message.add_reaction(Reactions.FAIL)
+            await Reactions.FAIL.add(message)
         else:
             self.filters[location][level].add(Filter(text))
-            await message.add_reaction(Reactions.SUCCESS)
+            await Reactions.SUCCESS.add(message)
 
     async def delete_filter(self, message, location, text):
         logger.info("Removing %r from server filter for '%s' (%d)", text, location.name, location.id)
@@ -67,13 +67,13 @@ class Filtering:
             try:
                 if self.bot.sql.filter.delete_filter(location, text):
                     logger.debug("Succesfully removed filter")
-                    await message.add_reaction(Reactions.SUCCESS)
+                    await Reactions.SUCCESS.add(message)
                 else:
                     logger.debug("Filter was not present, deletion failed")
-                    await message.add_reaction(Reactions.FAIL)
+                    await Reactions.FAIL.add(message)
             except:
                 logger.error("Error deleting filter", exc_info=1)
-                await message.add_reaction(Reactions.FAIL)
+                await Reactions.FAIL.add(message)
 
     async def show_filter(self, message, author, location_name, all_filters):
         if all_filters:
@@ -114,20 +114,31 @@ class Filtering:
 
         await asyncio.gather(
             post_all(),
-            message.add_reaction(Reactions.SUCCESS),
+            Reactions.SUCCESS.add(message),
         )
 
     @commands.group(name='filter')
     @commands.guild_only()
     async def filter(self, ctx):
         '''
-        Adds, removes, or lists words in the filter.
+        Adds, removes, or lists words in the text filter.
         It ignores case and checks for unicode strings that look similar.
         '''
 
         if ctx.invoked_subcommand is None:
             # TODO send help
-            await ctx.message.add_reaction(Reactions.FAIL)
+            await Reactions.FAIL.add(ctx.message)
+
+    @commands.group(name='cfilter', aliases=['content', 'filefilter', 'ffilter'])
+    @commands.guild_only()
+    async def content(self, ctx):
+        '''
+        Adds, removes, or lists SHA512 hashes in the content filter.
+        '''
+
+        if ctx.invoked_subcommand is None:
+            # TODO send help
+            await Reactions.FAIL.add(ctx.message)
 
     @filter.group(name='server', aliases=['srv', 's', 'guild', 'g'])
     @commands.guild_only()
@@ -138,7 +149,7 @@ class Filtering:
 
         if ctx.subcommand_passed in ('server', 'srv', 's', 'guild', 'g'):
             # TODO send help
-            await ctx.message.add_reaction(Reactions.FAIL)
+            await Reactions.FAIL.add(ctx.message)
 
     @filter_guild.command(name='show', aliases=['display', 'list'])
     @commands.guild_only()
@@ -215,7 +226,7 @@ class Filtering:
 
         if ctx.subcommand_passed in ('chan', 'ch', 'c'):
             # TODO send help
-            await ctx.message.add_reaction(Reactions.FAIL)
+            await Reactions.FAIL.add(ctx.message)
 
     @filter_channel.command(name='show', aliases=['display', 'list'])
     @commands.guild_only()

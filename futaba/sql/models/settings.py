@@ -14,6 +14,9 @@
 Has the model for managing persistent bot settings.
 '''
 
+# False positive when using SQLAlchemy decorators
+# pylint: disable=no-value-for-parameter
+
 import functools
 import logging
 
