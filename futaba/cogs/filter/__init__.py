@@ -10,7 +10,7 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-from .core import FilterCog
+from .core import Filtering
 from .filter import Filter, FilterType
 
 def setup(bot):
@@ -18,5 +18,5 @@ def setup(bot):
     Setup for bot to add cog
     '''
 
-    cog = FilterCog(bot)
+    cog = Filtering(bot)
     bot.add_cog(cog)

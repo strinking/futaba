@@ -23,16 +23,16 @@ import discord
 from discord.ext import commands
 
 from futaba import permissions
+from futaba.utils import Reactions
 from .filter import Filter, FilterType
-from .utils import Reactions
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    'FilterCog',
+    'Filtering',
 ]
 
-class FilterCog:
+class Filtering:
     __slots__ = (
         'bot',
         'filters',
@@ -175,7 +175,7 @@ class FilterCog:
 
         await self.add_filter(ctx.message, ctx.guild, FilterType.FLAG, text)
 
-    @filter_guild.command(name='block', aliases=['deny', 'delete', 'del', 'remove'])
+    @filter_guild.command(name='block', aliases=['deny', 'autoremove'])
     @commands.guild_only()
     @permissions.check_mod()
     async def filter_guild_block(self, ctx, *, text: str):
@@ -241,7 +241,7 @@ class FilterCog:
 
         await self.add_filter(ctx.message, channel, FilterType.FLAG, text)
 
-    @filter_channel.command(name='block', aliases=['deny', 'delete', 'del', 'remove'])
+    @filter_channel.command(name='block', aliases=['deny', 'autoremove'])
     @commands.guild_only()
     @permissions.check_mod()
     async def filter_channel_block(self, ctx, channel: discord.TextChannel, *, text: str):
