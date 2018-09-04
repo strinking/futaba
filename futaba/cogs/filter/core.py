@@ -82,15 +82,20 @@ class Filtering:
             lines = [f'Filtered strings for {location_name}:']
 
             for filter_type, filters in all_filters.items():
-                lines.append(f'{filter_type.emoji} {filter_type.description} {filter_type.emoji})')
-                lines.append('```')
-                current_len = sum(len(line) for line in lines)
+                lines.extend((
+                    f'{filter_type.emoji} {filter_type.description} {filter_type.emoji}',
+                    '```',
+                ))
+                current_len = sum(len(line) + 1 for line in lines)
+
+                if not filters:
+                    lines.append('(none)')
 
                 for filter in filters:
                     line = f'- "{filter.text}" {filter.text!r}'
                     current_len += len(line)
 
-                    if current_len > 1800:
+                    if current_len > 1900:
                         # Too long, break into new message
                         lines.append('```')
                         contents.append('\n'.join(lines))
@@ -104,8 +109,8 @@ class Filtering:
                         lines.append(line)
 
                 lines.append('```')
-                contents.append('\n'.join(lines))
-                lines.clear()
+            contents.append('\n'.join(lines))
+            lines.clear()
         else:
             contents = [f'No filtered strings for {location_name}']
 
