@@ -30,7 +30,7 @@ __all__ = [
 class SqlHandler:
     __slots__ = (
         'db',
-        'raw_conn',
+        'conn',
         'trans',
 
         'filter',
@@ -39,7 +39,7 @@ class SqlHandler:
 
     def __init__(self, db_path: str):
         self.db = create_engine(db_path)
-        self.raw_conn = self.db.connect()
+        self.conn = self.db.connect()
         self.trans = None
         logger.info("Connected to '%s'...", db_path)
         meta = MetaData(self.db)
@@ -50,13 +50,10 @@ class SqlHandler:
         meta.create_all(self.db)
         logger.info("Created all tables.")
 
-    @property
-    def conn(self):
-        return self.trans or self.raw_conn
-
     def execute(self, *args, **kwargs):
         return self.conn.execute(*args, **kwargs)
 
     def transaction(self, trans_logger=logger):
-        assert self.trans is None
+        assert self.trans is None, "Already in a transaction"
         self.trans = Transaction(self, self.raw_conn, trans_logger)
+        return self.trans
