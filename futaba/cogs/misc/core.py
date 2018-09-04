@@ -1,0 +1,49 @@
+#
+# cogs/misc/core.py
+#
+# futaba - A Discord Mod bot for the Programming server
+# Copyright (c) 2017 Jake Richardson, Ammon Smith, jackylam5
+#
+# futaba is available free of charge under the terms of the MIT
+# License. You are free to redistribute and/or modify it under those
+# terms. It is distributed in the hopes that it will be useful, but
+# WITHOUT ANY WARRANTY. See the LICENSE file for more details.
+#
+
+'''
+Cog for misceallaneous commands that don't really belong anywhere else.
+'''
+
+import asyncio
+import logging
+from datetime import datetime
+
+import discord
+from discord.ext import commands
+
+from futaba import permissions
+from futaba.utils import Reactions, react
+
+logger = logging.getLogger(__name__)
+
+__all__ = [
+    'MiscCog',
+]
+
+class MiscCog:
+    __slots__ = (
+        'bot',
+    )
+
+    def __init__(self, bot):
+        self.bot = bot
+
+    @commands.command(name='ping')
+    async def ping(self, ctx):
+        duration = datetime.now() - discord.utils.snowflake_time(ctx.message.id)
+        ms = duration.microseconds / 1000
+
+        await asyncio.gather(
+            react(ctx.message, Reactions.SUCCESS),
+            ctx.send(content=f"Pong! (`{ms} ms`)")
+        )
