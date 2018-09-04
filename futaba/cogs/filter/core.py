@@ -41,7 +41,18 @@ class Filtering:
 
     def __init__(self, bot):
         self.bot = bot
-        self.filters = defaultdict(lambda: {filter_type: set() for filter_type in FilterType})
+        self.filters = defaultdict(dict)
+        get_filters = self.bot.sql.filter.get_filters
+
+        logger.info("Fetching previously stored filters")
+        for guild in self.bot.guilds:
+            for text, filter_type in get_filters(guild).items():
+                self.filters[guild][text] = (Filter(text), filter_type)
+
+            for channel in guild.channels:
+                if isinstance(channel, discord.TextChannel):
+                    for text, filter_type in get_filters(channel).items():
+                        self.filters[channel][text] = (Filter(text), filter_type)
 
     async def add_filter(self, message, location, level, text):
         logger.info("Adding %r to server filter '%s' for '%s' (%d)",
@@ -58,7 +69,7 @@ class Filtering:
             logger.error("Error adding filter", exc_info=error)
             await Reactions.FAIL.add(message)
         else:
-            self.filters[location][level].add(Filter(text))
+            self.filters[location][text] = (Filter(text), level)
             await Reactions.SUCCESS.add(message)
 
     async def delete_filter(self, message, location, text):
@@ -67,13 +78,14 @@ class Filtering:
         with self.bot.sql.transaction():
             try:
                 if self.bot.sql.filter.delete_filter(location, text):
+                    del self.filters[location][text]
                     logger.debug("Succesfully removed filter")
                     await Reactions.SUCCESS.add(message)
                 else:
                     logger.debug("Filter was not present, deletion failed")
                     await Reactions.FAIL.add(message)
-            except:
-                logger.error("Error deleting filter", exc_info=1)
+            except Exception as error:
+                logger.error("Error deleting filter", exc_info=error)
                 await Reactions.FAIL.add(message)
 
     async def show_filter(self, message, author, location_name, all_filters):
@@ -81,18 +93,22 @@ class Filtering:
             contents = []
             lines = [f'Filtered strings for {location_name}:']
 
-            for filter_type, filters in all_filters.items():
+            filters = defaultdict(list)
+            for filter_text, (filter, filter_type) in all_filters.items():
+                filters[filter_type].append(filter_text)
+
+            for filter_type, filter_texts in filters.items():
                 lines.extend((
                     f'{filter_type.emoji} {filter_type.description} {filter_type.emoji}',
                     '```',
                 ))
                 current_len = sum(len(line) + 1 for line in lines)
 
-                if not filters:
+                if not filter_texts:
                     lines.append('(none)')
 
-                for filter in filters:
-                    line = f'- "{filter.text}" {filter.text!r}'
+                for filter_text in filter_texts:
+                    line = f'- "{filter_text}" {filter_text!r}'
                     current_len += len(line)
 
                     if current_len > 1900:
@@ -168,9 +184,16 @@ class Filtering:
         jail_role.name = 'Dunce Hat'
 
         async def message_violator():
+            escaped_filter_text = filter_text.replace('`', '\N{ARMENIAN COMMA}')
+            escaped_content = content.replace('`', '\N{ARMENIAN COMMA}')
+
+            if len(escaped_content) > 1800:
+                escaped_content = escaped_content[:1800] + ' ... (message too long)'
+
+            logger.debug("Sending message to user who violated the filter")
             lines = [
                 f"This message you posted in {message.channel.mention} violates a "
-                "{filter_type.value} filter disallowing '{filter_text}' to appear in messages."
+                f"{filter_type.value} filter disallowing `{escaped_filter_text}` to appear in messages."
             ]
 
             if severity > FilterType.JAIL.level:
@@ -187,31 +210,35 @@ class Filtering:
             else:
                 embed_caveat = ''
 
-            await message.author.send(content=f"The content of the deleted message {embed_caveat} is:")
-            await message.author.send(content=content)
+            embed = discord.Embed(type='rich', description=content)
+            embed.timestamp = discord.utils.snowflake_time(message.id)
+            embed.set_author(name=message.author.display_name, icon_url=message.author.avatar_url)
+            to_send = f"The content of the deleted message {embed_caveat} is:"
+            await message.author.send(content=to_send, embed=embed)
 
             lines.extend((
-                'quoted version:',
+                'or, quoted:',
                 '```',
-                content.replace('`', '\N{ARMENIAN COMMA}'),
+                escaped_content,
                 '```',
+                'Contact a moderator if you have questions.',
             ))
 
             await message.author.send(content='\n'.join(lines))
 
-        if severity > FilterType.FLAG.level:
+        if severity >= FilterType.FLAG.level:
             # TODO notify staff
             # this requires the logging cog to be complete
             logger.info("Notifying staff of filter violation")
 
-        if severity > FilterType.BLOCK.level:
+        if severity >= FilterType.BLOCK.level:
             logger.info("Deleting inappropriate message id %d and notifying user", message.id)
             await asyncio.gather(
                 message.delete(),
                 message_violator(),
             )
 
-        if severity > FilterType.JAIL.level:
+        if severity >= FilterType.JAIL.level:
             # TODO jail user
             # this requires the jailing/duncing mechanism to be complete
             # and having the dunce role available in settings
@@ -263,18 +290,17 @@ class Filtering:
         )
 
         for location_type, all_filters in filter_groups:
-            for filter_type, filters in all_filters.items():
-                for filter in filters:
-                    if filter.matches(content):
-                        await self.found_violation(
-                            message,
-                            content,
-                            location_type,
-                            filter_type,
-                            filter.text
-                        )
+            for filter_text, (filter, filter_type) in all_filters.items():
+                if filter.matches(content):
+                    await self.found_violation(
+                        message,
+                        content,
+                        location_type,
+                        filter_type,
+                        filter.text
+                    )
 
-                        return
+                    return
 
         logger.debug("No violations found!")
 

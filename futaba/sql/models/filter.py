@@ -47,16 +47,12 @@ class FilterModel:
     def __init__(self, sql, meta):
         self.sql = sql
         self.tb_filters = Table('filters', meta,
-                Column('location_id', BigInteger, primary_key=True),
+                Column('location_id', BigInteger),
                 Column('location_type', Enum(LocationType)),
                 Column('filter_type', Enum(FilterType)),
                 Column('text', Unicode),
-                UniqueConstraint('location_id', 'text', name='uq_filter'))
-        self.filter_cache = defaultdict(lambda: {filter_type: set() for filter_type in FilterType})
-
-    def filter_cache_delete(self, location, text):
-        for filter_type in FilterType:
-            self.filter_cache[location][filter_type].remove(text)
+                UniqueConstraint('location_id', 'location_type', 'filter_type', 'text', name='uq_filter'))
+        self.filter_cache = defaultdict(dict)
 
     def get_filters(self, location):
         logger.debug("Getting filters for location '%s' (%d)", location.name, location.id)
@@ -64,15 +60,15 @@ class FilterModel:
             logger.debug("Filter list was found in cache, returning")
             return self.filter_cache[location]
 
-        sel = select([self.tb_filters.c.type, self.tb_filters.c.text]) \
-                .where(self.tb_filters.c.location_id == location.id) \
-                .order_by(self.tb_filters.c.type)
+        sel = select([self.tb_filters.c.filter_type, self.tb_filters.c.text]) \
+                .where(and_(
+                    self.tb_filters.c.location_id == location.id,
+                    self.tb_filters.c.location_type == LocationType.of(location),
+                )) \
+                .order_by(self.tb_filters.c.filter_type)
         result = self.sql.execute(sel)
 
-        filters = {filter_type: set() for filter_type in FilterType}
-        for filter_type, text in result.fetchmany():
-            filters[filter_type].add(text)
-
+        filters = {text: filter_type for (filter_type, text) in result.fetchmany()}
         self.filter_cache[location] = filters
         return filters
 
@@ -91,12 +87,12 @@ class FilterModel:
 
         try:
             self.sql.execute(ins)
-            self.filter_cache[location][filter_type].add(text)
+            self.filter_cache[location][text] = filter_type
         except IntegrityError:
             raise ValueError("This filter already exists")
 
     def update_filter(self, location, filter_type, text):
-        logger.info("Updating filter %r to level '%s'", text, filter_type)
+        logger.info("Updating filter %r to level '%s'", text, filter_type.value)
 
         text = normalize_caseless(text)
         upd = self.tb_filters \
@@ -106,9 +102,10 @@ class FilterModel:
                     self.tb_filters.c.location_type == LocationType.of(location),
                     self.tb_filters.c.text == text,
                 ))
+        print(upd)
         self.sql.execute(upd)
-        self.filter_cache_delete(location, text)
-        self.filter_cache[location][type].add(text)
+        del self.filter_cache[location][text]
+        self.filter_cache[location][text] = filter_type
 
     def delete_filter(self, location, text):
         logger.info("Deleting filter %r", text)
@@ -121,6 +118,6 @@ class FilterModel:
                     self.tb_filters.c.text == text,
                 ))
         result = self.sql.execute(delet)
-        self.filter_cache_delete(location, text)
-        assert result.rowcount in (0, 1)
+        del self.filter_cache[location][text]
+        assert result.rowcount in (0, 1), "Only one matching filter"
         return bool(result.rowcount)
