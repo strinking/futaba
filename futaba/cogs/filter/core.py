@@ -327,8 +327,8 @@ class Filtering:
     @permissions.check_mod()
     async def filter_guild_remove(self, ctx, *, text: str):
         '''
-        Removes the given string from the server-wide filter. You don't need to
-        tell it which filter level it was for.
+        Removes the given string from the server-wide filter.
+        You don't need to tell it which filter level it was for.
         '''
 
         await self.delete_filter(ctx.message, ctx.guild, text)
@@ -338,9 +338,8 @@ class Filtering:
     @permissions.check_mod()
     async def filter_guild_flag(self, ctx, *, text: str):
         '''
-        Adds the text to the server-wide flagging filter. If a message
-        with this content is found, staff is alerted in the configured
-        channel.
+        Adds the text to the server-wide flagging filter, which notifies staff when posted.
+        It does not notify the user or delete the message.
 
         The entire argument, complete with spaces and quotes, is interpreted as
         a single word to add to the filter.
@@ -353,9 +352,8 @@ class Filtering:
     @permissions.check_mod()
     async def filter_guild_block(self, ctx, *, text: str):
         '''
-        Adds the text to the server-wide blocking filter. If a message with
-        this content is found, it is deleted and the contents of
-        the message are sent to the user.
+        Adds the text to the server-wide blocking filter, automatically deleting any matching messages.
+        A warning and the contents of the message are sent to the user who posted it.
 
         The entire argument, complete with spaces and quotes, is interpreted as
         a single word to add to the filter.
@@ -363,15 +361,13 @@ class Filtering:
 
         await self.add_filter(ctx.message, ctx.guild, FilterType.BLOCK, text)
 
-    @filter_guild.command(name='jail', aliases=['dunce', 'punish'])
+    @filter_guild.command(name='jail', aliases=['dunce', 'punish', 'mute'])
     @commands.guild_only()
     @permissions.check_mod()
     async def filter_guild_jail(self, ctx, *, text: str):
         '''
-        Adds the text to the server-wide jailing filter. If a message with
-        this content is found, it is deleted and the user is given the configured
-        jail role. The contents of their message is printed in jail channel, with
-        a message about how that behavior is inappropriate.
+        Adds the text to the server-wide jailing filter, which will automatically jail users.
+        Like the blocking filter, it will also delete the message and send the user a warning.
 
         The entire argument, complete with spaces and quotes, is interpreted as
         a single word to add to the filter.
@@ -383,7 +379,7 @@ class Filtering:
     @commands.guild_only()
     async def filter_channel(self, ctx):
         '''
-        Allows managing the server-wide filter.
+        Allows managing the local channel filter.
         '''
 
         if ctx.subcommand_passed in ('chan', 'ch', 'c'):
@@ -404,9 +400,8 @@ class Filtering:
     @permissions.check_mod()
     async def filter_channel_flag(self, ctx, channel: discord.TextChannel, *, text: str):
         '''
-        Adds the text to the channel flagging filter. If a message
-        with this content is found, staff is alerted in the configured
-        channel.
+        Adds the text to the channel's flagging filter, which notifies staff when posted.
+        It does not notify the user or delete the message.
 
         The entire argument, complete with spaces and quotes, is interpreted as
         a single word to add to the filter.
@@ -419,9 +414,8 @@ class Filtering:
     @permissions.check_mod()
     async def filter_channel_block(self, ctx, channel: discord.TextChannel, *, text: str):
         '''
-        Adds the text to the channel blocking filter. If a message with
-        this content is found, it is deleted and the contents of
-        the message are sent to the user.
+        Adds the text to the channel's blocking filter, automatically deleting any matching messages.
+        A warning and the contents of the message are sent to the user who posted it.
 
         The entire argument, complete with spaces and quotes, is interpreted as
         a single word to add to the filter.
@@ -429,15 +423,13 @@ class Filtering:
 
         await self.add_filter(ctx.message, channel, FilterType.BLOCK, text)
 
-    @filter_channel.command(name='jail', aliases=['dunce', 'punish'])
+    @filter_channel.command(name='jail', aliases=['dunce', 'punish', 'mute'])
     @commands.guild_only()
     @permissions.check_mod()
     async def filter_channel_jail(self, ctx, channel: discord.TextChannel, *, text: str):
         '''
-        Adds the text to the channel jailing filter. If a message with
-        this content is found, it is deleted and the user is given the configured
-        jail role. The contents of their message is printed in jail channel, with
-        a message about how that behavior is inappropriate.
+        Adds the text to the channel jailing filter, which will automatically jail users.
+        Like the blocking filter, it will also delete the message and send the user a warning.
 
         The entire argument, complete with spaces and quotes, is interpreted as
         a single word to add to the filter.
