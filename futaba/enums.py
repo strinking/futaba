@@ -63,7 +63,7 @@ class FilterType(Enum):
         if self == FilterType.FLAG:
             return 'Flagged words'
         elif self == FilterType.BLOCK:
-            return 'Denied words'
+            return 'Blocked words'
         elif self == FilterType.JAIL:
             return 'Auto-jail words'
         else:
