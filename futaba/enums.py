@@ -12,6 +12,8 @@
 
 from enum import Enum, unique
 
+import discord
+
 __all__ = [
     'FilterType',
     'LocationType',
@@ -54,7 +56,7 @@ class LocationType(Enum):
     def of(location):
         if isinstance(location, discord.Guild):
             return LocationType.GUILD
-        elif isinstance(location, discord.abc.TextChannel):
+        elif isinstance(location, discord.TextChannel):
             return LocationType.CHANNEL
         else:
-            return TypeError(f"No location type for %r")
+            return TypeError(f"No location type for {location!r}")

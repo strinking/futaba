@@ -10,6 +10,7 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+import asyncio
 import logging
 import unicodedata
 from enum import Enum
@@ -61,18 +62,24 @@ class Reloader:
         try:
             self.load_cog(cogname)
         except Exception as error:
-            logger.error("Load failed")
-            logger.debug("Reason:", exc_info=error)
-            await react(ctx.message, Reactions.FAIL)
+            logger.error("Loading cog %s failed", cogname, exc_info=error)
+
             embed = discord.Embed(color=discord.Color.red(), description=f'```{error}```')
             embed.set_author(name='Load failed')
-            await self.bot._send(embed=embed)
+            await asyncio.gather(
+                self.bot._send(embed=embed),
+                react(ctx.message, Reactions.FAIL),
+            )
+
         else:
             logger.info("Loaded cog: %s", cogname)
-            await react(ctx.message, Reactions.SUCCESS)
+
             embed = discord.Embed(color=discord.Color.green(), description=f'```{cogname}```')
             embed.set_author(name='Loaded')
-            await self.bot._send(embed=embed)
+            await asyncio.gather(
+                self.bot._send(embed=embed),
+                react(ctx.message, Reactions.SUCCESS),
+            )
 
     @commands.command()
     @permissions.check_owner()

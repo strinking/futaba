@@ -9,3 +9,13 @@
 # terms. It is distributed in the hopes that it will be useful, but
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
+
+from .core import SettingsCog
+
+def setup(bot):
+    '''
+    Setup for bot to add cog
+    '''
+
+    cog = SettingsCog(bot)
+    bot.add_cog(cog)

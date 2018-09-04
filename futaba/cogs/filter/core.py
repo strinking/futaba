@@ -22,11 +22,15 @@ from collections import defaultdict
 import discord
 from discord.ext import commands
 
-import permissions
+from futaba import permissions
 from .filter import Filter, FilterType
 from .utils import Reactions
 
 logger = logging.getLogger(__name__)
+
+__all__ = [
+    'FilterCog',
+]
 
 class FilterCog:
     __slots__ = (
