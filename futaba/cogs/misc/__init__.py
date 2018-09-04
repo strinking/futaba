@@ -10,12 +10,12 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-from .core import MiscCog
+from .core import Miscellaneous
 
 def setup(bot):
     '''
     Setup for bot to add cog
     '''
 
-    cog = MiscCog(bot)
+    cog = Miscellaneous(bot)
     bot.add_cog(cog)

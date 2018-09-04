@@ -27,10 +27,10 @@ from futaba.utils import Reactions, react
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    'MiscCog',
+    'Miscellaneous',
 ]
 
-class MiscCog:
+class Miscellaneous:
     __slots__ = (
         'bot',
     )
@@ -40,6 +40,10 @@ class MiscCog:
 
     @commands.command(name='ping')
     async def ping(self, ctx):
+        '''
+        Determines the bot's current latency.
+        '''
+
         duration = datetime.now() - discord.utils.snowflake_time(ctx.message.id)
         ms = duration.microseconds / 1000
 
@@ -47,3 +51,13 @@ class MiscCog:
             react(ctx.message, Reactions.SUCCESS),
             ctx.send(content=f"Pong! (`{ms} ms`)")
         )
+
+    @commands.command(name='shutdown', aliases=['halt'])
+    @permissions.check_owner()
+    async def shutdown(self, ctx):
+        '''
+        Shuts down the bot. Only able to be run by an owner.
+        '''
+
+        await react(ctx.message, Reactions.SUCCESS)
+        exit()
