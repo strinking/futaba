@@ -225,14 +225,17 @@ class Filtering:
 
         # Don't filter PMs
         if message.guild is None:
+            logger.debug("Not checking message because it's not from a guild")
             return
 
         # Check that we actually have permissions to delete
         if not message.channel.permissions_for(message.guild.me).manage_messages:
+            logger.debug("I don't have permission to delete messages here")
             return
 
         # Check filter immunity
         if self.filter_immune(message):
+            logger.debug("This user is immune to the filter")
             return
 
         logger.debug("Checking message id %d (by '%s' (%d)) for filter violations",

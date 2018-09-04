@@ -72,7 +72,7 @@ class SettingsModel:
                 Column('prefix', Unicode, nullable=True))
         self.tb_filter_settings = Table('filter_settings', meta,
                 Column('guild_id', BigInteger, primary_key=True),
-                Column('bots_immune', Boolean),
+                Column('bot_immune', Boolean),
                 Column('manage_messages_immune', Boolean))
         self.prefix_cache = {}
         self.filter_settings_cache = {}
@@ -163,9 +163,12 @@ class SettingsModel:
             return self.filter_settings_cache[guild]
 
         bot_immune, manage_messages_immune = result.fetchone()
-        storage = self.filter_settings_cache[guild]
+
+        # Update cache
+        storage = FilterSettingsStorage()
         storage.bot_immune = bot_immune
         storage.manage_messages_immune = manage_messages_immune
+        self.filter_settings_cache[guild] = storage
         return storage
 
     def set_bot_filter_immunity(self, guild, bot_immune=None, manage_messages_immune=None):

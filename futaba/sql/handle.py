@@ -55,5 +55,5 @@ class SqlHandler:
 
     def transaction(self, trans_logger=logger):
         assert self.trans is None, "Already in a transaction"
-        self.trans = Transaction(self, self.raw_conn, trans_logger)
+        self.trans = Transaction(self, self.conn, trans_logger)
         return self.trans
