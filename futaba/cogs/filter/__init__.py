@@ -19,4 +19,6 @@ def setup(bot):
     '''
 
     cog = Filtering(bot)
+    bot.add_listener(cog.check_message, 'on_message')
+    bot.add_listener(cog.check_message_edit, 'on_message_edit')
     bot.add_cog(cog)

@@ -21,7 +21,7 @@ import functools
 import logging
 
 from sqlalchemy import and_, or_
-from sqlalchemy import BigInteger, Column, Table, Unicode
+from sqlalchemy import BigInteger, Boolean, Column, Table, Unicode
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.sql import select
 
@@ -34,11 +34,35 @@ __all__ = [
     'SettingsModel',
 ]
 
+# TODO make this file a directory and move this to its own file?
+class FilterSettingsStorage:
+    __slots__ = (
+        'bot_immune',
+        'manage_messages_immune',
+    )
+
+    def __init__(self):
+        self.bot_immune = False
+        self.manage_messages_immune = True
+
+    def updated(self, field, value=None):
+        '''
+        Sets 'field' if 'value' is not None. Returns the current value of 'field'.
+        Useful for getting an excluded field, and updating the storage object too.
+        '''
+
+        if value is None:
+            setattr(self, field, value)
+
+        return getattr(self, field)
+
 class SettingsModel:
     __slots__ = (
         'sql',
         'tb_prefixes',
+        'tb_filter_settings',
         'prefix_cache',
+        'filter_settings_cache',
     )
 
     def __init__(self, sql, meta):
@@ -46,7 +70,12 @@ class SettingsModel:
         self.tb_prefixes = Table('prefixes', meta,
                 Column('guild_id', BigInteger, primary_key=True),
                 Column('prefix', Unicode, nullable=True))
+        self.tb_filter_settings = Table('filter_settings', meta,
+                Column('guild_id', BigInteger, primary_key=True),
+                Column('bots_immune', Boolean),
+                Column('manage_messages_immune', Boolean))
         self.prefix_cache = {}
+        self.filter_settings_cache = {}
 
     @on_guild_join
     def add_prefix(self, guild):
@@ -79,18 +108,78 @@ class SettingsModel:
                 .where(self.tb_prefixes.c.guild_id == guild.id)
         result = self.sql.execute(sel)
 
-        if result.rowcount:
-            prefix, = result.fetchone()
-        else:
-            prefix = None
+        if not result.rowcount:
+            self.add_prefix(guild)
+            return None
 
+        prefix, = result.fetchone()
         self.prefix_cache[guild] = prefix
         return prefix
 
     def set_prefix(self, guild, prefix):
+        logger.info("Setting prefix to '%s' for guild '%s' (%d)", prefix, guild.name, guild.id)
         upd = self.tb_prefixes \
                 .update() \
                 .where(self.tb_prefixes.c.guild_id == guild.id) \
                 .values(prefix=prefix)
         self.sql.execute(upd)
         self.prefix_cache[guild] = prefix
+
+    @on_guild_join
+    def add_filter_settings(self, guild):
+        logger.info("Adding row for bot filter immunity for new guild '%s' (%d)", guild.name, guild.id)
+        storage = FilterSettingsStorage()
+        ins = self.tb_filter_settings \
+                .insert() \
+                .values(
+                    guild_id=guild.id,
+                    bot_immune=storage.bot_immune,
+                    manage_messages_immune=storage.manage_messages_immune,
+                )
+        self.sql.execute(ins)
+        self.filter_settings_cache[guild] = storage
+
+    @on_guild_leave
+    def del_filter_settings(self, guild):
+        logger.info("Removing row for bot filter immunity for departing guild '%s' (%d)", guild.name, guild.id)
+        delet = self.tb_filter_settings \
+                    .delete() \
+                    .where(self.tb_filter_settings.c.guild_id == guild.id)
+        self.sql.execute(delet)
+        del self.filter_settings_cache[guild]
+
+    def get_filter_settings(self, guild):
+        logger.debug("Getting filter settings for guild '%s', (%d)", guild.name, guild.id)
+        if guild in self.filter_settings_cache:
+            logger.debug("Settings were found in cache, returning")
+            return self.filter_settings_cache[guild]
+
+        sel = select([self.tb_filter_settings.c.bot_immune, self.tb_filter_settings.c.manage_messages_immune]) \
+                .where(self.tb_filter_settings.c.guild_id == guild.id)
+        result = self.sql.execute(sel)
+
+        if not result.rowcount:
+            self.add_filter_settings(guild)
+            return self.filter_settings_cache[guild]
+
+        bot_immune, manage_messages_immune = result.fetchone()
+        storage = self.filter_settings_cache[guild]
+        storage.bot_immune = bot_immune
+        storage.manage_messages_immune = manage_messages_immune
+        return storage
+
+    def set_bot_filter_immunity(self, guild, bot_immune=None, manage_messages_immune=None):
+        storage = self.filter_settings_cache[guild]
+        bot_immune = storage.updated('bot_immune', bot_immune)
+        manage_messages_immune = storage.updated('manage_messages_immune', manage_messages_immune)
+
+        logger.info("Setting filter settings (bot_immune='%s', manage_messages_immune='%s') for guild '%s' (%d)",
+                bot_immune, manage_messages_immune, guild.name, guild.id)
+        upd = self.tb_filter_settings \
+                .update() \
+                .where(self.tb_filter_settings.c.guild_id == guild.id) \
+                .values(
+                    bot_immune=bot_immune,
+                    manage_messages_immune=manage_messages_immune,
+                )
+        self.sql.execute(upd)

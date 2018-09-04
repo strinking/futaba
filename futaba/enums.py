@@ -37,6 +37,17 @@ class FilterType(Enum):
     JAIL = 'jail'
 
     @property
+    def level(self):
+        if self == FilterType.FLAG:
+            return 1
+        elif self == FilterType.BLOCK:
+            return 2
+        elif self == FilterType.JAIL:
+            return 3
+        else:
+            raise ValueError(f"Invalid enum value: {self!r}")
+
+    @property
     def emoji(self):
         if self == FilterType.FLAG:
             return '\N{WARNING SIGN}'

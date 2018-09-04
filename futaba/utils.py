@@ -25,12 +25,24 @@ logger = logging.getLogger(__name__)
 COGS_DIR = 'futaba.cogs.'
 
 __all__ = [
+    'Dummy',
     'Reloader',
     'normalize_caseless',
     'plural',
 ]
 
+class Dummy:
+    '''
+    Dummy class that can freely be assigned any fields or members.
+    '''
+
+    pass
+
 class Reloader:
+    '''
+    Special cog that is used to load, unload, and reload all other cogs.
+    '''
+
     def __init__(self, bot):
         self.bot = bot
 
@@ -157,3 +169,16 @@ def plural(num):
     '''
 
     return '' if num == 1 else 's'
+
+def if_not_null(obj, alt):
+    '''
+    Returns 'obj' if it's not None, 'alt' otherwise.
+    '''
+
+    if obj is None:
+        if callable(alt):
+            return alt()
+        else:
+            return alt
+
+    return obj

@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     'UNICODE_SPACES_REGEX',
-    'FilterType',
     'Filter',
 ]
 
