@@ -11,18 +11,24 @@
 #
 
 '''
-Holds custom decorators to check permissioms for commands
+Holds custom decorators to check permissions for commands
 '''
 
 import discord
 from discord.ext import commands
+
+__all__ = [
+    'check_owner',
+    'check_admin',
+    'check_mod',
+]
 
 def check_owner_perm(ctx: commands.Context):
     '''
     Check if user is a owner of the bot from config
     '''
 
-    return ctx.author.id in ctx.bot.config['owners']
+    return ctx.author.id in ctx.bot.config.owner_ids
 
 def check_admin_perm(ctx: commands.Context):
     '''
@@ -31,15 +37,17 @@ def check_admin_perm(ctx: commands.Context):
 
     if isinstance(ctx.channel, discord.abc.PrivateChannel):
         return False
+
     return ctx.channel.permissions_for(ctx.author).manage_guild
 
-def check_mod_perm(ctx):
+def check_mod_perm(ctx: commands.Context):
     '''
     Used to check is user has the manage_channels permission
     '''
 
     if isinstance(ctx.channel, discord.abc.PrivateChannel):
         return False
+
     return ctx.channel.permissions_for(ctx.author).manage_channels
 
 def check_owner():
@@ -56,21 +64,17 @@ def check_admin():
 
     def checkperm(ctx):
         ''' Check the different perms '''
-        if check_owner_perm(ctx) or check_admin_perm(ctx):
-            return True
-        return False
+        return check_owner_perm(ctx) or check_admin_perm(ctx)
 
     return commands.check(checkperm)
 
 def check_mod():
     '''
-    Check if user is admin or higher
+    Check if user is moderator or higher
     '''
 
     def checkperm(ctx):
         ''' Check the different perms '''
-        if check_owner_perm(ctx) or check_admin_perm(ctx) or check_mod_perm(ctx):
-            return True
-        return False
+        return check_owner_perm(ctx) or check_admin_perm(ctx) or check_mod_perm(ctx)
 
     return commands.check(checkperm)

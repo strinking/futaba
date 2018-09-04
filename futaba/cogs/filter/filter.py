@@ -12,10 +12,11 @@
 
 import logging
 import re
-from enum import Enum, unique
 
 import discord
 from confusable_homoglyphs import confusables
+
+from enums import FilterType
 
 logger = logging.getLogger(__name__)
 
@@ -36,34 +37,6 @@ UNICODE_SPACES_REGEX = re.compile(''.join((
     '\u205f\u3000\ufeff',
     ']',
 )))
-
-@unique
-class FilterType(Enum):
-    FLAG = 'flag'
-    BLOCK = 'block'
-    JAIL = 'jail'
-
-    @property
-    def emoji(self):
-        if self == FilterType.FLAG:
-            return '\N{WARNING SIGN}'
-        elif self == FilterType.BLOCK:
-            return '\N{NO ENTRY SIGN}'
-        elif self == FilterType.JAIL:
-            return '\N{POLICE CARS REVOLVING LIGHT}'
-        else:
-            raise ValueError(r"Invalid enum value: {self!r}")
-
-    @property
-    def description(self):
-        if self == FilterType.FLAG:
-            return 'Flagged words'
-        elif self == FilterType.BLOCK:
-            return 'Denied words'
-        elif self == FilterType.JAIL:
-            return 'Auto-jail words'
-        else:
-            raise ValueError(r"Invalid enum value: {self!r}")
 
 class Filter:
     __slots__ = (

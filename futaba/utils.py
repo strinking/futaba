@@ -17,7 +17,7 @@ from enum import Enum
 import discord
 from discord.ext import commands
 
-from . import permissions
+from futaba import permissions
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +28,7 @@ __all__ = [
     'Reloader',
     'normalize_caseless',
     'plural',
+    'react',
 ]
 
 class Reactions(Enum):
@@ -57,7 +58,6 @@ class Reloader:
 
         logger.info("Cog load requested: %s", cogname)
 
-        # Load cog
         try:
             self.load_cog(cogname)
         except Exception as error:
@@ -81,7 +81,6 @@ class Reloader:
 
         logger.info("Cog unload requested: %s", cogname)
 
-        # Load cog
         try:
             self.unload_cog(cogname)
         except Exception as error:
@@ -141,9 +140,19 @@ class Reloader:
         await ctx.send('\n'.join(lines))
 
 def normalize_caseless(s):
+    '''
+    Shifts the string into a uniform case (lower-case),
+    but also accounting for unicode characters. Used
+    for case-insenstive comparisons.
+    '''
+
     return unicodedata.normalize('NFKD', s.casefold())
 
 def plural(num):
+    '''
+    Gets the English plural ending for an ordinal number.
+    '''
+
     return '' if num == 1 else 's'
 
 async def react(message: discord.Message, emoji: Reactions):

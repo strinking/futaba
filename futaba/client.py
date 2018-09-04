@@ -21,10 +21,9 @@ import os
 import discord
 from discord.ext import commands
 
-from . import utils
 from .config import Configuration
 from .sql import SqlHandler
-from .utils import plural
+from .utils import Reactions, Reloader, plural, react
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +86,7 @@ class Bot(commands.AutoShardedBot):
         else:
             self.debug_chan = self.get_channel(int(self.config.debug_channel_id))
 
-        self.add_cog(utils.Reloader(self))
+        self.add_cog(Reloader(self))
         logger.info("Loaded cog: Reloader")
 
         def _cog_ok(cog):
@@ -129,7 +128,7 @@ class Bot(commands.AutoShardedBot):
 
         elif isinstance(error, commands.errors.CheckFailure):
             # Tell the user they don't have the permission to tun the command
-            await utils.react(ctx.message, utils.Reactions.DENY)
+            await react(ctx.message, Reactions.DENY)
 
     async def _send(self, *args, **kwargs):
         if self.debug_chan is not None:

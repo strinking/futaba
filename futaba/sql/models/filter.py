@@ -16,37 +16,23 @@ Has the model for persisting filter settings.
 
 import functools
 import logging
-from enum import Enum, unique
+from collections import defaultdict
 
 from sqlalchemy import and_, or_
 from sqlalchemy import BigInteger, Column, Enum, Table, Unicode
 from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import select
 
-from cogs.filter import FilterType
-from utils import normalize_caseless
+from futaba.enums import LocationType, FilterType
+from futaba.utils import normalize_caseless
 
 Column = functools.partial(Column, nullable=False)
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    'LocationType',
     'FilterModel',
 ]
-
-@unique
-class LocationType(Enum):
-    CHANNEL = 'channel'
-    GUILD = 'guild'
-
-    @staticmethod
-    def of(location):
-        if instanceof(location, discord.Guild):
-            return LocationType.GUILD
-        elif instanceof(location, discord.TextChannel):
-            return LocationType.CHANNEL
-        else:
-            return TypeError(r"No location type for %r")
 
 class FilterModel:
     __slots__ = (
@@ -63,7 +49,7 @@ class FilterModel:
                 Column('filter_type', Enum(FilterType)),
                 Column('text', Unicode),
                 UniqueConstraint('location_id', 'text', name='uq_filter'))
-        self.filter_cache = {}
+        self.filter_cache = defaultdict(lambda: {filter_type: set() for filter_type in FilterType})
 
     def filter_cache_delete(self, location, text):
         for filter_type in FilterType:
@@ -103,7 +89,7 @@ class FilterModel:
         try:
             self.sql.execute(ins)
             self.filter_cache[filter_type].append(text)
-        except sqlalchemy.exc.IntegrityError:
+        except IntegrityError:
             raise ValueError("This filter already exists")
 
     def update_filter(self, location, filter_type, text):

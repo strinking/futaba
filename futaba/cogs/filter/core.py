@@ -146,7 +146,8 @@ class FilterCog:
         await self.show_filter(ctx.message, ctx.author, ctx.guild.name, self.filters[ctx.guild])
 
     @filter_guild.command(name='remove', aliases=['rm', 'delete', 'del'])
-    @commands.guild_only
+    @commands.guild_only()
+    @permissions.check_mod()
     async def filter_guild_remove(self, ctx, *, text: str):
         '''
         Removes the given string from the server-wide filter. You don't need to
@@ -268,7 +269,8 @@ class FilterCog:
         await self.add_filter(ctx.message, channel, FilterType.JAIL, text)
 
     @filter_channel.command(name='remove', aliases=['rm', 'delete', 'del'])
-    @commands.guild_only
+    @commands.guild_only()
+    @permissions.check_mod()
     async def filter_channel_remove(self, ctx, channel: discord.TextChannel, *, text: str):
         '''
         Removes the given string from this channel's filter. You don't need to

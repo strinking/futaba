@@ -22,7 +22,7 @@ from sqlalchemy import BigInteger, Column, Table, Unicode
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.sql import select
 
-from .hooks import on_guild_join, on_guild_leave
+from ..hooks import on_guild_join, on_guild_leave
 
 Column = functools.partial(Column, nullable=False)
 logger = logging.getLogger(__name__)
