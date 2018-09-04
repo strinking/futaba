@@ -77,7 +77,7 @@ class FilterModel:
         return filters
 
     def add_filter(self, location, filter_type, text):
-        logger.info("Adding text %r to filter, level '%s'", text, type)
+        logger.info("Adding text %r to filter, level '%s'", text, filter_type.value)
 
         text = normalize_caseless(text)
         ins = self.tb_filters \
@@ -91,7 +91,7 @@ class FilterModel:
 
         try:
             self.sql.execute(ins)
-            self.filter_cache[filter_type].append(text)
+            self.filter_cache[location][filter_type].add(text)
         except IntegrityError:
             raise ValueError("This filter already exists")
 
