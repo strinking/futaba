@@ -58,7 +58,7 @@ class FilterModel:
     def get_filters(self, location):
         logger.debug("Getting filters for location '%s' (%d)", location.name, location.id)
         if location in self.filter_cache:
-            logger.trace("Filter list was found in cache, returning")
+            logger.debug("Filter list was found in cache, returning")
             return self.filter_cache[location]
 
         sel = select([self.tb_filters.c.type, self.tb_filters.c.text]) \

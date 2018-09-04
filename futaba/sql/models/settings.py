@@ -69,7 +69,7 @@ class SettingsModel:
     def get_prefix(self, guild):
         logger.debug("Getting prefix for guild '%s' (%d)", guild.name, guild.id)
         if guild in self.prefix_cache:
-            logger.trace("Prefix was found in cache, returning")
+            logger.debug("Prefix was found in cache, returning")
             return self.prefix_cache[guild]
 
         sel = select([self.tb_prefixes.c.prefix]) \
