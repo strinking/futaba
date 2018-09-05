@@ -77,7 +77,7 @@ class Filtering:
         with self.bot.sql.transaction():
             try:
                 if self.bot.sql.filter.delete_filter(location, text):
-                    del self.filters[location][text]
+                    self.filters[location].pop(text, None)
                     logger.debug("Succesfully removed filter")
                     await Reactions.SUCCESS.add(message)
                 else:
@@ -93,7 +93,7 @@ class Filtering:
             lines = [f'Filtered strings for {location_name}:']
 
             filters = defaultdict(list)
-            for filter_text, (filter, filter_type) in all_filters.items():
+            for filter_text, (_, filter_type) in all_filters.items():
                 filters[filter_type].append(filter_text)
 
             for filter_type, filter_texts in filters.items():

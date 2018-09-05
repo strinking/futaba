@@ -124,7 +124,7 @@ class FilterModel:
                     self.tb_filters.c.text == text,
                 ))
         result = self.sql.execute(delet)
-        del self.filter_cache[location][text]
+        self.filter_cache[location].pop(text, None)
         assert result.rowcount in (0, 1), "Only one matching filter"
         return bool(result.rowcount)
 

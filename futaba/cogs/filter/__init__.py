@@ -10,8 +10,7 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-from functools import partial
-
+from futaba.utils import async_partial
 from .check import check_message, check_message_edit
 from .core import Filtering
 from .filter import Filter, FilterType
@@ -22,6 +21,6 @@ def setup(bot):
     '''
 
     cog = Filtering(bot)
-    bot.add_listener(partial(check_message, cog), 'on_message')
-    bot.add_listener(partial(check_message_edit, cog), 'on_message_edit')
+    bot.add_listener(async_partial(check_message, cog), 'on_message')
+    bot.add_listener(async_partial(check_message_edit, cog), 'on_message_edit')
     bot.add_cog(cog)

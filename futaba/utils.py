@@ -28,7 +28,9 @@ __all__ = [
     'Dummy',
     'Reloader',
     'normalize_caseless',
+    'async_partial',
     'plural',
+    'if_not_null',
 ]
 
 class Dummy:
@@ -162,6 +164,11 @@ def normalize_caseless(s):
     '''
 
     return unicodedata.normalize('NFKD', s.casefold())
+
+def async_partial(coro, *added_args, **added_kwargs):
+    async def wrapped(*args, **kwargs):
+        return await coro(*added_args, *args, **added_kwargs, **kwargs)
+    return wrapped
 
 def plural(num):
     '''

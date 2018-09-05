@@ -149,7 +149,7 @@ class SettingsModel:
         del self.filter_settings_cache[guild]
 
     def get_filter_settings(self, guild):
-        logger.debug("Getting filter settings for guild '%s', (%d)", guild.name, guild.id)
+        logger.debug("Getting filter settings for guild '%s' (%d)", guild.name, guild.id)
         if guild in self.filter_settings_cache:
             logger.debug("Settings were found in cache, returning")
             return self.filter_settings_cache[guild]
