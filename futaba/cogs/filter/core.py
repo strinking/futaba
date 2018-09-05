@@ -161,6 +161,84 @@ class Filtering:
             # TODO send help
             await Reactions.FAIL.add(ctx.message)
 
+    @filter.group(name='immune', aliases=['imm', 'ignore', 'ign'])
+    @commands.guild_only()
+    async def filter_immunity(self, ctx):
+        '''
+        Maintaining the list of special user immunities to the filter.
+        '''
+
+        if ctx.subcommand_passed in ('immune', 'imm', 'ignore', 'ign'):
+            # TODO send help
+            await Reactions.FAIL.add(ctx.message)
+
+    @filter_immunity.command(name='add', aliases=['append', 'extend', 'new'])
+    @commands.guild_only()
+    @permissions.check_admin()
+    async def filter_immunity_add(self, ctx, *members: discord.Member):
+        '''
+        Adds a set of users to the server filter immunity list.
+        '''
+
+        if not members:
+            await Reactions.FAIL.add(ctx.message)
+            return
+
+        member_names = ', '.join((f"'{member.name}' ({member.id})" for member in member))
+        logger.info("Adding members to guild '%s' (%d) filter immunity list: %s",
+                ctx.guild.name, ctx.guild.id, member_names)
+
+        with self.bot.sql.transaction():
+            for member in members:
+                logger.debug("Adding member: %s (%d)", member.display_name, member.id)
+                self.bot.sql.filter.add_filter_immune_user(ctx.guild, member)
+
+        await Reactions.SUCCESS.add(ctx.message)
+
+    @filter_immunity.command(name='remove', aliases=['rm', 'delete', 'del'])
+    @commands.guild_only()
+    @permissions.check_admin()
+    async def filter_immunity_remove(self, ctx, *members: discord.Member):
+        '''
+        Removes a set of users from the server filter immunity list.
+        '''
+
+        if not members:
+            await Reactions.FAIL.add(ctx.message)
+            return
+
+        member_names = ', '.join((f"'{member.name}' ({member.id})" for member in member))
+        logger.info("Removing members to guild '%s' (%d) filter immunity list: %s",
+                ctx.guild.name, ctx.guild.id, member_names)
+
+        with self.bot.sql.transaction():
+            for member in members:
+                logger.debug("Removing member: %s (%d)", member.display_name, member.id)
+                self.bot.sql.filter.remove_filter_immune_user(ctx.guild, member)
+
+        await Reactions.SUCCESS.add(ctx.message)
+
+    @filter_immunity.command(name='show', aliases=['display', 'list'])
+    @commands.guild_only()
+    async def filter_immunity_show(self, ctx):
+        '''
+        Lists all users in this server's filter immunity list.
+        '''
+
+        user_ids = self.bot.sql.filter.get_filter_immune_users(ctx.guild)
+
+        if user_ids:
+            embed = discord.Embed(description='\n'.join(f'- <@{user_id}>' for user_id in user_ids))
+            embed.set_author(name='Members with special filter immunity')
+        else:
+            embed = discord.Embed()
+            embed.set_author(name='No members with special filter immunity')
+
+        await asyncio.gather(
+            ctx.send(embed=embed),
+            Reactions.SUCCESS.add(ctx.message),
+        )
+
     @filter.group(name='server', aliases=['srv', 's', 'guild', 'g'])
     @commands.guild_only()
     async def filter_guild(self, ctx):
