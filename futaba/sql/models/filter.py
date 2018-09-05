@@ -41,7 +41,9 @@ class FilterModel:
     __slots__ = (
         'sql',
         'tb_filters',
+        'tb_filter_immune_users',
         'filter_cache',
+        'immune_users_cache',
     )
 
     def __init__(self, sql, meta):
@@ -51,8 +53,13 @@ class FilterModel:
                 Column('location_type', Enum(LocationType)),
                 Column('filter_type', Enum(FilterType)),
                 Column('text', Unicode),
-                UniqueConstraint('location_id', 'location_type', 'filter_type', 'text', name='uq_filter'))
+                UniqueConstraint('location_id', 'location_type', 'filter_type', 'text', name='filter_uq'))
+        self.tb_filter_immune_users = Table('filter_immune_users', meta,
+                Column('guild_id', BigInteger),
+                Column('user_id', BigInteger),
+                UniqueConstraint('guild_id', 'user_id', name='filter_immune_users_uq'))
         self.filter_cache = defaultdict(dict)
+        self.immune_users_cache = defaultdict(set)
 
     def get_filters(self, location):
         logger.debug("Getting filters for location '%s' (%d)", location.name, location.id)
@@ -64,8 +71,7 @@ class FilterModel:
                 .where(and_(
                     self.tb_filters.c.location_id == location.id,
                     self.tb_filters.c.location_type == LocationType.of(location),
-                )) \
-                .order_by(self.tb_filters.c.filter_type)
+                ))
         result = self.sql.execute(sel)
 
         filters = {text: filter_type for (filter_type, text) in result.fetchmany()}
@@ -120,4 +126,53 @@ class FilterModel:
         result = self.sql.execute(delet)
         del self.filter_cache[location][text]
         assert result.rowcount in (0, 1), "Only one matching filter"
+        return bool(result.rowcount)
+
+    def get_filter_immune_users(self, guild):
+        logger.info("Getting users about filter immunity in guild '%s' (%d)", guild.name, guild.id)
+
+        sel = select([self.tb_filter_immune_users.c.user_id]) \
+                .where(self.tb_filter_immune_users.c.guild_id == guild.id)
+        result = self.sql.execute(sel)
+        self.immune_users_cache[guild].update(user_id for user_id, in result.fetchmany())
+        return self.immune_users_cache[guild]
+
+    def user_is_filter_immune(self, guild, user):
+        logger.debug("Checking if user '%s' (%d) is filter immune in guild '%s' (%d)",
+                user.name, user.id, guild.name, guild.id)
+
+        return user.id in self.immune_users_cache[guild]
+
+    def add_filter_immune_user(self, guild, user):
+        logger.info("Adding user '%s' (%d) to filter immune list for guild '%s' (%d)",
+                user.name, user.id, guild.name, guild.id)
+
+        ins = self.tb_filter_immune_users \
+                .insert() \
+                .values(
+                    guild_id=guild.id,
+                    user_id=user.id,
+                )
+
+        try:
+            self.sql.execute(ins)
+            self.immune_users_cache[guild].add(user.id)
+            return True
+        except IntegrityError:
+            logger.debug("User is already on the list")
+            return False
+
+    def remove_filter_immune_user(self, guild, user):
+        logger.info("Removing user '%s' (%d) to filter immune list for guild '%s' (%d)",
+                user.name, user.id, guild.name, guild.id)
+
+        delet = self.tb_filter_immune_users \
+                    .delete() \
+                    .where(and_(
+                        self.tb_filter_immune_users.c.guild_id == guild.id,
+                        self.tb_filter_immune_users.c.user_id == user.id,
+                    ))
+        result = self.sql.execute(delet)
+        self.immune_users_cache[guild].remove(user.id)
+        assert result.rowcount in (0, 1), "Only one matching user"
         return bool(result.rowcount)

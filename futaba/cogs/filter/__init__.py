@@ -10,6 +10,9 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+from functools import partial
+
+from .check import check_message, check_message_edit
 from .core import Filtering
 from .filter import Filter, FilterType
 
@@ -19,6 +22,6 @@ def setup(bot):
     '''
 
     cog = Filtering(bot)
-    bot.add_listener(cog.check_message, 'on_message')
-    bot.add_listener(cog.check_message_edit, 'on_message_edit')
+    bot.add_listener(partial(check_message, cog), 'on_message')
+    bot.add_listener(partial(check_message_edit, cog), 'on_message_edit')
     bot.add_cog(cog)
