@@ -1,5 +1,5 @@
 #
-# cogs/<cog folder name>/core.py
+# cogs/info/__init__.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017 Jake Richardson, Ammon Smith, jackylam5
@@ -10,24 +10,12 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-# pylint: skip-file
+from .core import Info
 
-'''
-<description>
-'''
-
-import asyncio
-import logging
-
-import discord
-from discord.ext import commands
-
-logger = logging.getLogger(__package__)
-
-class NameOfCog:
+def setup(bot):
     '''
-    <description>
+    Setup for bot to add cog
     '''
 
-    def __init__(self, bot):
-        self.bot = bot
+    cog = Info(bot)
+    bot.add_cog(cog)
