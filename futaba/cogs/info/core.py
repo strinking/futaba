@@ -73,7 +73,14 @@ class Info:
 
         logger.debug("Found user! %r", user)
 
-        embed = discord.Embed(description=user.mention)
+        # Status
+        if getattr(user, 'status', None):
+            status = 'do not disturb' if user.status == discord.Status.dnd else user.status
+            descr = f'{user.mention}, {status}'
+        else:
+            descr = user.mention
+
+        embed = discord.Embed(description=descr)
         embed.timestamp = user.created_at
         embed.set_author(name=f'{user.name}#{user.discriminator}')
         embed.set_thumbnail(url=user.avatar_url)
@@ -82,6 +89,7 @@ class Info:
         if hasattr(user, 'colour'):
             embed.colour = user.colour
 
+        # User id
         embed.add_field(name='ID:', value=f'`{user.id}`')
 
         # Roles
