@@ -28,7 +28,7 @@ __all__ = [
 ]
 
 CHANNEL_MENTION_REGEX = re.compile(r'<#([0-9]+)>')
-USER_MENTION_REGEX = re.compile(r'<@([0-9]+)>')
+USER_MENTION_REGEX = re.compile(r'<@!?([0-9]+)>')
 ROLE_MENTION_REGEX = re.compile(r'<@&([0-9]+)>')
 USERNAME_DISCRIM_REGEX = re.compile(r'(.+)#([0-9]{4})')
 
