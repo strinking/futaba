@@ -12,6 +12,7 @@
 
 import asyncio
 import logging
+import string
 import unicodedata
 
 import discord
@@ -23,14 +24,17 @@ from futaba.enums import Reactions
 logger = logging.getLogger(__name__)
 
 COGS_DIR = 'futaba.cogs.'
+READABLE_CHAR_SET = frozenset(string.printable) - frozenset('\t\n\r\x0b\x0c')
 
 __all__ = [
+    'READABLE_CHAR_SET',
     'Dummy',
     'Reloader',
     'normalize_caseless',
     'async_partial',
     'plural',
     'if_not_null',
+    'unicode_repr',
 ]
 
 class Dummy:
@@ -189,3 +193,33 @@ def if_not_null(obj, alt):
             return alt
 
     return obj
+
+def unicode_repr(s):
+    '''
+    Similar to repr(), but always escapes characters that aren't "readable".
+    That is, any characters not in READABLE_CHAR_SET.
+    '''
+
+    parts = []
+    for ch in s:
+        if ch == '\n':
+            parts.append('\\n')
+        elif ch == '\t':
+            parts.append('\\t')
+        elif ch == '"':
+            parts.append('\\"')
+        elif ch in READABLE_CHAR_SET:
+            parts.append(ch)
+        else:
+            num = ord(ch)
+            if num < 0x100:
+                parts.append(f'\\x{num:02x}')
+            elif num < 0x10000:
+                parts.append(f'\\u{num:04x}')
+            elif num < 0x100000000:
+                parts.append(f'\\U{num:08x}')
+            else:
+                raise ValueError(f"Character {ch!r} (ord {num:x}) too big for escaping")
+
+    escaped = ''.join(parts)
+    return f'"{escaped}"'

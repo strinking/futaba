@@ -123,6 +123,8 @@ class Bot(commands.AutoShardedBot):
         # Complains about "context" vs "ctx".
         # pylint: disable=arguments-differ
 
+        logger.error("Error during command!", exc_info=error)
+
         if isinstance(error, commands.errors.CommandNotFound):
             # Ignore no command found as we don't care if it wasn't one of our commands
             pass

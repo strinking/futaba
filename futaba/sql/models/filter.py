@@ -53,12 +53,12 @@ class FilterModel:
                 Column('location_type', Enum(LocationType)),
                 Column('filter_type', Enum(FilterType)),
                 Column('text', Unicode),
-                UniqueConstraint('location_id', 'location_type', 'filter_type', 'text', name='filter_uq'))
+                UniqueConstraint('location_id', 'location_type', 'text', name='filter_uq'))
         self.tb_filter_immune_users = Table('filter_immune_users', meta,
                 Column('guild_id', BigInteger),
                 Column('user_id', BigInteger),
                 UniqueConstraint('guild_id', 'user_id', name='filter_immune_users_uq'))
-        self.filter_cache = defaultdict(dict)
+        self.filter_cache = {}
         self.immune_users_cache = defaultdict(set)
 
     def get_filters(self, location):
@@ -74,7 +74,7 @@ class FilterModel:
                 ))
         result = self.sql.execute(sel)
 
-        filters = {text: filter_type for (filter_type, text) in result.fetchmany()}
+        filters = {text: filter_type for (filter_type, text) in result.fetchall()}
         self.filter_cache[location] = filters
         return filters
 
@@ -103,14 +103,16 @@ class FilterModel:
         text = normalize_caseless(text)
         upd = self.tb_filters \
                 .update() \
+                .values(
+                    filter_type=filter_type,
+                    text=text,
+                ) \
                 .where(and_(
                     self.tb_filters.c.location_id == location.id,
                     self.tb_filters.c.location_type == LocationType.of(location),
-                    self.tb_filters.c.text == text,
+                    self.tb_filters.c.filter_type == filter_type,
                 ))
-        print(upd)
         self.sql.execute(upd)
-        del self.filter_cache[location][text]
         self.filter_cache[location][text] = filter_type
 
     def delete_filter(self, location, text):

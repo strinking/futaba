@@ -12,6 +12,7 @@
 
 from futaba.utils import async_partial
 from .check import check_message, check_message_edit
+from .manage import add_filter, delete_filter, show_filter
 from .core import Filtering
 from .filter import Filter, FilterType
 

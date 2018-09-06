@@ -46,7 +46,18 @@ class Filter:
     def __init__(self, text):
         logger.info("Creating filter regular expression from %r", text)
         groups = confusables.is_confusable(text, greedy=True)
+        if groups:
+            pattern = Filter.build_regex(text, groups)
+        else:
+            pattern = re.escape(text)
 
+        logger.debug("Generated pattern: %r", pattern)
+
+        self.text = text
+        self.regex = re.compile(pattern, re.IGNORECASE)
+
+    @staticmethod
+    def build_regex(text, groups):
         # Build similar character tree
         chars = {}
         parts = []
@@ -60,15 +71,11 @@ class Filter:
             chars[char] = ''.join(parts)
             parts.clear()
 
-        # Build regular expression
+        # Create pattern
         for char in text:
-            parts.append(chars[char])
+            parts.append(chars.get(char, char))
 
-        pattern = ''.join(parts)
-        logger.debug("Generated pattern: %r", pattern)
-
-        self.text = text
-        self.regex = re.compile(pattern, re.IGNORECASE)
+        return ''.join(parts)
 
     def matches(self, content):
         contents = (

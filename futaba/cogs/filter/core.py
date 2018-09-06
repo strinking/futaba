@@ -23,8 +23,9 @@ import discord
 from discord.ext import commands
 
 from futaba import permissions
-from futaba.enums import FilterType, LocationType, Reactions
+from futaba.enums import FilterType, Reactions
 from .filter import Filter
+from .manage import add_filter, delete_filter, show_filter
 
 logger = logging.getLogger(__name__)
 
@@ -52,91 +53,6 @@ class Filtering:
                 if isinstance(channel, discord.TextChannel):
                     for text, filter_type in get_filters(channel).items():
                         self.filters[channel][text] = (Filter(text), filter_type)
-
-    async def add_filter(self, message, location, level, text):
-        logger.info("Adding %r to server filter '%s' for '%s' (%d)",
-                text, level, location.name, location.id)
-
-        try:
-            with self.bot.sql.transaction():
-                try:
-                    self.bot.sql.filter.add_filter(location, level, text)
-                except ValueError:
-                    # Filter already exists
-                    self.bot.sql.filter.update_filter(location, level, text)
-        except Exception as error:
-            logger.error("Error adding filter", exc_info=error)
-            await Reactions.FAIL.add(message)
-        else:
-            self.filters[location][text] = (Filter(text), level)
-            await Reactions.SUCCESS.add(message)
-
-    async def delete_filter(self, message, location, text):
-        logger.info("Removing %r from server filter for '%s' (%d)", text, location.name, location.id)
-
-        with self.bot.sql.transaction():
-            try:
-                if self.bot.sql.filter.delete_filter(location, text):
-                    self.filters[location].pop(text, None)
-                    logger.debug("Succesfully removed filter")
-                    await Reactions.SUCCESS.add(message)
-                else:
-                    logger.debug("Filter was not present, deletion failed")
-                    await Reactions.FAIL.add(message)
-            except Exception as error:
-                logger.error("Error deleting filter", exc_info=error)
-                await Reactions.FAIL.add(message)
-
-    async def show_filter(self, message, author, location_name, all_filters):
-        if all_filters:
-            contents = []
-            lines = [f'Filtered strings for {location_name}:']
-
-            filters = defaultdict(list)
-            for filter_text, (_, filter_type) in all_filters.items():
-                filters[filter_type].append(filter_text)
-
-            for filter_type, filter_texts in filters.items():
-                lines.extend((
-                    f'{filter_type.emoji} {filter_type.description} {filter_type.emoji}',
-                    '```',
-                ))
-                current_len = sum(len(line) + 1 for line in lines)
-
-                if not filter_texts:
-                    lines.append('(none)')
-
-                for filter_text in filter_texts:
-                    line = f'- "{filter_text}" {filter_text!r}'
-                    current_len += len(line)
-
-                    if current_len > 1900:
-                        # Too long, break into new message
-                        lines.append('```')
-                        contents.append('\n'.join(lines))
-
-                        # Start lines over
-                        lines.clear()
-                        lines.append('```')
-                        lines.append(line)
-                        current_len = len(line)
-                    else:
-                        lines.append(line)
-
-                lines.append('```')
-            contents.append('\n'.join(lines))
-            lines.clear()
-        else:
-            contents = [f'No filtered strings for {location_name}']
-
-        async def post_all():
-            for content in contents:
-                await author.send(content=content)
-
-        await asyncio.gather(
-            post_all(),
-            Reactions.SUCCESS.add(message),
-        )
 
     @commands.group(name='filter')
     @commands.guild_only()
@@ -172,6 +88,12 @@ class Filtering:
             # TODO send help
             await Reactions.FAIL.add(ctx.message)
 
+    @filter.command(name='hello', aliases=['greetings'])
+    @commands.guild_only()
+    async def hello(self, ctx, *members: discord.Member):
+        # TEMP debugging discord.Member
+        await ctx.send(content=f"Hello! {', '.join(member.name for member in members)}")
+
     @filter_immunity.command(name='add', aliases=['append', 'extend', 'new'])
     @commands.guild_only()
     @permissions.check_admin()
@@ -184,7 +106,7 @@ class Filtering:
             await Reactions.FAIL.add(ctx.message)
             return
 
-        member_names = ', '.join((f"'{member.name}' ({member.id})" for member in member))
+        member_names = ', '.join((f"'{member.name}' ({member.id})" for member in members))
         logger.info("Adding members to guild '%s' (%d) filter immunity list: %s",
                 ctx.guild.name, ctx.guild.id, member_names)
 
@@ -207,7 +129,7 @@ class Filtering:
             await Reactions.FAIL.add(ctx.message)
             return
 
-        member_names = ', '.join((f"'{member.name}' ({member.id})" for member in member))
+        member_names = ', '.join((f"'{member.name}' ({member.id})" for member in members))
         logger.info("Removing members to guild '%s' (%d) filter immunity list: %s",
                 ctx.guild.name, ctx.guild.id, member_names)
 
@@ -257,7 +179,7 @@ class Filtering:
         List all currently filtered words in the server filter.
         '''
 
-        await self.show_filter(ctx.message, ctx.author, ctx.guild.name, self.filters[ctx.guild])
+        await show_filter(self.filters[ctx.guild], ctx.message, ctx.author, ctx.guild.name)
 
     @filter_guild.command(name='remove', aliases=['rm', 'delete', 'del'])
     @commands.guild_only()
@@ -268,7 +190,7 @@ class Filtering:
         You don't need to tell it which filter level it was for.
         '''
 
-        await self.delete_filter(ctx.message, ctx.guild, text)
+        await delete_filter(self.bot, self.filters, ctx.message, ctx.guild, text)
 
     @filter_guild.command(name='flag', aliases=['warn', 'alert', 'notice'])
     @commands.guild_only()
@@ -282,7 +204,7 @@ class Filtering:
         a single word to add to the filter.
         '''
 
-        await self.add_filter(ctx.message, ctx.guild, FilterType.FLAG, text)
+        await add_filter(self.bot, self.filters, ctx.message, ctx.guild, FilterType.FLAG, text)
 
     @filter_guild.command(name='block', aliases=['deny', 'autoremove'])
     @commands.guild_only()
@@ -296,7 +218,7 @@ class Filtering:
         a single word to add to the filter.
         '''
 
-        await self.add_filter(ctx.message, ctx.guild, FilterType.BLOCK, text)
+        await add_filter(self.bot, self.filters, ctx.message, ctx.guild, FilterType.BLOCK, text)
 
     @filter_guild.command(name='jail', aliases=['dunce', 'punish', 'mute'])
     @commands.guild_only()
@@ -310,7 +232,7 @@ class Filtering:
         a single word to add to the filter.
         '''
 
-        await self.add_filter(ctx.message, ctx.guild, FilterType.JAIL, text)
+        await add_filter(self.bot, self.filters, ctx.message, ctx.guild, FilterType.JAIL, text)
 
     @filter.group(name='channel', aliases=['chan', 'ch', 'c'])
     @commands.guild_only()
@@ -330,7 +252,7 @@ class Filtering:
         List all currently filtered words in the channel filter.
         '''
 
-        await self.show_filter(ctx.message, ctx.author, ctx.guild.name, self.filters[ctx.guild])
+        await show_filter(self.filters[ctx.guild], ctx.message, ctx.author, ctx.guild.name)
 
     @filter_channel.command(name='flag', aliases=['warn', 'alert', 'notice'])
     @commands.guild_only()
@@ -344,7 +266,7 @@ class Filtering:
         a single word to add to the filter.
         '''
 
-        await self.add_filter(ctx.message, channel, FilterType.FLAG, text)
+        await add_filter(self.bot, self.filters, ctx.message, channel, FilterType.FLAG, text)
 
     @filter_channel.command(name='block', aliases=['deny', 'autoremove'])
     @commands.guild_only()
@@ -358,7 +280,7 @@ class Filtering:
         a single word to add to the filter.
         '''
 
-        await self.add_filter(ctx.message, channel, FilterType.BLOCK, text)
+        await add_filter(self.bot, self.filters, ctx.message, channel, FilterType.BLOCK, text)
 
     @filter_channel.command(name='jail', aliases=['dunce', 'punish', 'mute'])
     @commands.guild_only()
@@ -372,7 +294,7 @@ class Filtering:
         a single word to add to the filter.
         '''
 
-        await self.add_filter(ctx.message, channel, FilterType.JAIL, text)
+        await add_filter(self.bot, self.filters, ctx.message, channel, FilterType.JAIL, text)
 
     @filter_channel.command(name='remove', aliases=['rm', 'delete', 'del'])
     @commands.guild_only()
@@ -383,4 +305,4 @@ class Filtering:
         tell it which filter level it was for.
         '''
 
-        await self.delete_filter(ctx.message, channel, text)
+        await delete_filter(self.bot, self.filters, ctx.message, channel, text)

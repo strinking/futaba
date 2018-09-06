@@ -149,11 +149,11 @@ async def found_violation(message, content, location_type, filter_type, filter_t
 
         logger.debug("Sending message to user who violated the filter")
         lines = [
-            f"This message you posted in {message.channel.mention} violates a "
-            f"{filter_type.value} filter disallowing `{escaped_filter_text}` to appear in messages."
+            f"The message you posted in {message.channel.mention} violates a {location_type.value} "
+            f"{filter_type.value} filter disallowing `{escaped_filter_text}`."
         ]
 
-        if severity > FilterType.JAIL.level:
+        if severity >= FilterType.JAIL.level:
             lines.extend((
                 "This offense is serious enough to warrant immediate revocation of speaking privileges.",
                 f"As such, you have been assigned the `{jail_role.name}` role, until a moderator clears you.",
