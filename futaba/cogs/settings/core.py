@@ -11,5 +11,30 @@
 #
 
 '''
-Cog for all commands that change bot settings.
+Cog for all commands that change bot settings. It ensures persistence
+of configured settings in between runs of the bot.
 '''
+
+import asyncio
+import logging
+
+import discord
+from discord.ext import commands
+
+from futaba import permissions
+
+logger = logging.getLogger(__name__)
+
+__all__ = [
+    'SettingsCog',
+]
+
+class SettingsCog:
+    __slots__ = (
+        'bot',
+    )
+
+    def __init__(self, bot):
+        self.bot = bot
+
+    # TODO

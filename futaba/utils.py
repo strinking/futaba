@@ -10,42 +10,55 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+import asyncio
 import logging
+import string
 import unicodedata
-from enum import Enum
 
 import discord
 from discord.ext import commands
 
-from . import permissions
+from futaba import permissions
+from futaba.enums import Reactions
 
 logger = logging.getLogger(__name__)
 
 COGS_DIR = 'futaba.cogs.'
+READABLE_CHAR_SET = frozenset(string.printable) - frozenset('\t\n\r\x0b\x0c')
 
 __all__ = [
-    'Reactions',
+    'READABLE_CHAR_SET',
+    'Dummy',
     'Reloader',
     'normalize_caseless',
+    'async_partial',
     'plural',
+    'if_not_null',
+    'unicode_repr',
 ]
 
-class Reactions(Enum):
-    SUCCESS = '✅'
-    FAIL = '❌'
-    DENY = '🚫'
+class Dummy:
+    '''
+    Dummy class that can freely be assigned any fields or members.
+    '''
+
+    pass
 
 class Reloader:
+    '''
+    Special cog that is used to load, unload, and reload all other cogs.
+    '''
+
     def __init__(self, bot):
         self.bot = bot
 
     def load_cog(self, cogname):
-        if COGS_DIR not in cogname:
+        if not cogname.startswith(COGS_DIR):
             cogname = f'{COGS_DIR}{cogname}'
         self.bot.load_extension(cogname)
 
     def unload_cog(self, cogname):
-        if COGS_DIR not in cogname:
+        if not cogname.startswith(COGS_DIR):
             cogname = f'{COGS_DIR}{cogname}'
         self.bot.unload_extension(cogname)
 
@@ -56,22 +69,25 @@ class Reloader:
 
         logger.info("Cog load requested: %s", cogname)
 
-        # Load cog
         try:
             self.load_cog(cogname)
         except Exception as error:
-            logger.error("Load failed")
-            logger.debug("Reason:", exc_info=error)
-            await react(ctx.message, Reactions.FAIL)
+            logger.error("Loading cog %s failed", cogname, exc_info=error)
             embed = discord.Embed(color=discord.Color.red(), description=f'```{error}```')
             embed.set_author(name='Load failed')
-            await self.bot._send(embed=embed)
+            await asyncio.gather(
+                self.bot._send(embed=embed),
+                Reactions.FAIL.add(ctx.message),
+            )
+
         else:
             logger.info("Loaded cog: %s", cogname)
-            await react(ctx.message, Reactions.SUCCESS)
             embed = discord.Embed(color=discord.Color.green(), description=f'```{cogname}```')
             embed.set_author(name='Loaded')
-            await self.bot._send(embed=embed)
+            await asyncio.gather(
+                self.bot._send(embed=embed),
+                Reactions.SUCCESS.add(ctx.message),
+            )
 
     @commands.command()
     @permissions.check_owner()
@@ -80,22 +96,24 @@ class Reloader:
 
         logger.info("Cog unload requested: %s", cogname)
 
-        # Load cog
         try:
             self.unload_cog(cogname)
         except Exception as error:
-            logger.error("Unload failed")
-            logger.debug("Reason:", exc_info=error)
-            await react(ctx.message, Reactions.FAIL)
+            logger.error("Unloading cog %s failed", cogname, exc_info=error)
             embed = discord.Embed(color=discord.Color.red(), description=f'```{error}```')
             embed.set_author(name='Unload failed')
-            await self.bot._send(embed=embed)
+            await asyncio.gather(
+                self.bot._send(embed=embed),
+                Reactions.FAIL.add(ctx.message),
+            )
         else:
             logger.info("Unloaded cog: %s", cogname)
-            await react(ctx.message, Reactions.SUCCESS)
             embed = discord.Embed(color=discord.Color.green(), description=f'```{cogname}```')
             embed.set_author(name='Unloaded')
-            await self.bot._send(embed=embed)
+            await asyncio.gather(
+                self.bot._send(embed=embed),
+                Reactions.SUCCESS.add(ctx.message),
+            )
 
     @commands.command()
     @permissions.check_owner()
@@ -109,18 +127,21 @@ class Reloader:
             self.unload_cog(cogname)
             self.load_cog(cogname)
         except Exception as error:
-            logger.error("Reload failed")
-            logger.debug("Reason:", exc_info=error)
-            await react(ctx.message, Reactions.FAIL)
+            logger.error("Reloading cog %s failed", cogname, exc_info=error)
             embed = discord.Embed(color=discord.Color.red(), description=f'```{error}```')
             embed.set_author(name='Reload failed')
-            await self.bot._send(embed=embed)
+            await asyncio.gather(
+                self.bot._send(embed=embed),
+                Reactions.FAIL.add(ctx.message),
+            )
         else:
             logger.info("Reloaded cog: %s", cogname)
-            await react(ctx.message, Reactions.SUCCESS)
             embed = discord.Embed(color=discord.Color.green(), description=f'```{cogname}```')
             embed.set_author(name='Reloaded')
-            await self.bot._send(embed=embed)
+            await asyncio.gather(
+                self.bot._send(embed=embed),
+                Reactions.SUCCESS.add(ctx.message),
+            )
 
     @commands.command()
     async def listcogs(self, ctx):
@@ -128,26 +149,77 @@ class Reloader:
         List the cogs that are currently loaded
         '''
 
-        lines = ["```yaml\nCogs loaded:"]
+        lines = ['```yaml', 'Cogs loaded:']
 
         if self.bot.cogs:
             for cog in self.bot.cogs:
-                lines.append(f" - {cog}")
+                lines.append(f' - {cog}')
         else:
-            lines.append(" - (none)")
+            lines.append(' - (none)')
 
-        lines.append("```")
+        lines.append('```')
         await ctx.send('\n'.join(lines))
 
 def normalize_caseless(s):
+    '''
+    Shifts the string into a uniform case (lower-case),
+    but also accounting for unicode characters. Used
+    for case-insenstive comparisons.
+    '''
+
     return unicodedata.normalize('NFKD', s.casefold())
 
+def async_partial(coro, *added_args, **added_kwargs):
+    async def wrapped(*args, **kwargs):
+        return await coro(*added_args, *args, **added_kwargs, **kwargs)
+    return wrapped
+
 def plural(num):
+    '''
+    Gets the English plural ending for an ordinal number.
+    '''
+
     return '' if num == 1 else 's'
 
-async def react(message: discord.Message, emoji: Reactions):
+def if_not_null(obj, alt):
     '''
-    React to a message with a reaction
+    Returns 'obj' if it's not None, 'alt' otherwise.
     '''
 
-    await message.add_reaction(emoji.value)
+    if obj is None:
+        if callable(alt):
+            return alt()
+        else:
+            return alt
+
+    return obj
+
+def unicode_repr(s):
+    '''
+    Similar to repr(), but always escapes characters that aren't "readable".
+    That is, any characters not in READABLE_CHAR_SET.
+    '''
+
+    parts = []
+    for ch in s:
+        if ch == '\n':
+            parts.append('\\n')
+        elif ch == '\t':
+            parts.append('\\t')
+        elif ch == '"':
+            parts.append('\\"')
+        elif ch in READABLE_CHAR_SET:
+            parts.append(ch)
+        else:
+            num = ord(ch)
+            if num < 0x100:
+                parts.append(f'\\x{num:02x}')
+            elif num < 0x10000:
+                parts.append(f'\\u{num:04x}')
+            elif num < 0x100000000:
+                parts.append(f'\\U{num:08x}')
+            else:
+                raise ValueError(f"Character {ch!r} (ord {num:x}) too big for escaping")
+
+    escaped = ''.join(parts)
+    return f'"{escaped}"'

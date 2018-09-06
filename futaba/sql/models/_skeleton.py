@@ -10,8 +10,15 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-# XXX _REMOVE_ME_
-# pylint: disable=unused-import
+# pylint: disable-all
+# XXX _REMOVE_ME_ ^
+
+'''
+_DESCRIPTION_HERE_
+'''
+
+# False positive when using SQLAlchemy decorators
+# pylint: disable=no-value-for-parameter
 
 import functools
 import logging
@@ -20,10 +27,6 @@ from sqlalchemy import and_, or_
 from sqlalchemy import BigInteger, Column, Table, Unicode
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.sql import select
-
-'''
-_DESCRIPTION_HERE_
-'''
 
 Column = functools.partial(Column, nullable=False)
 logger = logging.getLogger(__name__)

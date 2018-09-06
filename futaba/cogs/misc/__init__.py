@@ -1,5 +1,5 @@
 #
-# sql/__init__.py
+# cogs/misc/__init__.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017 Jake Richardson, Ammon Smith, jackylam5
@@ -10,16 +10,12 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-'''
-General module for all interfacing with the database.
-'''
+from .core import Miscellaneous
 
-from . import hooks
-from .handle import SqlHandler
-from .transaction import Transaction
+def setup(bot):
+    '''
+    Setup for bot to add cog
+    '''
 
-__all__ = [
-    'hooks',
-    'SqlHandler',
-    'Transaction',
-]
+    cog = Miscellaneous(bot)
+    bot.add_cog(cog)

@@ -21,10 +21,10 @@ import os
 import discord
 from discord.ext import commands
 
-from . import utils
 from .config import Configuration
+from .enums import Reactions
 from .sql import SqlHandler
-from .utils import plural
+from .utils import Reloader, plural
 
 logger = logging.getLogger(__name__)
 
@@ -47,14 +47,14 @@ class Bot(commands.AutoShardedBot):
                          pm_help=True)
 
     @staticmethod
-    def get_prefix_sql(self, message):
+    def get_prefix_sql(bot, message):
         prefix = None
 
         if message.guild is not None:
-            prefix = self.sql.settings.get_prefix(message.guild)
+            prefix = bot.sql.settings.get_prefix(message.guild)
 
-        prefix = prefix or self.config.default_prefix
-        return commands.when_mentioned_or(prefix)(self, message)
+        prefix = prefix or bot.config.default_prefix
+        return commands.when_mentioned_or(prefix)(bot, message)
 
     @property
     def uptime(self):
@@ -87,7 +87,7 @@ class Bot(commands.AutoShardedBot):
         else:
             self.debug_chan = self.get_channel(int(self.config.debug_channel_id))
 
-        self.add_cog(utils.Reloader(self))
+        self.add_cog(Reloader(self))
         logger.info("Loaded cog: Reloader")
 
         def _cog_ok(cog):
@@ -123,13 +123,15 @@ class Bot(commands.AutoShardedBot):
         # Complains about "context" vs "ctx".
         # pylint: disable=arguments-differ
 
+        logger.error("Error during command!", exc_info=error)
+
         if isinstance(error, commands.errors.CommandNotFound):
             # Ignore no command found as we don't care if it wasn't one of our commands
             pass
 
         elif isinstance(error, commands.errors.CheckFailure):
             # Tell the user they don't have the permission to tun the command
-            await utils.react(ctx.message, utils.Reactions.DENY)
+            await Reactions.DENY.add(ctx.message)
 
     async def _send(self, *args, **kwargs):
         if self.debug_chan is not None:

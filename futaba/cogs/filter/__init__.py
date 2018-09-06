@@ -1,5 +1,5 @@
 #
-# cogs/settings/__init__.py
+# cogs/filter/__init__.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017 Jake Richardson, Ammon Smith, jackylam5
@@ -10,12 +10,18 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-from .core import SettingsCog
+from futaba.utils import async_partial
+from .check import check_message, check_message_edit
+from .manage import add_filter, delete_filter, show_filter
+from .core import Filtering
+from .filter import Filter, FilterType
 
 def setup(bot):
     '''
     Setup for bot to add cog
     '''
 
-    cog = SettingsCog(bot)
+    cog = Filtering(bot)
+    bot.add_listener(async_partial(check_message, cog), 'on_message')
+    bot.add_listener(async_partial(check_message_edit, cog), 'on_message_edit')
     bot.add_cog(cog)

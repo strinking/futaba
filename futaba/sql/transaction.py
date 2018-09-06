@@ -51,6 +51,9 @@ class Transaction:
     async def __aexit__(self, type, value, traceback):
         self.__exit__(type, value, traceback)
 
+    def __bool__(self):
+        return True
+
     @property
     def trans(self):
         return self.sql.trans

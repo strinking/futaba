@@ -1,5 +1,5 @@
 #
-# sql/__init__.py
+# sql/models/__init__.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017 Jake Richardson, Ammon Smith, jackylam5
@@ -11,15 +11,17 @@
 #
 
 '''
-General module for all interfacing with the database.
+Module that contains models for interacting with SQL tables in a clean
+and abstracted way.
 '''
 
-from . import hooks
-from .handle import SqlHandler
-from .transaction import Transaction
+import os
+import sys
+
+from .filter import FilterModel
+from .settings import SettingsModel
 
 __all__ = [
-    'hooks',
-    'SqlHandler',
-    'Transaction',
+    'FilterModel',
+    'SettingsModel',
 ]

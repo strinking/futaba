@@ -28,17 +28,18 @@ logger = logging.getLogger(__name__)
 
 def decorator_maker(name):
     def decorator(func):
-        def hook(trans, *args):
+        def hook(*args):
             logger.debug("Running hook: %s:%r", name, func)
-            func(trans, *args)
+            func(*args)
         _hooks[name].append(hook)
         return func
     return decorator
 
-def run_hooks(name, trans, *args):
+def run_hooks(sql, name, *args):
     logger.info("Running hooks for '%s'...", name)
-    for hook in _hooks[name]:
-        hook(trans, *args)
+    with sql.transaction():
+        for hook in _hooks[name]:
+            hook(*args)
     logger.debug("Finished '%s' hooks.", name)
 
 on_guild_join = decorator_maker('on_guild_join')
