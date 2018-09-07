@@ -12,8 +12,10 @@
 
 import logging
 import re
+from itertools import islice
 
 import discord
+import textdistance
 
 from futaba.utils import normalize_caseless
 
@@ -24,7 +26,9 @@ __all__ = [
     'user_mention',
     'role_mention',
     'name_discrim_search',
+    'similar_names',
     'get_user_id',
+    'similar_user_ids',
 ]
 
 CHANNEL_MENTION_REGEX = re.compile(r'<#([0-9]+)>')
@@ -75,8 +79,13 @@ def role_mention(mention):
 
     return int(match[1])
 
-def name_discrim_search(s, users=(), ignorecase=False):
-    match = USERNAME_DISCRIM_REGEX.match(s)
+def name_discrim_search(name, users=(), ignorecase=False):
+    '''
+    Searches for a user matching the string [username]#[discriminator].
+    If ignorecase is True then the usernames are compared without regard to case.
+    '''
+
+    match = USERNAME_DISCRIM_REGEX.match(name)
     if match is None:
         return None
 
@@ -87,8 +96,22 @@ def name_discrim_search(s, users=(), ignorecase=False):
     else:
         return discord.utils.get(users, name=name, discriminator=discrim)
 
+def similar_names(word1, word2):
+    '''
+    Determines if the two strings are similar enough given the passed threshold.
+    An alias for textdistance.overlap.similarity().
+    '''
+
+    return textdistance.overlap.similarity(word1, word2)
+
 def get_user_id(name, users=()):
-    # Allow case-insensitive searching
+    '''
+    Gets a user ID from the given string 'name'.
+    You can pass in a list of users for additional
+    instances to search.
+    '''
+
+    # Search case-insensitively
     name = normalize_caseless(name)
 
     # Check for user ID
@@ -110,7 +133,7 @@ def get_user_id(name, users=()):
 
     # Check by username
     logger.debug("get_user_id: checking if it's a username")
-    user = discord.utils.get(users, name=name)
+    user = discord.utils.find(lambda u: name == normalize_caseless(u.name), users)
     if user is not None:
         return user.id
 
@@ -130,3 +153,53 @@ def get_user_id(name, users=()):
     # No results
     logger.debug("get_user_id found no results!")
     return None
+
+def similar_user_ids(name, users, max_entries=5):
+    '''
+    Gets a list of user IDs that are similar to the string 'name'.
+    They are ranked in order of similarity, marking users who are
+    not in the this guild.
+    '''
+
+    matching_ids = []
+
+    # Search case-insensitively
+    name = normalize_caseless(name)
+
+    # Check for user ID
+    logger.debug("similar_user_ids: checking if it's an integer")
+    if name.isdigit():
+        matching_ids.append(int(name))
+
+    # Check for mention
+    logger.debug("similar_user_ids: checking if it's a user mention")
+    id = user_mention(name)
+    if id is not None:
+        matching_ids.append(id)
+
+    # Check by name#discrim
+    logger.debug("similar_user_ids: checking if it's a username#discriminator")
+    user = name_discrim_search(name, users, True)
+    if user is not None:
+        matching_ids.append(user.id)
+
+    # Check by username, nickname, or username#discriminator
+    logger.debug("similar_user_ids: checking usernames")
+    match = USERNAME_DISCRIM_REGEX.match(name)
+    check_name = name if match is None else match[1]
+    similar_users = []
+
+    for user in users:
+        similar = similar_names(check_name, normalize_caseless(user.name))
+
+        if getattr(user, 'nick', None):
+            similar = max(similar, similar_names(check_name, normalize_caseless(user.nick)))
+
+        similar_users.append((user, similar))
+
+    # Sort by similarity
+    similar_users.sort(key=lambda p: p[1], reverse=True)
+    matching_ids.extend(user.id for user, similar in similar_users if similar > 0.3)
+
+    # Done
+    return islice(matching_ids, 0, max_entries)

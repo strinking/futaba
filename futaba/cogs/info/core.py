@@ -16,14 +16,14 @@ Informational commands that make finding and gathering data easier.
 
 import asyncio
 import logging
-import re
 from datetime import datetime
+from itertools import islice
 
 import discord
 from discord.ext import commands
 
 from futaba.enums import Reactions
-from futaba.parse import get_user_id
+from futaba.parse import get_user_id, similar_user_ids
 from futaba.utils import fancy_timedelta
 
 logger = logging.getLogger(__package__)
@@ -41,7 +41,7 @@ class Info:
         self.bot = bot
 
     @commands.command(name='uinfo', aliases=['userinfo'])
-    async def uinfo(self, ctx, name: str = None):
+    async def uinfo(self, ctx, *, name: str = None):
         '''
         Fetch information about a user, whether they are in the guild or not.
         If no argument is passed, the caller is checked instead.
@@ -67,9 +67,11 @@ class Info:
         if user is None:
             user = self.bot.get_user(id)
             if user is None:
-                logger.debug("No user with that ID found!")
-                await Reactions.FAIL.add(ctx.message)
-                return
+                user = await self.bot.get_user_info(id)
+                if user is None:
+                    logger.debug("No user with that ID found!")
+                    await Reactions.FAIL.add(ctx.message)
+                    return
 
         logger.debug("Found user! %r", user)
 
@@ -94,7 +96,7 @@ class Info:
 
         # Roles
         if getattr(user, 'roles', None):
-            roles = ' '.join(role.mention for role in user.roles[1:])
+            roles = ' '.join(role.mention for role in islice(user.roles, 1, len(user.roles)))
             if roles:
                 embed.add_field(name='Roles:', value=roles)
 
@@ -139,12 +141,50 @@ class Info:
 
             embed.add_field(name='Voice:', value=state)
 
-        # Join date
+        # Guild join date
         if hasattr(user, 'joined_at'):
             embed.add_field(name='Member for:', value=fancy_timedelta(user.joined_at))
+
+        # Discord join date
+        embed.add_field(name='Account age:', value=fancy_timedelta(user.created_at))
 
         # Send them
         await asyncio.gather(
             Reactions.SUCCESS.add(ctx.message),
             ctx.send(embed=embed),
+        )
+
+    @commands.command(name='ufind', aliases=['userfind', 'usearch', 'usersearch'])
+    async def ufind(self, ctx, *, name: str):
+        '''
+        Perform a fuzzy search to find users who match the given name.
+        They are listed with the closest matches first.
+        '''
+
+        logger.info("Running ufind on '%s'", name)
+        user_ids = similar_user_ids(name, self.bot.users)
+        users_in_guild = set(member.id for member in getattr(ctx.guild, 'members', []))
+
+        lines = ['**Users found:**']
+        for user_id in user_ids:
+            user = self.bot.get_user(user_id)
+            if user is None:
+                user = await self.bot.get_user_info(user_id)
+
+            logger.debug("Result for user ID %d: %r", user_id, user)
+            if user is not None:
+                extra = '' if user_id in users_in_guild else '\N{GLOBE WITH MERIDIANS}'
+                lines.append(f'- {user.mention} {extra}')
+
+        if len(lines) > 1:
+            descr = '\n'.join(lines)
+            colour = discord.Colour.teal()
+        else:
+            descr = '**No users found!**'
+            colour = discord.Colour.dark_red()
+
+        embed = discord.Embed(description=descr, colour=colour)
+        await asyncio.gather(
+            ctx.send(embed=embed),
+            Reactions.SUCCESS.add(ctx.message),
         )
