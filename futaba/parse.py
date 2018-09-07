@@ -79,10 +79,10 @@ def role_mention(mention):
 
     return int(match[1])
 
-def name_discrim_search(name, users=(), ignorecase=False):
+def name_discrim_search(name, users):
     '''
     Searches for a user matching the string [username]#[discriminator].
-    If ignorecase is True then the usernames are compared without regard to case.
+    It searches case-insensitively.
     '''
 
     match = USERNAME_DISCRIM_REGEX.match(name)
@@ -90,11 +90,14 @@ def name_discrim_search(name, users=(), ignorecase=False):
         return None
 
     name, discrim = match[1], int(match[2])
-    if ignorecase:
-        name = normalize_caseless(name)
-        return discord.utils.find(lambda u: name == normalize_caseless(u.name) and discrim == u.discriminator)
-    else:
-        return discord.utils.get(users, name=name, discriminator=discrim)
+    def check(user):
+        uname = normalize_caseless(user.name)
+        udiscrim = user.discriminator
+
+        return name == uname and discrim == udiscrim
+
+    name = normalize_caseless(name)
+    return discord.utils.find(check, users)
 
 def similar_names(word1, word2):
     '''
@@ -127,7 +130,7 @@ def get_user_id(name, users=()):
 
     # Check by name#discrim
     logger.debug("get_user_id: checking if it's a username#discriminator")
-    user = name_discrim_search(name, users, True)
+    user = name_discrim_search(name, users)
     if user is not None:
         return user.id
 
@@ -179,7 +182,7 @@ def similar_user_ids(name, users, max_entries=5):
 
     # Check by name#discrim
     logger.debug("similar_user_ids: checking if it's a username#discriminator")
-    user = name_discrim_search(name, users, True)
+    user = name_discrim_search(name, users)
     if user is not None:
         matching_ids.append(user.id)
 
