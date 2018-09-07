@@ -14,6 +14,7 @@ import asyncio
 import logging
 import string
 import unicodedata
+from datetime import datetime, timedelta
 
 import discord
 from discord.ext import commands
@@ -24,18 +25,20 @@ from futaba.enums import Reactions
 logger = logging.getLogger(__name__)
 
 COGS_DIR = 'futaba.cogs.'
-READABLE_CHAR_SET = frozenset(string.printable) - frozenset('\t\n\r\x0b\x0c')
 
 __all__ = [
     'READABLE_CHAR_SET',
     'Dummy',
     'Reloader',
     'normalize_caseless',
+    'fancy_timedelta',
     'async_partial',
     'plural',
     'if_not_null',
     'unicode_repr',
 ]
+
+READABLE_CHAR_SET = frozenset(string.printable) - frozenset('\t\n\r\x0b\x0c')
 
 class Dummy:
     '''
@@ -169,7 +172,43 @@ def normalize_caseless(s):
 
     return unicodedata.normalize('NFKD', s.casefold())
 
+def fancy_timedelta(delta):
+    '''
+    Formats a fancy time difference.
+    When given a datetime object, it calculates the difference from the present.
+    '''
+
+    if isinstance(delta, datetime):
+        delta = datetime.now() - delta
+
+    parts = []
+    years, days = divmod(delta.days, 365)
+    months, days = divmod(days, 30)
+    weeks, days = divmod(days, 7)
+    hours, seconds = divmod(delta.seconds, 3600)
+    minutes, seconds = divmod(seconds, 60)
+
+    if years:
+        parts.append(f'{years} year{plural(years)}')
+    if months:
+        parts.append(f'{months} month{plural(months)}')
+    if weeks:
+        parts.append(f'{weeks} week{plural(weeks)}')
+    if days:
+        parts.append(f'{days} day{plural(days)}')
+    if hours:
+        parts.append(f'{hours} hour{plural(hours)}')
+    if minutes:
+        parts.append(f'{minutes} minute{plural(minutes)}')
+
+    seconds += delta.microseconds / 1e6
+    return f'{", ".join(parts)} and {seconds} second{plural(seconds)}'
+
 def async_partial(coro, *added_args, **added_kwargs):
+    '''
+    Like functools.partial(), but for coroutines.
+    '''
+
     async def wrapped(*args, **kwargs):
         return await coro(*added_args, *args, **added_kwargs, **kwargs)
     return wrapped
