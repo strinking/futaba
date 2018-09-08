@@ -19,9 +19,11 @@ import os
 import sys
 
 from .filter import FilterModel
+from .guilds import GuildsModel
 from .settings import SettingsModel
 
 __all__ = [
     'FilterModel',
+    'GuildsModel',
     'SettingsModel',
 ]

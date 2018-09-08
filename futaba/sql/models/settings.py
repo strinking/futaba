@@ -68,10 +68,10 @@ class SettingsModel:
     def __init__(self, sql, meta):
         self.sql = sql
         self.tb_prefixes = Table('prefixes', meta,
-                Column('guild_id', BigInteger, primary_key=True),
+                Column('guild_id', BigInteger, ForeignKey('guilds.guild_id'), primary_key=True),
                 Column('prefix', Unicode, nullable=True))
         self.tb_filter_settings = Table('filter_settings', meta,
-                Column('guild_id', BigInteger, primary_key=True),
+                Column('guild_id', BigInteger, ForeignKey('guilds.guild_id'), primary_key=True),
                 Column('bot_immune', Boolean),
                 Column('manage_messages_immune', Boolean))
         self.prefix_cache = {}
