@@ -24,6 +24,8 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.enums import FilterType, Reactions
+from futaba.utils import async_partial
+from .check import check_message, check_message_edit
 from .filter import Filter
 from .manage import add_filter, delete_filter, show_filter
 
@@ -37,11 +39,16 @@ class Filtering:
     __slots__ = (
         'bot',
         'filters',
+        'check_message',
+        'check_message_edit',
     )
 
     def __init__(self, bot):
         self.bot = bot
         self.filters = defaultdict(dict)
+        self.check_message = async_partial(check_message, self)
+        self.check_message_edit = async_partial(check_message_edit, self)
+
         get_filters = self.bot.sql.filter.get_filters
 
         logger.info("Fetching previously stored filters")
@@ -53,6 +60,14 @@ class Filtering:
                 if isinstance(channel, discord.TextChannel):
                     for text, filter_type in get_filters(channel).items():
                         self.filters[channel][text] = (Filter(text), filter_type)
+
+    def __unload(self):
+        '''
+        Remove listeners when unloading the cog.
+        '''
+
+        self.bot.remove_listener(self.check_message, 'on_message')
+        self.bot.remove_listener(self.check_message_edit, 'on_message_edit')
 
     @commands.group(name='filter')
     @commands.guild_only()
