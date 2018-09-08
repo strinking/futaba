@@ -55,7 +55,7 @@ class FilterModel:
                 Column('text', Unicode),
                 UniqueConstraint('location_id', 'location_type', 'text', name='filter_uq'))
         self.tb_filter_immune_users = Table('filter_immune_users', meta,
-                Column('guild_id', BigInteger),
+                Column('guild_id', BigInteger, ForeignKey('guilds.guild_id')),
                 Column('user_id', BigInteger),
                 UniqueConstraint('guild_id', 'user_id', name='filter_immune_users_uq'))
         self.filter_cache = {}

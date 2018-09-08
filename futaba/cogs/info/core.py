@@ -16,7 +16,6 @@ Informational commands that make finding and gathering data easier.
 
 import asyncio
 import logging
-from datetime import datetime
 from itertools import islice
 
 import discord

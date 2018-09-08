@@ -14,7 +14,7 @@ import asyncio
 import logging
 import string
 import unicodedata
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import discord
 from discord.ext import commands

@@ -39,7 +39,10 @@ def run_hooks(sql, name, *args):
     logger.info("Running hooks for '%s'...", name)
     with sql.transaction():
         for hook in _hooks[name]:
-            hook(*args)
+            try:
+                hook(*args)
+            except Exception as error:
+                logger.error("Error running hook %r!", hook, exc_info=error)
     logger.debug("Finished '%s' hooks.", name)
 
 on_guild_join = decorator_maker('on_guild_join')
