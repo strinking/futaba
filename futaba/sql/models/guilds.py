@@ -24,7 +24,6 @@ import logging
 from collections import namedtuple
 
 from sqlalchemy import BigInteger, Column, Table
-from sqlalchemy import ForeignKey
 from sqlalchemy.sql import select
 
 from ..hooks import run_hooks
@@ -68,10 +67,30 @@ class GuildsModel:
                 .where(guild_id=guild.id)
         self.sql.execute(delet)
 
-    def get_guilds(self, bot):
+    def get_guild_ids(self, bot):
         logger.info("Fetching guilds currently in database")
         sel = select([self.tb_guilds.c.guild_id])
         result = self.sql.execute(sel)
 
-        get_guild = lambda id: bot.get_guild(id) or FakeGuild(id=id, name=f'<Guild id {id}>')
-        return (get_guild(guild_id) for guild_id, in result.fetchmany())
+        return (guild_id for guild_id, in result.fetchmany())
+
+    @staticmethod
+    def _get_guild(bot, guild_id):
+        return bot.get_guild(guild_id) or FakeGuild(id=guild_id, name=f'<Guild id {guild_id}>')
+
+    def migrate(self, bot):
+        migrated_guild_ids = frozenset(self.get_guild_ids(self))
+        current_guild_ids = frozenset(guild.id for guild in bot.guilds)
+
+        logger.info("Migrating guilds: %r -> %r", list(migrated_guild_ids), list(current_guild_ids))
+        logger.debug("Running insertions...")
+        with self.sql.transaction():
+            for guild_id in current_guild_ids - migrated_guild_ids:
+                guild = self._get_guild(bot, guild_id)
+                self.add_guild(guild)
+
+        logger.debug("Running deletions...")
+        with self.sql.transaction():
+            for guild_id in migrated_guild_ids - current_guild_ids:
+                guild = self._get_guild(bot, guild_id)
+                self.remove_guild(guild)

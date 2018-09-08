@@ -28,21 +28,20 @@ logger = logging.getLogger(__name__)
 
 def decorator_maker(name):
     def decorator(func):
-        def hook(*args):
+        def hook(args, kwargs):
             logger.debug("Running hook: %s:%r", name, func)
-            func(*args)
+            func(*args, **kwargs)
         _hooks[name].append(hook)
         return func
     return decorator
 
-def run_hooks(sql, name, *args):
+def run_hooks(name, *args, **kwargs):
     logger.info("Running hooks for '%s'...", name)
-    with sql.transaction():
-        for hook in _hooks[name]:
-            try:
-                hook(*args)
-            except Exception as error:
-                logger.error("Error running hook %r!", hook, exc_info=error)
+    for hook in _hooks[name]:
+        try:
+            hook(args, kwargs)
+        except Exception as error:
+            logger.error("Error running hook %r!", hook, exc_info=error)
     logger.debug("Finished '%s' hooks.", name)
 
 on_guild_join = decorator_maker('on_guild_join')

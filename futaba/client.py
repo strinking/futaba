@@ -87,6 +87,7 @@ class Bot(commands.AutoShardedBot):
         else:
             self.debug_chan = self.get_channel(int(self.config.debug_channel_id))
 
+        # Setup cog loading
         self.add_cog(Reloader(self))
         logger.info("Loaded cog: Reloader")
 
@@ -96,6 +97,7 @@ class Bot(commands.AutoShardedBot):
         files = [cog for cog in os.listdir('futaba/cogs') if _cog_ok(cog)]
         logger.info("Cogs found: %s", ', '.join(files))
 
+        # Load cogs
         for file in files:
             try:
                 self.load_extension(f'futaba.cogs.{file}')
@@ -107,6 +109,10 @@ class Bot(commands.AutoShardedBot):
             else:
                 logger.info("Loaded cog: %s", file)
 
+        # Performing migrations
+        self.sql.guilds.migrate(self)
+
+        # Finished
         logger.info("Logged in as %s (%d)", self.user.name, self.user.id)
         logger.info("Connected to:")
         logger.info("* %d guild%s", len(self.guilds), plural(len(self.guilds)))
@@ -114,6 +120,26 @@ class Bot(commands.AutoShardedBot):
         logger.info("* %d users", len(self.users))
         logger.info("------")
         logger.info("Ready!")
+
+    async def on_guild_join(self, guild):
+        '''
+        Event for handling joining a new guild.
+        Adds it to the database for triggering guild migration in the database.
+        '''
+
+        logger.info("Guild join event for '%s' (%d)", guild.name, guild.id)
+        with self.sql.transaction():
+            self.sql.guilds.add_guild(guild)
+
+    async def on_guild_remove(self, guild):
+        '''
+        Event for handling leaving a guild.
+        Removes it to the database for triggering guild migration in the database.
+        '''
+
+        logger.info("Guild leave event for '%s' (%d)", guild.name, guild.id)
+        with self.sql.transaction():
+            self.sql.guilds.add_guild(guild)
 
     async def on_command_error(self, ctx, error):
         '''
