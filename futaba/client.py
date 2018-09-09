@@ -58,9 +58,8 @@ class Bot(commands.AutoShardedBot):
 
     @property
     def uptime(self):
-        '''
-        Gets the uptime for the bot
-        '''
+        ''' Gets the bot's uptime '''
+
         return datetime.datetime.utcnow() - self.start_time
 
     def run_with_token(self):

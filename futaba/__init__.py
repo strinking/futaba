@@ -14,13 +14,14 @@
 futaba - A Discord Mod bot for the Programming server
 '''
 
-from . import client, config, enums, parse, permissions, utils
+from . import client, config, enums, journal, parse, permissions, utils
 
 __all__ = [
     '__version__',
     'client',
     'config',
     'enums',
+    'journal',
     'parse',
     'permissions',
     'utils',
