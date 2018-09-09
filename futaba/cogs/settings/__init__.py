@@ -10,12 +10,12 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-from .core import SettingsCog
+from .core import Settings
 
 def setup(bot):
     '''
     Setup for bot to add cog
     '''
 
-    cog = SettingsCog(bot)
+    cog = Settings(bot)
     bot.add_cog(cog)

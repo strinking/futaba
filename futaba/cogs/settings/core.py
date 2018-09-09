@@ -26,10 +26,10 @@ from futaba import permissions
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    'SettingsCog',
+    'Settings',
 ]
 
-class SettingsCog:
+class Settings:
     __slots__ = (
         'bot',
     )
