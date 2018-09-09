@@ -11,6 +11,7 @@
 #
 
 import logging
+from abc import abstractmethod
 
 logger = logging.getLogger(__name__)
 
@@ -19,18 +20,9 @@ __all__ = [
 ]
 
 class Listener:
-    __slots__ = (
-        'router',
-        'path',
-        'handler',
-        'recursive',
-        'filter',
-    )
-
-    def __init__(self, router, path, handler, recursive=True, filter=None):
+    def __init__(self, router, path, recursive=True, filter=None):
         self.router = router
         self.path = path
-        self.handler = handler
         self.recursive = recursive
         self.filter = filter
 
@@ -46,3 +38,12 @@ class Listener:
                 return False
 
         return True
+
+    @abstractmethod
+    async def handle(self, path, content, attributes):
+        '''
+        Abstract method for handling the event, in whatever way
+        the implementation decides.
+        '''
+
+        pass

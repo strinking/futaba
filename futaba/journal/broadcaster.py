@@ -35,9 +35,7 @@ class Broadcaster:
         assert not subpath.is_absolute, "Broadcasting on absolute subpath"
         path = self.path.joinpath(subpath)
 
-        # Replace attributes if not passed
-        attributes = attributes or {}
-
         # Queue up event
+        attributes = attributes or {}
         logger.info("Sending journal entry to %s: '%s' %s", path, content, attributes)
         self.router.queue.put_nowait((path, content, attributes))
