@@ -21,10 +21,12 @@ import os
 import discord
 from discord.ext import commands
 
+#from .cogs.journal import Journal
+from .cogs.reloader import Reloader
 from .config import Configuration
 from .enums import Reactions
 from .sql import SqlHandler
-from .utils import Reloader, plural
+from .utils import plural
 
 logger = logging.getLogger(__name__)
 
@@ -86,12 +88,24 @@ class Bot(commands.AutoShardedBot):
         else:
             self.debug_chan = self.get_channel(int(self.config.debug_channel_id))
 
-        # Setup cog loading
+        # Setup mandatory cogs
+        #self.add_cog(Journal(self))
+        #logger.info("Loaded mandatory cog: Journal")
+
         self.add_cog(Reloader(self))
-        logger.info("Loaded cog: Reloader")
+        logger.info("Loaded mandatory cog: Reloader")
 
         def _cog_ok(cog):
-            return not cog.startswith('_') and os.path.isdir(f'futaba/cogs/{cog}')
+            # Special files
+            if cog.startswith('_'):
+                return False
+
+            # Check for mandatory cogs
+            if cog in ('journal', 'reloader'):
+                return False
+
+            # Cog is a directory
+            return os.path.isdir(f'futaba/cogs/{cog}')
 
         files = [cog for cog in os.listdir('futaba/cogs') if _cog_ok(cog)]
         logger.info("Cogs found: %s", ', '.join(files))

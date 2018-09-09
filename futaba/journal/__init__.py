@@ -17,7 +17,7 @@ Broadcaster and Listener classes that rely on it.
 '''
 
 from .broadcaster import Broadcaster
-from .listener_impl import ChannelOutputListener
+from .impl import ChannelOutputListener
 from .listener import Listener
 from .router import Router
 
