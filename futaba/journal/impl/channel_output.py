@@ -34,6 +34,7 @@ ICONS = {
     'forbidden': '\N{NO ENTRY}',
     'critical': '\N{SQUARED SOS}',
     'ok': '\N{SQUARED OK}',
+    'announce': '\N{CHEERING MEGAPHONE}',
 
     # Moderation
     'ban': '\N{HAMMER}',
