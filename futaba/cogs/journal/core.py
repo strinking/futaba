@@ -46,7 +46,7 @@ class Journal:
             for guild in bot.guilds:
                 bot.sql.journal.get_journal_channels(guild)
 
-        self.router.start(bot.eventloop)
+        self.router.start(bot.loop)
 
     @commands.group(name='journal', aliases=['log'])
     async def log(self, ctx):
