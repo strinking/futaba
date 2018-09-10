@@ -109,8 +109,8 @@ ICONS = {
 }
 
 class ChannelOutputListener(Listener):
-    def __init__(self, router, path, channel, recursive=True, filter=None):
-        super().__init__(router, path, recursive, filter)
+    def __init__(self, router, path, channel, recursive=True):
+        super().__init__(router, path, recursive)
         self.channel = channel
 
     def filter(self, path, guild, content, attributes):

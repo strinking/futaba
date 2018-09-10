@@ -101,7 +101,7 @@ class Bot(commands.AutoShardedBot):
                 return False
 
             # Check for mandatory cogs
-            if cog in ('journal', 'reloader'):
+            if cog in Reloader.MANDATORY_COGS:
                 return False
 
             # Cog is a directory

@@ -64,22 +64,24 @@ class Journal:
 
         outputs = self.bot.sql.journal.get_journal_channels(ctx.guild)
         outputs.sort(key=lambda x: x.channel.name)
-        lines = [f'**Current journal outputs for {ctx.guild.name}**']
+        lines = []
         attributes = []
         for output in outputs:
-            if not output.attributes.recursive:
+            if not output.settings.recursive:
                 attributes.append('exact path')
 
-            lines.append(f'{output.channel.mention} `{output.path}` {", ".join(attributes)}')
+            lines.append(f'- `{output.path}` mounted on {output.channel.mention} {", ".join(attributes)}')
             attributes.clear()
 
         if len(lines) > 1:
-            content = '\n'.join(lines)
+            embed = discord.Embed(colour=discord.Colour.teal(), description='\n'.join(lines))
+            embed.set_author(name='Current journal outputs')
         else:
-            content = f'**No journal outputs for {ctx.guild.name}**'
+            embed = discord.Embed(colour=discord.Colour.dark_purple())
+            embed.set_author(name=f'No journal outputs!')
 
         await asyncio.gather(
-            ctx.send(content=content),
+            ctx.send(embed=embed),
             Reactions.SUCCESS.add(ctx.message),
         )
 
@@ -112,10 +114,11 @@ class Journal:
 
         logger.debug("Updating database for channel output")
         with self.bot.sql.transaction():
-            if self.bot.sql.journal.has_journal_channel(channel, path):
-                self.bot.sql.add_journal_channel(channel, path, recursive)
+            journal_sql = self.bot.sql.journal
+            if journal_sql.has_journal_channel(channel, path):
+                journal_sql.update_journal_channel(channel, path, recursive)
             else:
-                self.bot.sql.update_journal_channel(channel, path, recursive)
+                journal_sql.add_journal_channel(channel, path, recursive)
 
         await Reactions.SUCCESS.add(ctx.message)
 

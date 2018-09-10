@@ -36,6 +36,8 @@ class Reloader:
         'bot',
     )
 
+    MANDATORY_COGS = ('journal', 'reloader')
+
     def __init__(self, bot):
         self.bot = bot
 
@@ -56,22 +58,33 @@ class Reloader:
 
         logger.info("Cog load requested: %s", cogname)
 
+        if cogname in Reloader.MANDATORY_COGS:
+            logger.info("Cog cannot be loaded because it is mandatory")
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.set_author(name='Cannot load')
+            embed.description = 'Cog cannot be loaded because it is mandatory'
+            await asyncio.gather(
+                ctx.send(embed=embed),
+                Reactions.FAIL.add(ctx.message),
+            )
+            return
+
         try:
             self.load_cog(cogname)
         except Exception as error:
             logger.error("Loading cog %s failed", cogname, exc_info=error)
-            embed = discord.Embed(color=discord.Color.red(), description=f'```{error}```')
+            embed = discord.Embed(colour=discord.Colour.red(), description=f'```{error}```')
             embed.set_author(name='Load failed')
             await asyncio.gather(
-                self.bot._send(embed=embed),
+                ctx.send(embed=embed),
                 Reactions.FAIL.add(ctx.message),
             )
         else:
             logger.info("Loaded cog: %s", cogname)
-            embed = discord.Embed(color=discord.Color.green(), description=f'```{cogname}```')
+            embed = discord.Embed(colour=discord.Colour.green(), description=f'```{cogname}```')
             embed.set_author(name='Loaded')
             await asyncio.gather(
-                self.bot._send(embed=embed),
+                ctx.send(embed=embed),
                 Reactions.SUCCESS.add(ctx.message),
             )
 
@@ -82,22 +95,33 @@ class Reloader:
 
         logger.info("Cog unload requested: %s", cogname)
 
+        if cogname in Reloader.MANDATORY_COGS:
+            logger.info("Cog cannot be unloaded because it is mandatory")
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.set_author(name='Cannot unload')
+            embed.description = 'Cog cannot be unloaded because it is mandatory'
+            await asyncio.gather(
+                ctx.send(embed=embed),
+                Reactions.FAIL.add(ctx.message),
+            )
+            return
+
         try:
             self.unload_cog(cogname)
         except Exception as error:
             logger.error("Unloading cog %s failed", cogname, exc_info=error)
-            embed = discord.Embed(color=discord.Color.red(), description=f'```{error}```')
+            embed = discord.Embed(colour=discord.Colour.red(), description=f'```{error}```')
             embed.set_author(name='Unload failed')
             await asyncio.gather(
-                self.bot._send(embed=embed),
+                ctx.send(embed=embed),
                 Reactions.FAIL.add(ctx.message),
             )
         else:
             logger.info("Unloaded cog: %s", cogname)
-            embed = discord.Embed(color=discord.Color.green(), description=f'```{cogname}```')
+            embed = discord.Embed(colour=discord.Colour.green(), description=f'```{cogname}```')
             embed.set_author(name='Unloaded')
             await asyncio.gather(
-                self.bot._send(embed=embed),
+                ctx.send(embed=embed),
                 Reactions.SUCCESS.add(ctx.message),
             )
 
@@ -108,20 +132,31 @@ class Reloader:
 
         logger.info("Cog reload requested: %s", cogname)
 
+        if cogname in Reloader.MANDATORY_COGS:
+            logger.info("Cog cannot be reloaded because it is mandatory")
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.set_author(name='Cannot reload')
+            embed.description = 'Cog cannot be reloaded because it is mandatory'
+            await asyncio.gather(
+                ctx.send(embed=embed),
+                Reactions.FAIL.add(ctx.message),
+            )
+            return
+
         try:
             self.unload_cog(cogname)
             self.load_cog(cogname)
         except Exception as error:
             logger.error("Reloading cog %s failed", cogname, exc_info=error)
-            embed = discord.Embed(color=discord.Color.red(), description=f'```{error}```')
+            embed = discord.Embed(colour=discord.Colour.red(), description=f'```{error}```')
             embed.set_author(name='Reload failed')
             await asyncio.gather(
-                self.bot._send(embed=embed),
+                ctx.send(embed=embed),
                 Reactions.FAIL.add(ctx.message),
             )
         else:
             logger.info("Reloaded cog: %s", cogname)
-            embed = discord.Embed(color=discord.Color.green(), description=f'```{cogname}```')
+            embed = discord.Embed(colour=discord.Colour.green(), description=f'```{cogname}```')
             embed.set_author(name='Reloaded')
             await asyncio.gather(
                 self.bot._send(embed=embed),
