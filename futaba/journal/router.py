@@ -55,7 +55,7 @@ class Router:
             for path in chain((event_path,), event_path.parents):
                 for listener in self.paths[path]:
                     if listener.check(path, guild, content, attributes):
-                        events.append(listener.handle(path, guild, content, attributes))
+                        events.append(listener.handle(event_path, guild, content, attributes))
 
             # Run all the event handlers
             await asyncio.gather(*events)

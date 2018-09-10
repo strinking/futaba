@@ -139,3 +139,36 @@ class Journal:
             self.bot.sql.journal.delete_journal_channel(channel, path)
 
         await Reactions.SUCCESS.add(ctx.message)
+
+    @log.command(name='send', aliases=['broadcast'])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def log_send(self, ctx, path: str, content: str, *attributes: str):
+        '''
+        Manually send a journal event to test logging channels.
+        The content must be a single argument, wrapped in quotes if
+        it has spaces, and you can specify a number of journal attributes
+        in the form KEY=VALUE.
+        '''
+
+        if path == '/':
+            await asyncio.gather(
+                ctx.send(content='Cannot broadcast on /'),
+                Reactions.FAIL.add(ctx.message),
+            )
+            return
+
+        journal_attributes = {}
+        try:
+            for attribute in attributes:
+                for key, value in attribute.split('='):
+                    journal_attributes[key] = value
+        except ValueError:
+            await asyncio.gather(
+                ctx.send(content='All attributes must be in the form KEY=VALUE'),
+                Reactions.FAIL.add(ctx.message),
+            )
+            return
+
+        logging.info("Sending manual journal event: '%s' (attrs: %s)", content, journal_attributes)
+        self.bot.get_broadcaster(path).send(content, **journal_attributes)

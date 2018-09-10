@@ -38,7 +38,7 @@ ICONS = {
     'jail': '\N{POLICE CARS REVOLVING LIGHT}',
 
     # Filter
-    'filter': '\N{RECEIPT}',
+    'filter': '\N{PAGE WITH CURL}',
     'flag': '\N{TRIANGULAR FLAG ON POST}',
     'deleted': '\N{SKULL}',
     'nsfw': '\N{NO ONE UNDER EIGHTEEN SYMBOL}',

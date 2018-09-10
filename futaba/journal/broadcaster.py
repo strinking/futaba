@@ -26,14 +26,14 @@ class Broadcaster:
     )
 
     def __init__(self, router, path):
-        assert len(path.parts) > 1, "Cannot broadcast on the root"
         self.router = router
         self.path = PurePath(path)
+        assert len(self.path.parts) > 1, "Cannot broadcast on the root"
 
     def send(self, subpath, guild, content, **attributes):
         # Get full path
         subpath = PurePath(subpath)
-        assert not subpath.is_absolute, "Cannot broadcast on absolute subpath"
+        assert not subpath.is_absolute(), "Cannot broadcast on absolute subpath"
         path = self.path.joinpath(subpath)
 
         # Queue up event
