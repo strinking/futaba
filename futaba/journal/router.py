@@ -15,6 +15,8 @@ import logging
 from collections import defaultdict
 from itertools import chain
 
+from .process import process_content
+
 logger = logging.getLogger(__name__)
 
 __all__ = [
@@ -33,25 +35,27 @@ class Router:
 
     def start(self, eventloop):
         logger.info("Start journal event processing task")
-        eventloop.create_task(self.process_events())
+        eventloop.create_task(self.handle_events())
 
     def register(self, listener):
         logger.info("Registering %r on '%s'", listener, listener.path)
         self.paths[listener.path].append(listener)
 
-    async def process_events(self):
+    async def handle_events(self):
         events = []
 
         while True:
             logger.debug("Waiting for new journal event")
-            event_path, content, attributes = await self.queue.get()
+            event_path, guild, content, attributes = await self.queue.get()
             logger.info("Got journal event on %s: '%s' %s", event_path, content, attributes)
+            content = process_content(content, attributes)
+            logger.debug("Journal content after processing: '%s'", content)
 
             # Add events for this path
             for path in chain((event_path,), event_path.parents):
                 for listener in self.paths[path]:
-                    if listener.check(path, content, attributes):
-                        events.append(listener.handle(path, content, attributes))
+                    if listener.check(path, guild, content, attributes):
+                        events.append(listener.handle(path, guild, content, attributes))
 
             # Run all the event handlers
             await asyncio.gather(*events)

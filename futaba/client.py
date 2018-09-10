@@ -25,6 +25,7 @@ from .cogs.journal import Journal
 from .cogs.reloader import Reloader
 from .config import Configuration
 from .enums import Reactions
+from .journal import LoggingOutputListener
 from .sql import SqlHandler
 from .utils import plural
 
@@ -33,8 +34,8 @@ logger = logging.getLogger(__name__)
 class Bot(commands.AutoShardedBot):
     __slots__ = (
         'config',
-        'logger',
         'start_time',
+        'journal_cog',
         'debug_chan',
         'sql',
     )
@@ -42,6 +43,7 @@ class Bot(commands.AutoShardedBot):
     def __init__(self, config: Configuration):
         self.config = config
         self.start_time = datetime.datetime.utcnow()
+        self.journal_cog = None
         self.debug_chan = None
         self.sql = SqlHandler(config.database_url)
         super().__init__(command_prefix=self.get_prefix_sql,
@@ -121,6 +123,10 @@ class Bot(commands.AutoShardedBot):
                 continue
             else:
                 logger.info("Loaded cog: %s", file)
+
+        # Register logger to catch journal events
+        listener = LoggingOutputListener(self.journal_cog.router, '/')
+        self.journal_cog.router.register(listener)
 
         # Performing migrations
         self.sql.guilds.migrate(self)

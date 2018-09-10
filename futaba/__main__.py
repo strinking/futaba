@@ -24,6 +24,7 @@ from . import client
 from .config import InvalidConfigError, load_config
 
 LOG_FILE = 'futaba.log'
+LOG_JOURNAL_FILE = 'futaba-journal.log'
 LOG_FILE_MODE = 'w'
 LOG_FORMAT = '[%(levelname)s] %(asctime)s %(name)s: %(message)s'
 LOG_DATE_FORMAT = '[%d/%m/%Y %H:%M:%S]'
@@ -40,6 +41,9 @@ if __name__ == '__main__':
     argparser.add_argument('-D', '--discord',
                            dest='discord_log', action='store_true',
                            help="Adds the Discord logger to the log file.")
+    argparser.add_argument('-J', '--no-journal',
+                            dest='journal_log', action='store_false',
+                            help="Adds the special Futaba journal logger to the journal log file.")
     argparser.add_argument('config_file',
                            help="Specify a configuration file to use. Keep it secret!")
     args = argparser.parse_args()
@@ -53,6 +57,14 @@ if __name__ == '__main__':
     logger = logging.getLogger(__package__)
     logger.setLevel(level=log_level)
     logger.addHandler(log_hndl)
+
+    if args.journal_log:
+        log_journal_hndl = logging.FileHandler(filename=LOG_JOURNAL_FILE, encoding='utf-8', mode=LOG_FILE_MODE)
+        log_journal_hndl.setFormatter(log_fmtr)
+
+        journal_logger = logging.getLogger('futaba.meta.journal')
+        journal_logger.setLevel(level=logging.DEBUG)
+        journal_logger.addHandler(log_journal_hndl)
 
     if args.discord_log:
         discord_logger = logging.getLogger('discord')

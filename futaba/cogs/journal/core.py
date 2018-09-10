@@ -40,6 +40,7 @@ class Journal:
     def __init__(self, bot):
         self.bot = bot
         self.router = Router()
+        bot.journal_cog = self
 
         logger.info("Loading journal output channels from the database")
         with bot.sql.transaction():

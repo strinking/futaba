@@ -15,7 +15,4 @@ Module for implementations of Listeners or other subclasses.
 '''
 
 from .channel_output import ChannelOutputListener
-
-__all__ = [
-    'ChannelOutputListener',
-]
+from .logging_output import LoggingOutputListener
