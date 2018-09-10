@@ -35,6 +35,10 @@ class Router:
         logger.info("Start journal event processing task")
         eventloop.create_task(self.process_events())
 
+    def register(self, listener):
+        logger.info("Registering %r on '%s'", listener, listener.path)
+        self.paths[listener.path].append(listener)
+
     async def process_events(self):
         events = []
 

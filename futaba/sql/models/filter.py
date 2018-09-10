@@ -94,7 +94,8 @@ class FilterModel:
         try:
             self.sql.execute(ins)
             self.filter_cache[location][text] = filter_type
-        except IntegrityError:
+        except IntegrityError as error:
+            logger.error("Unable to insert new filter", exc_info=error)
             raise ValueError("This filter already exists")
 
     def update_filter(self, location, filter_type, text):
@@ -127,7 +128,7 @@ class FilterModel:
                 ))
         result = self.sql.execute(delet)
         self.filter_cache[location].pop(text, None)
-        assert result.rowcount in (0, 1), "Only one matching filter"
+        assert result.rowcount in (0, 1), "Multiple rows deleted"
         return bool(result.rowcount)
 
     def get_filter_immune_users(self, guild):

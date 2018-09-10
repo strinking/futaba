@@ -12,6 +12,7 @@
 
 import logging
 from abc import abstractmethod
+from pathlib import PurePath
 
 logger = logging.getLogger(__name__)
 
@@ -20,17 +21,15 @@ __all__ = [
 ]
 
 class Listener:
-    def __init__(self, router, path, recursive=True, filter=None):
+    def __init__(self, router, path, recursive=True):
         self.router = router
-        self.path = path
+        self.path = PurePath(path)
         self.recursive = recursive
-        self.filter = filter
 
-    def check(self, path, content, attributes):
-        if self.filter is not None:
-            if not self.filter(path, content, attributes):
-                logger.debug("Filter rejected journal entry")
-                return False
+    def check(self, path, guild, content, attributes):
+        if not self.filter(path, guild, content, attributes):
+            logger.debug("Filter rejected journal entry")
+            return False
 
         if not self.recursive:
             if self.path != path:
@@ -39,8 +38,15 @@ class Listener:
 
         return True
 
+    def filter(self, path, guild, content, attributes):
+        '''
+        Overridable method for further filtering listener events that are passed through.
+        '''
+
+        return True
+
     @abstractmethod
-    async def handle(self, path, content, attributes):
+    async def handle(self, path, guild, content, attributes):
         '''
         Abstract method for handling the event, in whatever way
         the implementation decides.

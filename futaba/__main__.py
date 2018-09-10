@@ -68,11 +68,11 @@ if __name__ == '__main__':
 
     try:
         config = load_config(args.config_file)
-    except (TomlDecodeError, IOError) as err:
-        logger.error("Unable to read configuration file.", exc_info=err)
+    except (TomlDecodeError, IOError) as error:
+        logger.error("Unable to read configuration file.", exc_info=error)
         exit(1)
-    except InvalidConfigError as err:
-        logger.error("Error when processing configuration file: %s", err)
+    except InvalidConfigError as error:
+        logger.error("Error when processing configuration file: %s", error)
         exit(1)
 
     # Open and run client

@@ -29,7 +29,7 @@ class Broadcaster:
         self.router = router
         self.path = PurePath(path)
 
-    def send(self, subpath, content, attributes=None):
+    def send(self, subpath, guild, content, attributes=None):
         # Get full path
         subpath = PurePath(subpath)
         assert not subpath.is_absolute, "Broadcasting on absolute subpath"
@@ -38,4 +38,4 @@ class Broadcaster:
         # Queue up event
         attributes = attributes or {}
         logger.info("Sending journal entry to %s: '%s' %s", path, content, attributes)
-        self.router.queue.put_nowait((path, content, attributes))
+        self.router.queue.put_nowait((path, guild, content, attributes))

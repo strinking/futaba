@@ -23,6 +23,7 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.enums import Reactions
+from futaba.journal import ChannelOutputListener, Router
 
 logger = logging.getLogger(__name__)
 
@@ -33,10 +34,19 @@ __all__ = [
 class Journal:
     __slots__ = (
         'bot',
+        'router',
     )
 
     def __init__(self, bot):
         self.bot = bot
+        self.router = Router()
+
+        logger.info("Loading journal output channels from the database")
+        with bot.sql.transaction():
+            for guild in bot.guilds:
+                bot.sql.journal.get_journal_channels(guild)
+
+        self.router.start(bot.eventloop)
 
     @commands.group(name='journal', aliases=['log'])
     async def log(self, ctx):
@@ -48,19 +58,34 @@ class Journal:
 
     @log.command(name='show', aliases=['display', 'list'])
     @commands.guild_only()
-    @permissions.check_admin()
+    @permissions.check_mod()
     async def log_show(self, ctx):
         ''' Displays current settings for this guild '''
 
-        # TODO store settings in DB
-        # TODO retrieve settings on load
-        # TODO allow per-guild querying
-        # TODO add logging.info() calls to commands
-        await Reactions.FAIL.add(ctx.message)
+        outputs = self.bot.sql.journal.get_journal_channels(ctx.guild)
+        outputs.sort(key=lambda x: x.channel.name)
+        lines = [f'**Current journal outputs for {ctx.guild.name}**']
+        attributes = []
+        for output in outputs:
+            if not output.attributes.recursive:
+                attributes.append('exact path')
+
+            lines.append(f'{output.channel.mention} `{output.path}` {", ".join(attributes)}')
+            attributes.clear()
+
+        if len(lines) > 1:
+            content = '\n'.join(lines)
+        else:
+            content = f'**No journal outputs for {ctx.guild.name}**'
+
+        await asyncio.gather(
+            ctx.send(content=content),
+            Reactions.SUCCESS.add(ctx.message),
+        )
 
     @log.command(name='add', aliases=['append', 'extend', 'new'])
     @commands.guild_only()
-    @permissions.check_admin()
+    @permissions.check_mod()
     async def log_add(self, ctx, channel: discord.TextChannel, path: str, *flags: str):
         '''
         Add a journal logger to the channel for the given path.
@@ -68,6 +93,8 @@ class Journal:
             -exact, Don't recursively accept journal events from children.
         '''
 
+        logging.info("Adding journal logger for channel #%s (%d) on path '%s'",
+                channel.name, channel.id, path)
         recursive = True
 
         for flag in flags:
@@ -76,20 +103,34 @@ class Journal:
             else:
                 await asyncio.gather(
                     Reactions.FAIL.add(ctx.message),
-                    ctx.send(content=f'No such flag: {flag}')
+                    ctx.send(content=f'No such flag: `{flag}`')
                 )
                 return
 
-        # TODO add
-        await Reactions.FAIL.add(ctx.message)
+        logger.debug("Registering route")
+        self.router.register(ChannelOutputListener(self.router, path, channel))
+
+        logger.debug("Updating database for channel output")
+        with self.bot.sql.transaction():
+            if self.bot.sql.journal.has_journal_channel(channel, path):
+                self.bot.sql.add_journal_channel(channel, path, recursive)
+            else:
+                self.bot.sql.update_journal_channel(channel, path, recursive)
+
+        await Reactions.SUCCESS.add(ctx.message)
 
     @log.command(name='remove', aliases=['rm', 'delete', 'del'])
     @commands.guild_only()
-    @permissions.check_admin()
+    @permissions.check_mod()
     async def log_remove(self, ctx, channel: discord.TextChannel, path: str):
         '''
         Removes a journal logger for the given path from the channel.
         '''
 
-        # TODO remove
-        await Reactions.FAIL.add(ctx.message)
+        logging.info("Removing journal logger for channel #%s (%d) from path '%s'",
+                channel.name, channel.id, path)
+
+        with self.bot.sql.transaction():
+            self.bot.sql.delete_journal_channel(channel, path)
+
+        await Reactions.SUCCESS.add(ctx.message)

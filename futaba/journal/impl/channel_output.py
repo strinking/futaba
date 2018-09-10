@@ -39,6 +39,8 @@ ICONS = {
     # Moderation
     'ban': '\N{HAMMER}',
     'kick': '\N{WOMANS BOOTS}',
+    'muffled': '\N{FACE WITH MEDICAL MASK}',
+    'mute': '\N{SPEAK-NO-EVIL MONKEY}',
     'jail': '\N{POLICE CARS REVOLVING LIGHT}',
 
     # Filter
@@ -50,10 +52,15 @@ ICONS = {
     'has-mail': '\N{OPEN MAILBOX WITH RAISED FLAG}',
     'no-mail': '\N{CLOSED MAILBOX WITH LOWERED FLAG}',
 
+    # Watchdog
+    'investigate': '\N{SLEUTH OR SPY}',
+    'watch': '\N{EYE}',
+
     # Configuration
     'edit': '\N{MEMO}',
     'save': '\N{FLOPPY DISK}',
-    'settings': '\N{WRENCH}',
+    'writing': '\N{WRITING HAND}',
+    'settings': '\N{HAMMER AND WRENCH}',
 
     # Development
     'deploy': '\N{ROCKET}',
@@ -71,17 +78,22 @@ ICONS = {
     'book': '\N{NOTEBOOK WITH DECORATIVE COVER}',
     'upload': '\N{OUTBOX TRAY}',
     'download': '\N{INBOX TRAY}',
-    'briefcase': '\N{BRIEFCASE}',
     'bookmark': '\N{BOOKMARK}',
     'journal': '\N{LEDGER}',
     'attachment': '\N{PAPERCLIP}',
     'clipboard': '\N{CLIPBOARD}',
     'pin': '\N{PUSHPIN}',
+    'briefcase': '\N{BRIEFCASE}',
+    'cabinet': '\N{CARD FILE BOX}',
+    'trash': '\N{WASTEBASKET}',
 
     # Miscellaneous
     'hourglass': '\N{HOURGLASS WITH FLOWING SAND}',
     'person': '\N{BUST IN SILHOUETTE}',
+    'navigate': '\N{COMPASS}',
+    'bot': '\N{ROBOT FACE}',
     'news': '\N{NEWSPAPER}',
+    'art': '\N{ARTIST PALETTE}',
     'tag': '\N{TICKET}',
     'music': '\N{MUSICAL NOTE}',
     'link': '\N{LINK SYMBOL}',
@@ -101,7 +113,18 @@ class ChannelOutputListener(Listener):
         super().__init__(router, path, recursive, filter)
         self.channel = channel
 
-    async def handle(self, path, content, attributes):
+    def filter(self, path, guild, content, attributes):
+        '''
+        Ensures that this event is actually meant for this channel output logger.
+        '''
+
+        if self.channel not in guild.channels:
+            logger.debug("Skipping event, wrong guild!")
+            return False
+
+        return True
+
+    async def handle(self, path, guild, content, attributes):
         '''
         Send the message to the given channel, applying the icon if applicable.
         '''

@@ -20,10 +20,12 @@ import sys
 
 from .filter import FilterModel
 from .guilds import GuildsModel
+from .journal import JournalModel
 from .settings import SettingsModel
 
 __all__ = [
     'FilterModel',
     'GuildsModel',
+    'JournalModel',
     'SettingsModel',
 ]

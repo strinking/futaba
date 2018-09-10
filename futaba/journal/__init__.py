@@ -23,6 +23,7 @@ from .router import Router
 
 __all__ = [
     'Broadcaster',
+    'ChannelOutputListener',
     'Listener',
     'Router',
 ]
