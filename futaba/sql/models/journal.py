@@ -31,33 +31,40 @@ from sqlalchemy.sql import select
 from ..hooks import on_guild_leave
 
 Column = functools.partial(Column, nullable=False)
-ChannelSettings = namedtuple('ChannelSettings', ('recursive'))
 ConfiguredChannelOutput = namedtuple('ConfiguredChannelOutput', ('channel', 'path', 'settings'))
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    'ChannelSettings',
     'ConfiguredChannelOutput',
+    'ChannelSettings',
     'JournalModel',
 ]
+
+class ChannelSettings:
+    __slots__ = (
+        'recursive',
+    )
+
+    def __init__(self, recursive):
+        self.recursive = recursive
 
 class JournalModel:
     __slots__ = (
         'sql',
-        'tb_journal_output',
-        'journal_output_cache',
+        'tb_journal_outputs',
+        'journal_outputs_cache',
         'journal_guild_cache',
     )
 
     def __init__(self, sql, meta):
         self.sql = sql
-        self.tb_journal_output = Table('journal_output', meta,
+        self.tb_journal_outputs = Table('journal_outputs', meta,
                 Column('guild_id', BigInteger, ForeignKey('guilds.guild_id')),
                 Column('channel_id', BigInteger, primary_key=True),
                 Column('path', Text, primary_key=True),
                 Column('recursive', Boolean),
-                UniqueConstraint('guild_id', 'channel_id', 'path', name='journal_output_uq'))
-        self.journal_output_cache = defaultdict(dict)
+                UniqueConstraint('guild_id', 'channel_id', 'path', name='journal_outputs_uq'))
+        self.journal_outputs_cache = defaultdict(dict)
         self.journal_guild_cache = set()
 
     def add_journal_channel(self, channel, path, recursive):
@@ -66,7 +73,7 @@ class JournalModel:
         logger.debug("Settings: recursive = %r", recursive)
 
         assert channel.guild is not None, "Channel must a guild channel"
-        ins = self.tb_journal_output \
+        ins = self.tb_journal_outputs \
                     .insert() \
                     .values(
                         guild_id=channel.guild.id,
@@ -77,7 +84,7 @@ class JournalModel:
 
         try:
             self.sql.execute(ins)
-            self.journal_output_cache[channel][path] = ChannelSettings(recursive=recursive)
+            self.journal_outputs_cache[channel][path] = ChannelSettings(recursive=recursive)
         except IntegrityError as error:
             logger.error("Unable to insert new journal channel", exc_info=error)
             raise ValueError("This channel already tracks the given path")
@@ -88,17 +95,17 @@ class JournalModel:
         logger.debug("Settings: recursive = %r", recursive)
 
         assert channel.guild is not None, "Channel must a guild channel"
-        upd = self.tb_journal_output \
+        upd = self.tb_journal_outputs \
                     .update() \
                     .values(recursive=recursive) \
                     .where(and_(
-                        self.tb_journal_output.c.guild_id == channel.guild.id,
-                        self.tb_journal_output.c.channel_id == channel.id,
-                        self.tb_journal_output.c.path == path,
+                        self.tb_journal_outputs.c.guild_id == channel.guild.id,
+                        self.tb_journal_outputs.c.channel_id == channel.id,
+                        self.tb_journal_outputs.c.path == path,
                     ))
 
         self.sql.execute(upd)
-        settings = self.journal_output_cache[channel][path]
+        settings = self.journal_outputs_cache[channel][path]
         settings.recursive = recursive
 
     def delete_journal_channel(self, channel, path):
@@ -106,23 +113,23 @@ class JournalModel:
                 channel.name, channel.id, path)
 
         assert channel.guild is not None, "Channel must be a guild channel"
-        delet = self.tb_journal_output \
+        delet = self.tb_journal_outputs \
                     .delete() \
                     .where(and_(
-                        self.tb_journal_output.c.guild_id == channel.guild.id,
-                        self.tb_journal_output.c.channel_id == channel.id,
-                        self.tb_journal_output.c.path == path,
+                        self.tb_journal_outputs.c.guild_id == channel.guild.id,
+                        self.tb_journal_outputs.c.channel_id == channel.id,
+                        self.tb_journal_outputs.c.path == path,
                     ))
 
         result = self.sql.execute(delet)
-        self.journal_output_cache[channel].pop(path, None)
+        self.journal_outputs_cache[channel].pop(path, None)
         assert result.rowcount in (0, 1), "Multiple rows deleted"
         return bool(result.rowcount)
 
     def has_journal_channel(self, channel, path):
         logger.info("Checking for journal channel on #%s (%d) for path '%s'",
                 channel.name, channel.id, path)
-        return path in self.journal_output_cache[channel]
+        return path in self.journal_outputs_cache[channel]
 
     def get_journal_channels(self, guild):
         logger.info("Fetching all journal channel outputs for guild '%s' (%d)",
@@ -134,22 +141,22 @@ class JournalModel:
             # Perform SELECT
             logger.debug("Guild not loaded from disk, doing select")
             sel = select([
-                        self.tb_journal_output.c.channel_id,
-                        self.tb_journal_output.c.path,
-                        self.tb_journal_output.c.recursive,
+                        self.tb_journal_outputs.c.channel_id,
+                        self.tb_journal_outputs.c.path,
+                        self.tb_journal_outputs.c.recursive,
                     ]) \
-                    .where(self.tb_journal_output.c.guild_id == guild.id)
+                    .where(self.tb_journal_outputs.c.guild_id == guild.id)
             result = self.sql.execute(sel)
 
             # Update cache
-            for channel_id, path, recursive in result.fetchmany():
+            for channel_id, path, recursive in result.fetchall():
                 channel = guild.get_channel(channel_id)
-                self.journal_output_cache[channel][path] = ChannelSettings(recursive=recursive)
+                self.journal_outputs_cache[channel][path] = ChannelSettings(recursive=recursive)
 
         # Compile guild list
         outputs = []
         for channel in guild.channels:
-            for path, settings in self.journal_output_cache[channel].items():
+            for path, settings in self.journal_outputs_cache[channel].items():
                 outputs.append(ConfiguredChannelOutput(channel=channel, path=path, settings=settings))
         return outputs
 
@@ -157,7 +164,7 @@ class JournalModel:
     def delete_journal_channels(self, guild):
         logger.info("Removing all journal channel outputs for guild '%s' (%d)",
                 guild.name, guild.id)
-        delet = self.tb_journal_output \
+        delet = self.tb_journal_outputs \
                     .delete() \
-                    .where(self.tb_journal_output.c.guild_id == guild.id)
+                    .where(self.tb_journal_outputs.c.guild_id == guild.id)
         result = self.sql.execute(delet)

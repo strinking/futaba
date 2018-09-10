@@ -137,7 +137,7 @@ class FilterModel:
         sel = select([self.tb_filter_immune_users.c.user_id]) \
                 .where(self.tb_filter_immune_users.c.guild_id == guild.id)
         result = self.sql.execute(sel)
-        self.immune_users_cache[guild].update(user_id for user_id, in result.fetchmany())
+        self.immune_users_cache[guild].update(user_id for user_id, in result.fetchall())
         return self.immune_users_cache[guild]
 
     def user_is_filter_immune(self, guild, user):

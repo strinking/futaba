@@ -70,10 +70,11 @@ class Journal:
             if not output.settings.recursive:
                 attributes.append('exact path')
 
-            lines.append(f'- `{output.path}` mounted on {output.channel.mention} {", ".join(attributes)}')
+            attributes_str = f'({", ".join(attributes)})' if attributes else ''
+            lines.append(f'- `{output.path}` mounted at {output.channel.mention} {attributes_str}')
             attributes.clear()
 
-        if len(lines) > 1:
+        if lines:
             embed = discord.Embed(colour=discord.Colour.teal(), description='\n'.join(lines))
             embed.set_author(name='Current journal outputs')
         else:
@@ -85,7 +86,7 @@ class Journal:
             Reactions.SUCCESS.add(ctx.message),
         )
 
-    @log.command(name='add', aliases=['append', 'extend', 'new'])
+    @log.command(name='add', aliases=['append', 'extend', 'new', 'set', 'update'])
     @commands.guild_only()
     @permissions.check_mod()
     async def log_add(self, ctx, channel: discord.TextChannel, path: str, *flags: str):
@@ -134,6 +135,6 @@ class Journal:
                 channel.name, channel.id, path)
 
         with self.bot.sql.transaction():
-            self.bot.sql.delete_journal_channel(channel, path)
+            self.bot.sql.journal.delete_journal_channel(channel, path)
 
         await Reactions.SUCCESS.add(ctx.message)
