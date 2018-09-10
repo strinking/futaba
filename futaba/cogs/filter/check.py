@@ -16,7 +16,7 @@ import logging
 import discord
 
 from futaba.enums import FilterType, LocationType
-from futaba.utils import Dummy
+from futaba.utils import Dummy, escape_backticks
 
 __all__ = [
     'check_message',
@@ -141,8 +141,8 @@ async def found_violation(message, content, location_type, filter_type, filter_t
     jail_role.name = 'Dunce Hat'
 
     async def message_violator():
-        escaped_filter_text = filter_text.replace('`', '\N{ARMENIAN COMMA}')
-        escaped_content = content.replace('`', '\N{ARMENIAN COMMA}')
+        escaped_filter_text = escape_backticks(filter_text)
+        escaped_content = escape_backticks(content)
 
         if len(escaped_content) > 1800:
             escaped_content = escaped_content[:1800] + ' ... (message too long)'

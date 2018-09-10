@@ -25,7 +25,7 @@ from .cogs.journal import Journal
 from .cogs.reloader import Reloader
 from .config import Configuration
 from .enums import Reactions
-from .journal import LoggingOutputListener
+from .journal import Broadcaster, LoggingOutputListener
 from .sql import SqlHandler
 from .utils import plural
 
@@ -139,6 +139,13 @@ class Bot(commands.AutoShardedBot):
         logger.info("* %d users", len(self.users))
         logger.info("------")
         logger.info("Ready!")
+
+    def get_broadcaster(self, root):
+        '''
+        A utility method for instantiating a bound Broadcaster on the given path.
+        '''
+
+        return Broadcaster(self.journal_cog.router, root)
 
     async def on_guild_join(self, guild):
         '''

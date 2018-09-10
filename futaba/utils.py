@@ -31,6 +31,7 @@ __all__ = [
     'fancy_timedelta',
     'async_partial',
     'plural',
+    'escape_backticks',
     'if_not_null',
     'unicode_repr',
 ]
@@ -86,25 +87,27 @@ def fancy_timedelta(delta):
     return f'{", ".join(parts)} and {seconds} second{plural(seconds)}'
 
 def async_partial(coro, *added_args, **added_kwargs):
-    '''
-    Like functools.partial(), but for coroutines.
-    '''
+    ''' Like functools.partial(), but for coroutines. '''
 
     async def wrapped(*args, **kwargs):
         return await coro(*added_args, *args, **added_kwargs, **kwargs)
     return wrapped
 
 def plural(num):
-    '''
-    Gets the English plural ending for an ordinal number.
-    '''
+    ''' Gets the English plural ending for an ordinal number. '''
 
     return '' if num == 1 else 's'
 
+def escape_backticks(content):
+    '''
+    Replace any backticks in 'content' with a unicode lookalike to allow
+    quoting in Discord.
+    '''
+
+    return content.replace('`', '\N{ARMENIAN COMMA}')
+
 def if_not_null(obj, alt):
-    '''
-    Returns 'obj' if it's not None, 'alt' otherwise.
-    '''
+    ''' Returns 'obj' if it's not None, 'alt' otherwise. '''
 
     if obj is None:
         if callable(alt):

@@ -38,6 +38,7 @@ ICONS = {
     'jail': '\N{POLICE CARS REVOLVING LIGHT}',
 
     # Filter
+    'filter': '\N{RECEIPT}',
     'flag': '\N{TRIANGULAR FLAG ON POST}',
     'deleted': '\N{SKULL}',
     'nsfw': '\N{NO ONE UNDER EIGHTEEN SYMBOL}',
@@ -48,7 +49,7 @@ ICONS = {
 
     # Watchdog
     'investigate': '\N{SLEUTH OR SPY}',
-    'watch': '\N{EYE}',
+    'found': '\N{EYE}',
 
     # Configuration
     'edit': '\N{MEMO}',
