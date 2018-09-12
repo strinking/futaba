@@ -36,6 +36,7 @@ ICONS = {
     'muffled': '\N{FACE WITH MEDICAL MASK}',
     'mute': '\N{SPEAK-NO-EVIL MONKEY}',
     'jail': '\N{POLICE CARS REVOLVING LIGHT}',
+    'shutdown': '\N{SKULL}',
 
     # Filter
     'filter': '\N{PAGE WITH CURL}',

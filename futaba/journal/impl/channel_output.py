@@ -34,6 +34,10 @@ class ChannelOutputListener(Listener):
         Ensures that this event is actually meant for this channel output logger.
         '''
 
+        if guild is None:
+            logger.debug("Skipping event, no guild attached")
+            return
+
         if self.channel not in guild.channels:
             logger.debug("Skipping event, wrong guild!")
             return False

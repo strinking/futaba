@@ -37,6 +37,7 @@ class Miscellaneous:
 
     def __init__(self, bot):
         self.bot = bot
+        self.journal = bot.get_broadcaster('/misc')
 
     @commands.command(name='ping')
     async def ping(self, ctx):
@@ -59,5 +60,6 @@ class Miscellaneous:
         Shuts down the bot. Only able to be run by an owner.
         '''
 
+        self.journal.send('admin/shutdown', ctx.guild, 'Shutting down bot', icon='shutdown')
         await Reactions.SUCCESS.add(ctx.message)
         exit()
