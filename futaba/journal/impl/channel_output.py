@@ -36,7 +36,7 @@ class ChannelOutputListener(Listener):
 
         if guild is None:
             logger.debug("Skipping event, no guild attached")
-            return
+            return False
 
         if self.channel not in guild.channels:
             logger.debug("Skipping event, wrong guild!")

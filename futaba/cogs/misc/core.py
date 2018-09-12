@@ -33,6 +33,7 @@ __all__ = [
 class Miscellaneous:
     __slots__ = (
         'bot',
+        'journal',
     )
 
     def __init__(self, bot):

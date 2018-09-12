@@ -11,6 +11,7 @@
 #
 
 from .core import Journal
+from .tracking import Tracking, LISTENERS
 
 def setup(bot):
     '''
@@ -18,4 +19,9 @@ def setup(bot):
     '''
 
     cog = Journal(bot)
+    bot.add_cog(cog)
+
+    cog = Tracking(bot)
+    for listener in LISTENERS:
+        bot.add_listener(getattr(cog, listener), listener)
     bot.add_cog(cog)

@@ -48,6 +48,15 @@ ICONS = {
     'has-mail': '\N{OPEN MAILBOX WITH RAISED FLAG}',
     'no-mail': '\N{CLOSED MAILBOX WITH LOWERED FLAG}',
 
+    # Tracking
+    'typing': '\N{WRITING HAND}',
+    'message': '\N{PAGE FACING UP}',
+    'delete': '\N{WASTEBASKET}',
+    'item_add': '\N{HEAVY PLUS SIGN}',
+    'item_remove': '\N{HEAVY MINUS SIGN}',
+    'item_clear': '\N{HEAVY MULTIPLICATION X}',
+    'channel': '#\N{COMBINING ENCLOSING KEYCAP}',
+
     # Watchdog
     'investigate': '\N{SLEUTH OR SPY}',
     'found': '\N{EYE}',
