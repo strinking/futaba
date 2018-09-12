@@ -161,16 +161,16 @@ class Journal:
             return
 
         journal_attributes = {}
-        try:
-            for attribute in attributes:
-                for key, value in attribute.split('='):
-                    journal_attributes[key] = value
-        except ValueError:
-            await asyncio.gather(
-                ctx.send(content='All attributes must be in the form KEY=VALUE'),
-                Reactions.FAIL.add(ctx.message),
-            )
-            return
+        for attribute in attributes:
+            try:
+                key, value = attribute.split('=')
+                journal_attributes[key] = value
+            except ValueError:
+                await asyncio.gather(
+                    ctx.send(content='All attributes must be in the form KEY=VALUE'),
+                    Reactions.FAIL.add(ctx.message),
+                )
+                return
 
         logging.info("Sending manual journal event: '%s' (attrs: %s)", content, journal_attributes)
-        self.bot.get_broadcaster(path).send(content, **journal_attributes)
+        self.bot.get_broadcaster(path).send('', ctx.guild, content, **journal_attributes)
