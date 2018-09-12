@@ -45,8 +45,10 @@ class Journal:
         logger.info("Loading journal output channels from the database")
         with bot.sql.transaction():
             for guild in bot.guilds:
-                bot.sql.journal.get_journal_channels(guild)
-
+                for output in bot.sql.journal.get_journal_channels(guild):
+                    logger.info("Registering journal channel #%s (%d) for path '%s'",
+                            output.channel.name, output.channel.id, output.path)
+                    self.router.register(ChannelOutputListener(self.router, output.path, output.channel))
         self.router.start(bot.loop)
 
     @commands.group(name='journal', aliases=['log'])
