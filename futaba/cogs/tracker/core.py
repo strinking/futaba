@@ -104,12 +104,12 @@ class Tracker:
         self.journal.send('jump/message/new', message.guild, message.jump_url, icon='previous')
 
     async def on_message_edit(self, before, after):
-        if message in self.edited_messages:
+        if after in self.edited_messages:
             return
         else:
-            self.edited_messages.append(message)
+            self.edited_messages.append(after)
 
-        if message.guild is None or message.author == self.bot.user:
+        if after.guild is None or after.author == self.bot.user:
             return
 
         logger.debug("Message %d by %s (%d) in #%s (%d) was edited",
@@ -117,7 +117,7 @@ class Tracker:
 
         content = f'{user_discrim(after.author)} edited message {after.id} in {after.channel.mention}'
         self.journal.send('message/edit', after.guild, content, icon='edit')
-        self.journal.send('jump/message/edit', message.guild, message.jump_url, icon='previous')
+        self.journal.send('jump/message/edit', after.guild, after.jump_url, icon='previous')
 
     async def on_message_delete(self, message):
         if message.guild is None:
