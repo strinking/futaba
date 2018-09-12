@@ -1,5 +1,5 @@
 #
-# cogs/journal/tracking.py
+# cogs/tracker/core.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
@@ -16,6 +16,7 @@ Cog for journaling live API events such as username changes, users joining and l
 
 import asyncio
 import logging
+from collections import deque
 
 import discord
 from discord.ext import commands
@@ -27,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     'LISTENERS',
-    'Tracking',
+    'Tracker',
 ]
 
 LISTENERS = (
@@ -45,15 +46,23 @@ LISTENERS = (
 def user_discrim(user):
     return f'{user.name}#{user.discriminator} ({user.id})'
 
-class Tracking:
+class Tracker:
     __slots__ = (
         'bot',
         'journal',
+        'new_messages',
+        'edited_messages',
+        'reactions',
+        'typing',
     )
 
     def __init__(self, bot):
         self.bot = bot
         self.journal = bot.get_broadcaster('/tracking')
+        self.new_messages = deque(maxlen=20)
+        self.edited_messages = deque(maxlen=20)
+        self.reactions = deque(maxlen=20)
+        self.typing = deque(maxlen=5)
 
     def __unload(self):
         '''
@@ -64,6 +73,11 @@ class Tracking:
             self.bot.remove_listener(getattr(self, listener), listener)
 
     async def on_typing(self, channel, user, when):
+        if (channel, user, when) in self.typing:
+            return
+        else:
+            self.typing.append((channel, user, when))
+
         if channel.guild is None:
             return
 
@@ -74,7 +88,12 @@ class Tracking:
         self.journal.send('typing', channel.guild, content, icon='typing')
 
     async def on_message(self, message):
-        if message.guild is None:
+        if message in self.new_messages:
+            return
+        else:
+            self.new_messages.append(message)
+
+        if message.guild is None or message.author == self.bot.user:
             return
 
         logger.debug("Received message from %s (%d) in #%s (%d)",
@@ -82,9 +101,15 @@ class Tracking:
 
         content = f'{user_discrim(message.author)} sent a message in {message.channel.mention}'
         self.journal.send('message/new', message.guild, content, icon='message')
+        self.journal.send('jump/message/new', message.guild, message.jump_url, icon='previous')
 
     async def on_message_edit(self, before, after):
-        if after.guild is None:
+        if message in self.edited_messages:
+            return
+        else:
+            self.edited_messages.append(message)
+
+        if message.guild is None or message.author == self.bot.user:
             return
 
         logger.debug("Message %d by %s (%d) in #%s (%d) was edited",
@@ -92,6 +117,7 @@ class Tracking:
 
         content = f'{user_discrim(after.author)} edited message {after.id} in {after.channel.mention}'
         self.journal.send('message/edit', after.guild, content, icon='edit')
+        self.journal.send('jump/message/edit', message.guild, message.jump_url, icon='previous')
 
     async def on_message_delete(self, message):
         if message.guild is None:
@@ -100,30 +126,38 @@ class Tracking:
         logger.debug("Message %d by %s (%d) was deleted", message.id, message.author.name, message.author.id)
         content = f'Message {message.id} by {user_discrim(message.author)} was deleted'
         self.journal.send('message/delete', message.guild, content, icon='delete')
+        self.journal.send('jump/message/delete', message.guild, message.jump_url, icon='previous')
 
     async def on_reaction_add(self, reaction, user):
+        if (reaction, user) in self.reactions:
+            return
+        else:
+            self.reactions.append((reaction, user))
+
         message = reaction.message
         channel = message.channel
         emoji = reaction.emoji
 
-        if message.guild is None:
+        if message.guild is None or user == self.bot.user:
             return
 
         logger.debug("Reaction %s added to message %d by %s (%d)", emoji, message.id, user.name, user.id)
         content = f'{user_discrim(user)} added reaction {emoji} to message {message.id} in {channel.mention}'
         self.journal.send('reaction/add', message.guild, content, icon='item_add')
+        self.journal.send('jump/reaction/add', message.guild, message.jump_url, icon='previous')
 
     async def on_reaction_remove(self, reaction, user):
         message = reaction.message
         channel = message.channel
         emoji = reaction.emoji
 
-        if message.guild is None:
+        if message.guild is None or user == self.bot.user:
             return
 
         logger.debug("Reaction %s removed to message %d by %s (%d)", emoji, message.id, user.name, user.id)
         content = f'{user_discrim(user)} removed reaction {emoji} from message {message.id} in {channel.mention}'
         self.journal.send('reaction/remove', message.guild, content, icon='item_remove')
+        self.journal.send('jump/reaction/remove', message.guild, message.jump_url, icon='previous')
 
     async def on_reaction_clear(self, message, reactions):
         if message.guild is None:
@@ -132,6 +166,7 @@ class Tracking:
         logger.debug("All reactions from message %d were removed", message.id)
         content = f'All reactions on message {message.id} in {message.channel.mention} were removed'
         self.journal.send('reaction/clear', message.guild, content, icon='item_clear')
+        self.journal.send('jump/reaction/clear', message.guild, message.jump_url, icon='previous')
 
     async def on_guild_channel_create(self, channel):
         logger.debug("Channel #%s (%d) was created", channel.name, channel.id)

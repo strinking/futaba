@@ -56,6 +56,8 @@ ICONS = {
     'item_remove': '\N{HEAVY MINUS SIGN}',
     'item_clear': '\N{HEAVY MULTIPLICATION X}',
     'channel': '#\N{COMBINING ENCLOSING KEYCAP}',
+    'join': '\N{INBOX TRAY}',
+    'leave': '\N{OUTBOX TRAY}',
 
     # Watchdog
     'investigate': '\N{SLEUTH OR SPY}',
@@ -93,6 +95,8 @@ ICONS = {
     'trash': '\N{WASTEBASKET}',
 
     # Miscellaneous
+    'next': '\N{DOWNWARDS BLACK ARROW}',
+    'previous': '\N{UPWARDS BLACK ARROW}',
     'hourglass': '\N{HOURGLASS WITH FLOWING SAND}',
     'person': '\N{BUST IN SILHOUETTE}',
     'navigate': '\N{COMPASS}',
