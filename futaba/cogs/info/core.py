@@ -25,7 +25,7 @@ from discord.ext import commands
 from futaba.enums import Reactions
 from futaba.parse import get_user_id, similar_user_ids
 from futaba.permissions import check_mod_perm
-from futaba.utils import fancy_timedelta, first
+from futaba.utils import escape_backticks, fancy_timedelta, first
 
 logger = logging.getLogger(__package__)
 
@@ -192,7 +192,7 @@ class Info:
 
     @staticmethod
     async def get_messages(channels, ids):
-        return asyncio.gather(*[Info.get_message(channels, id) for id in ids])
+        return await asyncio.gather(*[Info.get_message(channels, id) for id in ids])
 
     @staticmethod
     async def get_message(channels, id):
@@ -212,7 +212,7 @@ class Info:
         Finds and prints the contents of the messages with the given IDs.
         '''
 
-        logger.info("Finding message IDs: %s", ids)
+        logger.info("Finding message IDs for dump: %s", ids)
 
         if not check_mod_perm(ctx) and len(ids) > 3:
             ids = islice(ids, 0, 3)
@@ -262,6 +262,30 @@ class Info:
         messages = await self.get_messages(ctx.guild.text_channels, ids)
         for message, id in zip(messages, ids):
             await ctx.send(embed=make_embed(message, id))
+
+        await Reactions.SUCCESS.add(ctx.message)
+
+    @commands.command(name='rawmessage', aliases=['raw', 'rawmsg'])
+    @commands.guild_only()
+    async def raw_message(self, ctx, *ids: int):
+        '''
+        Finds and prints the raw contents of the messages with the given IDs.
+        '''
+
+        logger.info("Finding message IDs for raws: %s", ids)
+
+        if not check_mod_perm(ctx) and len(ids) > 5:
+            ids = islice(ids, 0, 5)
+            await ctx.send(content='Too many messages requested, stopping at 5...')
+
+        messages = await self.get_messages(ctx.guild.text_channels, ids)
+        for message in messages:
+            await ctx.send(content='\n'.join((
+                f'{message.author.name}#{message.author.discriminator} sent:',
+                '```',
+                escape_backticks(message.content),
+                '```',
+            )))
 
         await Reactions.SUCCESS.add(ctx.message)
 

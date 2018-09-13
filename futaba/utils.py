@@ -35,6 +35,7 @@ __all__ = [
     'async_partial',
     'first',
     'plural',
+    'escape_backticks',
     'if_not_null',
     'unicode_repr',
 ]
@@ -234,6 +235,14 @@ def plural(num):
     ''' Gets the English plural ending for an ordinal number. '''
 
     return '' if num == 1 else 's'
+
+def escape_backticks(content):
+    '''
+    Replace any backticks in 'content' with a unicode lookalike to allow
+    quoting in Discord.
+    '''
+
+    return content.replace('`', '\N{ARMENIAN COMMA}')
 
 def if_not_null(obj, alt):
     '''
