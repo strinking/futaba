@@ -199,7 +199,7 @@ class Info:
         embed.set_thumbnail(url=ctx.guild.icon_url)
 
         lines = [
-            f'\N{BUST IN SILHOUETTE} **Members:** {len(ctx.guild.members)}',
+            f'\N{MAN} **Members:** {len(ctx.guild.members)}',
             f'\N{MILITARY MEDAL} **Roles:** {len(ctx.guild.roles)}',
             f'\N{BAR CHART} **Channel categories:** {len(ctx.guild.categories)}',
             f'\N{MEMO} **Text Channels:** {len(ctx.guild.text_channels)}',
