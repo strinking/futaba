@@ -190,7 +190,23 @@ class Info:
             Reactions.SUCCESS.add(ctx.message),
         )
 
+    @staticmethod
+    async def get_messages(channels, ids):
+        return asyncio.gather(*[get_message(channels, id) for id in ids])
+
+    @staticmethod
+    async def get_message(channels, id):
+        async def from_channel(channel, id):
+            try:
+                return await channel.get_message(id)
+            except discord.NotFound:
+                return None
+
+        results = await asyncio.gather(*[from_channel(channel, id) for channel in channels])
+        return first(results)
+
     @commands.command(name='message', aliases=['findmsg', 'msg'])
+    @commands.guild_only()
     async def message(self, ctx, *ids: int):
         '''
         Finds and prints the contents of the messages with the given IDs.
@@ -202,23 +218,7 @@ class Info:
             ids = islice(ids, 0, 3)
             await ctx.send(content='Too many messages requested, stopping at 3...')
 
-        # Gather messages
-        if ctx.guild is None:
-            logger.debug("Not in a guild, only searching this channel")
-            channels = [ctx.channel]
-        else:
-            channels = ctx.guild.text_channels
-
-        async def get_message(channel, id):
-            try:
-                return await channel.get_message(id)
-            except discord.NotFound:
-                return None
-
-        async def get_message_embed(id):
-            results = await asyncio.gather(*[get_message(channel, id) for channel in channels])
-            message = first(results)
-
+        def make_embed(message, id):
             if message is None:
                 embed = discord.Embed(colour=discord.Colour.dark_red())
                 embed.description = f'No message with id `{id}` found'
@@ -259,8 +259,42 @@ class Info:
 
             return embed
 
-        embeds = await asyncio.gather(*[get_message_embed(id) for id in ids])
-        for embed in embeds:
-            await ctx.send(embed=embed)
+        messages = await self.get_messages(ctx.guild.text_channels, ids)
+        for message, id in zip(messages, ids):
+            await ctx.send(embed=make_embed(message, id))
+
+        await Reactions.SUCCESS.add(ctx.message)
+
+    @commands.command(name='embeds')
+    @commands.guild_only()
+    async def embeds(self, ctx, id: int):
+        '''
+        Finds and copies embeds from the given message.
+        '''
+
+        logger.info("Copying embeds from message %d", id)
+        message = await self.get_message(ctx.guild.text_channels, id)
+        if message is None:
+            logger.debug("No message with this id found")
+            embed = discord.Embed(colour=discord.Colour.dark_red())
+            embed.description = f'No message with id `{id}` found'
+            await asyncio.gather(
+                ctx.send(embed=embed),
+                Reactions.FAIL.add(ctx.message),
+            )
+            return
+
+        if not message.embeds:
+            logger.debug("This message does not have any embeds")
+            embed = discord.Embed(colour=discord.Colour.teal())
+            embed.description = 'This message contains no embeds.'
+            await asyncio.gather(
+                ctx.send(embed=embed),
+                Reactions.SUCCESS.add(ctx.message),
+            )
+            return
+
+        for i, embed in enumerate(message.embeds, 1):
+            await ctx.send(content=f'#{i}:', embed=embed)
 
         await Reactions.SUCCESS.add(ctx.message)
