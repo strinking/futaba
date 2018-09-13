@@ -192,7 +192,7 @@ class Info:
 
     @staticmethod
     async def get_messages(channels, ids):
-        return asyncio.gather(*[get_message(channels, id) for id in ids])
+        return asyncio.gather(*[Info.get_message(channels, id) for id in ids])
 
     @staticmethod
     async def get_message(channels, id):
