@@ -16,6 +16,7 @@ Informational commands that make finding and gathering data easier.
 
 import asyncio
 import logging
+from collections import Counter
 from itertools import islice
 
 import discord
@@ -23,7 +24,8 @@ from discord.ext import commands
 
 from futaba.enums import Reactions
 from futaba.parse import get_user_id, similar_user_ids
-from futaba.utils import fancy_timedelta
+from futaba.permissions import check_mod_perm
+from futaba.utils import fancy_timedelta, first
 
 logger = logging.getLogger(__package__)
 
@@ -187,3 +189,78 @@ class Info:
             ctx.send(embed=embed),
             Reactions.SUCCESS.add(ctx.message),
         )
+
+    @commands.command(name='message', aliases=['findmsg', 'msg'])
+    async def message(self, ctx, *ids: int):
+        '''
+        Finds and prints the contents of the messages with the given IDs.
+        '''
+
+        logger.info("Finding message IDs: %s", ids)
+
+        if not check_mod_perm(ctx) and len(ids) > 3:
+            ids = islice(ids, 0, 3)
+            await ctx.send(content='Too many messages requested, stopping at 3...')
+
+        # Gather messages
+        if ctx.guild is None:
+            logger.debug("Not in a guild, only searching this channel")
+            channels = [ctx.channel]
+        else:
+            channels = ctx.guild.text_channels
+
+        async def get_message(channel, id):
+            try:
+                return await channel.get_message(id)
+            except discord.NotFound:
+                return None
+
+        async def get_message_embed(id):
+            results = await asyncio.gather(*[get_message(channel, id) for channel in channels])
+            message = first(results)
+
+            if message is None:
+                embed = discord.Embed(colour=discord.Colour.dark_red())
+                embed.description = f'No message with id `{id}` found'
+                embed.timestamp = discord.utils.snowflake_time(id)
+            else:
+                embed = discord.Embed(colour=discord.Colour.teal())
+                embed.description = message.content or None
+                embed.timestamp = message.created_at
+                embed.set_thumbnail(url=message.author.avatar_url)
+                user_discrim = f'{message.author.name}#{message.author.discriminator}'
+                embed.add_field(name='Sent by', value=f'{message.author.mention} ({user_discrim})')
+
+                if ctx.guild is not None:
+                    embed.add_field(name='Channel', value=message.channel.mention)
+
+                embed.add_field(name='Permalink', value=message.jump_url)
+
+                if message.edited_at is not None:
+                    delta = fancy_timedelta(message.edited_at - message.created_at)
+                    embed.add_field(name='Edited at', value=f'`{message.edited_at}` ({delta} afterwords)')
+
+                if message.attachments:
+                    embed.add_field(name='Attachments', value='\n'.join(
+                        attach.url for attach in message.attachments
+                    ))
+
+                if message.embeds:
+                    embed.add_field(name='Embeds', value=str(len(message.embeds)))
+
+                if message.reactions:
+                    emojis = Counter()
+                    for reaction in message.reactions:
+                        emojis[str(reaction.emoji)] += 1
+
+                    embed.add_field(name='Reactions', value='\n'.join((
+                        f'{count}: {emoji}' for emoji, count in emojis.items()
+                    )))
+
+            return embed
+
+        embeds = await asyncio.gather(*[get_message_embed(id) for id in ids])
+        for embed in embeds:
+            await ctx.send(embed=embed)
+
+        await Reactions.SUCCESS.add(ctx.message)
