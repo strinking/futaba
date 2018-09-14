@@ -187,3 +187,53 @@ class Info:
             ctx.send(embed=embed),
             Reactions.SUCCESS.add(ctx.message),
         )
+
+    @commands.command(name='ginfo', aliases=['guildinfo'])
+    @commands.guild_only()
+    async def ginfo(self, ctx):
+        ''' Gets information about the current guild. '''
+
+        embed = discord.Embed()
+        embed.timestamp = ctx.guild.created_at
+        embed.set_author(name=ctx.guild.name)
+        embed.set_thumbnail(url=ctx.guild.icon_url)
+
+        lines = [
+            f'\N{MAN} **Members:** {len(ctx.guild.members)}',
+            f'\N{MILITARY MEDAL} **Roles:** {len(ctx.guild.roles)}',
+            f'\N{BAR CHART} **Channel categories:** {len(ctx.guild.categories)}',
+            f'\N{MEMO} **Text Channels:** {len(ctx.guild.text_channels)}',
+            f'\N{STUDIO MICROPHONE} **Voice Channels:** {len(ctx.guild.voice_channels)}',
+            f'\N{CLOCK FACE TWO OCLOCK} **Age:** {fancy_timedelta(ctx.guild.created_at)}',
+            ''
+        ]
+
+        moderators = 0
+        admins = 0
+        bots = 0
+
+        # Do a single loop instead of generator expressions
+        for member in ctx.guild.members:
+            if member.bot:
+                bots += 1
+
+            perms = member.permissions_in(ctx.channel)
+            if perms.administrator:
+                admins += 1
+            elif perms.manage_messages:
+                moderators += 1
+
+        if bots:
+            lines.append(f'\N{ROBOT FACE} **Bots:** {bots}')
+        if moderators:
+            lines.append(f'\N{CONSTRUCTION WORKER} **Moderators:** {moderators}')
+        if admins:
+            lines.append(f'\N{POLICE OFFICER} **Administrators:** {admins}')
+        lines.append(f'\N{CROWN} **Owner:** {ctx.guild.owner.mention}')
+
+        embed.description = '\n'.join(lines)
+
+        await asyncio.gather(
+            ctx.send(embed=embed),
+            Reactions.SUCCESS.add(ctx.message),
+        )
