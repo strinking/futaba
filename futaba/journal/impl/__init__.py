@@ -1,5 +1,5 @@
 #
-# sql/__init__.py
+# journal/impl/__init__.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
@@ -11,15 +11,8 @@
 #
 
 '''
-General module for all interfacing with the database.
+Module for implementations of Listeners or other subclasses.
 '''
 
-from . import hooks
-from .handle import SqlHandler
-from .transaction import Transaction
-
-__all__ = [
-    'hooks',
-    'SqlHandler',
-    'Transaction',
-]
+from .channel_output import ChannelOutputListener
+from .logging_output import LoggingOutputListener
