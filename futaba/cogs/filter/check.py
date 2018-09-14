@@ -2,7 +2,7 @@
 # cogs/filter/check.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2018 Jake Richardson, Ammon Smith, jackylam5
+# Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -12,18 +12,32 @@
 
 import asyncio
 import logging
+from collections import namedtuple
 
 import discord
 
 from futaba.enums import FilterType, LocationType
-from futaba.utils import Dummy
+from futaba.utils import Dummy, escape_backticks
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     'check_message',
     'check_message_edit',
 ]
 
-logger = logging.getLogger(__name__)
+JournalProperties = namedtuple('JournalProperties', ('verb', 'path', 'icon'))
+
+JOURNAL_PROPERTIES = {
+    FilterType.FLAG: JournalProperties(verb='Flagged', path='flag', icon='flag'),
+    FilterType.BLOCK: JournalProperties(verb='Blocked', path='block', icon='deleted'),
+    FilterType.JAIL: JournalProperties(verb='Jailed for', path='jail', icon='jail'),
+}
+
+def journal_violation(journal, message, filter_type, flagged_content):
+    props = JOURNAL_PROPERTIES[filter_type]
+    content = f'{props.verb} message content: `{flagged_content}` by {message.author.mention} in {message.channel.mention}'
+    journal.send(props.path, message.guild, content, icon=props.icon)
 
 async def check_message(cog, message):
     '''
@@ -74,6 +88,7 @@ async def check_message(cog, message):
         for filter_text, (filter, filter_type) in all_filters.items():
             if filter.matches(content):
                 await found_violation(
+                    cog.journal,
                     message,
                     content,
                     location_type,
@@ -127,7 +142,7 @@ def filter_immune(bot, message):
 
     return False
 
-async def found_violation(message, content, location_type, filter_type, filter_text):
+async def found_violation(journal, message, content, location_type, filter_type, filter_text):
     '''
     Processes a violation of the text filter. This method is responsible
     for actual enforcement, based on the filter_type.
@@ -140,13 +155,14 @@ async def found_violation(message, content, location_type, filter_type, filter_t
     jail_role = Dummy() # FIXME
     jail_role.name = 'Dunce Hat'
 
+    # Escape content for display
+    escaped_filter_text = escape_backticks(filter_text)
+    escaped_content = escape_backticks(content)
+
+    if len(escaped_content) > 1800:
+        escaped_content = escaped_content[:1800] + ' ... (message too long)'
+
     async def message_violator():
-        escaped_filter_text = filter_text.replace('`', '\N{ARMENIAN COMMA}')
-        escaped_content = content.replace('`', '\N{ARMENIAN COMMA}')
-
-        if len(escaped_content) > 1800:
-            escaped_content = escaped_content[:1800] + ' ... (message too long)'
-
         logger.debug("Sending message to user who violated the filter")
         lines = [
             f"The message you posted in {message.channel.mention} violates a {location_type.value} "
@@ -184,9 +200,8 @@ async def found_violation(message, content, location_type, filter_type, filter_t
         await message.author.send(content='\n'.join(lines))
 
     if severity >= FilterType.FLAG.level:
-        # TODO notify staff
-        # this requires the logging cog to be complete
         logger.info("Notifying staff of filter violation")
+        journal_violation(journal, message, filter_type, escaped_content)
 
     if severity >= FilterType.BLOCK.level:
         logger.info("Deleting inappropriate message id %d and notifying user", message.id)

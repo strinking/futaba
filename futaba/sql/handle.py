@@ -2,7 +2,7 @@
 # sql/handle.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2018 Jake Richardson, Ammon Smith, jackylam5
+# Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -18,7 +18,7 @@ import logging
 
 from sqlalchemy import create_engine, MetaData
 
-from .models import FilterModel, GuildsModel, SettingsModel
+from .models import FilterModel, GuildsModel, JournalModel, SettingsModel
 from .transaction import Transaction
 
 logger = logging.getLogger(__name__)
@@ -35,6 +35,7 @@ class SqlHandler:
 
         'filter',
         'guilds',
+        'journal',
         'settings',
     )
 
@@ -47,6 +48,7 @@ class SqlHandler:
 
         self.filter = FilterModel(self, meta)
         self.guilds = GuildsModel(self, meta)
+        self.journal = JournalModel(self, meta)
         self.settings = SettingsModel(self, meta)
 
         meta.create_all(self.db)

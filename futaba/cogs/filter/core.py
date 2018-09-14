@@ -2,7 +2,7 @@
 # cogs/filter/core.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2018 Jake Richardson, Ammon Smith, jackylam5
+# Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -24,7 +24,7 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.enums import FilterType, Reactions
-from futaba.utils import async_partial
+from futaba.utils import async_partial, escape_backticks
 from .check import check_message, check_message_edit
 from .filter import Filter
 from .manage import add_filter, delete_filter, show_filter
@@ -38,6 +38,7 @@ __all__ = [
 class Filtering:
     __slots__ = (
         'bot',
+        'journal',
         'filters',
         'check_message',
         'check_message_edit',
@@ -45,6 +46,7 @@ class Filtering:
 
     def __init__(self, bot):
         self.bot = bot
+        self.journal = bot.get_broadcaster('/filter')
         self.filters = defaultdict(dict)
         self.check_message = async_partial(check_message, self)
         self.check_message_edit = async_partial(check_message_edit, self)
@@ -103,12 +105,6 @@ class Filtering:
             # TODO send help
             await Reactions.FAIL.add(ctx.message)
 
-    @filter.command(name='hello', aliases=['greetings'])
-    @commands.guild_only()
-    async def hello(self, ctx, *members: discord.Member):
-        # TEMP debugging discord.Member
-        await ctx.send(content=f"Hello! {', '.join(member.name for member in members)}")
-
     @filter_immunity.command(name='add', aliases=['append', 'extend', 'new'])
     @commands.guild_only()
     @permissions.check_admin()
@@ -129,6 +125,10 @@ class Filtering:
             for member in members:
                 logger.debug("Adding member: %s (%d)", member.display_name, member.id)
                 self.bot.sql.filter.add_filter_immune_user(ctx.guild, member)
+
+        for member in members:
+            content = f'Added {member.name}#{member.discriminator} to filter immunity list'
+            self.journal.send('immunity/new', ctx.guild, content, icon='person')
 
         await Reactions.SUCCESS.add(ctx.message)
 
@@ -152,6 +152,10 @@ class Filtering:
             for member in members:
                 logger.debug("Removing member: %s (%d)", member.display_name, member.id)
                 self.bot.sql.filter.remove_filter_immune_user(ctx.guild, member)
+
+        for member in members:
+            content = f'Removed {member.name}#{member.discriminator} from filter immunity list'
+            self.journal.send('immunity/remove', ctx.guild, content, icon='person')
 
         await Reactions.SUCCESS.add(ctx.message)
 
@@ -196,17 +200,6 @@ class Filtering:
 
         await show_filter(self.filters[ctx.guild], ctx.message, ctx.author, ctx.guild.name)
 
-    @filter_guild.command(name='remove', aliases=['rm', 'delete', 'del'])
-    @commands.guild_only()
-    @permissions.check_mod()
-    async def filter_guild_remove(self, ctx, *, text: str):
-        '''
-        Removes the given string from the server-wide filter.
-        You don't need to tell it which filter level it was for.
-        '''
-
-        await delete_filter(self.bot, self.filters, ctx.message, ctx.guild, text)
-
     @filter_guild.command(name='flag', aliases=['warn', 'alert', 'notice'])
     @commands.guild_only()
     @permissions.check_mod()
@@ -219,6 +212,8 @@ class Filtering:
         a single word to add to the filter.
         '''
 
+        content = f'Added guild flag filter for `{escape_backticks(text)}`'
+        self.journal.send('guild/new/flag', ctx.guild, content, icon='filter')
         await add_filter(self.bot, self.filters, ctx.message, ctx.guild, FilterType.FLAG, text)
 
     @filter_guild.command(name='block', aliases=['deny', 'autoremove'])
@@ -233,6 +228,8 @@ class Filtering:
         a single word to add to the filter.
         '''
 
+        content = f'Added guild block filter for `{escape_backticks(text)}`'
+        self.journal.send('guild/new/block', ctx.guild, content, icon='filter')
         await add_filter(self.bot, self.filters, ctx.message, ctx.guild, FilterType.BLOCK, text)
 
     @filter_guild.command(name='jail', aliases=['dunce', 'punish', 'mute'])
@@ -247,7 +244,22 @@ class Filtering:
         a single word to add to the filter.
         '''
 
+        content = f'Added guild jail filter for `{escape_backticks(text)}`'
+        self.journal.send('guild/new/jail', ctx.guild, content, icon='filter')
         await add_filter(self.bot, self.filters, ctx.message, ctx.guild, FilterType.JAIL, text)
+
+    @filter_guild.command(name='remove', aliases=['rm', 'delete', 'del'])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def filter_guild_remove(self, ctx, *, text: str):
+        '''
+        Removes the given string from the server-wide filter.
+        You don't need to tell it which filter level it was for.
+        '''
+
+        content = f'Removed guild filter for `{escape_backticks(text)}`'
+        self.journal.send('guild/remove', ctx.guild, content, icon='filter')
+        await delete_filter(self.bot, self.filters, ctx.message, ctx.guild, text)
 
     @filter.group(name='channel', aliases=['chan', 'ch', 'c'])
     @commands.guild_only()
@@ -281,6 +293,8 @@ class Filtering:
         a single word to add to the filter.
         '''
 
+        content = f'Added channel flag filter in {channel.mention} for `{escape_backticks(text)}`'
+        self.journal.send('channel/new/flag', ctx.guild, content, icon='filter')
         await add_filter(self.bot, self.filters, ctx.message, channel, FilterType.FLAG, text)
 
     @filter_channel.command(name='block', aliases=['deny', 'autoremove'])
@@ -295,6 +309,8 @@ class Filtering:
         a single word to add to the filter.
         '''
 
+        content = f'Added channel block filter in {channel.mention} for `{escape_backticks(text)}`'
+        self.journal.send('channel/new/block', ctx.guild, content, icon='filter')
         await add_filter(self.bot, self.filters, ctx.message, channel, FilterType.BLOCK, text)
 
     @filter_channel.command(name='jail', aliases=['dunce', 'punish', 'mute'])
@@ -309,6 +325,8 @@ class Filtering:
         a single word to add to the filter.
         '''
 
+        content = f'Added channel jail filter in {channel.mention} for `{escape_backticks(text)}`'
+        self.journal.send('channel/new/jail', ctx.guild, content, icon='filter')
         await add_filter(self.bot, self.filters, ctx.message, channel, FilterType.JAIL, text)
 
     @filter_channel.command(name='remove', aliases=['rm', 'delete', 'del'])
@@ -320,4 +338,6 @@ class Filtering:
         tell it which filter level it was for.
         '''
 
+        content = f'Removed channel filter in {channel.mention} for `{escape_backticks(text)}`'
+        self.journal.send('channel/remove', ctx.guild, content, icon='filter')
         await delete_filter(self.bot, self.filters, ctx.message, channel, text)
