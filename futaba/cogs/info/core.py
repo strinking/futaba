@@ -23,9 +23,9 @@ import discord
 from discord.ext import commands
 
 from futaba.enums import Reactions
-from futaba.parse import get_user_id, similar_user_ids
+from futaba.parse import get_role_id, get_user_id, similar_user_ids
 from futaba.permissions import check_mod_perm
-from futaba.utils import escape_backticks, fancy_timedelta, first
+from futaba.utils import escape_backticks, fancy_timedelta, first, plural
 
 logger = logging.getLogger(__package__)
 
@@ -93,13 +93,13 @@ class Info:
             embed.colour = user.colour
 
         # User id
-        embed.add_field(name='ID:', value=f'`{user.id}`')
+        embed.add_field(name='ID', value=f'`{user.id}`')
 
         # Roles
         if getattr(user, 'roles', None):
             roles = ' '.join(role.mention for role in islice(user.roles, 1, len(user.roles)))
             if roles:
-                embed.add_field(name='Roles:', value=roles)
+                embed.add_field(name='Roles', value=roles)
 
         # Current game
         if getattr(user, 'activity', None):
@@ -140,14 +140,14 @@ class Info:
             else:
                 state = 'active'
 
-            embed.add_field(name='Voice:', value=state)
+            embed.add_field(name='Voice', value=state)
 
         # Guild join date
         if hasattr(user, 'joined_at'):
-            embed.add_field(name='Member for:', value=fancy_timedelta(user.joined_at))
+            embed.add_field(name='Member for', value=fancy_timedelta(user.joined_at))
 
         # Discord join date
-        embed.add_field(name='Account age:', value=fancy_timedelta(user.created_at))
+        embed.add_field(name='Account age', value=fancy_timedelta(user.created_at))
 
         # Send them
         await asyncio.gather(
@@ -187,6 +187,103 @@ class Info:
         embed = discord.Embed(description=descr, colour=colour)
         await asyncio.gather(
             ctx.send(embed=embed),
+            Reactions.SUCCESS.add(ctx.message),
+        )
+
+    @commands.command(name='rinfo', aliases=['roleinfo', 'role'])
+    @commands.guild_only()
+    async def rinfo(self, ctx, *, name: str = None):
+        '''
+        Fetches and prints information about a particular role in the current guild.
+        If no role is specified, it displays information about the default role.
+        '''
+
+        if name in (None, '@everyone', 'everyone', '@here', 'here', 'default'):
+            role = ctx.guild.default_role
+        else:
+            id = get_role_id(name, ctx.guild.roles)
+            if id is None:
+                role = None
+            else:
+                role = discord.utils.get(ctx.guild.roles, id=id)
+
+        if role is None:
+            await Reactions.FAIL.add(ctx.message)
+            return
+
+        logger.info("Running rinfo on '%s'", role)
+
+        embed = discord.Embed(colour=role.colour)
+        embed.timestamp = role.created_at
+        embed.add_field(name='ID', value=str(role.id))
+        embed.add_field(name='Position', value=str(role.position))
+
+        lines = [role.mention]
+        if role.mentionable:
+            lines.append('Mentionable')
+        if role.hoist:
+            lines.append('Hoisted')
+        if role.managed:
+            lines.append('Managed')
+        embed.description = '\n'.join(lines)
+
+        if role.members:
+            max_members = 15
+            members = ", ".join(map(lambda m: m.mention, islice(role.members, 0, max_members)))
+            if len(role.members) > max_members:
+                diff = len(role.members) - max_members
+                members += f' (and {diff} other{plural(diff)})'
+        else:
+            members = '(none)'
+
+        embed.add_field(name='Members', value=members)
+
+        await asyncio.gather(
+            ctx.send(embed=embed),
+            Reactions.SUCCESS.add(ctx.message),
+        )
+
+    @commands.command(name='roles', aliases=['lroles', 'listroles'])
+    @commands.guild_only()
+    async def roles(self, ctx):
+        ''' Lists all roles in the guild. '''
+
+        contents = []
+        lines = []
+        current_len = 0
+
+        logger.info("Listing roles within the guild")
+        for role in ctx.guild.roles:
+            line = f'- {role.mention} id: `{role.id}`, members: `{len(role.members)}`'
+            current_len += len(line)
+
+            if current_len > 1900:
+                # Too long, break into new embed
+                contents.append('\n'.join(lines))
+
+                # Start lines over
+                lines.clear()
+                lines.append(line)
+                current_len = len(line)
+            else:
+                lines.append(line)
+
+        contents.append('\n'.join(lines))
+        lines.clear()
+
+        async def post_all():
+            for i, content in enumerate(contents):
+                embed = discord.Embed(description=content)
+                page = f'Page {i + 1}/{len(contents)}'
+                if i == 0:
+                    embed.set_author(name=page)
+                else:
+                    embed.set_author(name=f'{page} Roles in {ctx.guild.name}')
+
+                await ctx.send(embed=embed)
+
+        await asyncio.gather(
+            post_all(),
             Reactions.SUCCESS.add(ctx.message),
         )
 
