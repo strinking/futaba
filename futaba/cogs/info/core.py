@@ -243,6 +243,50 @@ class Info:
             Reactions.SUCCESS.add(ctx.message),
         )
 
+    @commands.command(name='roles', aliases=['lroles', 'listroles'])
+    @commands.guild_only()
+    async def roles(self, ctx):
+        ''' Lists all roles in the guild. '''
+
+        contents = []
+        lines = []
+        current_len = 0
+
+        logger.info("Listing roles within the guild")
+        for role in ctx.guild.roles:
+            line = f'- {role.mention} id: `{role.id}`, members: `{len(role.members)}`'
+            current_len += len(line)
+
+            if current_len > 1900:
+                # Too long, break into new embed
+                contents.append('\n'.join(lines))
+
+                # Start lines over
+                lines.clear()
+                lines.append(line)
+                current_len = len(line)
+            else:
+                lines.append(line)
+
+        contents.append('\n'.join(lines))
+        lines.clear()
+
+        async def post_all():
+            for i, content in enumerate(contents):
+                embed = discord.Embed(description=content)
+                page = f'Page {i + 1}/{len(contents)}'
+                if i == 0:
+                    embed.set_author(name=page)
+                else:
+                    embed.set_author(name=f'{page} Roles in {ctx.guild.name}')
+
+                await ctx.send(embed=embed)
+
+        await asyncio.gather(
+            post_all(),
+            Reactions.SUCCESS.add(ctx.message),
+        )
+
     @staticmethod
     async def get_messages(channels, ids):
         return await asyncio.gather(*[Info.get_message(channels, id) for id in ids])
