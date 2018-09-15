@@ -32,6 +32,9 @@ __all__ = [
     'Moderation',
 ]
 
+BAN_ACTION = discord.AuditLogAction.ban
+KICK_ACTION = discord.AuditLogAction.kick
+
 def user_disc(user):
     ''' 
     Return the user's username and disc
@@ -53,6 +56,12 @@ class Moderation:
     def __init__(self, bot):
         self.bot = bot
         self.journal = bot.get_broadcaster('/moderation')
+
+    def __unload(self):
+        ''' Remove listeners '''
+
+        self.bot.remove_listener(self.member_ban, "on_member_ban")
+        self.bot.remove_listener(self.member_kick, "on_member_remove")
 
     @commands.command()
     @commands.guild_only()
@@ -191,3 +200,44 @@ class Moderation:
                 Reactions.DENY.add(ctx.message),
                 ctx.send("Can't do that user has higher role than me")
             )
+
+    async def member_ban(self, guild, user):
+        ''' Event that is run on a members ban '''
+
+        def find_banned_user(event):
+            ''' Find the event for the banned user '''
+            return event.target == user and event.user != guild.me
+
+        # Check the audit log to get who banned the user
+        ban_event = await guild.audit_logs(limit=1, action=BAN_ACTION).find(find_banned_user)
+
+        if ban_event:
+            mod = user_disc(ban_event.user)
+            banned = user_disc(ban_event.target)
+            clean_reason = escape_backticks(ban_event.reason)
+            content = f'{mod} banned {ban_event.target.mention} ({banned}) with reason: `{clean_reason}`'
+
+            self.journal.send('member/ban', guild, content, icon='ban')
+
+    async def member_kick(self, member):
+        '''
+        Event that is run when a member leaves
+        Used to check if someone was kicked
+        '''
+
+        guild = member.guild
+
+        def find_kicked_user(event):
+            ''' Find the event for the kicked user '''
+            return event.target == member and event.user != guild.me
+
+        # Check the audit log to get who kicked the user
+        kick_event = await guild.audit_logs(limit=1, action=KICK_ACTION).find(find_kicked_user)
+
+        if kick_event:
+            mod = user_disc(kick_event.user)
+            kicked = user_disc(kick_event.target)
+            clean_reason = escape_backticks(kick_event.reason)
+            content = f'{mod} kicked {kick_event.target.mention} ({kicked}) with reason: `{clean_reason}`'
+
+            self.journal.send('member/kick', guild, content, icon='kick')
