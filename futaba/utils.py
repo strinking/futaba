@@ -30,6 +30,7 @@ __all__ = [
     'normalize_caseless',
     'fancy_timedelta',
     'async_partial',
+    'first',
     'plural',
     'escape_backticks',
     'if_not_null',
@@ -84,7 +85,12 @@ def fancy_timedelta(delta):
         parts.append(f'{minutes} minute{plural(minutes)}')
 
     seconds += delta.microseconds / 1e6
-    return f'{", ".join(parts)} and {seconds} second{plural(seconds)}'
+    seconds_str = f'{seconds} second{plural(seconds)}'
+
+    if parts:
+        return f'{", ".join(parts)} and {seconds_str}'
+    else:
+        return seconds_str
 
 def async_partial(coro, *added_args, **added_kwargs):
     ''' Like functools.partial(), but for coroutines. '''
@@ -92,6 +98,17 @@ def async_partial(coro, *added_args, **added_kwargs):
     async def wrapped(*args, **kwargs):
         return await coro(*added_args, *args, **added_kwargs, **kwargs)
     return wrapped
+
+def first(iterable, default=None):
+    '''
+    Returns the first item in the iterable that is truthy.
+    If none, then return 'default'.
+    '''
+
+    for item in iterable:
+        if item:
+            return item
+    return default
 
 def plural(num):
     ''' Gets the English plural ending for an ordinal number. '''
