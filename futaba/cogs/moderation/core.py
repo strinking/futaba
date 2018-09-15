@@ -24,7 +24,7 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.enums import Reactions
-from futaba.utils import escape_backticks
+from futaba.utils import escape_backticks, user_disc
 
 logger = logging.getLogger(__name__)
 
@@ -34,14 +34,6 @@ __all__ = [
 
 BAN_ACTION = discord.AuditLogAction.ban
 KICK_ACTION = discord.AuditLogAction.kick
-
-def user_disc(user):
-    ''' 
-    Return the user's username and disc
-    in the format username#disc
-    '''
-
-    return f'{user.name}#{user.discriminator}'
 
 class Moderation:
     '''
@@ -60,8 +52,8 @@ class Moderation:
     def __unload(self):
         ''' Remove listeners '''
 
-        self.bot.remove_listener(self.member_ban, "on_member_ban")
-        self.bot.remove_listener(self.member_kick, "on_member_remove")
+        self.bot.remove_listener(self.member_ban, 'on_member_ban')
+        self.bot.remove_listener(self.member_kick, 'on_member_remove')
 
     @commands.command()
     @commands.guild_only()
@@ -83,17 +75,16 @@ class Moderation:
             
             await asyncio.gather(
                 ctx.guild.kick(member, reason=f'{reason} - {mod}'),
-                Reactions.SUCCESS.add(ctx.message),
-                ctx.send(embed=embed)
+                ctx.send(embed=embed),
+                Reactions.SUCCESS.add(ctx.message)
             )
 
             self.journal.send('member/kick', ctx.guild, content, icon='kick')
         
-        except discord.errors.Forbidden:
-            
+        except discord.errors.Forbidden:            
             await asyncio.gather(
-                Reactions.DENY.add(ctx.message),
-                ctx.send("Can't do that user has higher role than me")
+                ctx.send("Can't do that user has higher role than me"),
+                Reactions.DENY.add(ctx.message)
             )
     
     @commands.command()
@@ -116,17 +107,16 @@ class Moderation:
             
             await asyncio.gather(
                 ctx.guild.ban(member, reason=f'{reason} - {mod}'),
-                Reactions.SUCCESS.add(ctx.message),
-                ctx.send(embed=embed)
+                ctx.send(embed=embed),
+                Reactions.SUCCESS.add(ctx.message)
             )
 
             self.journal.send('member/ban', ctx.guild, content, icon='ban')
         
-        except discord.errors.Forbidden:
-            
+        except discord.errors.Forbidden:            
             await asyncio.gather(
-                Reactions.DENY.add(ctx.message),
-                ctx.send("Can't do that user has higher role than me")
+                ctx.send("Can't do that user has higher role than me"),
+                Reactions.DENY.add(ctx.message)
             )
 
     @commands.command(name='softban', aliases=['soft', 'sban',])
@@ -151,19 +141,18 @@ class Moderation:
             
             await asyncio.gather(
                 ctx.guild.ban(member, reason=f'{reason} - {mod}', delete_message_days=1),
-                Reactions.SUCCESS.add(ctx.message),
-                ctx.send(embed=embed)
+                ctx.send(embed=embed),
+                Reactions.SUCCESS.add(ctx.message)
             )
 
             await ctx.guild.unban(member, reason=f'{reason} - {mod}')
 
-            self.journal.send('member/softban', ctx.guild, content, icon='soft')
+            self.journal.send('member/softban', ctx.guild, content, icon='soft')        
         
-        except discord.errors.Forbidden:
-            
+        except discord.errors.Forbidden:            
             await asyncio.gather(
-                Reactions.DENY.add(ctx.message),
-                ctx.send("Can't do that user has higher role than me")
+                ctx.send("Can't do that user has higher role than me"),
+                Reactions.DENY.add(ctx.message)
             )
     
     @commands.command()
@@ -188,17 +177,16 @@ class Moderation:
             
             await asyncio.gather(
                 ctx.guild.unban(member, reason=f'{reason} - {mod}'),
-                Reactions.SUCCESS.add(ctx.message),
-                ctx.send(embed=embed)
+                ctx.send(embed=embed),
+                Reactions.SUCCESS.add(ctx.message)
             )
 
             self.journal.send('member/unban', ctx.guild, content, icon='unban')
         
-        except discord.errors.Forbidden:
-            
+        except discord.errors.Forbidden:            
             await asyncio.gather(
-                Reactions.DENY.add(ctx.message),
-                ctx.send("Can't do that user has higher role than me")
+                ctx.send("Can't do that user has higher role than me"),
+                Reactions.DENY.add(ctx.message)
             )
 
     async def member_ban(self, guild, user):
