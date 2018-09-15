@@ -32,6 +32,8 @@ ICONS = {
 
     # Moderation
     'ban': '\N{HAMMER}',
+    'unban': '\N{FACE WITH HEAD-BANDAGE}',
+    'soft': '\N{BED}',
     'kick': '\N{WOMANS BOOTS}',
     'muffled': '\N{FACE WITH MEDICAL MASK}',
     'mute': '\N{SPEAK-NO-EVIL MONKEY}',
