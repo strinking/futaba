@@ -25,6 +25,7 @@ from discord.ext import commands
 from futaba import permissions
 from futaba.enums import Reactions
 from futaba.utils import escape_backticks, user_disc
+from futaba.parse import get_user_id
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +67,7 @@ class Moderation:
 
         try:
             embed = discord.Embed(description='Done! User Kicked')
-            embed.add_field(name='Reason:', value=reason)
+            embed.add_field(name='Reason', value=reason)
 
             mod = user_disc(ctx.author)
             kicked = user_disc(member)
@@ -98,7 +99,7 @@ class Moderation:
 
         try:
             embed = discord.Embed(description='Done! User Banned')
-            embed.add_field(name='Reason:', value=reason)
+            embed.add_field(name='Reason', value=reason)
 
             mod = user_disc(ctx.author)
             banned = user_disc(member)
@@ -119,7 +120,7 @@ class Moderation:
                 Reactions.DENY.add(ctx.message)
             )
 
-    @commands.command(name='softban', aliases=['soft', 'sban',])
+    @commands.command(name='softban', aliases=['soft', 'sban'])
     @commands.guild_only()
     @permissions.check_admin()
     async def softban(self, ctx, member: discord.Member, *, reason: str):
@@ -132,7 +133,7 @@ class Moderation:
 
         try:
             embed = discord.Embed(description='Done! User Soft-banned')
-            embed.add_field(name='Reason:', value=reason)
+            embed.add_field(name='Reason', value=reason)
 
             mod = user_disc(ctx.author)
             banned = user_disc(member)
@@ -158,17 +159,18 @@ class Moderation:
     @commands.command()
     @commands.guild_only()
     @permissions.check_admin()
-    async def unban(self, ctx, user_id: int, *, reason: str):
+    async def unban(self, ctx, name: str, *, reason: str):
         '''
         Unbans the id from the guild with a reason.
         If guild has moderation logging enabled, it is logged
         '''
 
         try:
+            user_id = get_user_id(name)
             member = self.bot.get_user(user_id)
 
             embed = discord.Embed(description='Done! User Unbanned')
-            embed.add_field(name='Reason:', value=reason)
+            embed.add_field(name='Reason', value=reason)
 
             mod = user_disc(ctx.author)
             unbanned = user_disc(member)
@@ -199,7 +201,7 @@ class Moderation:
         # Check the audit log to get who banned the user
         ban_event = await guild.audit_logs(limit=1, action=BAN_ACTION).find(find_banned_user)
 
-        if ban_event:
+        if ban_event is not None:
             mod = user_disc(ban_event.user)
             banned = user_disc(ban_event.target)
             clean_reason = escape_backticks(ban_event.reason)
@@ -222,7 +224,7 @@ class Moderation:
         # Check the audit log to get who kicked the user
         kick_event = await guild.audit_logs(limit=1, action=KICK_ACTION).find(find_kicked_user)
 
-        if kick_event:
+        if kick_event is not None:
             mod = user_disc(kick_event.user)
             kicked = user_disc(kick_event.target)
             clean_reason = escape_backticks(kick_event.reason)
