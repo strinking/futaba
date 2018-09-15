@@ -17,6 +17,7 @@ Holds the custom discord client
 import logging
 import datetime
 import os
+import sys
 
 import discord
 from discord.ext import commands
@@ -113,6 +114,9 @@ class Bot(commands.AutoShardedBot):
         self.sql.guilds.migrate(self)
 
         # Finished
+        pyver = sys.version_info
+        logger.info("Powered by Python %d.%d.%d", pyver.major, pyver.minor, pyver.micro)
+        logger.info("Using discord.py %s", discord.__version__)
         logger.info("Logged in as %s (%d)", self.user.name, self.user.id)
         logger.info("Connected to:")
         logger.info("* %d guild%s", len(self.guilds), plural(len(self.guilds)))
