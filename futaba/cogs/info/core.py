@@ -227,9 +227,10 @@ class Info:
                 embed = discord.Embed(colour=discord.Colour.teal())
                 embed.description = message.content or None
                 embed.timestamp = message.created_at
+                embed.url = message.jump_url
+                embed.set_author(name=f'{message.author.name}#{message.author.discriminator}')
                 embed.set_thumbnail(url=message.author.avatar_url)
-                user_discrim = f'{message.author.name}#{message.author.discriminator}'
-                embed.add_field(name='Sent by', value=f'{message.author.mention} ({user_discrim})')
+                embed.add_field(name='Sent by', value=message.author.mention)
 
                 if ctx.guild is not None:
                     embed.add_field(name='Channel', value=message.channel.mention)
