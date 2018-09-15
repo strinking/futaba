@@ -18,5 +18,9 @@ prefix = "!"
 # Be warned this channel will get spammed!
 debug-channel = ""
 
+[emojis]
+python = "490419105699069952"
+discordpy = "490419059964510210"
+
 [database]
 url = "sqlite:///futaba.db"

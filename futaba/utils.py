@@ -13,6 +13,7 @@
 import asyncio
 import logging
 import string
+import subprocess
 import unicodedata
 from datetime import datetime
 
@@ -26,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     'READABLE_CHAR_SET',
+    'GIT_HASH',
     'Dummy',
     'normalize_caseless',
     'fancy_timedelta',
@@ -37,7 +39,19 @@ __all__ = [
     'unicode_repr',
 ]
 
+def _get_git_hash():
+    try:
+        output = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD'])
+        return output.decode('utf-8').strip()
+    except FileNotFoundError:
+        logger.warn("'git' binary not found")
+    except subprocess.CalledProcessError:
+        logger.warn("Unable to call 'git rev-parse --short HEAD'")
+
+    return ''
+
 READABLE_CHAR_SET = frozenset(string.printable) - frozenset('\t\n\r\x0b\x0c')
+GIT_HASH = _get_git_hash()
 
 class Dummy:
     '''
@@ -121,7 +135,7 @@ def escape_backticks(content):
     quoting in Discord.
     '''
 
-    return content.replace('`', '\N{ARMENIAN COMMA}')
+    return content.replace('`', '\N{ARMENIAN COMMA}').replace(':', '\N{RATIO}')
 
 def if_not_null(obj, alt):
     ''' Returns 'obj' if it's not None, 'alt' otherwise. '''
