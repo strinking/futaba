@@ -224,7 +224,7 @@ class Info:
                 embed.description = f'No message with id `{id}` found'
                 embed.timestamp = discord.utils.snowflake_time(id)
             else:
-                embed = discord.Embed(colour=discord.Colour.teal())
+                embed = discord.Embed(colour=message.author.colour)
                 embed.description = message.content or None
                 embed.timestamp = message.created_at
                 embed.url = message.jump_url
