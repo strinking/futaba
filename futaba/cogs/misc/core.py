@@ -2,7 +2,7 @@
 # cogs/misc/core.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2018 Jake Richardson, Ammon Smith, jackylam5
+# Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -33,10 +33,12 @@ __all__ = [
 class Miscellaneous:
     __slots__ = (
         'bot',
+        'journal',
     )
 
     def __init__(self, bot):
         self.bot = bot
+        self.journal = bot.get_broadcaster('/misc')
 
     @commands.command(name='ping')
     async def ping(self, ctx):
@@ -59,5 +61,6 @@ class Miscellaneous:
         Shuts down the bot. Only able to be run by an owner.
         '''
 
+        self.journal.send('admin/shutdown', ctx.guild, 'Shutting down bot', icon='shutdown')
         await Reactions.SUCCESS.add(ctx.message)
         exit()

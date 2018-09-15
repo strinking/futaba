@@ -2,7 +2,7 @@
 # sql/filter.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2018 Jake Richardson, Ammon Smith, jackylam5
+# Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -94,7 +94,8 @@ class FilterModel:
         try:
             self.sql.execute(ins)
             self.filter_cache[location][text] = filter_type
-        except IntegrityError:
+        except IntegrityError as error:
+            logger.error("Unable to insert new filter", exc_info=error)
             raise ValueError("This filter already exists")
 
     def update_filter(self, location, filter_type, text):
@@ -127,7 +128,7 @@ class FilterModel:
                 ))
         result = self.sql.execute(delet)
         self.filter_cache[location].pop(text, None)
-        assert result.rowcount in (0, 1), "Only one matching filter"
+        assert result.rowcount in (0, 1), "Multiple rows deleted"
         return bool(result.rowcount)
 
     def get_filter_immune_users(self, guild):
@@ -136,7 +137,7 @@ class FilterModel:
         sel = select([self.tb_filter_immune_users.c.user_id]) \
                 .where(self.tb_filter_immune_users.c.guild_id == guild.id)
         result = self.sql.execute(sel)
-        self.immune_users_cache[guild].update(user_id for user_id, in result.fetchmany())
+        self.immune_users_cache[guild].update(user_id for user_id, in result.fetchall())
         return self.immune_users_cache[guild]
 
     def user_is_filter_immune(self, guild, user):
