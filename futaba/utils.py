@@ -31,6 +31,7 @@ __all__ = [
     'fancy_timedelta',
     'async_partial',
     'first',
+    'lowerbool',
     'plural',
     'escape_backticks',
     'if_not_null',
@@ -109,6 +110,11 @@ def first(iterable, default=None):
         if item:
             return item
     return default
+
+def lowerbool(value):
+    ''' Returns 'true' if the expression is true, and 'false' if not. '''
+
+    return 'true' if value else 'false'
 
 def plural(num):
     ''' Gets the English plural ending for an ordinal number. '''
