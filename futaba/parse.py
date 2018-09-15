@@ -13,6 +13,7 @@
 import logging
 import re
 from itertools import islice
+from typing import Iterable, Optional
 
 import discord
 import textdistance
@@ -28,6 +29,7 @@ __all__ = [
     'name_discrim_search',
     'similar_names',
     'get_user_id',
+    'get_role_id',
     'similar_user_ids',
 ]
 
@@ -36,7 +38,7 @@ USER_MENTION_REGEX = re.compile(r'<@!?([0-9]+)>')
 ROLE_MENTION_REGEX = re.compile(r'<@&([0-9]+)>')
 USERNAME_DISCRIM_REGEX = re.compile(r'(.+)#([0-9]{4})')
 
-def channel_mention(mention):
+def channel_mention(mention) -> Optional[int]:
     '''
     Parses a channel mention, returning the ID inside.
     The id might not correspond with an actual channel.
@@ -50,7 +52,7 @@ def channel_mention(mention):
 
     return int(match[1])
 
-def user_mention(mention):
+def user_mention(mention) -> Optional[int]:
     '''
     Parses a user mention, returning the ID inside.
     The id might not correspond with an actual user.
@@ -64,7 +66,7 @@ def user_mention(mention):
 
     return int(match[1])
 
-def role_mention(mention):
+def role_mention(mention) -> Optional[int]:
     '''
     Parses the role mention, returning the ID insice.
     The id might not correspond with an actual role.
@@ -79,7 +81,7 @@ def role_mention(mention):
 
     return int(match[1])
 
-def name_discrim_search(name, users):
+def name_discrim_search(name, users) -> Optional[discord.User]:
     '''
     Searches for a user matching the string [username]#[discriminator].
     It searches case-insensitively.
@@ -99,7 +101,7 @@ def name_discrim_search(name, users):
     name = normalize_caseless(name)
     return discord.utils.find(check, users)
 
-def similar_names(word1, word2):
+def similar_names(word1, word2) -> float:
     '''
     Determines if the two strings are similar enough given the passed threshold.
     An alias for textdistance.overlap.similarity().
@@ -107,7 +109,7 @@ def similar_names(word1, word2):
 
     return textdistance.overlap.similarity(word1, word2)
 
-def get_user_id(name, users=()):
+def get_user_id(name, users=()) -> Optional[int]:
     '''
     Gets a user ID from the given string 'name'.
     You can pass in a list of users for additional
@@ -157,7 +159,41 @@ def get_user_id(name, users=()):
     logger.debug("get_user_id found no results!")
     return None
 
-def similar_user_ids(name, users, max_entries=5):
+def get_role_id(name, roles) -> Optional[int]:
+    '''
+    Gets a role from the given string 'name'.
+    You must pass a list of roles to search from.
+    '''
+
+    # Check for role ID
+    logger.debug("get_role_id: checking if it's an integer")
+    if name.isdigit():
+        return int(name)
+
+    # Check for mention
+    logger.debug("get_role_id: checking if it's a role mention")
+    id = role_mention(name)
+    if id is not None:
+        return discord.utils.get(roles, id=id)
+
+    # Check by name
+    logger.debug("get_role_id: checking by name")
+    role = discord.utils.get(roles, name=name)
+    if role is not None:
+        return role.id
+
+    # Check by name, case-insensitive
+    logger.debug("get_role_id: checking by name, case-insensitive")
+    name = normalize_caseless(name)
+    role = discord.utils.find(lambda r: name == normalize_caseless(r.name), roles)
+    if role is not None:
+        return role.id
+
+    # No results
+    logger.debug("get_role_id found no results!")
+    return None
+
+def similar_user_ids(name, users, max_entries=5) -> Iterable[id]:
     '''
     Gets a list of user IDs that are similar to the string 'name'.
     They are ranked in order of similarity, marking users who are

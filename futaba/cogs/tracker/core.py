@@ -78,7 +78,7 @@ class Tracker:
         else:
             self.typing.append((channel, user, when))
 
-        if channel.guild is None:
+        if getattr(channel, 'guild', None) is None:
             return
 
         logger.debug("Received typing event from %s (%d) in #%s (%d)",
