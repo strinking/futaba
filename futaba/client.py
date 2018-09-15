@@ -2,7 +2,7 @@
 # client.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2017 Jake Richardson, Ammon Smith, jackylam5
+# Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -17,22 +17,26 @@ Holds the custom discord client
 import logging
 import datetime
 import os
+import sys
 
 import discord
 from discord.ext import commands
 
+from .cogs.journal import Journal
+from .cogs.reloader import Reloader
 from .config import Configuration
 from .enums import Reactions
+from .journal import Broadcaster, LoggingOutputListener
 from .sql import SqlHandler
-from .utils import Reloader, plural
+from .utils import plural
 
 logger = logging.getLogger(__name__)
 
 class Bot(commands.AutoShardedBot):
     __slots__ = (
         'config',
-        'logger',
         'start_time',
+        'journal_cog',
         'debug_chan',
         'sql',
     )
@@ -40,6 +44,7 @@ class Bot(commands.AutoShardedBot):
     def __init__(self, config: Configuration):
         self.config = config
         self.start_time = datetime.datetime.utcnow()
+        self.journal_cog = None
         self.debug_chan = None
         self.sql = SqlHandler(config.database_url)
         super().__init__(command_prefix=self.get_prefix_sql,
@@ -58,9 +63,8 @@ class Bot(commands.AutoShardedBot):
 
     @property
     def uptime(self):
-        '''
-        Gets the uptime for the bot
-        '''
+        ''' Gets the bot's uptime '''
+
         return datetime.datetime.utcnow() - self.start_time
 
     def run_with_token(self):
@@ -87,12 +91,24 @@ class Bot(commands.AutoShardedBot):
         else:
             self.debug_chan = self.get_channel(int(self.config.debug_channel_id))
 
-        # Setup cog loading
+        # Setup mandatory cogs
+        self.add_cog(Journal(self))
+        logger.info("Loaded mandatory cog: Journal")
+
         self.add_cog(Reloader(self))
-        logger.info("Loaded cog: Reloader")
+        logger.info("Loaded mandatory cog: Reloader")
 
         def _cog_ok(cog):
-            return not cog.startswith('_') and os.path.isdir(f'futaba/cogs/{cog}')
+            # Special files
+            if cog.startswith('_'):
+                return False
+
+            # Check for mandatory cogs
+            if cog in Reloader.MANDATORY_COGS:
+                return False
+
+            # Cog is a directory
+            return os.path.isdir(f'futaba/cogs/{cog}')
 
         files = [cog for cog in os.listdir('futaba/cogs') if _cog_ok(cog)]
         logger.info("Cogs found: %s", ', '.join(files))
@@ -109,10 +125,17 @@ class Bot(commands.AutoShardedBot):
             else:
                 logger.info("Loaded cog: %s", file)
 
+        # Register logger to catch journal events
+        listener = LoggingOutputListener(self.journal_cog.router, '/')
+        self.journal_cog.router.register(listener)
+
         # Performing migrations
         self.sql.guilds.migrate(self)
 
         # Finished
+        pyver = sys.version_info
+        logger.info("Powered by Python %d.%d.%d", pyver.major, pyver.minor, pyver.micro)
+        logger.info("Using discord.py %s", discord.__version__)
         logger.info("Logged in as %s (%d)", self.user.name, self.user.id)
         logger.info("Connected to:")
         logger.info("* %d guild%s", len(self.guilds), plural(len(self.guilds)))
@@ -120,6 +143,13 @@ class Bot(commands.AutoShardedBot):
         logger.info("* %d users", len(self.users))
         logger.info("------")
         logger.info("Ready!")
+
+    def get_broadcaster(self, root):
+        '''
+        A utility method for instantiating a bound Broadcaster on the given path.
+        '''
+
+        return Broadcaster(self.journal_cog.router, root)
 
     async def on_guild_join(self, guild):
         '''

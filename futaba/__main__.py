@@ -2,7 +2,7 @@
 # __main__.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2017 Jake Richardson, Ammon Smith, jackylam5
+# Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -24,6 +24,7 @@ from . import client
 from .config import InvalidConfigError, load_config
 
 LOG_FILE = 'futaba.log'
+LOG_JOURNAL_FILE = 'futaba-journal.log'
 LOG_FILE_MODE = 'w'
 LOG_FORMAT = '[%(levelname)s] %(asctime)s %(name)s: %(message)s'
 LOG_DATE_FORMAT = '[%d/%m/%Y %H:%M:%S]'
@@ -40,6 +41,9 @@ if __name__ == '__main__':
     argparser.add_argument('-D', '--discord',
                            dest='discord_log', action='store_true',
                            help="Adds the Discord logger to the log file.")
+    argparser.add_argument('-J', '--no-journal',
+                            dest='journal_log', action='store_false',
+                            help="Adds the special Futaba journal logger to the journal log file.")
     argparser.add_argument('config_file',
                            help="Specify a configuration file to use. Keep it secret!")
     args = argparser.parse_args()
@@ -53,6 +57,14 @@ if __name__ == '__main__':
     logger = logging.getLogger(__package__)
     logger.setLevel(level=log_level)
     logger.addHandler(log_hndl)
+
+    if args.journal_log:
+        log_journal_hndl = logging.FileHandler(filename=LOG_JOURNAL_FILE, encoding='utf-8', mode=LOG_FILE_MODE)
+        log_journal_hndl.setFormatter(log_fmtr)
+
+        journal_logger = logging.getLogger('futaba.meta.journal')
+        journal_logger.setLevel(level=logging.DEBUG)
+        journal_logger.addHandler(log_journal_hndl)
 
     if args.discord_log:
         discord_logger = logging.getLogger('discord')
@@ -68,11 +80,11 @@ if __name__ == '__main__':
 
     try:
         config = load_config(args.config_file)
-    except (TomlDecodeError, IOError) as err:
-        logger.error("Unable to read configuration file.", exc_info=err)
+    except (TomlDecodeError, IOError) as error:
+        logger.error("Unable to read configuration file.", exc_info=error)
         exit(1)
-    except InvalidConfigError as err:
-        logger.error("Error when processing configuration file: %s", err)
+    except InvalidConfigError as error:
+        logger.error("Error when processing configuration file: %s", error)
         exit(1)
 
     # Open and run client

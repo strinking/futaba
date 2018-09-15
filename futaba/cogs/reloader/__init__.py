@@ -1,5 +1,5 @@
 #
-# __init__.py
+# cogs/reloader/__init__.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
@@ -10,21 +10,12 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-'''
-futaba - A Discord Mod bot for the Programming server
-'''
+from .core import Reloader
 
-from . import client, config, enums, journal, parse, permissions, utils
+def setup(bot):
+    '''
+    Setup for bot to add cog
+    '''
 
-__all__ = [
-    '__version__',
-    'client',
-    'config',
-    'enums',
-    'journal',
-    'parse',
-    'permissions',
-    'utils',
-]
-
-__version__ = '0.0.5'
+    cog = Reloader(bot)
+    bot.add_cog(cog)

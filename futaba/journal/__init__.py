@@ -1,5 +1,5 @@
 #
-# __init__.py
+# journal/__init__.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
@@ -11,20 +11,12 @@
 #
 
 '''
-futaba - A Discord Mod bot for the Programming server
+Module for defining components of the journaling system.
+This file instantiates a single, global router, and provides
+Broadcaster and Listener classes that rely on it.
 '''
 
-from . import client, config, enums, journal, parse, permissions, utils
-
-__all__ = [
-    '__version__',
-    'client',
-    'config',
-    'enums',
-    'journal',
-    'parse',
-    'permissions',
-    'utils',
-]
-
-__version__ = '0.0.5'
+from .broadcaster import Broadcaster
+from .impl import ChannelOutputListener, LoggingOutputListener
+from .listener import Listener
+from .router import Router

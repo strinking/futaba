@@ -2,7 +2,7 @@
 # config.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2017 Jake Richardson, Ammon Smith, jackylam5
+# Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -25,8 +25,15 @@ __all__ = [
 ]
 
 Configuration = namedtuple(
-    'Configuration',
-    ('token', 'owner_ids', 'default_prefix', 'debug_channel_id', 'database_url'),
+    'Configuration', (
+        'token',
+        'owner_ids',
+        'default_prefix',
+        'debug_channel_id',
+        'python_emoji_id',
+        'discord_py_emoji_id',
+        'database_url',
+    ),
 )
 
 class InvalidConfigError(RuntimeError):
@@ -62,6 +69,14 @@ def load_config(path):
     except ValueError:
         raise InvalidConfigError("Channel ID must be an integer", config)
 
+    config_emoji = _get(config, 'emojis')
+
+    try:
+        python_emoji_id = int(_get(config_emoji, 'python', 'emojis'))
+        discord_py_emoji_id = int(_get(config_emoji, 'discordpy', 'emojis'))
+    except ValueError:
+        raise InvalidConfigError("Emoji IDs must be integers")
+
     config_db = _get(config, 'database')
     db_url = _get(config_db, 'url', 'database')
 
@@ -70,5 +85,7 @@ def load_config(path):
         owner_ids=owner_ids,
         default_prefix=prefix,
         debug_channel_id=debug_channel,
+        python_emoji_id=python_emoji_id,
+        discord_py_emoji_id=discord_py_emoji_id,
         database_url=db_url,
     )

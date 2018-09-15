@@ -2,7 +2,7 @@
 # sql/models/guilds.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2017 Jake Richardson, Ammon Smith, jackylam5
+# Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -72,7 +72,7 @@ class GuildsModel:
         sel = select([self.tb_guilds.c.guild_id])
         result = self.sql.execute(sel)
 
-        return (guild_id for guild_id, in result.fetchmany())
+        return (guild_id for guild_id, in result.fetchall())
 
     @staticmethod
     def _get_guild(bot, guild_id):

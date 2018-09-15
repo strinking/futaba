@@ -1,8 +1,8 @@
 #
-# sql/_FILENAME_HERE_.py
+# sql/models/_FILENAME_HERE_.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2017 Jake Richardson, Ammon Smith, jackylam5
+# Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -30,3 +30,10 @@ from sqlalchemy.sql import select
 
 Column = functools.partial(Column, nullable=False)
 logger = logging.getLogger(__name__)
+
+__all__ = [
+    '_SKELETON_Model',
+]
+
+class _SKELETON_Model:
+    pass
