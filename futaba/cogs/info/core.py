@@ -23,7 +23,7 @@ import discord
 from discord.ext import commands
 
 from futaba.enums import Reactions
-from futaba.parse import get_user_id, similar_user_ids
+from futaba.parse import get_role_id, get_user_id, similar_user_ids
 from futaba.permissions import check_mod_perm
 from futaba.utils import escape_backticks, fancy_timedelta, first, plural
 
@@ -192,14 +192,24 @@ class Info:
 
     @commands.command(name='rinfo', aliases=['roleinfo', 'role'])
     @commands.guild_only()
-    async def rinfo(self, ctx, *, role: discord.Role = None):
+    async def rinfo(self, ctx, *, name: str = None):
         '''
         Fetches and prints information about a particular role in the current guild.
         If no role is specified, it displays information about the default role.
         '''
 
-        if role is None:
+        if name in (None, '@everyone', 'everyone', '@here', 'here', 'default'):
             role = ctx.guild.default_role
+        else:
+            id = get_role_id(name, ctx.guild.roles)
+            if id is None:
+                role = None
+            else:
+                role = discord.utils.get(ctx.guild.roles, id=id)
+
+        if role is None:
+            await Reactions.FAIL.add(ctx.message)
+            return
 
         logger.info("Running rinfo on '%s'", role)
 
