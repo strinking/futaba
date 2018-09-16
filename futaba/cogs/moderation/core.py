@@ -24,8 +24,8 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.enums import Reactions
-from futaba.utils import escape_backticks, user_disc
 from futaba.parse import get_user_id
+from futaba.utils import escape_backticks, user_discrim
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ class Moderation:
 
     __slots__ = (
         'bot',
-        'journal',        
+        'journal',
     )
 
     def __init__(self, bot):
@@ -69,11 +69,11 @@ class Moderation:
             embed = discord.Embed(description='Done! User Kicked')
             embed.add_field(name='Reason', value=reason)
 
-            mod = user_disc(ctx.author)
-            kicked = user_disc(member)
+            mod = user_discrim(ctx.author)
+            kicked = user_discrim(member)
             clean_reason = escape_backticks(reason)
             content = f'{mod} kicked {member.mention} ({kicked}) with reason: `{clean_reason}`'
-            
+
             await asyncio.gather(
                 ctx.guild.kick(member, reason=f'{reason} - {mod}'),
                 ctx.send(embed=embed),
@@ -81,13 +81,13 @@ class Moderation:
             )
 
             self.journal.send('member/kick', ctx.guild, content, icon='kick')
-        
-        except discord.errors.Forbidden:            
+
+        except discord.errors.Forbidden:
             await asyncio.gather(
                 ctx.send("Can't do that user has higher role than me"),
                 Reactions.DENY.add(ctx.message)
             )
-    
+
     @commands.command()
     @commands.guild_only()
     @permissions.check_admin()
@@ -101,11 +101,11 @@ class Moderation:
             embed = discord.Embed(description='Done! User Banned')
             embed.add_field(name='Reason', value=reason)
 
-            mod = user_disc(ctx.author)
-            banned = user_disc(member)
+            mod = user_discrim(ctx.author)
+            banned = user_discrim(member)
             clean_reason = escape_backticks(reason)
             content = f'{mod} banned {member.mention} ({banned}) with reason: `{clean_reason}`'
-            
+
             await asyncio.gather(
                 ctx.guild.ban(member, reason=f'{reason} - {mod}'),
                 ctx.send(embed=embed),
@@ -113,8 +113,8 @@ class Moderation:
             )
 
             self.journal.send('member/ban', ctx.guild, content, icon='ban')
-        
-        except discord.errors.Forbidden:            
+
+        except discord.errors.Forbidden:
             await asyncio.gather(
                 ctx.send("Can't do that user has higher role than me"),
                 Reactions.DENY.add(ctx.message)
@@ -135,11 +135,11 @@ class Moderation:
             embed = discord.Embed(description='Done! User Soft-banned')
             embed.add_field(name='Reason', value=reason)
 
-            mod = user_disc(ctx.author)
-            banned = user_disc(member)
+            mod = user_discrim(ctx.author)
+            banned = user_discrim(member)
             clean_reason = escape_backticks(reason)
             content = f'{mod} soft-banned {member.mention} ({banned}) with reason: `{clean_reason}`'
-            
+
             await asyncio.gather(
                 ctx.guild.ban(member, reason=f'{reason} - {mod}', delete_message_days=1),
                 ctx.send(embed=embed),
@@ -148,14 +148,14 @@ class Moderation:
 
             await ctx.guild.unban(member, reason=f'{reason} - {mod}')
 
-            self.journal.send('member/softban', ctx.guild, content, icon='soft')        
-        
-        except discord.errors.Forbidden:            
+            self.journal.send('member/softban', ctx.guild, content, icon='soft')
+
+        except discord.errors.Forbidden:
             await asyncio.gather(
                 ctx.send("Can't do that user has higher role than me"),
                 Reactions.DENY.add(ctx.message)
             )
-    
+
     @commands.command()
     @commands.guild_only()
     @permissions.check_admin()
@@ -172,11 +172,11 @@ class Moderation:
             embed = discord.Embed(description='Done! User Unbanned')
             embed.add_field(name='Reason', value=reason)
 
-            mod = user_disc(ctx.author)
-            unbanned = user_disc(member)
+            mod = user_discrim(ctx.author)
+            unbanned = user_discrim(member)
             clean_reason = escape_backticks(reason)
             content = f'{mod} unbanned {member.mention} ({unbanned}) with reason: `{clean_reason}`'
-            
+
             await asyncio.gather(
                 ctx.guild.unban(member, reason=f'{reason} - {mod}'),
                 ctx.send(embed=embed),
@@ -184,8 +184,8 @@ class Moderation:
             )
 
             self.journal.send('member/unban', ctx.guild, content, icon='unban')
-        
-        except discord.errors.Forbidden:            
+
+        except discord.errors.Forbidden:
             await asyncio.gather(
                 ctx.send("Can't do that user has higher role than me"),
                 Reactions.DENY.add(ctx.message)
@@ -202,8 +202,8 @@ class Moderation:
         ban_event = await guild.audit_logs(limit=1, action=BAN_ACTION).find(find_banned_user)
 
         if ban_event is not None:
-            mod = user_disc(ban_event.user)
-            banned = user_disc(ban_event.target)
+            mod = user_discrim(ban_event.user)
+            banned = user_discrim(ban_event.target)
             clean_reason = escape_backticks(ban_event.reason)
             content = f'{mod} banned {ban_event.target.mention} ({banned}) with reason: `{clean_reason}`'
 
@@ -225,8 +225,8 @@ class Moderation:
         kick_event = await guild.audit_logs(limit=1, action=KICK_ACTION).find(find_kicked_user)
 
         if kick_event is not None:
-            mod = user_disc(kick_event.user)
-            kicked = user_disc(kick_event.target)
+            mod = user_discrim(kick_event.user)
+            kicked = user_discrim(kick_event.target)
             clean_reason = escape_backticks(kick_event.reason)
             content = f'{mod} kicked {kick_event.target.mention} ({kicked}) with reason: `{clean_reason}`'
 
