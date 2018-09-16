@@ -47,9 +47,9 @@ class GuildsModel:
         self.tb_guilds = Table('guilds', meta,
                 Column('guild_id', BigInteger, primary_key=True))
 
-    # Note: Do NOT use @on_guild_join or @on_guild_leave here, this is
-    # where those hooks are invoked. This method itself is called by the
-    # client on an actual guild join or leave event.
+    # Note: Do NOT register the on_guild_join/on_guild_leave hooks here,
+    # as this is where those hooks are invoked. This method itself is
+    # called by the client on an actual guild join or leave event.
 
     def add_guild(self, guild):
         logger.info("Adding guild '%s' (%d) to guilds list", guild.name, guild.id)

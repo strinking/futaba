@@ -28,7 +28,7 @@ from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import select
 
-from ..hooks import on_guild_leave
+from ..hooks import register_hook
 
 Column = functools.partial(Column, nullable=False)
 ConfiguredChannelOutput = namedtuple('ConfiguredChannelOutput', ('channel', 'path', 'settings'))
@@ -66,6 +66,8 @@ class JournalModel:
                 UniqueConstraint('guild_id', 'channel_id', 'path', name='journal_outputs_uq'))
         self.journal_outputs_cache = defaultdict(dict)
         self.journal_guild_cache = set()
+
+        register_hook('on_guild_leave', self.delete_journal_channels)
 
     def add_journal_channel(self, channel, path, recursive):
         logger.info("Adding journal channel for #%s (%d) on path %s",
@@ -160,7 +162,6 @@ class JournalModel:
                 outputs.append(ConfiguredChannelOutput(channel=channel, path=path, settings=settings))
         return outputs
 
-    @on_guild_leave
     def delete_journal_channels(self, guild):
         logger.info("Removing all journal channel outputs for guild '%s' (%d)",
                 guild.name, guild.id)
