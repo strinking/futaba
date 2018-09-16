@@ -22,12 +22,12 @@ import logging
 from collections import defaultdict
 
 from sqlalchemy import and_, or_
-from sqlalchemy import BigInteger, Column, Enum, Table, Unicode
+from sqlalchemy import BigInteger, Column, Enum, LargeBinary, Table, Unicode
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import select
 
-from futaba.enums import LocationType, FilterType
+from futaba.enums import FilterType, LocationType
 from futaba.unicode import normalize_caseless
 
 Column = functools.partial(Column, nullable=False)
@@ -41,8 +41,10 @@ class FilterModel:
     __slots__ = (
         'sql',
         'tb_filters',
+        'tb_content_filters',
         'tb_filter_immune_users',
         'filter_cache',
+        'content_filter_cache',
         'immune_users_cache',
     )
 
@@ -54,11 +56,17 @@ class FilterModel:
                 Column('filter_type', Enum(FilterType)),
                 Column('text', Unicode),
                 UniqueConstraint('location_id', 'location_type', 'text', name='filter_uq'))
+        self.tb_content_filters = Table('content_filters', meta,
+                Column('guild_id', BigInteger, ForeignKey('guilds.guild_id')),
+                Column('filter_type', Enum(FilterType)),
+                Column('hashsum', LargeBinary),
+                UniqueConstraint('guild_id', 'hashsum', name='content_filter_uq'))
         self.tb_filter_immune_users = Table('filter_immune_users', meta,
                 Column('guild_id', BigInteger, ForeignKey('guilds.guild_id')),
                 Column('user_id', BigInteger),
                 UniqueConstraint('guild_id', 'user_id', name='filter_immune_users_uq'))
         self.filter_cache = {}
+        self.content_filter_cache = {}
         self.immune_users_cache = defaultdict(set)
 
     def get_filters(self, location):
@@ -104,14 +112,12 @@ class FilterModel:
         text = normalize_caseless(text)
         upd = self.tb_filters \
                 .update() \
-                .values(
-                    filter_type=filter_type,
-                    text=text,
-                ) \
+                .values(filter_type=filter_type) \
                 .where(and_(
                     self.tb_filters.c.location_id == location.id,
                     self.tb_filters.c.location_type == LocationType.of(location),
                     self.tb_filters.c.filter_type == filter_type,
+                    self.tb_filters.c.text == text,
                 ))
         self.sql.execute(upd)
         self.filter_cache[location][text] = filter_type
@@ -120,14 +126,74 @@ class FilterModel:
         logger.info("Deleting filter %r", text)
 
         delet = self.tb_filters \
-                .delete() \
-                .where(and_(
-                    self.tb_filters.c.location_id == location.id,
-                    self.tb_filters.c.location_type == LocationType.of(location),
-                    self.tb_filters.c.text == text,
-                ))
+                    .delete() \
+                    .where(and_(
+                        self.tb_filters.c.location_id == location.id,
+                        self.tb_filters.c.location_type == LocationType.of(location),
+                        self.tb_filters.c.text == text,
+                    ))
         result = self.sql.execute(delet)
         self.filter_cache[location].pop(text, None)
+        assert result.rowcount in (0, 1), "Multiple rows deleted"
+        return bool(result.rowcount)
+
+    def get_content_filters(self, guild):
+        logger.debug("Getting content filters for guild '%s' (%d)", guild.name, guild.id)
+        if guild in self.content_filter_cache:
+            logger.debug("Content filter list found in cache, returning")
+            return self.content_filter_cache[guild]
+
+        sel = select([self.tb_content_filters.c.filter_type, self.tb_content_filters.c.hashsum]) \
+                .where(self.tb_content_filters.c.guild_id == guild.id)
+        result = self.sql.execute(sel)
+
+        filters = {hashsum: filter_type for (filter_type, hashsum) in result.fetchall()}
+        self.content_filter_cache[guild] = filters
+        return filters
+
+    def add_content_filter(self, guild, filter_type, hashsum):
+        logger.info("Adding SHA512 hash %s to filter, level '%s'", hashsum.hex(), filter_type.value)
+
+        ins = self.tb_content_filters \
+                .insert() \
+                .values(
+                    guild_id=guild.id,
+                    filter_type=filter_type,
+                    hashsum=hashsum,
+                )
+
+        try:
+            self.sql.execute(ins)
+            self.content_filter_cache[guild][hashsum] = filter_type
+        except IntegrityError as error:
+            logger.error("Unable to insert new content filter", exc_info=error)
+            raise ValueError("This content filter already exists")
+
+    def update_content_filter(self, guild, filter_type, hashsum):
+        logger.info("Updating SHA512 hash %s to filter, level '%s'", hashsum.hex(), filter_type.value)
+
+        upd = self.tb_content_filters \
+                .update() \
+                .values(filter_type=filter_type) \
+                .where(and_(
+                    self.tb_content_filters.c.guild_id == guild.id,
+                    self.tb_content_filters.c.filter_type == filter_type,
+                    self.tb_content_filters.c.hashsum == hashsum,
+                ))
+        self.sql.execute(upd)
+        self.content_filter_cache[guild][hashsum] = filter_type
+
+    def delete_content_filter(self, guild, hashsum):
+        logger.info("Deleting SHA512 hash %s from filter", hashsum.hex())
+
+        delet = self.tb_content_filters \
+                    .delete() \
+                    .where(and_(
+                        self.tb_content_filters.c.guild_id == guild.id,
+                        self.tb_content_filters.c.hashsum == hashsum,
+                    ))
+        result = self.sql.execute(delet)
+        self.content_filter_cache[guild].pop(hashsum, None)
         assert result.rowcount in (0, 1), "Multiple rows deleted"
         return bool(result.rowcount)
 

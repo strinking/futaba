@@ -14,35 +14,34 @@
 Hooks that trigger on certain events to ensure database consistency.
 '''
 
-from collections import defaultdict
 import logging
 
 __all__ = [
+    'HOOK_NAMES',
+    'register_hook',
     'run_hooks',
-    'on_guild_join',
-    'on_guild_leave',
 ]
 
-_hooks = defaultdict(list)
+HOOK_NAMES = (
+    'on_guild_join',
+    'on_guild_leave',
+)
+
+_hooks = {name: [] for name in HOOK_NAMES}
 logger = logging.getLogger(__name__)
 
-def decorator_maker(name):
-    def decorator(func):
-        def hook(args, kwargs):
-            logger.debug("Running hook: %s:%r", name, func)
-            func(*args, **kwargs)
-        _hooks[name].append(hook)
-        return func
-    return decorator
+def register_hook(name, hook):
+    if name not in HOOK_NAMES:
+        raise ValueError(f"No such hook type: {name}")
+
+    logger.info("Register hook %r for '%s'", hook, name)
+    _hooks[name].append(hook)
 
 def run_hooks(name, *args, **kwargs):
     logger.info("Running hooks for '%s'...", name)
     for hook in _hooks[name]:
         try:
-            hook(args, kwargs)
+            hook(*args, **kwargs)
         except Exception as error:
             logger.error("Error running hook %r!", hook, exc_info=error)
     logger.debug("Finished '%s' hooks.", name)
-
-on_guild_join = decorator_maker('on_guild_join')
-on_guild_leave = decorator_maker('on_guild_leave')
