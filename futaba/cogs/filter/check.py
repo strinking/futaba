@@ -12,12 +12,14 @@
 
 import asyncio
 import logging
+import re
 from collections import namedtuple
 
 import discord
 
 from futaba.enums import FilterType, LocationType
 from futaba.utils import Dummy, escape_backticks
+from .download import download_attachments, download_links
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +35,10 @@ JOURNAL_PROPERTIES = {
     FilterType.BLOCK: JournalProperties(verb='Blocked', path='block', icon='deleted'),
     FilterType.JAIL: JournalProperties(verb='Jailed for', path='jail', icon='jail'),
 }
+
+URL_REGEX = re.compile(
+    r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)'
+)
 
 def journal_violation(journal, message, filter_type, flagged_content):
     props = JOURNAL_PROPERTIES[filter_type]
@@ -62,7 +68,12 @@ async def check_message(cog, message):
 
     logger.debug("Checking message id %d (by '%s' (%d)) for filter violations",
             message.id, message.author.name, message.author.id)
+    await asyncio.gather(
+        check_text_filter(cog, message),
+        check_file_filter(cog, message),
+    )
 
+async def check_text_filter(cog, message):
     # Also check embed content
     parts = [message.content]
     for embed in message.embeds:
@@ -95,10 +106,17 @@ async def check_message(cog, message):
                     filter_type,
                     filter_text
                 )
-
                 return
 
     logger.debug("No violations found!")
+
+async def check_file_filter(cog, message):
+    file_urls = URL_REGEX.findall(message.content)
+
+    # See if the message even has attachments
+    if not message.attachments:
+        logger.debug("Message has no attachments, skipping")
+        return
 
 async def check_message_edit(cog, before, after):
     logger.debug("Checking message edit")
