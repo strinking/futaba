@@ -37,6 +37,7 @@ __all__ = [
     'chunks',
     'lowerbool',
     'plural',
+    'user_discrim',
     'escape_backticks',
     'if_not_null',
     'unicode_repr',
@@ -143,6 +144,14 @@ def plural(num):
 
     return '' if num == 1 else 's'
 
+def user_discrim(user):
+    '''
+    Return the user's username and disc
+    in the format <username>#<discriminator>
+    '''
+
+    return f'{user.name}#{user.discriminator}'
+
 def escape_backticks(content):
     '''
     Replace any backticks in 'content' with a unicode lookalike to allow
@@ -191,11 +200,3 @@ def unicode_repr(s):
 
     escaped = ''.join(parts)
     return f'"{escaped}"'
-
-    def user_disc(user):
-        '''
-        Return the user's username and disc
-        in the format username#disc
-        '''
-
-        return f'{user.name}#{user.discriminator}'

@@ -23,6 +23,7 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.enums import Reactions
+from futaba.utils import user_discrim
 
 logger = logging.getLogger(__name__)
 
@@ -42,9 +43,6 @@ LISTENERS = (
     'on_guild_channel_create',
     'on_guild_channel_delete',
 )
-
-def user_discrim(user):
-    return f'{user.name}#{user.discriminator} ({user.id})'
 
 class Tracker:
     __slots__ = (
