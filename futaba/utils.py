@@ -41,9 +41,9 @@ def _get_git_hash():
         output = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD'])
         return output.decode('utf-8').strip()
     except FileNotFoundError:
-        logger.warn("'git' binary not found")
+        logger.warning("'git' binary not found")
     except subprocess.CalledProcessError:
-        logger.warn("Unable to call 'git rev-parse --short HEAD'")
+        logger.warning("Unable to call 'git rev-parse --short HEAD'")
 
     return ''
 

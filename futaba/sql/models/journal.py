@@ -169,3 +169,4 @@ class JournalModel:
                     .delete() \
                     .where(self.tb_journal_outputs.c.guild_id == guild.id)
         result = self.sql.execute(delet)
+        return bool(result.rowcount)
