@@ -14,8 +14,8 @@ import asyncio
 import logging
 from collections import defaultdict
 
-from futaba.enums import Reactions
-from futaba.utils import READABLE_CHAR_SET, unicode_repr
+from futaba.enums import FilterType, Reactions
+from futaba.utils import READABLE_CHAR_SET, chunks, unicode_repr
 from .filter import Filter
 
 '''
@@ -29,6 +29,7 @@ __all__ = [
     'add_filter',
     'delete_filter',
     'show_filter',
+    'show_content_filter',
 ]
 
 
@@ -69,8 +70,8 @@ async def show_filter(all_filters, message, author, location_name):
     if all_filters:
         contents = []
         lines = [f'**Filtered strings for {location_name}:**']
-
         filters = defaultdict(list)
+
         for filter_text, (_, filter_type) in all_filters.items():
             filters[filter_type].append(filter_text)
 
@@ -114,6 +115,44 @@ async def show_filter(all_filters, message, author, location_name):
     async def post_all():
         for content in contents:
             await author.send(content=content)
+
+    await asyncio.gather(
+        post_all(),
+        Reactions.SUCCESS.add(message),
+    )
+
+async def show_content_filter(all_filters, message):
+    if all_filters:
+        contents = []
+        lines = [f'**Filtered SHA512 hashes for {message.guild.name}:**']
+
+        for filter_type in FilterType:
+            lines.extend((
+                f'{filter_type.emoji} {filter_type.description} {filter_type.emoji}',
+                '```',
+            ))
+
+            hashsums = sorted(all_filters[filter_type])
+
+            if not hashsums:
+                lines.append('(none)')
+
+            for chunked in chunks(hashsums, 140):
+                for hashsum in chunked:
+                    if hashsum is None:
+                        break
+
+                    lines.append(hashsum)
+                lines.append('```')
+                contents.append('\n'.join(lines))
+                lines.clear()
+                lines.append('```')
+    else:
+        contents = [f'**No filtered SHA512 hashes for {message.guild.name}**']
+
+    async def post_all():
+        for content in contents:
+            await message.author.send(content=content)
 
     await asyncio.gather(
         post_all(),

@@ -27,7 +27,7 @@ from futaba.enums import FilterType, Reactions
 from futaba.utils import async_partial, escape_backticks
 from .check import check_message, check_message_edit
 from .filter import Filter
-from .manage import add_filter, delete_filter, show_filter
+from .manage import add_filter, delete_filter, show_filter, show_content_filter
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +40,7 @@ class Filtering:
         'bot',
         'journal',
         'filters',
+        'content_filters',
         'check_message',
         'check_message_edit',
     )
@@ -48,6 +49,7 @@ class Filtering:
         self.bot = bot
         self.journal = bot.get_broadcaster('/filter')
         self.filters = defaultdict(dict)
+        self.content_filters = defaultdict(lambda: {filter_type: set() for filter_type in FilterType})
         self.check_message = async_partial(check_message, self)
         self.check_message_edit = async_partial(check_message_edit, self)
 
@@ -93,6 +95,37 @@ class Filtering:
         if ctx.invoked_subcommand is None:
             # TODO send help
             await Reactions.FAIL.add(ctx.message)
+
+    @content.command(name='show', aliases=['display', 'list'])
+    @commands.guild_only()
+    async def content_show(self, ctx):
+        '''
+        List all currently filtered SHA512 file hashes in the guild's filter.
+        '''
+
+        await show_content_filter(self.content_filters[ctx.guild], ctx.message)
+
+    @content.command(name='flag', aliases=['warn', 'alert', 'notice'])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def content_flag(self, ctx, *hashsums: str):
+        '''
+        Adds the given SHA512 hashes to the guild's flagging filter, which notifies staff when posted.
+        It does not notify the user or delete the message.
+
+        You may pass multiple hashes.
+        '''
+
+        if not hashsums:
+            await Reactions.FAIL.add(ctx.message)
+        elif any(lambda h: len(h) != 128):
+            await asyncio.gather(
+                ctx.send(content='SHA512 hashes are 128 hex digits long.'),
+                Reactions.FAIL.add(ctx.message),
+            )
+        else:
+            # TODO
+            pass
 
     @filter.group(name='immune', aliases=['imm', 'ignore', 'ign'])
     @commands.guild_only()

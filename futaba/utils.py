@@ -16,6 +16,7 @@ import string
 import subprocess
 import unicodedata
 from datetime import datetime
+from itertools import zip_longest
 
 import discord
 from discord.ext import commands
@@ -33,6 +34,7 @@ __all__ = [
     'fancy_timedelta',
     'async_partial',
     'first',
+    'chunks',
     'lowerbool',
     'plural',
     'escape_backticks',
@@ -124,6 +126,12 @@ def first(iterable, default=None):
         if item:
             return item
     return default
+
+def chunks(iterable, count, fillvalue=None):
+    ''' Iterate over the iterable in 'count'-long chunks. '''
+
+    args = [iter(iterable)] * count
+    return zip_longest(*args, fillvalue=fillvalue)
 
 def lowerbool(value):
     ''' Returns 'true' if the expression is true, and 'false' if not. '''
