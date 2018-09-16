@@ -23,7 +23,7 @@ import discord
 from discord.ext import commands
 
 from futaba.enums import Reactions
-from futaba.parse import get_role_id, get_user_id, similar_user_ids
+from futaba.parse import get_channel_id, get_role_id, get_user_id, similar_user_ids
 from futaba.permissions import check_mod_perm
 from futaba.utils import escape_backticks, fancy_timedelta, first, plural
 
@@ -420,6 +420,62 @@ class Info:
             await ctx.send(content=f'#{i}:', embed=embed)
 
         await Reactions.SUCCESS.add(ctx.message)
+
+    @commands.command(name='cinfo', aliases=['chaninfo', 'channelinfo'])
+    @commands.guild_only()
+    async def cinfo(self, ctx, name: str = None):
+        '''
+        Fetches and prints information about a channel from the guild.
+        If no channel is specified, it displays information about the current channel.
+        '''
+
+        if name is None:
+            name = str(ctx.channel.mention)
+
+        id = get_channel_id(name, ctx.guild.channels)
+        if id is None:
+            logger.debug("No user ID found!")
+            await Reactions.FAIL.add(ctx.message)
+            return
+
+        channel = ctx.guild.get_channel(id)
+        logger.info("Running cinfo on '%s'", channel.name)
+
+        embed = discord.Embed()
+        embed.timestamp = channel.created_at
+        embed.add_field(name='ID', value=str(channel.id))
+        embed.add_field(name='Position', value=str(channel.position))
+        channel_category_name = channel.category.name if channel.category else '(none)'
+
+        if hasattr(channel, 'is_nsfw'):
+            nsfw = '\N{NO ONE UNDER EIGHTEEN SYMBOL}' if channel.is_nsfw() else ''
+
+        if isinstance(channel, discord.TextChannel):
+            embed.description = f'\N{MEMO} Text channel - {channel.mention} {nsfw}'
+            embed.add_field(name='Topic', value=(channel.topic or '(no topic)'))
+            embed.add_field(name='Channel category', value=channel_category_name)
+            embed.add_field(name='Changed roles', value=str(len(channel.changed_roles)))
+            embed.add_field(name='Members', value=str(len(channel.members)))
+        elif isinstance(channel, discord.VoiceChannel):
+            embed.description = f'\N{STUDIO MICROPHONE} Voice channel - {channel.mention}'
+            embed.add_field(name='Channel category', value=channel_category_name)
+            embed.add_field(name='Changed roles', value=str(len(channel.changed_roles)))
+            embed.add_field(name='Bitrate', value=str(channel.bitrate))
+            embed.add_field(name='User limit', value=str(channel.user_limit))
+            embed.add_field(name='Members', value=str(len(channel.members)))
+        elif isinstance(channel, discord.CategoryChannel):
+            embed.description = f'\N{BAR CHART} Channel category - {channel.name} {nsfw}'
+            chans = '\n'.join(chan.mention for chan in channel.channels)
+            embed.add_field(name='Channels', value=(chans or '(none)'))
+            embed.add_field(name='Channel category', value=channel_category_name)
+            embed.add_field(name='Changed roles', value=str(len(channel.changed_roles)))
+        else:
+            raise ValueError(f"Unknown guild channel: {channel!r}")
+
+        await asyncio.gather(
+            ctx.send(embed=embed),
+            Reactions.SUCCESS.add(ctx.message),
+        )
 
     @commands.command(name='ginfo', aliases=['guildinfo'])
     @commands.guild_only()

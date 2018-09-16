@@ -23,20 +23,38 @@ from futaba.utils import normalize_caseless
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    'channel_name',
     'channel_mention',
     'user_mention',
     'role_mention',
     'name_discrim_search',
     'similar_names',
+    'channel_name',
     'get_user_id',
     'get_role_id',
+    'get_channel_id',
     'similar_user_ids',
 ]
 
+CHANNEL_NAME_REGEX = re.compile(r'#?([^ ]+)')
 CHANNEL_MENTION_REGEX = re.compile(r'<#([0-9]+)>')
 USER_MENTION_REGEX = re.compile(r'<@!?([0-9]+)>')
 ROLE_MENTION_REGEX = re.compile(r'<@&([0-9]+)>')
 USERNAME_DISCRIM_REGEX = re.compile(r'(.+)#([0-9]{4})')
+
+def channel_name(name) -> Optional[str]:
+    '''
+    Parses a channel name, returning the name of the channel.
+    The name might not correspond with an actual channel.
+    '''
+
+    logger.debug("Checking possible channel name '%s'", name)
+
+    match = CHANNEL_NAME_REGEX.match(name)
+    if match is None:
+        return None
+
+    return match[1]
 
 def channel_mention(mention) -> Optional[int]:
     '''
@@ -191,6 +209,38 @@ def get_role_id(name, roles) -> Optional[int]:
 
     # No results
     logger.debug("get_role_id found no results!")
+    return None
+
+def get_channel_id(name, channels) -> Optional[int]:
+    '''
+    Gets a channel from the given string 'name'.
+    You must pass a list of channels to search from.
+    '''
+
+    # Search case-insensitively
+    name = normalize_caseless(name)
+
+    # Check for channel ID
+    logger.debug("get_channel_id: checking if it's an integer")
+    if name.isdigit():
+        return int(name)
+
+    # Check for channel mention
+    logger.debug("get_channel_id: checking if it's a channel mention")
+    id = channel_mention(name)
+    if id is not None:
+        return id
+
+    # Check by name
+    logger.debug("get_channel_id: checking if it's a name")
+    cname = channel_name(name)
+    if cname is not None:
+        channel = discord.utils.find(lambda c: name == normalize_caseless(c.name), channels)
+        if channel is not None:
+            return channel.id
+
+    # No results
+    logger.debug("get_channel_id found no results!")
     return None
 
 def similar_user_ids(name, users, max_entries=5) -> Iterable[id]:
