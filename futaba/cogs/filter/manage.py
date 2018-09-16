@@ -12,11 +12,14 @@
 
 import asyncio
 import logging
+import re
 from collections import defaultdict
 
 from futaba.enums import FilterType, Reactions
 from futaba.utils import READABLE_CHAR_SET, chunks, unicode_repr
 from .filter import Filter
+
+HEXADECIMAL_REGEX = re.compile(r'[A-Fa-f0-9]+')
 
 '''
 Helper module to do the management of adding and removing filters.
@@ -29,13 +32,15 @@ __all__ = [
     'add_filter',
     'delete_filter',
     'show_filter',
+    'add_content_filter',
+    'delete_content_filter',
     'show_content_filter',
 ]
 
 
 async def add_filter(bot, filters, message, location, level, text):
     logger.info("Adding %r to server filter '%s' for '%s' (%d)",
-            text, level, location.name, location.id)
+            text, level.value, location.name, location.id)
 
     try:
         with bot.sql.transaction():
@@ -51,10 +56,11 @@ async def add_filter(bot, filters, message, location, level, text):
         await Reactions.SUCCESS.add(message)
 
 async def delete_filter(bot, filters, message, location, text):
-    logger.info("Removing %r from server filter for '%s' (%d)", text, location.name, location.id)
+    logger.info("Removing %r from server filter for '%s' (%d)",
+            text, location.name, location.id)
 
-    with bot.sql.transaction():
-        try:
+    try:
+        with bot.sql.transaction():
             if bot.sql.filter.delete_filter(location, text):
                 filters[location].pop(text, None)
                 logger.debug("Succesfully removed filter")
@@ -62,9 +68,9 @@ async def delete_filter(bot, filters, message, location, text):
             else:
                 logger.debug("Filter was not present, deletion failed")
                 await Reactions.FAIL.add(message)
-        except Exception as error:
-            logger.error("Error deleting filter", exc_info=error)
-            await Reactions.FAIL.add(message)
+    except Exception as error:
+        logger.error("Error deleting filter", exc_info=error)
+        await Reactions.FAIL.add(message)
 
 async def show_filter(all_filters, message, author, location_name):
     if all_filters:
@@ -121,6 +127,55 @@ async def show_filter(all_filters, message, author, location_name):
         Reactions.SUCCESS.add(message),
     )
 
+async def check_hashsums(hashsums, message):
+    if not hashsums:
+        await Reactions.FAIL.add(message)
+    elif not all(lambda h: len(h) == 128 and HEXADECIMAL_REGEX.match(h)):
+        await asyncio.gather(
+            message.channel.send(content='SHA512 hashes are 128 hex digits long.'),
+            Reactions.FAIL.add(message),
+        )
+
+async def add_content_filter(bot, filters, message, level, hexsums):
+    logger.info("Adding SHA512s to guild content filter '%s': %s",
+            level.value, f'[{", ".join(hexsums)}]')
+
+    try:
+        hashsums = [bytes.fromhex(hexsum) for hexsum in hexsums]
+        with bot.sql.transaction():
+            for hashsum in hashsums:
+                if hashsum in filters[message.guild]:
+                    bot.sql.filter.update_content_filter(message.guild, level, hashsum)
+                else:
+                    bot.sql.filter.add_content_filter(message.guild, level, hashsum)
+
+        filters[message.guild][hashsum].update(hashsums)
+    except Exception as error:
+        logger.error("Error adding content filter", exc_info=error)
+        await Reactions.FAIL.add(message)
+    else:
+        await Reactions.SUCCESS.add(message)
+
+async def delete_content_filter(bot, filters, message, hexsums):
+    logger.info("Removing SHA512s from guild content filter: %s", f'[{", ".join(hexsums)}]')
+
+    try:
+        hashsums = [bytes.fromhex(hexsum) for hexsum in hexsums]
+        with bot.sql.transaction():
+            for hashsum in hashsums:
+                if hashsum in filters[message.guild]:
+                    bot.sql.filter.delete_filter(message.guild, hashsum)
+                    filters[message.guild].pop(hashsum, None)
+                    logger.debug("Succesfully removed hashsum from filter")
+                else:
+                    logger.debug("Filter was not present, not deleting")
+    except Exception as error:
+        logger.error("Error deleting filter", exc_info=error)
+        success = False
+        await Reactions.FAIL.add(message)
+    else:
+        await Reactions.SUCCESS.add(message)
+
 async def show_content_filter(all_filters, message):
     if all_filters:
         contents = []
@@ -142,7 +197,7 @@ async def show_content_filter(all_filters, message):
                     if hashsum is None:
                         break
 
-                    lines.append(hashsum)
+                    lines.append(hashsum.hex())
                 lines.append('```')
                 contents.append('\n'.join(lines))
                 lines.clear()

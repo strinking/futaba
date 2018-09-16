@@ -27,7 +27,8 @@ from futaba.enums import FilterType, Reactions
 from futaba.utils import async_partial, escape_backticks
 from .check import check_message, check_message_edit
 from .filter import Filter
-from .manage import add_filter, delete_filter, show_filter, show_content_filter
+from .manage import add_filter, delete_filter, show_filter
+from .manage import check_hashsums, add_content_filter, delete_content_filter, show_content_filter
 
 logger = logging.getLogger(__name__)
 
@@ -54,16 +55,23 @@ class Filtering:
         self.check_message_edit = async_partial(check_message_edit, self)
 
         get_filters = self.bot.sql.filter.get_filters
+        get_content_filters = self.bot.sql.filter.get_content_filters
 
         logger.info("Fetching previously stored filters")
         for guild in self.bot.guilds:
+            # Guild text filters
             for text, filter_type in get_filters(guild).items():
                 self.filters[guild][text] = (Filter(text), filter_type)
 
+            # Channel text filters
             for channel in guild.channels:
                 if isinstance(channel, discord.TextChannel):
                     for text, filter_type in get_filters(channel).items():
                         self.filters[channel][text] = (Filter(text), filter_type)
+
+            # Guild content filters
+            for hashsum, in filter_type in get_content_filters(guild).items():
+                self.content_filters[guild][filter_type].add(hashsum)
 
     def __unload(self):
         '''
@@ -87,7 +95,7 @@ class Filtering:
 
     @commands.group(name='cfilter', aliases=['content', 'filefilter', 'ffilter'])
     @commands.guild_only()
-    async def content(self, ctx):
+    async def cfilter(self, ctx):
         '''
         Adds, removes, or lists SHA512 hashes in the content filter.
         '''
@@ -96,19 +104,19 @@ class Filtering:
             # TODO send help
             await Reactions.FAIL.add(ctx.message)
 
-    @content.command(name='show', aliases=['display', 'list'])
+    @cfilter.command(name='show', aliases=['display', 'list'])
     @commands.guild_only()
-    async def content_show(self, ctx):
+    async def cfilter_show(self, ctx):
         '''
         List all currently filtered SHA512 file hashes in the guild's filter.
         '''
 
         await show_content_filter(self.content_filters[ctx.guild], ctx.message)
 
-    @content.command(name='flag', aliases=['warn', 'alert', 'notice'])
+    @cfilter.command(name='flag', aliases=['warn', 'alert', 'notice'])
     @commands.guild_only()
     @permissions.check_mod()
-    async def content_flag(self, ctx, *hashsums: str):
+    async def cfilter_flag(self, ctx, *hashsums: str):
         '''
         Adds the given SHA512 hashes to the guild's flagging filter, which notifies staff when posted.
         It does not notify the user or delete the message.
@@ -116,16 +124,48 @@ class Filtering:
         You may pass multiple hashes.
         '''
 
-        if not hashsums:
-            await Reactions.FAIL.add(ctx.message)
-        elif any(lambda h: len(h) != 128):
-            await asyncio.gather(
-                ctx.send(content='SHA512 hashes are 128 hex digits long.'),
-                Reactions.FAIL.add(ctx.message),
-            )
-        else:
-            # TODO
-            pass
+        await check_hashsums(hashsums, ctx.message)
+        await add_content_filter(self.bot, self.content_filters, ctx.message, FilterType.FLAG, hashsums)
+
+    @cfilter.command(name='block', aliases=['deny', 'autoremove'])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def cfilter_block(self, ctx, *hashsums: str):
+        '''
+        Adds the given SHA512 hashes to the guild's blocking filter, automatically deleting any messages.
+        It does not notify the user or delete the message.
+
+        You may pass multiple hashes.
+        '''
+
+        await check_hashsums(hashsums, ctx.message)
+        await add_content_filter(self.bot, self.content_filters, ctx.message, FilterType.BLOCK, hashsums)
+
+    @cfilter.command(name='jail', aliases=['dunce', 'punish', 'mute'])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def cfilter_jail(self, ctx, *hashsums: str):
+        '''
+        Adds the given SHA512 hashes to the guild's jailing filter, which will automatically jail users.
+        Like the blocking filter, it will also delete the message and send the user a warning.
+
+        You may pass multiple hashes.
+        '''
+
+        await check_hashsums(hashsums, ctx.message)
+        await add_content_filter(self.bot, self.content_filters, ctx.message, FilterType.BLOCK, hashsums)
+
+    @cfilter.command(name='remove', aliases=['rm', 'delete', 'del'])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def cfilter_remove(self, ctx, *hashsums: str):
+        '''
+        Removes the given SHA512 hashes from the guild filter.
+        You don't need to specify which filter level they were for.
+        '''
+
+        await check_hashsums(hashsums, ctx.message)
+        await delete_content_filter(self.bot, self.content_filters, ctx.message, hashsums)
 
     @filter.group(name='immune', aliases=['imm', 'ignore', 'ign'])
     @commands.guild_only()
@@ -287,7 +327,7 @@ class Filtering:
     async def filter_guild_remove(self, ctx, *, text: str):
         '''
         Removes the given string from the server-wide filter.
-        You don't need to tell it which filter level it was for.
+        You don't need to specify which filter level it was for.
         '''
 
         content = f'Removed guild filter for `{escape_backticks(text)}`'
