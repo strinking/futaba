@@ -193,7 +193,7 @@ def get_role_id(name, roles) -> Optional[int]:
     logger.debug("get_role_id found no results!")
     return None
 
-def similar_user_ids(name, users, max_entries=5) -> Iterable[id]:
+def similar_user_ids(name, users, max_entries=5) -> Iterable[int]:
     '''
     Gets a list of user IDs that are similar to the string 'name'.
     They are ranked in order of similarity, marking users who are
