@@ -12,7 +12,7 @@
 
 import asyncio
 import logging
-from io import BytesIO
+from hashlib import sha512
 
 import aiohttp
 
@@ -20,8 +20,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     'MAXIMUM_FILE_SIZE',
-    'download_attachments',
-    'download_links',
+    'sha512_links',
 ]
 
 # Maximum size to download from foreign sites
@@ -30,26 +29,28 @@ MAXIMUM_FILE_SIZE = 24 * 1024 * 1024
 # How large each read request should be
 CHUNK_SIZE = 4 * 1024
 
-async def download_attachments(attachments):
-    return await asyncio.gather(*[download_attachment(attach) for attach in attachments])
-
-async def download_links(urls):
+async def sha512_links(urls):
     async with aiohttp.ClientSession() as session:
-        buffers = await asyncio.gather(*[download_link(session, url) for url in urls])
+        buffers = await asyncio.gather(*[sha512_link(session, url) for url in urls])
     return buffers
 
-async def download_attachment(attachment):
-    io = BytesIO()
-    await attachment.save(io)
-    return io
+async def sha512_link(session, url):
+    hasher = sha512()
+    downloaded = 0
 
-async def download_link(session, url):
-    io = BytesIO()
-    async with session.get(link) as response:
-        while len(io.getbuffer()) < MAXIMUM_FILE_SIZE:
-            chunk = await response.content.read(CHUNK_SIZE)
-            if not chunk:
-                break
+    try:
+        async with session.get(url) as response:
+            while downloaded < MAXIMUM_FILE_SIZE:
+                chunk = await response.content.read(CHUNK_SIZE)
+                downloaded += len(chunk)
 
-            io.write(chunk)
-    return io
+                if chunk:
+                    hasher.update(chunk)
+                else:
+                    return hasher.digest()
+
+            logger.info("File was too large, bailing out (max file size: %d bytes)", MAXIMUM_FILE_SIZE)
+            return None
+    except Exception as error:
+        logger.info("Error while downloading %s for hash check", url, exc_info=error)
+        return None
