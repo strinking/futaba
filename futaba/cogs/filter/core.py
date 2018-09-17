@@ -50,7 +50,7 @@ class Filtering:
         self.bot = bot
         self.journal = bot.get_broadcaster('/filter')
         self.filters = defaultdict(dict)
-        self.content_filters = defaultdict(lambda: {filter_type: set() for filter_type in FilterType})
+        self.content_filters = defaultdict(dict)
         self.check_message = async_partial(check_message, self)
         self.check_message_edit = async_partial(check_message_edit, self)
 
@@ -70,8 +70,8 @@ class Filtering:
                         self.filters[channel][text] = (Filter(text), filter_type)
 
             # Guild content filters
-            for hashsum, in filter_type in get_content_filters(guild).items():
-                self.content_filters[guild][filter_type].add(hashsum)
+            for hashsum, filter_type in get_content_filters(guild).items():
+                self.content_filters[guild][hashsum] = filter_type
 
     def __unload(self):
         '''

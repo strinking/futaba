@@ -83,7 +83,7 @@ async def show_filter(all_filters, message, author, location_name):
 
         for filter_type, filter_texts in filters.items():
             lines.extend((
-                f'{filter_type.emoji} {filter_type.description} {filter_type.emoji}',
+                f'{filter_type.emoji} {filter_type.description} strings {filter_type.emoji}',
                 '```',
             ))
             current_len = sum(len(line) + 1 for line in lines)
@@ -130,7 +130,7 @@ async def show_filter(all_filters, message, author, location_name):
 async def check_hashsums(hashsums, message):
     if not hashsums:
         await Reactions.FAIL.add(message)
-    elif not all(lambda h: len(h) == 128 and HEXADECIMAL_REGEX.match(h)):
+    elif not all(map(lambda h: len(h) == 128 and HEXADECIMAL_REGEX.match(h), hashsums)):
         await asyncio.gather(
             message.channel.send(content='SHA512 hashes are 128 hex digits long.'),
             Reactions.FAIL.add(message),
@@ -149,7 +149,7 @@ async def add_content_filter(bot, filters, message, level, hexsums):
                 else:
                     bot.sql.filter.add_content_filter(message.guild, level, hashsum)
 
-        filters[message.guild][hashsum].update(hashsums)
+        filters[message.guild][hashsum] = level
     except Exception as error:
         logger.error("Error adding content filter", exc_info=error)
         await Reactions.FAIL.add(message)
@@ -181,27 +181,43 @@ async def show_content_filter(all_filters, message):
         contents = []
         lines = [f'**Filtered SHA512 hashes for {message.guild.name}:**']
 
+        # Set up filter list
+        filters = {filter_type: [] for filter_type in FilterType}
+
+        for hashsum, filter_type in all_filters.items():
+            filters[filter_type].append(hashsum.hex())
+
+        # Iterate through filters
         for filter_type in FilterType:
+            filters[filter_type].sort()
+            hexsums = filters[filter_type]
+
             lines.extend((
-                f'{filter_type.emoji} {filter_type.description} {filter_type.emoji}',
+                f'{filter_type.emoji} {filter_type.description} hashes {filter_type.emoji}',
                 '```',
             ))
 
-            hashsums = sorted(all_filters[filter_type])
-
-            if not hashsums:
+            if not hexsums:
                 lines.append('(none)')
 
-            for chunked in chunks(hashsums, 140):
-                for hashsum in chunked:
-                    if hashsum is None:
+            # Since we know the size of each hexsum, we know how many
+            # we can fit in a message
+            for chunked in chunks(hexsums, 140):
+                for hexsum in chunked:
+                    if hexsum is None:
                         break
 
-                    lines.append(hashsum.hex())
+                    lines.append(hexsum)
                 lines.append('```')
                 contents.append('\n'.join(lines))
                 lines.clear()
                 lines.append('```')
+
+            # For end of filter_level hashes
+            lines.append('```')
+
+        if len(lines) > 1:
+            contents.append('\n'.join(lines))
     else:
         contents = [f'**No filtered SHA512 hashes for {message.guild.name}**']
 

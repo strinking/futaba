@@ -61,11 +61,11 @@ class FilterType(Enum):
     @property
     def description(self):
         if self == FilterType.FLAG:
-            return 'Flagged words'
+            return 'Flagged'
         elif self == FilterType.BLOCK:
-            return 'Blocked words'
+            return 'Blocked'
         elif self == FilterType.JAIL:
-            return 'Auto-jail words'
+            return 'Auto-jail'
         else:
             raise ValueError(f"Invalid enum value: {self!r}")
 
