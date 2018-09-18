@@ -14,12 +14,13 @@ import asyncio
 import logging
 import re
 from collections import namedtuple
+from hashlib import sha512
 
 import discord
 
 from futaba.enums import FilterType, LocationType
 from futaba.utils import Dummy, escape_backticks
-from .download import sha512_links
+from .download import download_links
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +43,7 @@ FoundFileViolation = namedtuple('FoundFileViolation', (
     'message',
     'filter_type',
     'url',
-    'is_attachment',
+    'binio',
     'hashsum',
 ))
 
@@ -141,7 +142,8 @@ async def check_file_filter(cog, message):
         return
 
     triggered = None
-    hashsums = await sha512_links(file_urls)
+    buffers = await download_links(file_urls)
+    hashsums = [sha512(buffer).digest() for buffer in buffers]
     for hashsum, filter_type in cog.filters[message.guild]:
         try:
             index = hashsums.index(hashsum)
@@ -152,7 +154,6 @@ async def check_file_filter(cog, message):
                                 message=message,
                                 filter_type=filter_type,
                                 url=url,
-                                is_attachment=(index >= len(file_urls) - len(message.attachments)),
                                 hashsum=hashsum,
                             )
         except ValueError:
@@ -282,7 +283,7 @@ async def found_text_violation(triggered):
         # and having the dunce role available in settings
         logger.info("Jailing user for inappropriate message")
 
-async def found_file_violation(triggered):
+async def found_file_violation(triggered, reupload):
     '''
     Processes a violation of the file content filter. This coroutine is responsible
     for actual enforcement, based on the filter_type.
@@ -292,7 +293,7 @@ async def found_file_violation(triggered):
     message = triggered.message
     filter_type = triggered.filter_type
     url = triggered.url
-    is_attachment = triggered.is_attachment
+    binio = triggered.binio
     hashsum = triggered.hashsum
 
     logger.info("Punishing file content filter violation (%s, level %s) by '%s' (%d)",
@@ -307,12 +308,8 @@ async def found_file_violation(triggered):
         lines = [
             f'The message you posted in {message.channel.mention} contains or links to a file '
             f'that violates a {filter_type.value} content filter.',
+            f'The file can be found here: {url}',
         ]
-
-        if is_attachment:
-            lines.append(f'You attached a file (accessible here: {url}), which matched the given file filter:')
-        else:
-            lines.append(f'You linked {url}, which matched the given file filter:')
 
         lines.extend((
             '```',
@@ -326,7 +323,13 @@ async def found_file_violation(triggered):
                 f"As such, you have been assigned the `{jail_role.name}` role, until a moderator clears you.",
             ))
 
-        await message.author.send(content='\n'.join(lines))
+        if reupload:
+            lines.append("In case the link is broken, the file has been attached below:")
+            file = discord.File(binio)
+        else:
+            file = None
+
+        await message.author.send(content='\n'.join(lines), file=file)
 
     if severity >= FilterType.FLAG.level:
         logger.info("Notifying staff of filter violation")

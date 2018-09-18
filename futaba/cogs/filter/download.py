@@ -12,7 +12,7 @@
 
 import asyncio
 import logging
-from hashlib import sha512
+from io import BytesIO
 
 import aiohttp
 
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     'MAXIMUM_FILE_SIZE',
-    'sha512_links',
+    'download_links',
 ]
 
 # Maximum size to download from foreign sites
@@ -29,26 +29,22 @@ MAXIMUM_FILE_SIZE = 24 * 1024 * 1024
 # How large each read request should be
 CHUNK_SIZE = 4 * 1024
 
-async def sha512_links(urls):
+async def download_links(urls):
     async with aiohttp.ClientSession() as session:
-        buffers = await asyncio.gather(*[sha512_link(session, url) for url in urls])
+        buffers = await asyncio.gather(*[download_link(session, url) for url in urls])
     return buffers
 
-async def sha512_link(session, url):
-    hasher = sha512()
-    downloaded = 0
+async def download_link(session, url):
+    binio = BytesIO()
 
     try:
         async with session.get(url) as response:
-            while downloaded < MAXIMUM_FILE_SIZE:
+            while len(binio.getbuffer()) < MAXIMUM_FILE_SIZE:
                 chunk = await response.content.read(CHUNK_SIZE)
-                downloaded += len(chunk)
+                if not chunk:
+                    return binio
 
-                if chunk:
-                    hasher.update(chunk)
-                else:
-                    return hasher.digest()
-
+                binio.write(chunk)
             logger.info("File was too large, bailing out (max file size: %d bytes)", MAXIMUM_FILE_SIZE)
             return None
     except Exception as error:
