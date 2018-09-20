@@ -12,8 +12,9 @@
 
 import logging
 import re
+import unicodedata
 from itertools import islice
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Union
 
 import discord
 import textdistance
@@ -243,7 +244,7 @@ def get_channel_id(name, channels) -> Optional[int]:
     logger.debug("get_channel_id found no results!")
     return None
 
-def similar_user_ids(name, users, max_entries=5) -> Iterable[id]:
+def similar_user_ids(name, users, max_entries=5) -> Iterable[int]:
     '''
     Gets a list of user IDs that are similar to the string 'name'.
     They are ranked in order of similarity, marking users who are

@@ -75,7 +75,7 @@ def load_config(path):
         python_emoji_id = int(_get(config_emoji, 'python', 'emojis'))
         discord_py_emoji_id = int(_get(config_emoji, 'discordpy', 'emojis'))
     except ValueError:
-        raise InvalidConfigError("Emoji IDs must be integers")
+        raise InvalidConfigError("Emoji IDs must be integers", config)
 
     config_db = _get(config, 'database')
     db_url = _get(config_db, 'url', 'database')
