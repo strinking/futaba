@@ -136,11 +136,3 @@ def unicode_repr(s):
 
     escaped = ''.join(parts)
     return f'"{escaped}"'
-
-    def user_disc(user):
-        '''
-        Return the user's username and disc
-        in the format username#disc
-        '''
-
-        return f'{user.name}#{user.discriminator}'

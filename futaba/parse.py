@@ -147,9 +147,10 @@ def get_emoji(name, emojis) -> Optional[Union[str, discord.Emoji]]:
     if name.isdigit():
         id = int(name)
         try:
-            return chr(id)
+            emoji = chr(id)
         except (OverflowError, ValueError):
-            return discord.utils.get(emojis, id=int(name))
+            emoji = discord.utils.get(emojis, id=int(name))
+        return emoji
 
     logger.debug("get_emoji: checking if it's a Discord emoji mention")
     match = EMOJI_REGEX.match(name)
