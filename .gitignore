@@ -11,6 +11,7 @@ venv/
 # Artifacts
 __pycache__
 *.py[cdo]
+/unidata-blocks.txt
 
 # Logging
 *.log

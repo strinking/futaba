@@ -14,7 +14,7 @@
 futaba - A Discord Mod bot for the Programming server
 '''
 
-from . import client, config, enums, journal, parse, permissions, utils
+from . import client, config, enums, journal, parse, permissions, unicode, utils
 
 __all__ = [
     '__version__',
@@ -24,6 +24,7 @@ __all__ = [
     'journal',
     'parse',
     'permissions',
+    'unicode',
     'utils',
 ]
 

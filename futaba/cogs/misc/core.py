@@ -16,6 +16,7 @@ Cog for misceallaneous commands that don't really belong anywhere else.
 
 import asyncio
 import logging
+import random
 import sys
 from datetime import datetime
 
@@ -50,8 +51,8 @@ class Miscellaneous:
         ms = duration.microseconds / 1000
 
         await asyncio.gather(
+            ctx.send(content=f"Pong! `{ms} ms`"),
             Reactions.SUCCESS.add(ctx.message),
-            ctx.send(content=f"Pong! `{ms} ms`")
         )
 
     @commands.command(name='about', aliases=['aboutme', 'botinfo'])
@@ -77,8 +78,23 @@ class Miscellaneous:
             embed.colour = ctx.guild.me.colour
 
         await asyncio.gather(
-            Reactions.SUCCESS.add(ctx.message),
             ctx.send(embed=embed),
+            Reactions.SUCCESS.add(ctx.message),
+        )
+
+    @commands.command(name='randomemoji', aliases=['randemoji', 'remoji'])
+    async def random_emoji(self, ctx):
+        '''
+        Sends a random emoji from any the servers the bot is connected to.
+        '''
+
+        if not self.bot.emojis:
+            await Reactions.FAIL.add(ctx.message)
+            return
+
+        await asyncio.gather(
+            ctx.send(content=random.choice(self.bot.emojis)),
+            Reactions.SUCCESS.add(ctx.message),
         )
 
     @commands.command(name='shutdown', aliases=['halt'])

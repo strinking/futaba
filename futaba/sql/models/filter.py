@@ -28,7 +28,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import select
 
 from futaba.enums import LocationType, FilterType
-from futaba.utils import normalize_caseless
+from futaba.unicode import normalize_caseless
 
 Column = functools.partial(Column, nullable=False)
 logger = logging.getLogger(__name__)
