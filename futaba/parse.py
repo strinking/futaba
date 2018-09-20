@@ -31,12 +31,14 @@ __all__ = [
     'name_discrim_search',
     'similar_names',
     'channel_name',
+    'get_emoji',
     'get_user_id',
     'get_role_id',
     'get_channel_id',
     'similar_user_ids',
 ]
 
+EMOJI_REGEX = re.compile(r'<:([A-Za-z0-9_\-]+(?:~[0-9]+)?):([0-9]+)>')
 CHANNEL_NAME_REGEX = re.compile(r'#?([^ ]+)')
 CHANNEL_MENTION_REGEX = re.compile(r'<#([0-9]+)>')
 USER_MENTION_REGEX = re.compile(r'<@!?([0-9]+)>')
@@ -127,6 +129,46 @@ def similar_names(word1, word2) -> float:
     '''
 
     return textdistance.overlap.similarity(word1, word2)
+
+def get_emoji(name, emojis) -> Optional[Union[str, discord.Emoji]]:
+    '''
+    Attempts to get a discord or unicode emoji described by the given name.
+    You must pass a list of all emojis the client has access to.
+    '''
+
+    logger.debug("get_emoji: checking if it's not ASCII")
+    if not any(map(str.isascii, name)):
+        return name
+
+    # Search case-insensitively
+    name = normalize_caseless(name)
+
+    logger.debug("get_emoji: checking if it's an integer")
+    if name.isdigit():
+        id = int(name)
+        try:
+            return chr(id)
+        except (OverflowError, ValueError):
+            return discord.utils.get(emojis, id=int(name))
+
+    logger.debug("get_emoji: checking if it's a Discord emoji mention")
+    match = EMOJI_REGEX.match(name)
+    if match is not None:
+        return discord.utils.get(emojis, id=int(match[2]))
+
+    logger.debug("get_emoji: checking for Discord emoji name")
+    emoji = discord.utils.find(lambda e: name == normalize_caseless(e.name), emojis)
+    if emoji is not None:
+        return emoji
+
+    logger.debug("get_emoji: checking if it's a unicode emoji name")
+    try:
+        return unicodedata.lookup(name)
+    except KeyError:
+        pass
+
+    # No results
+    return None
 
 def get_user_id(name, users=()) -> Optional[int]:
     '''

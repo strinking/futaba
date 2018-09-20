@@ -101,7 +101,7 @@ def unicode_block(s):
     codepoint = ord(s)
     index = bisect(UNICODE_BLOCK_STARTS, codepoint)
     try:
-        start, stop, block = UNICODE_BLOCKS[index]
+        _, stop, block = UNICODE_BLOCKS[index]
     except IndexError:
         return None
 

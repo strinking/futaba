@@ -16,22 +16,29 @@ Informational commands that make finding and gathering data easier.
 
 import asyncio
 import logging
+import unicodedata
 from collections import Counter
+from functools import partial
 from itertools import islice
 
 import discord
 from discord.ext import commands
 
 from futaba.enums import Reactions
-from futaba.parse import get_channel_id, get_role_id, get_user_id, similar_user_ids
+from futaba.parse import get_emoji, get_channel_id, get_role_id, get_user_id, similar_user_ids
 from futaba.permissions import check_mod_perm
-from futaba.utils import escape_backticks, fancy_timedelta, first, plural
+from futaba.utils import escape_backticks, fancy_timedelta, first, lowerbool, plural
+from futaba.unicode import UNICODE_CATEGORY_NAME, unicode_repr
 
 logger = logging.getLogger(__package__)
 
 __all__ = [
     'Info',
 ]
+
+def get_unicode_url(emoji):
+    name = '-'.join(map(lambda c: f'{ord(c):x}', emoji))
+    return f'https://raw.githubusercontent.com/twitter/twemoji/gh-pages/72x72/{name}.png'
 
 class Info:
     '''
@@ -40,6 +47,50 @@ class Info:
 
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.command(name='emoji', aliases=['emojis'])
+    async def emoji(self, ctx, name: str):
+        '''
+        Fetches information about the given emojis.
+        This supports both Discord and unicode emojis, and will check
+        all guilds the bot is in.
+        '''
+
+        if not name:
+            await Reactions.FAIL.add(ctx.message)
+            return
+
+        emoji = get_emoji(name, self.bot.emojis)
+        if emoji is None:
+            embed = discord.Embed(colour=discord.Colour.dark_red())
+            embed.set_author(name=name)
+            embed.description = 'No emoji with this name found or not in the same guild.'
+        elif isinstance(emoji, discord.Emoji):
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
+            embed.description = str(emoji)
+            embed.set_author(name=name)
+            embed.set_thumbnail(url=emoji.url)
+            embed.add_field(name='Name', value=emoji.name)
+            embed.add_field(name='Guild', value=emoji.guild.name)
+            embed.add_field(name='Managed', value=lowerbool(emoji.managed))
+            embed.timestamp = emoji.created_at
+        elif isinstance(emoji, str):
+            category = lambda ch: UNICODE_CATEGORY_NAME[unicodedata.category(ch)]
+
+            embed = discord.Embed(colour=discord.Colour.dark_gold())
+            embed.description = emoji
+            embed.set_author(name=name)
+            embed.set_thumbnail(url=get_unicode_url(emoji)); print(get_unicode_url(emoji))
+            embed.add_field(name='Name', value=', '.join(map(unicodedata.name, emoji)))
+            embed.add_field(name='Codepoint', value=', '.join(map(lambda c: str(ord(c)), emoji)))
+            embed.add_field(name='Category', value='; '.join(map(category, emoji)))
+        else:
+            raise ValueError(f"Unknown emoji object returned: {emoji!r}")
+
+        await asyncio.gather(
+            ctx.send(embed=embed),
+            Reactions.SUCCESS.add(ctx.message),
+        )
 
     @commands.command(name='uinfo', aliases=['userinfo'])
     async def uinfo(self, ctx, *, name: str = None):
