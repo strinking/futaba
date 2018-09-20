@@ -16,22 +16,29 @@ Informational commands that make finding and gathering data easier.
 
 import asyncio
 import logging
+import unicodedata
 from collections import Counter
+from functools import partial
 from itertools import islice
 
 import discord
 from discord.ext import commands
 
 from futaba.enums import Reactions
-from futaba.parse import get_role_id, get_user_id, similar_user_ids
+from futaba.parse import get_emoji, get_channel_id, get_role_id, get_user_id, similar_user_ids
 from futaba.permissions import check_mod_perm
-from futaba.utils import escape_backticks, fancy_timedelta, first, plural
+from futaba.utils import escape_backticks, fancy_timedelta, first, lowerbool, plural
+from futaba.unicode import UNICODE_CATEGORY_NAME, unicode_repr
 
 logger = logging.getLogger(__package__)
 
 __all__ = [
     'Info',
 ]
+
+def get_unicode_url(emoji):
+    name = '-'.join(map(lambda c: f'{ord(c):x}', emoji))
+    return f'https://raw.githubusercontent.com/twitter/twemoji/gh-pages/72x72/{name}.png'
 
 class Info:
     '''
@@ -40,6 +47,50 @@ class Info:
 
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.command(name='emoji', aliases=['emojis'])
+    async def emoji(self, ctx, name: str):
+        '''
+        Fetches information about the given emojis.
+        This supports both Discord and unicode emojis, and will check
+        all guilds the bot is in.
+        '''
+
+        if not name:
+            await Reactions.FAIL.add(ctx.message)
+            return
+
+        emoji = get_emoji(name, self.bot.emojis)
+        if emoji is None:
+            embed = discord.Embed(colour=discord.Colour.dark_red())
+            embed.set_author(name=name)
+            embed.description = 'No emoji with this name found or not in the same guild.'
+        elif isinstance(emoji, discord.Emoji):
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
+            embed.description = str(emoji)
+            embed.set_author(name=name)
+            embed.set_thumbnail(url=emoji.url)
+            embed.add_field(name='Name', value=emoji.name)
+            embed.add_field(name='Guild', value=emoji.guild.name)
+            embed.add_field(name='Managed', value=lowerbool(emoji.managed))
+            embed.timestamp = emoji.created_at
+        elif isinstance(emoji, str):
+            category = lambda ch: UNICODE_CATEGORY_NAME[unicodedata.category(ch)]
+
+            embed = discord.Embed(colour=discord.Colour.dark_gold())
+            embed.description = emoji
+            embed.set_author(name=name)
+            embed.set_thumbnail(url=get_unicode_url(emoji))
+            embed.add_field(name='Name', value=', '.join(map(unicodedata.name, emoji)))
+            embed.add_field(name='Codepoint', value=', '.join(map(lambda c: str(ord(c)), emoji)))
+            embed.add_field(name='Category', value='; '.join(map(category, emoji)))
+        else:
+            raise ValueError(f"Unknown emoji object returned: {emoji!r}")
+
+        await asyncio.gather(
+            ctx.send(embed=embed),
+            Reactions.SUCCESS.add(ctx.message),
+        )
 
     @commands.command(name='uinfo', aliases=['userinfo'])
     async def uinfo(self, ctx, *, name: str = None):
@@ -420,6 +471,98 @@ class Info:
             await ctx.send(content=f'#{i}:', embed=embed)
 
         await Reactions.SUCCESS.add(ctx.message)
+
+    @commands.command(name='cinfo', aliases=['chaninfo', 'channelinfo'])
+    @commands.guild_only()
+    async def cinfo(self, ctx, name: str = None):
+        '''
+        Fetches and prints information about a channel from the guild.
+        If no channel is specified, it displays information about the current channel.
+        '''
+
+        if name is None:
+            name = str(ctx.channel.mention)
+
+        id = get_channel_id(name, ctx.guild.channels)
+        if id is None:
+            logger.debug("No user ID found!")
+            await Reactions.FAIL.add(ctx.message)
+            return
+
+        channel = ctx.guild.get_channel(id)
+        logger.info("Running cinfo on '%s'", channel.name)
+
+        embed = discord.Embed()
+        embed.timestamp = channel.created_at
+        embed.add_field(name='ID', value=str(channel.id))
+        embed.add_field(name='Position', value=str(channel.position))
+        channel_category_name = channel.category.name if channel.category else '(none)'
+
+        if hasattr(channel, 'is_nsfw'):
+            nsfw = '\N{NO ONE UNDER EIGHTEEN SYMBOL}' if channel.is_nsfw() else ''
+
+        if isinstance(channel, discord.TextChannel):
+            embed.description = f'\N{MEMO} Text channel - {channel.mention} {nsfw}'
+            embed.add_field(name='Topic', value=(channel.topic or '(no topic)'))
+            embed.add_field(name='Channel category', value=channel_category_name)
+            embed.add_field(name='Changed roles', value=str(len(channel.changed_roles)))
+            embed.add_field(name='Members', value=str(len(channel.members)))
+        elif isinstance(channel, discord.VoiceChannel):
+            embed.description = f'\N{STUDIO MICROPHONE} Voice channel - {channel.mention}'
+            embed.add_field(name='Channel category', value=channel_category_name)
+            embed.add_field(name='Changed roles', value=str(len(channel.changed_roles)))
+            embed.add_field(name='Bitrate', value=str(channel.bitrate))
+            embed.add_field(name='User limit', value=str(channel.user_limit))
+            embed.add_field(name='Members', value=str(len(channel.members)))
+        elif isinstance(channel, discord.CategoryChannel):
+            embed.description = f'\N{BAR CHART} Channel category - {channel.name} {nsfw}'
+            chans = '\n'.join(chan.mention for chan in channel.channels)
+            embed.add_field(name='Channels', value=(chans or '(none)'))
+            embed.add_field(name='Channel category', value=channel_category_name)
+            embed.add_field(name='Changed roles', value=str(len(channel.changed_roles)))
+        else:
+            raise ValueError(f"Unknown guild channel: {channel!r}")
+
+        await asyncio.gather(
+            ctx.send(embed=embed),
+            Reactions.SUCCESS.add(ctx.message),
+        )
+
+    @commands.command(name='channels', aliases=['chans', 'listchannels', 'listchans'])
+    @commands.guild_only()
+    async def channels(self, ctx):
+        ''' Lists all channels in the guild. '''
+
+        def category(chan):
+            if chan.category is None:
+                return ''
+            else:
+                return f'[{chan.category.name}]'
+
+        if ctx.guild.text_channels:
+            text_channels = '\n'.join(f'{chan.mention} {category(chan)}' for chan in ctx.guild.text_channels)
+        else:
+            text_channels = '(none)'
+
+        if ctx.guild.voice_channels:
+            voice_channels = '\n'.join(f'{chan.name} {category(chan)}' for chan in ctx.guild.voice_channels)
+        else:
+            voice_channels = '(none)'
+
+        if ctx.guild.categories:
+            channel_categories = '\n'.join(f'{chan.name} {category(chan)}' for chan in ctx.guild.categories)
+        else:
+            channel_categories = '(none)'
+
+        embed = discord.Embed()
+        embed.add_field(name='\N{MEMO} Text channels', value=text_channels)
+        embed.add_field(name='\N{STUDIO MICROPHONE} Voice channels', value=voice_channels)
+        embed.add_field(name='\N{BAR CHART} Channel categories', value=channel_categories)
+
+        await asyncio.gather(
+            ctx.send(embed=embed),
+            Reactions.SUCCESS.add(ctx.message),
+        )
 
     @commands.command(name='ginfo', aliases=['guildinfo'])
     @commands.guild_only()

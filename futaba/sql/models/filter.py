@@ -28,7 +28,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import select
 
 from futaba.enums import FilterType, LocationType
-from futaba.utils import normalize_caseless
+from futaba.unicode import normalize_caseless
 
 from ..hooks import register_hook
 

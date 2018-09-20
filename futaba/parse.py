@@ -12,31 +12,52 @@
 
 import logging
 import re
+import unicodedata
 from itertools import islice
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Union
 
 import discord
 import textdistance
 
-from futaba.utils import normalize_caseless
+from futaba.unicode import normalize_caseless
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    'channel_name',
     'channel_mention',
     'user_mention',
     'role_mention',
     'name_discrim_search',
     'similar_names',
+    'channel_name',
+    'get_emoji',
     'get_user_id',
     'get_role_id',
+    'get_channel_id',
     'similar_user_ids',
 ]
 
+EMOJI_REGEX = re.compile(r'<:([A-Za-z0-9_\-]+(?:~[0-9]+)?):([0-9]+)>')
+CHANNEL_NAME_REGEX = re.compile(r'#?([^ ]+)')
 CHANNEL_MENTION_REGEX = re.compile(r'<#([0-9]+)>')
 USER_MENTION_REGEX = re.compile(r'<@!?([0-9]+)>')
 ROLE_MENTION_REGEX = re.compile(r'<@&([0-9]+)>')
 USERNAME_DISCRIM_REGEX = re.compile(r'(.+)#([0-9]{4})')
+
+def channel_name(name) -> Optional[str]:
+    '''
+    Parses a channel name, returning the name of the channel.
+    The name might not correspond with an actual channel.
+    '''
+
+    logger.debug("Checking possible channel name '%s'", name)
+
+    match = CHANNEL_NAME_REGEX.match(name)
+    if match is None:
+        return None
+
+    return match[1]
 
 def channel_mention(mention) -> Optional[int]:
     '''
@@ -108,6 +129,47 @@ def similar_names(word1, word2) -> float:
     '''
 
     return textdistance.overlap.similarity(word1, word2)
+
+def get_emoji(name, emojis) -> Optional[Union[str, discord.Emoji]]:
+    '''
+    Attempts to get a discord or unicode emoji described by the given name.
+    You must pass a list of all emojis the client has access to.
+    '''
+
+    logger.debug("get_emoji: checking if it's not ASCII")
+    if not any(map(str.isascii, name)):
+        return name
+
+    # Search case-insensitively
+    name = normalize_caseless(name)
+
+    logger.debug("get_emoji: checking if it's an integer")
+    if name.isdigit():
+        id = int(name)
+        try:
+            emoji = chr(id)
+        except (OverflowError, ValueError):
+            emoji = discord.utils.get(emojis, id=int(name))
+        return emoji
+
+    logger.debug("get_emoji: checking if it's a Discord emoji mention")
+    match = EMOJI_REGEX.match(name)
+    if match is not None:
+        return discord.utils.get(emojis, id=int(match[2]))
+
+    logger.debug("get_emoji: checking for Discord emoji name")
+    emoji = discord.utils.find(lambda e: name == normalize_caseless(e.name), emojis)
+    if emoji is not None:
+        return emoji
+
+    logger.debug("get_emoji: checking if it's a unicode emoji name")
+    try:
+        return unicodedata.lookup(name)
+    except KeyError:
+        pass
+
+    # No results
+    return None
 
 def get_user_id(name, users=()) -> Optional[int]:
     '''
@@ -191,6 +253,38 @@ def get_role_id(name, roles) -> Optional[int]:
 
     # No results
     logger.debug("get_role_id found no results!")
+    return None
+
+def get_channel_id(name, channels) -> Optional[int]:
+    '''
+    Gets a channel from the given string 'name'.
+    You must pass a list of channels to search from.
+    '''
+
+    # Search case-insensitively
+    name = normalize_caseless(name)
+
+    # Check for channel ID
+    logger.debug("get_channel_id: checking if it's an integer")
+    if name.isdigit():
+        return int(name)
+
+    # Check for channel mention
+    logger.debug("get_channel_id: checking if it's a channel mention")
+    id = channel_mention(name)
+    if id is not None:
+        return id
+
+    # Check by name
+    logger.debug("get_channel_id: checking if it's a name")
+    cname = channel_name(name)
+    if cname is not None:
+        channel = discord.utils.find(lambda c: name == normalize_caseless(c.name), channels)
+        if channel is not None:
+            return channel.id
+
+    # No results
+    logger.debug("get_channel_id found no results!")
     return None
 
 def similar_user_ids(name, users, max_entries=5) -> Iterable[int]:

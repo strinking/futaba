@@ -12,9 +12,7 @@
 
 import asyncio
 import logging
-import string
 import subprocess
-import unicodedata
 from datetime import datetime
 from itertools import zip_longest
 
@@ -27,10 +25,8 @@ from futaba.enums import Reactions
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    'READABLE_CHAR_SET',
     'GIT_HASH',
     'Dummy',
-    'normalize_caseless',
     'fancy_timedelta',
     'async_partial',
     'first',
@@ -40,7 +36,6 @@ __all__ = [
     'user_discrim',
     'escape_backticks',
     'if_not_null',
-    'unicode_repr',
 ]
 
 def _get_git_hash():
@@ -54,7 +49,6 @@ def _get_git_hash():
 
     return ''
 
-READABLE_CHAR_SET = frozenset(string.printable) - frozenset('\t\n\r\x0b\x0c')
 GIT_HASH = _get_git_hash()
 
 class Dummy:
@@ -63,15 +57,6 @@ class Dummy:
     '''
 
     pass
-
-def normalize_caseless(s):
-    '''
-    Shifts the string into a uniform case (lower-case),
-    but also accounting for unicode characters. Used
-    for case-insenstive comparisons.
-    '''
-
-    return unicodedata.normalize('NFKD', s.casefold())
 
 def fancy_timedelta(delta):
     '''
@@ -170,33 +155,3 @@ def if_not_null(obj, alt):
             return alt
 
     return obj
-
-def unicode_repr(s):
-    '''
-    Similar to repr(), but always escapes characters that aren't "readable".
-    That is, any characters not in READABLE_CHAR_SET.
-    '''
-
-    parts = []
-    for ch in s:
-        if ch == '\n':
-            parts.append('\\n')
-        elif ch == '\t':
-            parts.append('\\t')
-        elif ch == '"':
-            parts.append('\\"')
-        elif ch in READABLE_CHAR_SET:
-            parts.append(ch)
-        else:
-            num = ord(ch)
-            if num < 0x100:
-                parts.append(f'\\x{num:02x}')
-            elif num < 0x10000:
-                parts.append(f'\\u{num:04x}')
-            elif num < 0x100000000:
-                parts.append(f'\\U{num:08x}')
-            else:
-                raise ValueError(f"Character {ch!r} (ord {num:x}) too big for escaping")
-
-    escaped = ''.join(parts)
-    return f'"{escaped}"'
