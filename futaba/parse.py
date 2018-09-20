@@ -19,7 +19,7 @@ from typing import Iterable, Optional, Union
 import discord
 import textdistance
 
-from futaba.utils import normalize_caseless
+from futaba.unicode import normalize_caseless
 
 logger = logging.getLogger(__name__)
 
