@@ -31,6 +31,7 @@ __all__ = [
     'first',
     'lowerbool',
     'plural',
+    'user_discrim',
     'escape_backticks',
     'if_not_null',
 ]
@@ -40,9 +41,9 @@ def _get_git_hash():
         output = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD'])
         return output.decode('utf-8').strip()
     except FileNotFoundError:
-        logger.warn("'git' binary not found")
+        logger.warning("'git' binary not found")
     except subprocess.CalledProcessError:
-        logger.warn("Unable to call 'git rev-parse --short HEAD'")
+        logger.warning("Unable to call 'git rev-parse --short HEAD'")
 
     return ''
 
@@ -119,6 +120,14 @@ def plural(num):
     ''' Gets the English plural ending for an ordinal number. '''
 
     return '' if num == 1 else 's'
+
+def user_discrim(user):
+    '''
+    Return the user's username and disc
+    in the format <username>#<discriminator>
+    '''
+
+    return f'{user.name}#{user.discriminator}'
 
 def escape_backticks(content):
     '''

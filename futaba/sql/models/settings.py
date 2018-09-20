@@ -25,7 +25,7 @@ from sqlalchemy import BigInteger, Boolean, Column, Table, Unicode
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.sql import select
 
-from ..hooks import on_guild_join, on_guild_leave
+from ..hooks import register_hook
 
 Column = functools.partial(Column, nullable=False)
 logger = logging.getLogger(__name__)
@@ -77,7 +77,11 @@ class SettingsModel:
         self.prefix_cache = {}
         self.filter_settings_cache = {}
 
-    @on_guild_join
+        register_hook('on_guild_join', self.add_prefix)
+        register_hook('on_guild_leave', self.del_prefix)
+        register_hook('on_guild_join', self.add_filter_settings)
+        register_hook('on_guild_leave', self.del_filter_settings)
+
     def add_prefix(self, guild):
         logger.info("Adding prefix row for new guild '%s' (%d)", guild.name, guild.id)
         ins = self.tb_prefixes \
@@ -89,7 +93,6 @@ class SettingsModel:
         self.sql.execute(ins)
         self.prefix_cache[guild] = None
 
-    @on_guild_leave
     def del_prefix(self, guild):
         logger.info("Removing prefix row for departing guild '%s' (%d)", guild.name, guild.id)
         delet = self.tb_prefixes \
@@ -125,7 +128,6 @@ class SettingsModel:
         self.sql.execute(upd)
         self.prefix_cache[guild] = prefix
 
-    @on_guild_join
     def add_filter_settings(self, guild):
         logger.info("Adding row for bot filter immunity for new guild '%s' (%d)", guild.name, guild.id)
         storage = FilterSettingsStorage()
@@ -139,7 +141,6 @@ class SettingsModel:
         self.sql.execute(ins)
         self.filter_settings_cache[guild] = storage
 
-    @on_guild_leave
     def del_filter_settings(self, guild):
         logger.info("Removing row for bot filter immunity for departing guild '%s' (%d)", guild.name, guild.id)
         delet = self.tb_filter_settings \
