@@ -71,8 +71,8 @@ class Filtering:
                         self.filters[channel][text] = (Filter(text), filter_type)
 
             # Guild content filters
-            for hashsum, filter_type in sql.get_content_filters(guild).items():
-                self.content_filters[guild][hashsum] = filter_type
+            for hashsum, (filter_type, description) in sql.get_content_filters(guild).items():
+                self.content_filters[guild][hashsum] = (filter_type, description)
 
     def __unload(self):
         '''
@@ -117,44 +117,65 @@ class Filtering:
     @cfilter.command(name='flag', aliases=['warn', 'alert', 'notice'])
     @commands.guild_only()
     @permissions.check_mod()
-    async def cfilter_flag(self, ctx, *hashsums: str):
+    async def cfilter_flag(self, ctx, hashsum: str, description: str):
         '''
         Adds the given SHA1 hashes to the guild's flagging filter, which notifies staff when posted.
         It does not notify the user or delete the message.
 
-        You may pass multiple hashes.
+        You must specify a description of the file being filtered.
         '''
 
-        await check_hashsums(hashsums, ctx.message)
-        await add_content_filter(self.bot, self.content_filters, ctx.message, FilterType.FLAG, hashsums)
+        await check_hashsums((hashsum,), ctx.message)
+        await add_content_filter(
+            self.bot,
+            self.content_filters,
+            ctx.message,
+            FilterType.FLAG,
+            hashsum,
+            description,
+        )
 
     @cfilter.command(name='block', aliases=['deny', 'autoremove'])
     @commands.guild_only()
     @permissions.check_mod()
-    async def cfilter_block(self, ctx, *hashsums: str):
+    async def cfilter_block(self, ctx, hashsum: str, description: str):
         '''
         Adds the given SHA1 hashes to the guild's blocking filter, automatically deleting any messages.
         It does not notify the user or delete the message.
 
-        You may pass multiple hashes.
+        You must specify a description of the file being filtered.
         '''
 
-        await check_hashsums(hashsums, ctx.message)
-        await add_content_filter(self.bot, self.content_filters, ctx.message, FilterType.BLOCK, hashsums)
+        await check_hashsums((hashsum,), ctx.message)
+        await add_content_filter(
+            self.bot,
+            self.content_filters,
+            ctx.message,
+            FilterType.BLOCK,
+            hashsum,
+            description,
+        )
 
     @cfilter.command(name='jail', aliases=['dunce', 'punish', 'mute'])
     @commands.guild_only()
     @permissions.check_mod()
-    async def cfilter_jail(self, ctx, *hashsums: str):
+    async def cfilter_jail(self, ctx, hashsum: str, description: str):
         '''
         Adds the given SHA1 hashes to the guild's jailing filter, which will automatically jail users.
         Like the blocking filter, it will also delete the message and send the user a warning.
 
-        You may pass multiple hashes.
+        You must specify a description of the file being filtered.
         '''
 
-        await check_hashsums(hashsums, ctx.message)
-        await add_content_filter(self.bot, self.content_filters, ctx.message, FilterType.BLOCK, hashsums)
+        await check_hashsums((hashsum,), ctx.message)
+        await add_content_filter(
+            self.bot,
+            self.content_filters,
+            ctx.message,
+            FilterType.JAIL,
+            hashsum,
+            description,
+        )
 
     @cfilter.command(name='remove', aliases=['rm', 'delete', 'del'])
     @commands.guild_only()

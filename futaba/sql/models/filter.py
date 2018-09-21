@@ -87,6 +87,7 @@ class FilterModel:
                 Column('guild_id', BigInteger, ForeignKey('guilds.guild_id')),
                 Column('filter_type', Enum(FilterType)),
                 Column('hashsum', LargeBinary),
+                Column('description', Unicode),
                 UniqueConstraint('guild_id', 'hashsum', name='content_filter_uq'))
         self.tb_filter_immune_users = Table('filter_immune_users', meta,
                 Column('guild_id', BigInteger, ForeignKey('guilds.guild_id')),
@@ -179,15 +180,22 @@ class FilterModel:
             logger.debug("Content filter list found in cache, returning")
             return self.content_filter_cache[guild]
 
-        sel = select([self.tb_content_filters.c.filter_type, self.tb_content_filters.c.hashsum]) \
+        sel = select([
+                    self.tb_content_filters.c.filter_type,
+                    self.tb_content_filters.c.hashsum,
+                    self.tb_content_filters.c.description,
+                ]) \
                 .where(self.tb_content_filters.c.guild_id == guild.id)
         result = self.sql.execute(sel)
 
-        filters = {hashsum: filter_type for (filter_type, hashsum) in result.fetchall()}
+        filters = {
+            hashsum: (filter_type, description)
+                for (filter_type, hashsum, description) in result.fetchall()
+        }
         self.content_filter_cache[guild] = filters
         return filters
 
-    def add_content_filter(self, guild, filter_type, hashsum):
+    def add_content_filter(self, guild, filter_type, hashsum, description):
         logger.info("Adding SHA1 hash %s to filter, level '%s'", hashsum.hex(), filter_type.value)
 
         ins = self.tb_content_filters \
@@ -196,28 +204,29 @@ class FilterModel:
                     guild_id=guild.id,
                     filter_type=filter_type,
                     hashsum=hashsum,
+                    description=description,
                 )
 
         try:
             self.sql.execute(ins)
-            self.content_filter_cache[guild][hashsum] = filter_type
+            self.content_filter_cache[guild][hashsum] = (filter_type, description)
         except IntegrityError as error:
             logger.error("Unable to insert new content filter", exc_info=error)
             raise ValueError("This content filter already exists")
 
-    def update_content_filter(self, guild, filter_type, hashsum):
+    def update_content_filter(self, guild, filter_type, hashsum, description):
         logger.info("Updating SHA1 hash %s to filter, level '%s'", hashsum.hex(), filter_type.value)
 
         upd = self.tb_content_filters \
                 .update() \
-                .values(filter_type=filter_type) \
+                .values(filter_type=filter_type, description=description) \
                 .where(and_(
                     self.tb_content_filters.c.guild_id == guild.id,
                     self.tb_content_filters.c.filter_type == filter_type,
                     self.tb_content_filters.c.hashsum == hashsum,
                 ))
         self.sql.execute(upd)
-        self.content_filter_cache[guild][hashsum] = filter_type
+        self.content_filter_cache[guild][hashsum] = (filter_type, description)
 
     def delete_content_filter(self, guild, hashsum):
         logger.info("Deleting SHA1 hash %s from filter", hashsum.hex())
@@ -285,10 +294,14 @@ class FilterModel:
     def fetch_settings(self, guild):
         logger.info("Getting filter settings for guild '%s' (%d)", guild.name, guild.id)
 
-        sel = select([self.tb_filter_settings]) \
+        sel = select([
+                    self.tb_filter_settings.c.bot_immune,
+                    self.tb_filter_settings.c.manage_messages_immune,
+                    self.tb_filter_settings.c.reupload,
+                ]) \
                 .where(self.tb_filter_settings.c.guild_id == guild.id)
         result = self.sql.execute(sel)
-        _, bot_immune, manage_messages_immune, reupload = result.fetchone()
+        bot_immune, manage_messages_immune, reupload = result.fetchone()
 
         # Update cache
         storage = FilterSettingsStorage()
