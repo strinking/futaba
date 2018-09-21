@@ -29,8 +29,11 @@ MAXIMUM_FILE_SIZE = 24 * 1024 * 1024
 # How large each read request should be
 CHUNK_SIZE = 4 * 1024
 
+# Prevent connections from hanging for too long
+TIMEOUT = aiohttp.ClientTimeout(total=45, sock_read=5)
+
 async def download_links(urls):
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(timeout=TIMEOUT, trust_env=True) as session:
         buffers = await asyncio.gather(*[download_link(session, url) for url in urls])
     return buffers
 
