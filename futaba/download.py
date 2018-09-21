@@ -41,6 +41,12 @@ async def download_link(session, url):
     binio = BytesIO()
     try:
         async with session.get(url) as response:
+            if response.content_length is not None:
+                if response.content_length > MAXIMUM_FILE_SIZE:
+                    logger.info("File is reportedly too large (%d bytes > %d bytes)",
+                            response.content_length, MAXIMUM_FILE_SIZE)
+                    return None
+
             while len(binio.getbuffer()) < MAXIMUM_FILE_SIZE:
                 chunk = await response.content.read(CHUNK_SIZE)
                 if chunk:
