@@ -98,7 +98,7 @@ class Filtering:
     @commands.guild_only()
     async def cfilter(self, ctx):
         '''
-        Adds, removes, or lists MD5 hashes in the content filter.
+        Adds, removes, or lists SHA1 hashes in the content filter.
         '''
 
         if ctx.invoked_subcommand is None:
@@ -109,7 +109,7 @@ class Filtering:
     @commands.guild_only()
     async def cfilter_show(self, ctx):
         '''
-        List all currently filtered MD5 file hashes in the guild's filter.
+        List all currently filtered SHA1 file hashes in the guild's filter.
         '''
 
         await show_content_filter(self.content_filters[ctx.guild], ctx.message)
@@ -119,7 +119,7 @@ class Filtering:
     @permissions.check_mod()
     async def cfilter_flag(self, ctx, *hashsums: str):
         '''
-        Adds the given MD5 hashes to the guild's flagging filter, which notifies staff when posted.
+        Adds the given SHA1 hashes to the guild's flagging filter, which notifies staff when posted.
         It does not notify the user or delete the message.
 
         You may pass multiple hashes.
@@ -133,7 +133,7 @@ class Filtering:
     @permissions.check_mod()
     async def cfilter_block(self, ctx, *hashsums: str):
         '''
-        Adds the given MD5 hashes to the guild's blocking filter, automatically deleting any messages.
+        Adds the given SHA1 hashes to the guild's blocking filter, automatically deleting any messages.
         It does not notify the user or delete the message.
 
         You may pass multiple hashes.
@@ -147,7 +147,7 @@ class Filtering:
     @permissions.check_mod()
     async def cfilter_jail(self, ctx, *hashsums: str):
         '''
-        Adds the given MD5 hashes to the guild's jailing filter, which will automatically jail users.
+        Adds the given SHA1 hashes to the guild's jailing filter, which will automatically jail users.
         Like the blocking filter, it will also delete the message and send the user a warning.
 
         You may pass multiple hashes.
@@ -161,7 +161,7 @@ class Filtering:
     @permissions.check_mod()
     async def cfilter_remove(self, ctx, *hashsums: str):
         '''
-        Removes the given MD5 hashes from the guild filter.
+        Removes the given SHA1 hashes from the guild filter.
         You don't need to specify which filter level they were for.
         '''
 

@@ -15,7 +15,7 @@ import logging
 import os
 import re
 from collections import namedtuple
-from hashlib import md5
+from hashlib import sha1
 from urllib.parse import urlparse
 
 import discord
@@ -146,7 +146,7 @@ async def check_file_filter(cog, message):
 
     for binio, url in zip(buffers, file_urls):
         if binio is not None:
-            digest = md5(binio.getbuffer()).digest()
+            digest = sha1(binio.getbuffer()).digest()
             hashsums[digest] = (binio, url)
 
     for hashsum, filter_type in cog.content_filters[message.guild].items():

@@ -132,12 +132,12 @@ async def check_hashsums(hashsums, message):
         await Reactions.FAIL.add(message)
     elif not all(map(lambda h: len(h) == 32 and HEXADECIMAL_REGEX.match(h), hashsums)):
         await asyncio.gather(
-            message.channel.send(content='MD5 hashes are 32 hex digits long.'),
+            message.channel.send(content='SHA1 hashes are 32 hex digits long.'),
             Reactions.FAIL.add(message),
         )
 
 async def add_content_filter(bot, filters, message, level, hexsums):
-    logger.info("Adding MD5s to guild content filter '%s': %s",
+    logger.info("Adding SHA1s to guild content filter '%s': %s",
             level.value, f'[{", ".join(hexsums)}]')
 
     try:
@@ -157,7 +157,7 @@ async def add_content_filter(bot, filters, message, level, hexsums):
         await Reactions.SUCCESS.add(message)
 
 async def delete_content_filter(bot, filters, message, hexsums):
-    logger.info("Removing MD5s from guild content filter: %s", f'[{", ".join(hexsums)}]')
+    logger.info("Removing SHA1s from guild content filter: %s", f'[{", ".join(hexsums)}]')
 
     try:
         hashsums = [bytes.fromhex(hexsum) for hexsum in hexsums]
@@ -179,7 +179,7 @@ async def delete_content_filter(bot, filters, message, hexsums):
 async def show_content_filter(all_filters, message):
     if all_filters:
         contents = []
-        lines = [f'**Filtered MD5 hashes for {message.guild.name}:**']
+        lines = [f'**Filtered SHA1 hashes for {message.guild.name}:**']
 
         # Set up filter list
         filters = {filter_type: [] for filter_type in FilterType}
@@ -222,7 +222,7 @@ async def show_content_filter(all_filters, message):
         if len(lines) > 1:
             contents.append('\n'.join(lines))
     else:
-        contents = [f'**No filtered MD5 hashes for {message.guild.name}**']
+        contents = [f'**No filtered SHA1 hashes for {message.guild.name}**']
 
     async def post_all():
         for content in contents:
