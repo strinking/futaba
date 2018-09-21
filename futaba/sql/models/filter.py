@@ -222,7 +222,6 @@ class FilterModel:
                 .values(filter_type=filter_type, description=description) \
                 .where(and_(
                     self.tb_content_filters.c.guild_id == guild.id,
-                    self.tb_content_filters.c.filter_type == filter_type,
                     self.tb_content_filters.c.hashsum == hashsum,
                 ))
         self.sql.execute(upd)
