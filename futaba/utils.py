@@ -10,18 +10,11 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-import asyncio
 import logging
 import re
 import subprocess
 from datetime import datetime
 from itertools import zip_longest
-
-import discord
-from discord.ext import commands
-
-from futaba import permissions
-from futaba.enums import Reactions
 
 logger = logging.getLogger(__name__)
 

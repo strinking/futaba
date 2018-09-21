@@ -143,8 +143,10 @@ async def add_content_filter(bot, filters, message, level, hexsum, description):
         hashsum = bytes.fromhex(hexsum)
         with bot.sql.transaction():
             if hashsum in filters[message.guild]:
+                logger.debug("Updating existing content filter")
                 bot.sql.filter.update_content_filter(message.guild, level, hashsum, description)
             else:
+                logger.debug("Adding new content filter")
                 bot.sql.filter.add_content_filter(message.guild, level, hashsum, description)
 
         filters[message.guild][hashsum] = (level, description)
@@ -155,8 +157,7 @@ async def add_content_filter(bot, filters, message, level, hexsum, description):
         await Reactions.SUCCESS.add(message)
 
 async def delete_content_filter(bot, filters, message, hexsums):
-    list_hexsums = ', '.join(hexsums)
-    logger.info("Removing SHA1s from guild content filter: %s", f'[list_hexsums]')
+    logger.info("Removing SHA1s from guild content filter: %s", f'[", ".join(hexsums)]')
 
     try:
         hashsums = [bytes.fromhex(hexsum) for hexsum in hexsums]

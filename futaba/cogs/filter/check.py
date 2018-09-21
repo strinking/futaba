@@ -13,7 +13,6 @@
 import asyncio
 import logging
 import os
-import re
 from collections import namedtuple
 from hashlib import sha1
 from urllib.parse import urlparse

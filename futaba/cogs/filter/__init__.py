@@ -10,11 +10,12 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+from futaba.enums import FilterType
 from futaba.utils import async_partial
 from .check import check_message, check_message_edit
 from .manage import add_filter, delete_filter, show_filter
 from .core import Filtering
-from .filter import Filter, FilterType
+from .filter import Filter
 
 def setup(bot):
     '''

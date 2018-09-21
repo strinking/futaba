@@ -20,7 +20,6 @@ Has the model for managing persistent bot settings.
 import functools
 import logging
 
-from sqlalchemy import and_, or_
 from sqlalchemy import BigInteger, Boolean, Column, Table, Unicode
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.sql import select
