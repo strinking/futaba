@@ -16,7 +16,8 @@ import re
 from collections import defaultdict
 
 from futaba.enums import FilterType, Reactions
-from futaba.utils import READABLE_CHAR_SET, chunks, unicode_repr
+from futaba.utils import chunks
+from futaba.unicode import READABLE_CHAR_SET, unicode_repr
 from .filter import Filter
 
 HEXADECIMAL_REGEX = re.compile(r'[A-Fa-f0-9]+')
