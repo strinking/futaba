@@ -14,7 +14,7 @@ import asyncio
 import logging
 import re
 from collections import namedtuple
-from hashlib import sha512
+from hashlib import md5
 
 import discord
 
@@ -139,7 +139,7 @@ async def check_file_filter(cog, message):
 
     triggered = None
     buffers = await download_links(file_urls)
-    hashsums = [sha512(buffer).digest() for buffer in buffers]
+    hashsums = [md5(buffer).digest() for buffer in buffers]
     for hashsum, filter_type in cog.filters[message.guild]:
         try:
             index = hashsums.index(hashsum)

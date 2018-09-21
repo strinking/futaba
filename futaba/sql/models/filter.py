@@ -164,7 +164,7 @@ class FilterModel:
         return filters
 
     def add_content_filter(self, guild, filter_type, hashsum):
-        logger.info("Adding SHA512 hash %s to filter, level '%s'", hashsum.hex(), filter_type.value)
+        logger.info("Adding MD5 hash %s to filter, level '%s'", hashsum.hex(), filter_type.value)
 
         ins = self.tb_content_filters \
                 .insert() \
@@ -182,7 +182,7 @@ class FilterModel:
             raise ValueError("This content filter already exists")
 
     def update_content_filter(self, guild, filter_type, hashsum):
-        logger.info("Updating SHA512 hash %s to filter, level '%s'", hashsum.hex(), filter_type.value)
+        logger.info("Updating MD5 hash %s to filter, level '%s'", hashsum.hex(), filter_type.value)
 
         upd = self.tb_content_filters \
                 .update() \
@@ -196,7 +196,7 @@ class FilterModel:
         self.content_filter_cache[guild][hashsum] = filter_type
 
     def delete_content_filter(self, guild, hashsum):
-        logger.info("Deleting SHA512 hash %s from filter", hashsum.hex())
+        logger.info("Deleting MD5 hash %s from filter", hashsum.hex())
 
         delet = self.tb_content_filters \
                     .delete() \

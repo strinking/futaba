@@ -19,7 +19,7 @@ import logging
 import random
 import sys
 from datetime import datetime
-from hashlib import sha512
+from hashlib import md5
 
 import discord
 from discord.ext import commands
@@ -35,7 +35,7 @@ __all__ = [
     'Miscellaneous',
 ]
 
-SHA512_ERROR_MESSAGE = 'Error downloading file'.ljust(128)
+MD5_ERROR_MESSAGE = 'Error downloading file'.ljust(32)
 
 class Miscellaneous:
     __slots__ = (
@@ -101,9 +101,9 @@ class Miscellaneous:
             Reactions.SUCCESS.add(ctx.message),
         )
 
-    @commands.command(name='sha512', aliases=['hash'])
-    async def sha512(self, ctx, *urls: str):
-        ''' Gives the SHA512 hashes of any files attached to the message. '''
+    @commands.command(name='md5', aliases=['md5sum', 'hashsum', 'hash'])
+    async def md5(self, ctx, *urls: str):
+        ''' Gives the MD5 hashes of any files attached to the message. '''
 
         # Check all URLs
         for url in urls:
@@ -132,9 +132,9 @@ class Miscellaneous:
         buffers = await download_links(urls)
         for i, binio in enumerate(buffers):
             if binio is None:
-                hashsum = SHA512_ERROR_MESSAGE
+                hashsum = MD5_ERROR_MESSAGE
             else:
-                hashsum = sha512(binio.getbuffer()).hexdigest()
+                hashsum = md5(binio.getbuffer()).hexdigest()
 
             lines.append(f'{hashsum} {names[i]}')
         lines.append('```')
