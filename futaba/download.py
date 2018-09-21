@@ -13,6 +13,7 @@
 import asyncio
 import logging
 from io import BytesIO
+from ssl import SSLError
 
 import aiohttp
 
@@ -55,6 +56,9 @@ async def download_link(session, url):
                     return binio
             logger.info("File was too large, bailing out (max file size: %d bytes)", MAXIMUM_FILE_SIZE)
             return None
+    except SSLError:
+        # Ignore SSL errors
+        pass
     except Exception as error:
         logger.info("Error while downloading %s for hash check", url, exc_info=error)
         return None

@@ -27,6 +27,7 @@ from discord.ext import commands
 from futaba import permissions, __version__
 from futaba.download import download_links
 from futaba.enums import Reactions
+from futaba.str_builder import StringBuilder
 from futaba.utils import GIT_HASH, URL_REGEX, fancy_timedelta
 
 logger = logging.getLogger(__name__)
@@ -131,7 +132,8 @@ class Miscellaneous:
             return
 
         # Download and check files
-        lines = ['Hashes:', '```']
+        contents = []
+        content = StringBuilder('Hashes:\n```')
         buffers = await download_links(links)
         for i, binio in enumerate(buffers):
             if binio is None:
@@ -139,11 +141,23 @@ class Miscellaneous:
             else:
                 hashsum = sha1(binio.getbuffer()).hexdigest()
 
-            lines.append(f'{hashsum} {names[i]}')
-        lines.append('```')
+            content.writeln(f'{hashsum} {names[i]}')
+            if len(content) > 1920:
+                contents.append(content)
+                if i < len(buffers) - 1:
+                    content.clear()
+                    content.writeln('```')
+
+        if len(content) > 4:
+            content.writeln('```')
+            contents.append(content)
+
+        async def send_messages():
+            for content in contents:
+                await ctx.send(content=str(content))
 
         await asyncio.gather(
-            ctx.send(content='\n'.join(lines)),
+            send_messages(),
             Reactions.SUCCESS.add(ctx.message),
         )
 
