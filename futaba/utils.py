@@ -54,7 +54,7 @@ def _get_git_hash():
 GIT_HASH = _get_git_hash()
 
 URL_REGEX = re.compile(
-    r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)'
+    r'https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b(?:[-a-zA-Z0-9@:%_\+.~#?&//=]*)'
 )
 
 class Dummy:

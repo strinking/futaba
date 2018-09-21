@@ -36,15 +36,14 @@ async def download_links(urls):
 
 async def download_link(session, url):
     binio = BytesIO()
-
     try:
         async with session.get(url) as response:
             while len(binio.getbuffer()) < MAXIMUM_FILE_SIZE:
                 chunk = await response.content.read(CHUNK_SIZE)
-                if not chunk:
+                if chunk:
+                    binio.write(chunk)
+                else:
                     return binio
-
-                binio.write(chunk)
             logger.info("File was too large, bailing out (max file size: %d bytes)", MAXIMUM_FILE_SIZE)
             return None
     except Exception as error:

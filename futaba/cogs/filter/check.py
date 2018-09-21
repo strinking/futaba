@@ -83,6 +83,7 @@ async def check_message(cog, message):
 
     logger.debug("Checking message id %d (by '%s' (%d)) for filter violations",
             message.id, message.author.name, message.author.id)
+
     await asyncio.gather(
         check_text_filter(cog, message),
         check_file_filter(cog, message),
@@ -139,20 +140,27 @@ async def check_file_filter(cog, message):
 
     triggered = None
     buffers = await download_links(file_urls)
-    hashsums = [md5(buffer).digest() for buffer in buffers]
-    for hashsum, filter_type in cog.filters[message.guild]:
+    hashsums = {}
+
+    for binio, url in zip(buffers, file_urls):
+        if binio is not None:
+            digest = md5(binio.getbuffer()).digest()
+            hashsums[digest] = (binio, url)
+
+    for hashsum, filter_type in cog.content_filters[message.guild].items():
         try:
-            index = hashsums.index(hashsum)
-            url = file_urls[index]
+            binio, url = hashsums[hashsum]
+            print(f'hashsum: {hashsum}, binio: {binio}, url: {url}')
             if triggered is None or filter_type.value > triggered.filter_type.value:
                 triggered = FoundFileViolation(
                                 journal=cog.journal,
                                 message=message,
                                 filter_type=filter_type,
                                 url=url,
+                                binio=binio,
                                 hashsum=hashsum,
                             )
-        except ValueError:
+        except KeyError:
             # Hash sum not found, not a match
             pass
 

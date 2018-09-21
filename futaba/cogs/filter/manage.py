@@ -16,7 +16,6 @@ import re
 from collections import defaultdict
 
 from futaba.enums import FilterType, Reactions
-from futaba.utils import chunks
 from futaba.unicode import READABLE_CHAR_SET, unicode_repr
 from .filter import Filter
 
@@ -204,16 +203,20 @@ async def show_content_filter(all_filters, message):
                     '```',
                 ))
 
-            # Since we know the size of each hexsum, we know how many
-            # we can fit in a message
-            for chunked in chunks(hexsums, 140):
-                for hexsum in chunked:
-                    if hexsum is None:
-                        break
+            for hexsum in hexsums:
+                lines.append(hexsum)
 
-                    lines.append(hexsum)
+                # Since we know the size of each hexsum, we know how many
+                # we can fit in a message
+                if len(lines) > 60:
+                    lines.append('```')
+                    contents.append('\n'.join(lines))
+                    lines.clear()
+                    lines.append('```')
+
+            if len(lines) > 1:
                 lines.append('```')
-                contents.append('\n'.join(lines))
+            else:
                 lines.clear()
 
         if len(lines) > 1:
