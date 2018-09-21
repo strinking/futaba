@@ -18,9 +18,9 @@ from hashlib import sha512
 
 import discord
 
+from futaba.download import download_links
 from futaba.enums import FilterType, LocationType
-from futaba.utils import Dummy, escape_backticks
-from .download import download_links
+from futaba.utils import URL_REGEX, Dummy, escape_backticks
 
 logger = logging.getLogger(__name__)
 
@@ -54,10 +54,6 @@ JOURNAL_PROPERTIES = {
     FilterType.BLOCK: JournalProperties(verb='Blocked', path='block', icon='deleted'),
     FilterType.JAIL: JournalProperties(verb='Jailed for', path='jail', icon='jail'),
 }
-
-URL_REGEX = re.compile(
-    r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)'
-)
 
 def journal_violation(journal, message, filter_type, flagged_content):
     props = JOURNAL_PROPERTIES[filter_type]

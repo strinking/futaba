@@ -1,5 +1,5 @@
 #
-# cogs/filter/download.py
+# download.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5

@@ -19,19 +19,23 @@ import logging
 import random
 import sys
 from datetime import datetime
+from hashlib import sha512
 
 import discord
 from discord.ext import commands
 
 from futaba import permissions, __version__
+from futaba.download import download_links
 from futaba.enums import Reactions
-from futaba.utils import GIT_HASH, fancy_timedelta
+from futaba.utils import GIT_HASH, URL_REGEX, fancy_timedelta
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
     'Miscellaneous',
 ]
+
+SHA512_ERROR_MESSAGE = 'Error downloading file'.ljust(128)
 
 class Miscellaneous:
     __slots__ = (
@@ -94,6 +98,49 @@ class Miscellaneous:
 
         await asyncio.gather(
             ctx.send(content=random.choice(self.bot.emojis)),
+            Reactions.SUCCESS.add(ctx.message),
+        )
+
+    @commands.command(name='sha512', aliases=['hash'])
+    async def sha512(self, ctx, *urls: str):
+        ''' Gives the SHA512 hashes of any files attached to the message. '''
+
+        # Check all URLs
+        for url in urls:
+            if not URL_REGEX.match(url):
+                await asyncio.gather(
+                    ctx.send(content=f'Not a valid url: {url}'),
+                    Reactions.FAIL.add(ctx.message),
+                )
+                return
+
+        # Send error if no URLS
+        urls = list(urls)
+        urls.extend(attach.url for attach in ctx.message.attachments)
+        names = list(urls)
+        names.extend(attach.filename for attach in ctx.message.attachments)
+
+        if not urls:
+            await asyncio.gather(
+                ctx.send(content='No URLs listed or files attached.'),
+                Reactions.FAIL.add(ctx.message),
+            )
+            return
+
+        # Download and check files
+        lines = ['Hashes:', '```']
+        buffers = await download_links(urls)
+        for i, binio in enumerate(buffers):
+            if binio is None:
+                hashsum = SHA512_ERROR_MESSAGE
+            else:
+                hashsum = sha512(binio.getbuffer()).hexdigest()
+
+            lines.append(f'{hashsum} {names[i]}')
+        lines.append('```')
+
+        await asyncio.gather(
+            ctx.send(content='\n'.join(lines)),
             Reactions.SUCCESS.add(ctx.message),
         )
 

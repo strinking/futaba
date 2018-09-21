@@ -12,6 +12,7 @@
 
 import asyncio
 import logging
+import re
 import subprocess
 from datetime import datetime
 from itertools import zip_longest
@@ -26,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     'GIT_HASH',
+    'URL_REGEX',
     'Dummy',
     'fancy_timedelta',
     'async_partial',
@@ -50,6 +52,10 @@ def _get_git_hash():
     return ''
 
 GIT_HASH = _get_git_hash()
+
+URL_REGEX = re.compile(
+    r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)'
+)
 
 class Dummy:
     '''
