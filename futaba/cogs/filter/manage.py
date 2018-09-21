@@ -199,7 +199,10 @@ async def show_content_filter(all_filters, message):
             ))
 
             if not hexsums:
-                lines.append('(none)')
+                lines.extend((
+                    '(none)',
+                    '```',
+                ))
 
             # Since we know the size of each hexsum, we know how many
             # we can fit in a message
@@ -212,10 +215,6 @@ async def show_content_filter(all_filters, message):
                 lines.append('```')
                 contents.append('\n'.join(lines))
                 lines.clear()
-                lines.append('```')
-
-            # For end of filter_level hashes
-            lines.append('```')
 
         if len(lines) > 1:
             contents.append('\n'.join(lines))
