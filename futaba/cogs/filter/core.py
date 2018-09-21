@@ -54,23 +54,24 @@ class Filtering:
         self.check_message = async_partial(check_message, self)
         self.check_message_edit = async_partial(check_message_edit, self)
 
-        get_filters = self.bot.sql.filter.get_filters
-        get_content_filters = self.bot.sql.filter.get_content_filters
-
         logger.info("Fetching previously stored filters")
+        sql = self.bot.sql.filter
         for guild in self.bot.guilds:
+            # Get filter settings
+            sql.fetch_settings(guild)
+
             # Guild text filters
-            for text, filter_type in get_filters(guild).items():
+            for text, filter_type in sql.get_filters(guild).items():
                 self.filters[guild][text] = (Filter(text), filter_type)
 
             # Channel text filters
             for channel in guild.channels:
                 if isinstance(channel, discord.TextChannel):
-                    for text, filter_type in get_filters(channel).items():
+                    for text, filter_type in sql.get_filters(channel).items():
                         self.filters[channel][text] = (Filter(text), filter_type)
 
             # Guild content filters
-            for hashsum, filter_type in get_content_filters(guild).items():
+            for hashsum, filter_type in sql.get_content_filters(guild).items():
                 self.content_filters[guild][hashsum] = filter_type
 
     def __unload(self):

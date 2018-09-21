@@ -19,7 +19,7 @@ Has the model for persisting filter settings.
 
 import functools
 import logging
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 
 from sqlalchemy import and_, or_
 from sqlalchemy import BigInteger, Boolean, Column, Enum, LargeBinary, Table, Unicode
@@ -32,9 +32,31 @@ from futaba.unicode import normalize_caseless
 
 from ..hooks import register_hook
 
-FilterSettings = namedtuple('FilterSettings', ('reupload',))
 Column = functools.partial(Column, nullable=False)
 logger = logging.getLogger(__name__)
+
+class FilterSettingsStorage:
+    __slots__ = (
+        'bot_immune',
+        'manage_messages_immune',
+        'reupload',
+    )
+
+    def __init__(self):
+        self.bot_immune = False
+        self.manage_messages_immune = True
+        self.reupload = True
+
+    def updated(self, field, value=None):
+        '''
+        Sets 'field' if 'value' is not None. Returns the current value of 'field'.
+        Useful for getting an excluded field, and updating the storage object too.
+        '''
+
+        if value is None:
+            setattr(self, field, value)
+
+        return getattr(self, field)
 
 __all__ = [
     'FilterModel',
@@ -72,14 +94,16 @@ class FilterModel:
                 UniqueConstraint('guild_id', 'user_id', name='filter_immune_users_uq'))
         self.tb_filter_settings = Table('filter_reupload', meta,
                 Column('guild_id', BigInteger, ForeignKey('guilds.guild_id'), primary_key=True),
+                Column('bot_immune', Boolean),
+                Column('manage_messages_immune', Boolean),
                 Column('reupload', Boolean))
         self.filter_cache = {}
         self.content_filter_cache = {}
         self.immune_users_cache = defaultdict(set)
         self.settings_cache = {}
 
-        register_hook('on_guild_join', self.add_filter_settings)
-        register_hook('on_guild_leave', self.remove_filter_settings)
+        register_hook('on_guild_join', self.add_settings)
+        register_hook('on_guild_leave', self.remove_settings)
 
     def get_filters(self, location):
         logger.debug("Getting filters for location '%s' (%d)", location.name, location.id)
@@ -258,35 +282,68 @@ class FilterModel:
         assert result.rowcount in (0, 1), "Only one matching user"
         return bool(result.rowcount)
 
-    def get_filter_settings(self, guild):
+    def fetch_settings(self, guild):
         logger.info("Getting filter settings for guild '%s' (%d)", guild.name, guild.id)
 
-        sel = select([self.tb_filter_settings.c.reupload]) \
+        sel = select([self.tb_filter_settings]) \
                 .where(self.tb_filter_settings.c.guild_id == guild.id)
         result = self.sql.execute(sel)
-        reupload, = result.fetchone()
-        self.settings_cache[guild] = FilterSettings(reupload=reupload)
+        _, bot_immune, manage_messages_immune, reupload = result.fetchone()
 
-    def add_filter_settings(self, guild):
+        # Update cache
+        storage = FilterSettingsStorage()
+        storage.bot_immune = bot_immune
+        storage.manage_messages_immune = manage_messages_immune
+        storage.reupload = reupload
+        self.settings_cache[guild] = storage
+        return storage
+
+    def get_settings(self, guild):
+        logger.info("Getting cached filter settings for guild '%s' (%d)",
+                guild.name, guild.id)
+        return self.settings_cache[guild]
+
+    def add_settings(self, guild):
         logger.info("Adding filter settings for guild '%s' (%d)", guild.name, guild.id)
-
+        storage = FilterSettingsStorage()
         ins = self.tb_filter_settings \
                 .insert() \
-                .values(reupload=True)
+                .values(
+                    guild_id=guild.id,
+                    bot_immune=storage.bot_immune,
+                    manage_messages_immune=storage.manage_messages_immune,
+                    reupload=storage.reupload,
+                )
         self.sql.execute(ins)
-        self.settings_cache[guild] = FilterSettings(reupload=True)
+        self.settings_cache[guild] = storage
 
-    def update_filter_settings(self, guild, reupload):
+    def set_reupload(self, guild, reupload):
         logger.info("Updating filter settings for guild '%s' (%d)", guild.name, guild.id)
 
         upd = self.tb_filter_settings \
                 .update() \
-                .values(reupload=reupload) \
-                .where(self.tb_filter_settings.c.guild_id == guild.id)
+                .where(self.tb_filter_settings.c.guild_id == guild.id) \
+                .values(reupload=reupload)
         self.sql.execute(upd)
-        self.settings_cache[guild] = FilterSettings(reupload=reupload)
+        self.settings_cache[guild].reupload = reupload
 
-    def remove_filter_settings(self, guild):
+    def set_bot_filter_immunity(self, guild, bot_immune=None, manage_messages_immune=None):
+        storage = self.settings_cache[guild]
+        bot_immune = storage.updated('bot_immune', bot_immune)
+        manage_messages_immune = storage.updated('manage_messages_immune', manage_messages_immune)
+
+        logger.info("Updating filter settings (bot_immune='%s', manage_messages_immune='%s') for guild '%s' (%d)",
+                bot_immune, manage_messages_immune, guild.name, guild.id)
+        upd = self.tb_filter_settings \
+                .update() \
+                .where(self.tb_filter_settings.c.guild_id == guild.id) \
+                .values(
+                    bot_immune=bot_immune,
+                    manage_messages_immune=manage_messages_immune,
+                )
+        self.sql.execute(upd)
+
+    def remove_settings(self, guild):
         logger.info("Removing filter settings for guild '%s' (%d)", guild.name, guild.id)
 
         delet = self.tb_filter_settings \

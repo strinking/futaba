@@ -106,21 +106,24 @@ class Miscellaneous:
         ''' Gives the MD5 hashes of any files attached to the message. '''
 
         # Check all URLs
+        links = []
         for url in urls:
-            if not URL_REGEX.match(url):
+            match = URL_REGEX.match(url)
+            if match is None:
                 await asyncio.gather(
                     ctx.send(content=f'Not a valid url: {url}'),
                     Reactions.FAIL.add(ctx.message),
                 )
                 return
+            links.append(match[1])
+        links.extend(attach.url for attach in ctx.message.attachments)
 
-        # Send error if no URLS
-        urls = list(urls)
-        urls.extend(attach.url for attach in ctx.message.attachments)
+        # Get list of "names"
         names = list(urls)
         names.extend(attach.filename for attach in ctx.message.attachments)
 
-        if not urls:
+        # Send error if no URLS
+        if not links:
             await asyncio.gather(
                 ctx.send(content='No URLs listed or files attached.'),
                 Reactions.FAIL.add(ctx.message),
@@ -129,7 +132,7 @@ class Miscellaneous:
 
         # Download and check files
         lines = ['Hashes:', '```']
-        buffers = await download_links(urls)
+        buffers = await download_links(links)
         for i, binio in enumerate(buffers):
             if binio is None:
                 hashsum = MD5_ERROR_MESSAGE

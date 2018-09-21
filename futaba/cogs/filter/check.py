@@ -12,9 +12,11 @@
 
 import asyncio
 import logging
+import os
 import re
 from collections import namedtuple
 from hashlib import md5
+from urllib.parse import urlparse
 
 import discord
 
@@ -126,7 +128,7 @@ async def check_text_filter(cog, message):
                     )
 
     if triggered is None:
-        logger.debug("No violations found!")
+        logger.debug("No text violations found!")
     else:
         await found_text_violation(triggered)
 
@@ -150,19 +152,25 @@ async def check_file_filter(cog, message):
     for hashsum, filter_type in cog.content_filters[message.guild].items():
         try:
             binio, url = hashsums[hashsum]
-            print(f'hashsum: {hashsum}, binio: {binio}, url: {url}')
-            if triggered is None or filter_type.value > triggered.filter_type.value:
-                triggered = FoundFileViolation(
-                                journal=cog.journal,
-                                message=message,
-                                filter_type=filter_type,
-                                url=url,
-                                binio=binio,
-                                hashsum=hashsum,
-                            )
         except KeyError:
             # Hash sum not found, not a match
-            pass
+            continue
+
+        if triggered is None or filter_type.value > triggered.filter_type.value:
+            triggered = FoundFileViolation(
+                            journal=cog.journal,
+                            message=message,
+                            filter_type=filter_type,
+                            url=url,
+                            binio=binio,
+                            hashsum=hashsum,
+                        )
+
+    if triggered is None:
+        logger.debug("No content violations found!")
+    else:
+        settings = cog.bot.sql.filter.get_settings(message.guild)
+        await found_file_violation(triggered, settings.reupload)
 
 async def check_message_edit(cog, before, after):
     logger.debug("Checking message edit")
@@ -181,7 +189,7 @@ def filter_immune(bot, message):
         return True
 
     # Check if bots have filter immunity
-    filter_settings = bot.sql.settings.get_filter_settings(message.guild)
+    filter_settings = bot.sql.filter.get_settings(message.guild)
     if filter_settings.bot_immune:
         if message.author.bot:
             return True
@@ -311,15 +319,12 @@ async def found_file_violation(triggered, reupload):
         logger.debug("Sending message to user who violated the filter")
         lines = [
             f'The message you posted in {message.channel.mention} contains or links to a file '
-            f'that violates a {filter_type.value} content filter.',
-            f'The file can be found here: {url}',
+            f'that violates a {filter_type.value} content filter: `{hashsum.hex()}`.',
+            f'Your original link: <{url}>',
         ]
 
-        lines.extend((
-            '```',
-            hashsum.hex(),
-            '```',
-        ))
+        if reupload:
+            lines.append('The filtered file has been attached to this message.')
 
         if severity >= FilterType.JAIL.level:
             lines.extend((
@@ -327,13 +332,14 @@ async def found_file_violation(triggered, reupload):
                 f"As such, you have been assigned the `{jail_role.name}` role, until a moderator clears you.",
             ))
 
+        kwargs = {'content': '\n'.join(lines)}
+
         if reupload:
             lines.append("In case the link is broken, the file has been attached below:")
-            file = discord.File(binio)
-        else:
-            file = None
+            filename = os.path.basename(urlparse(url).path)
+            kwargs['file'] = discord.File(binio.getbuffer(), filename=filename)
 
-        await message.author.send(content='\n'.join(lines), file=file)
+        await message.author.send(**kwargs)
 
     if severity >= FilterType.FLAG.level:
         logger.info("Notifying staff of filter violation")
