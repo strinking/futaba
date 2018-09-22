@@ -37,5 +37,8 @@ class StringBuilder:
     def __str__(self):
         return self.buffer.getvalue()
 
+    def __bool__(self):
+        return bool(len(self))
+
     def __len__(self):
         return self.buffer.tell()
