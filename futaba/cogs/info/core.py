@@ -295,36 +295,30 @@ class Info:
         ''' Lists all roles in the guild. '''
 
         contents = []
-        lines = []
-        current_len = 0
+        content = StringBuilder()
 
         logger.info("Listing roles within the guild")
         for role in ctx.guild.roles:
-            line = f'- {role.mention} id: `{role.id}`, members: `{len(role.members)}`'
-            current_len += len(line)
+            content.writeln(f'- {role.mention} id: `{role.id}`, members: `{len(role.members)}`')
 
-            if current_len > 1900:
+            if len(content) > 1900:
                 # Too long, break into new embed
-                contents.append('\n'.join(lines))
+                contents.append(str(content))
 
-                # Start lines over
-                lines.clear()
-                lines.append(line)
-                current_len = len(line)
-            else:
-                lines.append(line)
+                # Start content over
+                content.clear()
 
-        contents.append('\n'.join(lines))
-        lines.clear()
+        if content:
+            contents.append(str(content))
 
         async def post_all():
             for i, content in enumerate(contents):
                 embed = discord.Embed(description=content)
                 page = f'Page {i + 1}/{len(contents)}'
                 if i == 0:
-                    embed.set_author(name=page)
+                    embed.set_footer(text=page)
                 else:
-                    embed.set_author(name=f'{page} Roles in {ctx.guild.name}')
+                    embed.set_footer(text=f'{page} Roles in {ctx.guild.name}')
 
                 await ctx.send(embed=embed)
 
