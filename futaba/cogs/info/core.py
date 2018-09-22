@@ -212,8 +212,9 @@ class Info:
         logger.info("Running ufind on '%s'", name)
         user_ids = similar_user_ids(name, self.bot.users)
         users_in_guild = set(member.id for member in getattr(ctx.guild, 'members', []))
+        found_users = False
 
-        lines = ['**Users found:**']
+        descr = StringBuilder('**Similar users found:**\n')
         for user_id in user_ids:
             user = self.bot.get_user(user_id)
             if user is None:
@@ -222,16 +223,14 @@ class Info:
             logger.debug("Result for user ID %d: %r", user_id, user)
             if user is not None:
                 extra = '' if user_id in users_in_guild else '\N{GLOBE WITH MERIDIANS}'
-                lines.append(f'- {user.mention} {extra}')
+                descr.writeln(f'- {user.mention} {extra}')
+                found_users = True
 
-        if len(lines) > 1:
-            descr = '\n'.join(lines)
-            colour = discord.Colour.teal()
+        if found_users:
+            embed = discord.Embed(description=str(descr), colour=discord.Colour.teal())
         else:
-            descr = '**No users found!**'
-            colour = discord.Colour.dark_red()
+            embed = discord.Embed(description='**No users found!**', colour=discord.Colour.dark_red())
 
-        embed = discord.Embed(description=descr, colour=colour)
         await asyncio.gather(
             ctx.send(embed=embed),
             Reactions.SUCCESS.add(ctx.message),
