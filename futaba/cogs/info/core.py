@@ -26,6 +26,7 @@ from discord.ext import commands
 from futaba.enums import Reactions
 from futaba.parse import get_emoji, get_channel_id, get_role_id, get_user_id, similar_user_ids
 from futaba.permissions import check_mod_perm
+from futaba.str_builder import StringBuilder
 from futaba.utils import escape_backticks, fancy_timedelta, first, lowerbool, plural
 from futaba.unicode import UNICODE_CATEGORY_NAME
 
@@ -573,15 +574,14 @@ class Info:
         embed.set_author(name=ctx.guild.name)
         embed.set_thumbnail(url=ctx.guild.icon_url)
 
-        lines = [
-            f'\N{MAN} **Members:** {len(ctx.guild.members)}',
-            f'\N{MILITARY MEDAL} **Roles:** {len(ctx.guild.roles)}',
-            f'\N{BAR CHART} **Channel categories:** {len(ctx.guild.categories)}',
-            f'\N{MEMO} **Text Channels:** {len(ctx.guild.text_channels)}',
-            f'\N{STUDIO MICROPHONE} **Voice Channels:** {len(ctx.guild.voice_channels)}',
-            f'\N{CLOCK FACE TWO OCLOCK} **Age:** {fancy_timedelta(ctx.guild.created_at)}',
-            ''
-        ]
+        descr = StringBuilder()
+        descr.writeln(f'\N{MAN} **Members:** {len(ctx.guild.members)}')
+        descr.writeln(f'\N{MILITARY MEDAL} **Roles:** {len(ctx.guild.roles)}')
+        descr.writeln(f'\N{BAR CHART} **Channel categories:** {len(ctx.guild.categories)}')
+        descr.writeln(f'\N{MEMO} **Text Channels:** {len(ctx.guild.text_channels)}')
+        descr.writeln(f'\N{STUDIO MICROPHONE} **Voice Channels:** {len(ctx.guild.voice_channels)}')
+        descr.writeln(f'\N{CLOCK FACE TWO OCLOCK} **Age:** {fancy_timedelta(ctx.guild.created_at)}')
+        descr.writeln()
 
         moderators = 0
         admins = 0
@@ -599,14 +599,13 @@ class Info:
                 moderators += 1
 
         if bots:
-            lines.append(f'\N{ROBOT FACE} **Bots:** {bots}')
+            descr.writeln(f'\N{ROBOT FACE} **Bots:** {bots}')
         if moderators:
-            lines.append(f'\N{CONSTRUCTION WORKER} **Moderators:** {moderators}')
+            descr.writeln(f'\N{CONSTRUCTION WORKER} **Moderators:** {moderators}')
         if admins:
-            lines.append(f'\N{POLICE OFFICER} **Administrators:** {admins}')
-        lines.append(f'\N{CROWN} **Owner:** {ctx.guild.owner.mention}')
-
-        embed.description = '\n'.join(lines)
+            descr.writeln(f'\N{POLICE OFFICER} **Administrators:** {admins}')
+        descr.writeln(f'\N{CROWN} **Owner:** {ctx.guild.owner.mention}')
+        embed.description = str(descr)
 
         await asyncio.gather(
             ctx.send(embed=embed),

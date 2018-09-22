@@ -69,17 +69,17 @@ class Journal:
         outputs = self.bot.sql.journal.get_journal_channels(ctx.guild)
         outputs.sort(key=lambda x: x.channel.name)
         attributes = []
-        description = StringBuilder()
+        descr = StringBuilder()
         for output in outputs:
             if not output.settings.recursive:
                 attributes.append('exact path')
 
             attr_str = f'({", ".join(attributes)})' if attributes else ''
-            description.writeln(f'- `{output.path}` mounted at {output.channel.mention} {attr_str}')
+            descr.writeln(f'- `{output.path}` mounted at {output.channel.mention} {attr_str}')
             attributes.clear()
 
         if lines:
-            embed = discord.Embed(colour=discord.Colour.teal(), description=str(description))
+            embed = discord.Embed(colour=discord.Colour.teal(), description=str(descr))
             embed.set_author(name='Current journal outputs')
         else:
             embed = discord.Embed(colour=discord.Colour.dark_purple())

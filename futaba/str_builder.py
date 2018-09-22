@@ -33,7 +33,7 @@ class StringBuilder:
 
         self.buffer.write(str(text))
 
-    def writeln(self, text, endl='\n'):
+    def writeln(self, text='', endl='\n'):
         if self and self.sep:
             self.buffer.write(self.sep)
 
