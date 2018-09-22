@@ -89,6 +89,14 @@ class Journal:
             Reactions.SUCCESS.add(ctx.message),
         )
 
+    def log_updated_message(self, channel):
+        outputs = list(self.bot.sql.journal.get_journals_on_channel(channel))
+        if outputs:
+            paths = ' '.join(f'`{output.path}`' for output in outputs)
+        else:
+            paths = '(none)'
+        return f'Channel outputs updated! Current journal paths: {paths}'
+
     @log.command(name='add', aliases=['append', 'extend', 'new', 'set', 'update'])
     @commands.guild_only()
     @permissions.check_mod()
@@ -124,7 +132,10 @@ class Journal:
             else:
                 journal_sql.add_journal_channel(channel, path, recursive)
 
-        await Reactions.SUCCESS.add(ctx.message)
+        await asyncio.gather(
+            channel.send(content=self.log_updated_message(channel)),
+            Reactions.SUCCESS.add(ctx.message),
+        )
 
     @log.command(name='remove', aliases=['rm', 'delete', 'del'])
     @commands.guild_only()
@@ -137,10 +148,24 @@ class Journal:
         logging.info("Removing journal logger for channel #%s (%d) from path '%s'",
                 channel.name, channel.id, path)
 
+        listener = self.router.get(path, channel=channel)
+        if listener is None:
+            # No listener found
+            await asyncio.gather(
+                ctx.send(content=f'No output on `{path}` found for {channel.mention}'),
+                Reactions.FAIL.add(ctx.message),
+            )
+            return
+
+        self.router.unregister(listener)
+
         with self.bot.sql.transaction():
             self.bot.sql.journal.delete_journal_channel(channel, path)
 
-        await Reactions.SUCCESS.add(ctx.message)
+        await asyncio.gather(
+            channel.send(content=self.log_updated_message(channel)),
+            Reactions.SUCCESS.add(ctx.message),
+        )
 
     @log.command(name='send', aliases=['broadcast'])
     @commands.guild_only()

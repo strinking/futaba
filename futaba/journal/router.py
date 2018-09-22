@@ -14,6 +14,9 @@ import asyncio
 import logging
 from collections import defaultdict
 from itertools import chain
+from pathlib import PurePath
+
+import discord
 
 from .process import process_content
 
@@ -37,9 +40,20 @@ class Router:
         logger.info("Start journal event processing task")
         eventloop.create_task(self.handle_events())
 
+    def get(self, path, **attrs):
+        logger.debug("Getting first listener on path '%s' that matches attributes: %r",
+            path, attrs)
+
+        path = PurePath(path)
+        return discord.utils.get(self.paths[path], **attrs)
+
     def register(self, listener):
         logger.info("Registering %r on '%s'", listener, listener.path)
         self.paths[listener.path].append(listener)
+
+    def unregister(self, listener):
+        logger.info("Unregistering %r from '%s'", listener, listener.path)
+        self.paths[listener.path].remove(listener)
 
     async def handle_events(self):
         events = []
