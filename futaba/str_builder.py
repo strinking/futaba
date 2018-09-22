@@ -25,10 +25,10 @@ class StringBuilder:
         self.buffer = StringIO(initial)
 
     def write(self, text):
-        self.buffer.write(text)
+        self.buffer.write(str(text))
 
     def writeln(self, text):
-        self.buffer.writelines((text, '\n'))
+        self.buffer.writelines((str(text), '\n'))
 
     def clear(self):
         self.buffer.seek(0)
