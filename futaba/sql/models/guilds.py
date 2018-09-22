@@ -64,7 +64,7 @@ class GuildsModel:
         run_hooks('on_guild_leave', guild)
         delet = self.tb_guilds \
                 .delete() \
-                .where(guild_id=guild.id)
+                .where(self.tb_guilds.c.guild_id == guild.id)
         self.sql.execute(delet)
 
     def get_guild_ids(self, bot):

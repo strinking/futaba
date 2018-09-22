@@ -27,7 +27,7 @@ HOOK_NAMES = (
     'on_guild_leave',
 )
 
-_hooks = {name: [] for name in HOOK_NAMES}
+hooks = {name: [] for name in HOOK_NAMES}
 logger = logging.getLogger(__name__)
 
 def register_hook(name, hook):
@@ -35,11 +35,11 @@ def register_hook(name, hook):
         raise ValueError(f"No such hook type: {name}")
 
     logger.info("Register hook %r for '%s'", hook, name)
-    _hooks[name].append(hook)
+    hooks[name].append(hook)
 
 def run_hooks(name, *args, **kwargs):
     logger.info("Running hooks for '%s'...", name)
-    for hook in _hooks[name]:
+    for hook in hooks[name]:
         try:
             hook(*args, **kwargs)
         except Exception as error:
