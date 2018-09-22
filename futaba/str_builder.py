@@ -19,16 +19,24 @@ __all__ = [
 class StringBuilder:
     __slots__ = (
         'buffer',
+        'sep',
     )
 
-    def __init__(self, initial=''):
+    def __init__(self, initial='', sep=''):
         self.buffer = StringIO(initial)
+        self.sep = sep
 
     def write(self, text):
+        if self and self.sep:
+            self.buffer.write(self.sep)
+
         self.buffer.write(str(text))
 
-    def writeln(self, text):
-        self.buffer.writelines((str(text), '\n'))
+    def writeln(self, text, endl='\n'):
+        if self and self.sep:
+            self.buffer.write(self.sep)
+
+        self.buffer.writelines((str(text), endl))
 
     def clear(self):
         self.buffer.seek(0)
