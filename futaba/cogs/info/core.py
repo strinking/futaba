@@ -264,17 +264,17 @@ class Info:
         embed.add_field(name='ID', value=str(role.id))
         embed.add_field(name='Position', value=str(role.position))
 
-        lines = [role.mention]
+        descr = StringBuilder(role.mention)
         if role.mentionable:
-            lines.append('Mentionable')
+            descr.writeln('Mentionable')
         if role.hoist:
-            lines.append('Hoisted')
+            descr.writeln('Hoisted')
         if role.managed:
-            lines.append('Managed')
-        embed.description = '\n'.join(lines)
+            descr.writeln('Managed')
+        embed.description = str(descr)
 
         if role.members:
-            max_members = 15
+            max_members = 10
             members = ", ".join(map(lambda m: m.mention, islice(role.members, 0, max_members)))
             if len(role.members) > max_members:
                 diff = len(role.members) - max_members
