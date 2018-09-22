@@ -180,17 +180,13 @@ class Info:
             mute = user.voice.mute or user.voice.self_mute
             deaf = user.voice.deaf or user.voice.self_deaf
 
-            states = []
+            states = StringBuilder(sep=' ')
             if mute:
-                states.append('muted')
+                states.write('muted')
             if deaf:
-                states.append('deafened')
+                states.write('deafened')
 
-            if states:
-                state = ', '.join(states)
-            else:
-                state = 'active'
-
+            state = str(states) if states else 'active'
             embed.add_field(name='Voice', value=state)
 
         # Guild join date
