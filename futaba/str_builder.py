@@ -24,6 +24,7 @@ class StringBuilder:
 
     def __init__(self, initial='', sep=''):
         self.buffer = StringIO(initial)
+        self.buffer.seek(len(initial))
         self.sep = sep
 
     def write(self, text):
