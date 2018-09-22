@@ -21,6 +21,7 @@ import discord
 
 from futaba.download import download_links
 from futaba.enums import FilterType, LocationType
+from futaba.str_builder import StringBuilder
 from futaba.utils import URL_REGEX, Dummy, escape_backticks
 
 logger = logging.getLogger(__name__)
@@ -92,19 +93,19 @@ async def check_message(cog, message):
 
 async def check_text_filter(cog, message):
     # Also check embed content
-    parts = [message.content]
+    content = StringBuilder(message.content)
     for embed in message.embeds:
         embed_dict = embed.to_dict()
-        parts.append(embed_dict.get('description', ''))
-        parts.append(embed_dict.get('title', ''))
+        content.writeln(embed_dict.get('description', ''))
+        content.writeln(embed_dict.get('title', ''))
 
         for field in embed_dict.get('fields', []):
-            parts.append(field.get('name', ''))
-            parts.append(field.get('value', ''))
+            content.writeln(field.get('name', ''))
+            content.writeln(field.get('value', ''))
 
     # This is the string we will validate against
-    content = '\n'.join(parts)
-    logger.debug("Content to check: %r", content)
+    to_check = str(content)
+    logger.debug("Content to check: %r", to_check)
 
     # Iterate through all guild filters
     triggered = None
@@ -115,12 +116,12 @@ async def check_text_filter(cog, message):
 
     for location_type, all_filters in filter_groups:
         for filter_text, (filter, filter_type) in all_filters.items():
-            if filter.matches(content):
+            if filter.matches(to_check):
                 if triggered is None or filter_type.value > triggered.filter_type.value:
                     triggered = FoundTextViolation(
                         journal=cog.journal,
                         message=message,
-                        content=content,
+                        content=to_check,
                         location_type=location_type,
                         filter_type=filter_type,
                         filter_text=filter_text,

@@ -78,7 +78,7 @@ class Journal:
             descr.writeln(f'- `{output.path}` mounted at {output.channel.mention} {attr_str}')
             attributes.clear()
 
-        if lines:
+        if outputs:
             embed = discord.Embed(colour=discord.Colour.teal(), description=str(descr))
             embed.set_author(name='Current journal outputs')
         else:
