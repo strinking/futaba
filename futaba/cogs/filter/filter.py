@@ -15,6 +15,8 @@ import re
 
 from confusable_homoglyphs import confusables
 
+from futaba.str_builder import StringBuilder
+
 logger = logging.getLogger(__name__)
 
 __all__ = [
@@ -57,22 +59,22 @@ class Filter:
     def build_regex(text, groups):
         # Build similar character tree
         chars = {}
-        parts = []
+        pattern = StringBuilder()
         for group in groups:
-            parts.append('[')
+            pattern.write('[')
             char = group['character']
-            parts.append(re.escape(char))
+            pattern.write(re.escape(char))
             for homoglyph in group['homoglyphs']:
-                parts.append(re.escape(homoglyph['c']))
-            parts.append(']')
-            chars[char] = ''.join(parts)
-            parts.clear()
+                pattern.write(re.escape(homoglyph['c']))
+            pattern.write(']')
+            chars[char] = str(pattern)
+            pattern.clear()
 
         # Create pattern
         for char in text:
-            parts.append(chars.get(char, char))
+            pattern.write(chars.get(char, char))
 
-        return ''.join(parts)
+        return str(pattern)
 
     def matches(self, content):
         contents = (

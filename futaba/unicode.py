@@ -18,7 +18,7 @@ import unicodedata
 from bisect import bisect
 from urllib.request import urlretrieve
 
-from .str_builder import StringBuilder
+from futaba.str_builder import StringBuilder
 
 logger = logging.getLogger(__name__)
 

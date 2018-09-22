@@ -16,7 +16,7 @@ import subprocess
 from datetime import datetime
 from itertools import zip_longest
 
-from .str_builder import StringBuilder
+from futaba.str_builder import StringBuilder
 
 logger = logging.getLogger(__name__)
 
