@@ -148,6 +148,17 @@ class Journal:
         logging.info("Removing journal logger for channel #%s (%d) from path '%s'",
                 channel.name, channel.id, path)
 
+        listener = self.router.get(path, channel=channel)
+        if listener is None:
+            # No listener found
+            await asyncio.gather(
+                ctx.send(content=f'No output on `{path}` found for {channel.mention}'),
+                Reactions.FAIL.add(ctx.message),
+            )
+            return
+
+        self.router.unregister(listener)
+
         with self.bot.sql.transaction():
             self.bot.sql.journal.delete_journal_channel(channel, path)
 
