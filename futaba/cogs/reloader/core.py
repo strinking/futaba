@@ -55,7 +55,7 @@ class Reloader:
     @commands.command(name='load', aliases=['l'])
     @permissions.check_owner()
     async def load(self, ctx, cogname: str):
-        ''' Loads the given cog '''
+        ''' Loads the named cog. '''
 
         logger.info("Cog load requested: %s", cogname)
 
@@ -92,7 +92,7 @@ class Reloader:
     @commands.command(name='unload', aliases=['ul'])
     @permissions.check_owner()
     async def unload(self, ctx, cogname: str):
-        ''' Unloads the cog given '''
+        ''' Unloads the named cog. '''
 
         logger.info("Cog unload requested: %s", cogname)
 
@@ -129,7 +129,7 @@ class Reloader:
     @commands.command(name='reload', aliases=['rl'])
     @permissions.check_owner()
     async def reload(self, ctx, cogname: str):
-        ''' Reloads the cog given '''
+        ''' Reloads the named cog. '''
 
         logger.info("Cog reload requested: %s", cogname)
 
@@ -166,9 +166,7 @@ class Reloader:
 
     @commands.command(name='listcogs', aliases=['cogs'])
     async def listcogs(self, ctx):
-        '''
-        List the cogs that are currently loaded
-        '''
+        ''' Lists all currently loaded cogs. '''
 
         content = StringBuilder('```yaml\nCogs loaded:\n')
         if self.bot.cogs:

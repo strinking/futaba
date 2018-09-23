@@ -72,6 +72,7 @@ class Info:
             embed.set_thumbnail(url=emoji.url)
             embed.add_field(name='Name', value=emoji.name)
             embed.add_field(name='Guild', value=emoji.guild.name)
+            embed.add_field(name='ID', value=str(emoji.id))
             embed.add_field(name='Managed', value=lowerbool(emoji.managed))
             embed.timestamp = emoji.created_at
         elif isinstance(emoji, str):
