@@ -125,6 +125,8 @@ class Filtering:
         '''
 
         await check_hashsums((hashsum,), ctx.message)
+        content = f'Added content flag filter for `{hashsum}`'
+        self.journal.send('content/new/flag', ctx.guild, content, icon='filter')
         await add_content_filter(
             self.bot,
             self.content_filters,
@@ -146,6 +148,8 @@ class Filtering:
         '''
 
         await check_hashsums((hashsum,), ctx.message)
+        content = f'Added content block filter for `{hashsum}`'
+        self.journal.send('content/new/block', ctx.guild, content, icon='filter')
         await add_content_filter(
             self.bot,
             self.content_filters,
@@ -167,6 +171,8 @@ class Filtering:
         '''
 
         await check_hashsums((hashsum,), ctx.message)
+        content = f'Added content jail filter for `{hashsum}`'
+        self.journal.send('content/new/jail', ctx.guild, content, icon='filter')
         await add_content_filter(
             self.bot,
             self.content_filters,
@@ -186,6 +192,8 @@ class Filtering:
         '''
 
         await check_hashsums(hashsums, ctx.message)
+        content = f'Removed content jail filter for `{hashsum}`'
+        self.journal.send('content/remove', ctx.guild, content, icon='filter')
         await delete_content_filter(self.bot, self.content_filters, ctx.message, hashsums)
 
     @filter.group(name='immune', aliases=['imm', 'ignore', 'ign'])
