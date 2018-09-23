@@ -22,10 +22,11 @@ import logging
 
 import discord
 from sqlalchemy import and_, or_
-from sqlalchemy import BigInteger, Column, Table, Unicode
+from sqlalchemy import BigInteger, Boolean, Column, Table, Unicode
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.sql import select
 
+from futaba.utils import lowerbool
 from ..hooks import register_hook
 
 Column = functools.partial(Column, nullable=False)
@@ -41,13 +42,17 @@ class WelcomeStorage:
         'guild',
         'welcome_message',
         'goodbye_message',
+        'agreed_message',
+        'delete_on_agree',
         'welcome_channel',
     )
 
-    def __init__(self, guild, welcome_message, goodbye_message, welcome_channel_id):
+    def __init__(self, guild, welcome_message, goodbye_message, agreed_message, delete_on_agree, welcome_channel_id):
         self.guild = guild
         self.welcome_message = welcome_message
         self.goodbye_message = goodbye_message
+        self.agreed_message = agreed_message
+        self.delete_on_agree = delete_on_agree
         self.welcome_channel = discord.utils.get(guild.roles, id=welcome_channel_id)
 
     @property
@@ -67,6 +72,8 @@ class WelcomeModel:
                 Column('guild_id', BigInteger, ForeignKey('guilds.guild_id'), primary_key=True),
                 Column('welcome_message', Unicode, nullable=True),
                 Column('goodbye_message', Unicode, nullable=True),
+                Column('agreed_message', Unicode, nullable=True),
+                Column('delete_on_agree', Boolean),
                 Column('welcome_channel_id', BigInteger, nullable=True))
         self.cache = {}
 
@@ -134,6 +141,28 @@ class WelcomeModel:
                 .values(goodbye_message=goodbye_message)
         self.sql.execute(upd)
         self.cache[guild].goodbye_message = goodbye_message
+
+    def set_agreed_message(self, guild, agreed_message):
+        logger.info("Setting agreed message to %r for guild '%s' (%d)",
+                agreed_message, guild.name, guild.id)
+
+        upd = self.tb_welcome \
+                .update() \
+                .where(self.tb_welcome.c.guild_id == guild.id) \
+                .values(agreed_message=agreed_message)
+        self.sql.execute(upd)
+        self.cache[guild].agreed_message = agreed_message
+
+    def set_delete_on_agree(self, guild, value):
+        logger.info("Setting 'delete on agree' option to %s for guild '%s' (%d)",
+                lowerbool(value), guild.name, guild.id)
+
+        upd = self.tb_welcome \
+                .update() \
+                .where(self.tb_welcome.c.guild_id == guild.id) \
+                .values(delete_on_agree=value)
+        self.sql.execute(upd)
+        self.cache[guild].delete_on_agree = value
 
     def set_welcome_channel(self, guild, channel):
         if channel is None:

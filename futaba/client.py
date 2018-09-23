@@ -26,6 +26,7 @@ from .cogs.journal import Journal
 from .cogs.reloader import Reloader
 from .config import Configuration
 from .enums import Reactions
+from .exceptions import InvalidCommandContext
 from .journal import Broadcaster, LoggingOutputListener
 from .sql import SqlHandler
 from .utils import plural
@@ -173,7 +174,7 @@ class Bot(commands.AutoShardedBot):
 
     async def on_command_error(self, ctx, error):
         '''
-        Deals with errors when a command is invoked.
+        Handles errors when a command is invoked but raises an exception.
         '''
 
         # Complains about "context" vs "ctx".
@@ -188,6 +189,11 @@ class Bot(commands.AutoShardedBot):
         elif isinstance(error, commands.errors.CheckFailure):
             # Tell the user they don't have the permission to tun the command
             await Reactions.DENY.add(ctx.message)
+
+        elif isinstance(error, InvalidCommandContext):
+            # Explicitly ignore, this command was not even meant to be invoked in the first place
+            # This is sent when we explicitly DO NOT want to add a SUCCESS reaction.
+            pass
 
     async def _send(self, *args, **kwargs):
         if self.debug_chan is not None:
