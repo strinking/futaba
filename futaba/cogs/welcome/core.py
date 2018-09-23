@@ -32,6 +32,8 @@ __all__ = [
     'Welcome',
 ]
 
+AGREE_REASON = "User agreed to the server's rules and policies"
+
 def format_welcome_message(welcome_message, ctx):
     user = ctx.author
     channel = ctx.channel
@@ -62,21 +64,28 @@ class Welcome:
         self.bot = bot
         self.recently_joined = deque(maxlen=5)
 
+    @staticmethod
+    async def send_welcome_message(member, format_message, channel):
+        ctx = FakeContext(author=member, channel=channel, guild=member.guild)
+        content = format_welcome_message(format_message, ctx)
+        await channel.send(content=content)
+
     async def member_join(self, member):
         logger.info("Member %s (%d) joined '%s' (%d)",
                 user_discrim(member), member.id, member.guild.name, member.guild.id)
 
         welcome = self.bot.sql.welcome.get_welcome(member.guild)
         roles = self.bot.sql.settings.get_special_roles(member.guild)
+        tasks = []
 
         if welcome.welcome_message and welcome.channel:
-            ctx = FakeContext(author=member, channel=welcome.channel, guild=member.guild)
-            content = format_welcome_message(welcome.welcome_message, ctx)
-            await welcome.channel.send(content=content)
+            tasks.append(self.send_welcome_message(member, welcome.welcome_message, welcome.channel))
 
         if roles.guest:
             logger.info("Adding role %s (%d) to new guest", roles.guest.name, roles.guest.id)
-            await member.add_roles(roles.guest, reason="New user joined")
+            tasks.append(member.add_roles(roles.guest, reason="New user joined"))
+
+        await asyncio.gather(*tasks)
 
     async def member_leave(self, member):
         logger.info("Member %s (%d) left '%s' (%d)",
@@ -85,9 +94,7 @@ class Welcome:
         welcome = self.bot.sql.welcome.get_welcome(member.guild)
 
         if welcome.goodbye_message and welcome.channel:
-            ctx = FakeContext(author=member, channel=welcome.channel, guild=member.guild)
-            content = format_welcome_message(welcome.goodbye_message, ctx)
-            await welcome.channel.send(content=content)
+            await self.send_welcome_message(member, welcome.goodbye_message, welcome.channel)
 
     @commands.command(name='agree', aliases=['accept'])
     @commands.guild_only()
@@ -118,22 +125,27 @@ class Welcome:
                 ctx.author.name, ctx.author.id)
 
         self.recently_joined.append(ctx.author)
+        tasks = []
+
+        if welcome.delete_on_agree:
+            tasks.append(ctx.message.delete())
 
         if roles.member:
             logger.info("Adding member role %s (%d)", roles.member.name, roles.member.id)
-            await ctx.author.add_roles(roles.member, reason='Agreed to the rules and policies')
+            tasks.append(ctx.author.add_roles(roles.member, reason=AGREE_REASON))
 
         if roles.guest:
             logger.info("Removing guest role %s (%d)", roles.guest.name, roles.guest.id)
-            await ctx.author.remove_roles(roles.guest, reason='Agreed to the rules and policies')
+            tasks.append(ctx.author.remove_roles(roles.guest, reason=AGREE_REASON))
 
         if welcome.agreed_message:
-            await ctx.send(content=format_welcome_message(welcome.agreed_message, ctx))
+            tasks.append(ctx.send(content=format_welcome_message(welcome.agreed_message, ctx)))
 
         # TODO: restore old roles
 
-        if welcome.delete_on_agree:
-            await ctx.message.delete()
+        # Run all tasks in parallel
+        await asyncio.gather(*tasks)
 
-            # Prevent the bot from attempting to add a success reaction
+        # Prevent the bot from attempting to add a success reaction
+        if welcome.delete_on_agree:
             raise InvalidCommandContext()
