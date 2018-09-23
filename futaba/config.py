@@ -18,9 +18,10 @@ from collections import namedtuple
 
 import toml
 
+from futaba.exceptions import InvalidConfigError
+
 __all__ = [
     'Configuration',
-    'InvalidConfigError',
     'load_config',
 ]
 
@@ -35,11 +36,6 @@ Configuration = namedtuple(
         'database_url',
     ),
 )
-
-class InvalidConfigError(RuntimeError):
-    def __init__(self, message, config):
-        super().__init__(message)
-        self.config = config
 
 def _get(config, field, path=None):
     if field not in config:
