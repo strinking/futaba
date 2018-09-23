@@ -206,6 +206,7 @@ class Bot(commands.AutoShardedBot):
             # TODO send help message for error.command
             pass
 
+    # Remove this?
     async def _send(self, *args, **kwargs):
         if self.debug_chan is not None:
             await self.debug_chan.send(*args, **kwargs)

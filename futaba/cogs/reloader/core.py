@@ -160,7 +160,7 @@ class Reloader:
             embed = discord.Embed(colour=discord.Colour.green(), description=f'```{cogname}```')
             embed.set_author(name='Reloaded')
             await asyncio.gather(
-                self.bot._send(embed=embed),
+                ctx.send(embed=embed),
                 Reactions.SUCCESS.add(ctx.message),
             )
 
