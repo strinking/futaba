@@ -40,17 +40,15 @@ class WelcomeStorage:
     __slots__ = (
         'guild',
         'welcome_message',
+        'goodbye_message',
         'welcome_channel',
     )
 
-    def __init__(self, guild, welcome_message, welcome_channel_id):
+    def __init__(self, guild, welcome_message, goodbye_message, welcome_channel_id):
         self.guild = guild
         self.welcome_message = welcome_message
+        self.goodbye_message = goodbye_message
         self.welcome_channel = discord.utils.get(guild.roles, id=welcome_channel_id)
-
-    @property
-    def message(self):
-        return self.welcome_message
 
     @property
     def channel(self):
@@ -68,6 +66,7 @@ class WelcomeModel:
         self.tb_welcome = Table('welcome', meta,
                 Column('guild_id', BigInteger, ForeignKey('guilds.guild_id'), primary_key=True),
                 Column('welcome_message', Unicode, nullable=True),
+                Column('goodbye_message', Unicode, nullable=True),
                 Column('welcome_channel_id', BigInteger, nullable=True))
         self.cache = {}
 
@@ -78,7 +77,12 @@ class WelcomeModel:
         logger.info("Adding welcome message row for guild '%s' (%d)", guild.name, guild.id)
         ins = self.tb_welcome \
                 .insert() \
-                .values(guild_id=guild.id, welcome_message=None, welcome_channel_id=None)
+                .values(
+                    guild_id=guild.id,
+                    welcome_message=None,
+                    goodbye_message=None,
+                    welcome_channel_id=None,
+                )
         self.sql.execute(ins)
         self.cache[guild] = WelcomeStorage(guild, None, None)
 
@@ -96,12 +100,16 @@ class WelcomeModel:
             logger.debug("Welcome message data found in cache, returning")
             return self.cache[guild]
 
-        sel = select([self.tb_welcome.c.welcome_message, self.tb_welcome.c.welcome_channel_id]) \
+        sel = select([
+                    self.tb_welcome.c.welcome_message,
+                    self.tb_welcome.c.goodbye_message,
+                    self.tb_welcome.c.welcome_channel_id,
+                ]) \
                 .where(self.tb_welcome.c.guild_id == guild.id)
         result = self.sql.execute(sel)
         welcome_message, welcome_channel_id = result.fetchone()
 
-        welcome = WelcomeStorage(guild, welcome_message, welcome_channel_id)
+        welcome = WelcomeStorage(guild, welcome_message, goodbye_message, welcome_channel_id)
         self.cache[guild] = welcome
         return welcome
 
@@ -115,6 +123,17 @@ class WelcomeModel:
                 .values(welcome_message=welcome_message)
         self.sql.execute(upd)
         self.cache[guild].welcome_message = welcome_message
+
+    def set_goodbye_message(self, guild, goodbye_message):
+        logger.info("Setting goodbye message to %r for guild '%s' (%d)",
+                goodbye_message, guild.name, guild.id)
+
+        upd = self.tb_welcome \
+                .update() \
+                .where(self.tb_welcome.c.guild_id == guild.id) \
+                .values(goodbye_message=goodbye_message)
+        self.sql.execute(upd)
+        self.cache[guild].goodbye_message = goodbye_message
 
     def set_welcome_channel(self, guild, channel):
         if channel is None:
