@@ -32,12 +32,18 @@ logger = logging.getLogger(__name__)
 __all__ = [
     'LISTENERS',
     'Tracker',
+    'MessageDeletionReason',
     'MemberLeaveReason',
 ]
 
+MessageDeletionReason = namedtuple(
+    'MessageDeletionReason',
+    ('message', 'cause', 'count', 'reason', 'deleted_at', 'audit_log_entry'),
+)
+
 MemberLeaveReason = namedtuple(
     'MemberLeaveReason',
-    ('type', 'member', 'cause', 'left_at', 'audit_log_entry'),
+    ('type', 'member', 'cause', 'reason', 'left_at', 'audit_log_entry'),
 )
 
 LISTENERS = (
@@ -131,16 +137,45 @@ class Tracker:
         self.journal.send('jump/message/edit', after.guild, after.jump_url,
                 icon='previous', before=before, after=after)
 
+    async def get_deletion_reason(self, message, timestamp):
+        async for entry in message.guild.audit_logs(limit=20, action=AuditLogAction.message_delete):
+            if entry.after.id == message.id:
+                return MessageDeletionReason(
+                    message=message,
+                    cause=entry.user,
+                    count=entry.extra.count,
+                    reason=entry.reason,
+                    deleted_at=timestamp,
+                    audit_log_entry=entry,
+                )
+
+        # Couldn't find anything, must be a self-delete.
+        return MessageDeletionReason(
+            message=message,
+            cause=message.author,
+            count=1,
+            reason=None,
+            deleted_at=timestamp,
+            audit_log_entry=None,
+        )
+
     async def on_message_delete(self, message):
         if message.guild is None:
             return
 
         logger.debug("Message %d by %s (%d) was deleted",
                 message.id, message.author.name, message.author.id)
+
+        # Wait for a bit so we can catch the audit log entry
+        timestamp = datetime.now()
+        await asyncio.sleep(5)
+        cause = await self.get_removal_cause(message, timestamp)
+
         content = f'Message {message.id} by {user_discrim(message.author)} was deleted'
-        self.journal.send('message/delete', message.guild, content, icon='delete', message=message)
+        self.journal.send('message/delete', message.guild, content, icon='delete',
+                message=message, cause=cause)
         self.journal.send('jump/message/delete', message.guild, message.jump_url,
-                icon='previous', message=message)
+                icon='previous', message=message, cause=cause)
 
     async def on_reaction_add(self, reaction, user):
         if (reaction, user) in self.reactions:
@@ -205,13 +240,14 @@ class Tracker:
         self.journal.send('member/join', member.guild, content, icon='join', member=member)
 
     async def get_removal_cause(self, member, timestamp):
-        async for entry in member.guild.audit_logs(limit=40):
+        async for entry in member.guild.audit_logs(limit=20):
             if entry.action == AuditLogAction.kick:
                 if entry.target == member:
                     return MemberLeaveReason(
                         type=MemberLeaveType.KICKED,
                         member=member,
                         cause=entry.user,
+                        reason=entry.reason,
                         left_at=entry.created_at,
                         audit_log_entry=entry,
                     )
@@ -221,6 +257,7 @@ class Tracker:
                         type=MemberLeaveType.BANNED,
                         member=member,
                         cause=entry.user,
+                        reason=entry.reason,
                         left_at=entry.created_at,
                         audit_log_entry=entry,
                     )
@@ -237,6 +274,7 @@ class Tracker:
                         type=MemberLeaveType.PRUNED,
                         member=member,
                         cause=entry.user,
+                        reason=entry.reason,
                         left_at=entry.created_at,
                         audit_log_entry=entry,
                     )
@@ -246,6 +284,7 @@ class Tracker:
             type=MemberLeaveType.LEFT,
             member=member,
             cause=member,
+            reason=None,
             left_at=timestamp,
             audit_log_entry=None,
         )
