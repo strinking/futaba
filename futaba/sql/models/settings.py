@@ -50,6 +50,22 @@ class SpecialRoleStorage:
         self.mute_role = self._get_role(mute_role_id)
         self.jail_role = self._get_role(jail_role_id)
 
+    @property
+    def member(self):
+        return self.member_role
+
+    @property
+    def guest(self):
+        return self.guest_role
+
+    @property
+    def mute(self):
+        return self.mute_role
+
+    @property
+    def jail(self):
+        return self.jail_role
+
     def _get_role(self, id):
         if id is None:
             return None
