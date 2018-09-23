@@ -172,7 +172,7 @@ class Reloader:
 
         content = StringBuilder('```yaml\nCogs loaded:\n')
         if self.bot.cogs:
-            for cog in self.bot.cogs:
+            for cog in sorted(self.bot.cogs):
                 content.writeln(f' - {cog}')
         else:
             content.writeln(' - (none)')
