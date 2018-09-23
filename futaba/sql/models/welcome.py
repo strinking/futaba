@@ -165,6 +165,9 @@ class WelcomeModel:
         self.cache[guild].delete_on_agree = value
 
     def set_welcome_channel(self, guild, channel):
+        if channel is not None:
+            assert guild == channel.guild
+
         if channel is None:
             logger.info("Unsetting welcome channel for guild '%s' (%d)",
                     guild.name, guild.id)

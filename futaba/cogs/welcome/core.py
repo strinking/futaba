@@ -21,7 +21,9 @@ from collections import deque, namedtuple
 import discord
 from discord.ext import commands
 
-from futaba.exceptions import InvalidCommandContext
+from futaba import permissions
+from futaba.enums import Reactions
+from futaba.exceptions import InvalidCommandContext, SendHelp
 from futaba.utils import user_discrim
 
 FakeContext = namedtuple('FakeContext', ('author', 'channel', 'guild'))
@@ -57,11 +59,13 @@ def format_welcome_message(welcome_message, ctx):
 class Welcome:
     __slots__ = (
         'bot',
+        'journal',
         'recently_joined',
     )
 
     def __init__(self, bot):
         self.bot = bot
+        self.journal = bot.get_broadcaster('/welcome')
         self.recently_joined = deque(maxlen=5)
 
     @staticmethod
@@ -149,3 +153,61 @@ class Welcome:
         # Prevent the bot from attempting to add a success reaction
         if welcome.delete_on_agree:
             raise InvalidCommandContext()
+
+    @commands.group(name='welcome', aliases=['wlm'])
+    @commands.guild_only()
+    async def welcome(self, ctx):
+        ''' Manages the welcome cog for managing new users and roles. '''
+
+        if ctx.invoked_subcommand is None:
+            raise SendHelp(ctx.command)
+
+    @welcome.command(name='welcomechannel', alias=['wchannel', 'getch'])
+    @commands.guild_only()
+    async def get_welcome_channel(self, ctx):
+        ''' Gets the welcome channel. '''
+
+        welcome = self.bot.sql.welcome.get_welcome(ctx.guild)
+        if welcome.channel:
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
+            embed.description = f'Welcome channel set to {welcome.channel.mention}'
+        else:
+            embed = discord.Embed(colour=discord.Colour.dark_purple())
+            embed.description = 'No welcome channel set for this guild!'
+
+        await asyncio.gather(
+            ctx.send(embed=embed),
+            Reactions.SUCCESS.add(ctx.message),
+        )
+
+    @welcome.command(name='setwelcomechannel', alias=['swchannel', 'setch'])
+    @commands.guild_only()
+    @permissions.check_admin()
+    async def set_welcome_channel(self, ctx, channel: discord.TextChannel):
+        ''' Sets the welcome channel. '''
+
+        logger.info("Setting welcome channel to #%s (%d) in guild '%s' (%d)",
+                channel.name, channel.id, ctx.guild.name, ctx.guild.id)
+
+        with self.bot.sql.transaction():
+            self.bot.sql.welcome.set_welcome_channel(ctx.guild, channel)
+
+        content = f'{user_discrim(ctx.author)} set the welcome channel to {channel.mention}'
+        self.journal.send('channel/set', ctx.guild, content, icon='settings',
+                channel=channel, cause=ctx.author)
+
+    @welcome.command(name='nowelcomechannel', alias=['nwchannel', 'unsetch'])
+    @commands.guild_only()
+    @permissions.check_admin()
+    async def unset_welcome_channel(self, ctx):
+        ''' Unsets the welcome channel. '''
+
+        logger.info("Unsetting the welcome channel in guild '%s' (%d)",
+                ctx.guild.name, ctx.guild.id)
+
+        with self.bot.sql.transaction():
+            self.bot.sql.welcome.set_welcome_channel(ctx.guild, None)
+
+        content = f'{user_discrim(ctx.author)} unset the welcome channel'
+        self.journal.send('channel/set', ctx.guild, content, icon='settings',
+                channel=None, cause=ctx.author)
