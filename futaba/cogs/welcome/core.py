@@ -159,10 +159,12 @@ class Welcome:
     async def welcome(self, ctx):
         ''' Manages the welcome cog for managing new users and roles. '''
 
+        print('>>', ctx.command, ctx.invoked_with, ctx.kwargs)
+        print('$$', ctx.invoked_subcommand)
         if ctx.invoked_subcommand is None:
             raise SendHelp(ctx.command)
 
-    @welcome.command(name='getchannel', alias=['getch'])
+    @welcome.command(name='getchan')
     @commands.guild_only()
     async def get_welcome_channel(self, ctx):
         ''' Gets the welcome channel. '''
@@ -180,7 +182,7 @@ class Welcome:
             Reactions.SUCCESS.add(ctx.message),
         )
 
-    @welcome.command(name='setchannel', alias=['setch'])
+    @welcome.command(name='setchan')
     @commands.guild_only()
     @permissions.check_admin()
     async def set_welcome_channel(self, ctx, channel: discord.TextChannel):
@@ -196,7 +198,7 @@ class Welcome:
         self.journal.send('channel/set', ctx.guild, content, icon='settings',
                 channel=channel, cause=ctx.author)
 
-    @welcome.command(name='unsetchannel', alias=['unsetch', 'noch'])
+    @welcome.command(name='unsetchan')
     @commands.guild_only()
     @permissions.check_admin()
     async def unset_welcome_channel(self, ctx):
