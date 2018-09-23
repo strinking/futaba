@@ -85,7 +85,8 @@ class Tracker:
                 user.name, user.id, channel.name, channel.id)
 
         content = f'{user.name}#{user.discriminator} ({user.id}) is typing in {channel.mention}'
-        self.journal.send('typing', channel.guild, content, icon='typing')
+        self.journal.send('typing', channel.guild, content,
+                icon='typing', channel=channel, user=user, when=when)
 
     async def on_message(self, message):
         if message in self.new_messages:
@@ -100,8 +101,9 @@ class Tracker:
                 message.author.name, message.author.id, message.channel.name, message.channel.id)
 
         content = f'{user_discrim(message.author)} sent a message in {message.channel.mention}'
-        self.journal.send('message/new', message.guild, content, icon='message')
-        self.journal.send('jump/message/new', message.guild, message.jump_url, icon='previous')
+        self.journal.send('message/new', message.guild, content, icon='message', message=message)
+        self.journal.send('jump/message/new', message.guild, message.jump_url,
+                icon='previous', message=message)
 
     async def on_message_edit(self, before, after):
         if after in self.edited_messages:
@@ -116,17 +118,21 @@ class Tracker:
                 after.id, after.author.name, after.author.id, after.channel.name, after.channel.id)
 
         content = f'{user_discrim(after.author)} edited message {after.id} in {after.channel.mention}'
-        self.journal.send('message/edit', after.guild, content, icon='edit')
-        self.journal.send('jump/message/edit', after.guild, after.jump_url, icon='previous')
+        self.journal.send('message/edit', after.guild, content, icon='edit',
+                before=before, after=after)
+        self.journal.send('jump/message/edit', after.guild, after.jump_url,
+                icon='previous', message=message)
 
     async def on_message_delete(self, message):
         if message.guild is None:
             return
 
-        logger.debug("Message %d by %s (%d) was deleted", message.id, message.author.name, message.author.id)
+        logger.debug("Message %d by %s (%d) was deleted",
+                message.id, message.author.name, message.author.id)
         content = f'Message {message.id} by {user_discrim(message.author)} was deleted'
-        self.journal.send('message/delete', message.guild, content, icon='delete')
-        self.journal.send('jump/message/delete', message.guild, message.jump_url, icon='previous')
+        self.journal.send('message/delete', message.guild, content, icon='delete', message=message)
+        self.journal.send('jump/message/delete', message.guild, message.jump_url,
+                icon='previous', message=message)
 
     async def on_reaction_add(self, reaction, user):
         if (reaction, user) in self.reactions:
@@ -143,8 +149,10 @@ class Tracker:
 
         logger.debug("Reaction %s added to message %d by %s (%d)", emoji, message.id, user.name, user.id)
         content = f'{user_discrim(user)} added reaction {emoji} to message {message.id} in {channel.mention}'
-        self.journal.send('reaction/add', message.guild, content, icon='item_add')
-        self.journal.send('jump/reaction/add', message.guild, message.jump_url, icon='previous')
+        self.journal.send('reaction/add', message.guild, content,
+                icon='item_add', reaction=reaction, user=user)
+        self.journal.send('jump/reaction/add', message.guild, message.jump_url,
+                icon='previous', message=message)
 
     async def on_reaction_remove(self, reaction, user):
         message = reaction.message
@@ -156,8 +164,10 @@ class Tracker:
 
         logger.debug("Reaction %s removed to message %d by %s (%d)", emoji, message.id, user.name, user.id)
         content = f'{user_discrim(user)} removed reaction {emoji} from message {message.id} in {channel.mention}'
-        self.journal.send('reaction/remove', message.guild, content, icon='item_remove')
-        self.journal.send('jump/reaction/remove', message.guild, message.jump_url, icon='previous')
+        self.journal.send('reaction/remove', message.guild, content,
+                icon='item_remove', reaction=reaction, user=user)
+        self.journal.send('jump/reaction/remove', message.guild, message.jump_url,
+                icon='previous', message=message)
 
     async def on_reaction_clear(self, message, reactions):
         if message.guild is None:
@@ -165,18 +175,20 @@ class Tracker:
 
         logger.debug("All reactions from message %d were removed", message.id)
         content = f'All reactions on message {message.id} in {message.channel.mention} were removed'
-        self.journal.send('reaction/clear', message.guild, content, icon='item_clear')
-        self.journal.send('jump/reaction/clear', message.guild, message.jump_url, icon='previous')
+        self.journal.send('reaction/clear', message.guild, content, icon='item_clear',
+                message=message, reactions=reactions)
+        self.journal.send('jump/reaction/clear', message.guild, message.jump_url,
+                icon='previous', message=message)
 
     async def on_guild_channel_create(self, channel):
         logger.debug("Channel #%s (%d) was created", channel.name, channel.id)
         content = f'Guild channel {channel.mention} created'
-        self.journal.send('channel/new', channel.guild, content, icon='channel')
+        self.journal.send('channel/new', channel.guild, content, icon='channel', channel=channel)
 
     async def on_guild_channel_delete(self, channel):
         logger.debug("Channel #%s (%d) was deleted", channel.name, channel.id)
         content = f'Guild channel #{channel.name} ({channel.id}) deleted'
-        self.journal.send('channel/delete', channel.guild, content, icon='delete')
+        self.journal.send('channel/delete', channel.guild, content, icon='delete', channel=channel)
 
     async def on_member_join(self, member):
         logger.debug("Member %s (%d) joined '%s' (%d)",
