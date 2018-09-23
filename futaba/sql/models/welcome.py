@@ -47,7 +47,14 @@ class WelcomeStorage:
         'welcome_channel',
     )
 
-    def __init__(self, guild, welcome_message, goodbye_message, agreed_message, delete_on_agree, welcome_channel_id):
+    def __init__(
+        self, guild,
+        welcome_message=None,
+        goodbye_message=None,
+        agreed_message=None,
+        delete_on_agree=True,
+        welcome_channel_id=None,
+    ):
         self.guild = guild
         self.welcome_message = welcome_message
         self.goodbye_message = goodbye_message
@@ -58,6 +65,14 @@ class WelcomeStorage:
     @property
     def channel(self):
         return self.welcome_channel
+
+    @property
+    def channel_id(self):
+        return self.welcome_channel_id
+
+    @property
+    def welcome_channel_id(self):
+        return getattr(self.welcome_channel, 'id', None)
 
 class WelcomeModel:
     __slots__ = (
@@ -82,16 +97,18 @@ class WelcomeModel:
 
     def add_welcome(self, guild):
         logger.info("Adding welcome message row for guild '%s' (%d)", guild.name, guild.id)
+        storage = WelcomeStorage(guild)
         ins = self.tb_welcome \
                 .insert() \
                 .values(
                     guild_id=guild.id,
-                    welcome_message=None,
-                    goodbye_message=None,
-                    welcome_channel_id=None,
+                    welcome_message=storage.welcome_channel,
+                    goodbye_message=storage.goodbye_message,
+                    delete_on_agree=storage.delete_on_agree,
+                    welcome_channel_id=storage.welcome_channel_id,
                 )
         self.sql.execute(ins)
-        self.cache[guild] = WelcomeStorage(guild, None, None)
+        self.cache[guild] = storage
 
     def del_welcome(self, guild):
         logger.info("Removing welcome message row for guild '%s' (%d)", guild.name, guild.id)
@@ -110,6 +127,7 @@ class WelcomeModel:
         sel = select([
                     self.tb_welcome.c.welcome_message,
                     self.tb_welcome.c.goodbye_message,
+                    self.tb_welcome.c.delete_on_agree,
                     self.tb_welcome.c.welcome_channel_id,
                 ]) \
                 .where(self.tb_welcome.c.guild_id == guild.id)
@@ -119,9 +137,14 @@ class WelcomeModel:
             self.add_welcome(guild)
             return self.cache[guild]
 
-        welcome_message, goodbye_message, welcome_channel_id = result.fetchone()
-
-        welcome = WelcomeStorage(guild, welcome_message, goodbye_message, welcome_channel_id)
+        welcome_message, goodbye_message, delete_on_agree, welcome_channel_id = result.fetchone()
+        welcome = WelcomeStorage(
+            guild,
+            welcome_message,
+            goodbye_message,
+            delete_on_agree,
+            welcome_channel_id,
+        )
         self.cache[guild] = welcome
         return welcome
 

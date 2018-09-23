@@ -159,8 +159,6 @@ class Welcome:
     async def welcome(self, ctx):
         ''' Manages the welcome cog for managing new users and roles. '''
 
-        print('>>', ctx.command, ctx.invoked_with, ctx.kwargs)
-        print('$$', ctx.invoked_subcommand)
         if ctx.invoked_subcommand is None:
             raise SendHelp(ctx.command)
 
@@ -198,6 +196,8 @@ class Welcome:
         self.journal.send('channel/set', ctx.guild, content, icon='settings',
                 channel=channel, cause=ctx.author)
 
+        await Reactions.SUCCESS.add(ctx.message)
+
     @welcome.command(name='unsetchan')
     @commands.guild_only()
     @permissions.check_admin()
@@ -213,3 +213,5 @@ class Welcome:
         content = f'{user_discrim(ctx.author)} unset the welcome channel'
         self.journal.send('channel/set', ctx.guild, content, icon='settings',
                 channel=None, cause=ctx.author)
+
+        await Reactions.SUCCESS.add(ctx.message)
