@@ -94,9 +94,9 @@ class Filtering:
         if ctx.invoked_subcommand is None:
             raise SendHelp(ctx.command)
 
-    @commands.group(name='cfilter', aliases=['content', 'filefilter', 'ffilter'])
+    @commands.group(name='ffilter', aliases=['filefilter', 'content', 'cfilter'])
     @commands.guild_only()
-    async def cfilter(self, ctx):
+    async def ffilter(self, ctx):
         '''
         Adds, removes, or lists SHA1 hashes in the content filter.
         '''
@@ -104,19 +104,19 @@ class Filtering:
         if ctx.invoked_subcommand is None:
             raise SendHelp(ctx.command)
 
-    @cfilter.command(name='show', aliases=['display', 'list'])
+    @ffilter.command(name='show', aliases=['display', 'list'])
     @commands.guild_only()
-    async def cfilter_show(self, ctx):
+    async def ffilter_show(self, ctx):
         '''
         List all currently filtered SHA1 file hashes in the guild's filter.
         '''
 
         await show_content_filter(self.content_filters[ctx.guild], ctx.message)
 
-    @cfilter.command(name='flag', aliases=['warn', 'alert', 'notice'])
+    @ffilter.command(name='flag', aliases=['warn', 'alert', 'notice'])
     @commands.guild_only()
     @permissions.check_mod()
-    async def cfilter_flag(self, ctx, hashsum: str, description: str):
+    async def ffilter_flag(self, ctx, hashsum: str, description: str):
         '''
         Adds the given SHA1 hashes to the guild's flagging filter, which notifies staff when posted.
         It does not notify the user or delete the message.
@@ -136,10 +136,10 @@ class Filtering:
             description,
         )
 
-    @cfilter.command(name='block', aliases=['deny', 'autoremove'])
+    @ffilter.command(name='block', aliases=['deny', 'autoremove'])
     @commands.guild_only()
     @permissions.check_mod()
-    async def cfilter_block(self, ctx, hashsum: str, description: str):
+    async def ffilter_block(self, ctx, hashsum: str, description: str):
         '''
         Adds the given SHA1 hashes to the guild's blocking filter, automatically deleting any messages.
         It does not notify the user or delete the message.
@@ -159,10 +159,10 @@ class Filtering:
             description,
         )
 
-    @cfilter.command(name='jail', aliases=['dunce', 'punish', 'mute'])
+    @ffilter.command(name='jail', aliases=['dunce', 'punish', 'mute'])
     @commands.guild_only()
     @permissions.check_mod()
-    async def cfilter_jail(self, ctx, hashsum: str, description: str):
+    async def ffilter_jail(self, ctx, hashsum: str, description: str):
         '''
         Adds the given SHA1 hashes to the guild's jailing filter, which will automatically jail users.
         Like the blocking filter, it will also delete the message and send the user a warning.
@@ -182,10 +182,10 @@ class Filtering:
             description,
         )
 
-    @cfilter.command(name='remove', aliases=['rm', 'delete', 'del'])
+    @ffilter.command(name='remove', aliases=['rm', 'delete', 'del'])
     @commands.guild_only()
     @permissions.check_mod()
-    async def cfilter_remove(self, ctx, *hashsums: str):
+    async def ffilter_remove(self, ctx, *hashsums: str):
         '''
         Removes the given SHA1 hashes from the guild filter.
         You don't need to specify which filter level they were for.
@@ -373,12 +373,12 @@ class Filtering:
 
     @filter_channel.command(name='show', aliases=['display', 'list'])
     @commands.guild_only()
-    async def filter_channel_show(self, ctx):
+    async def filter_channel_show(self, ctx, channel: discord.TextChannel):
         '''
         List all currently filtered words in the channel filter.
         '''
 
-        await show_filter(self.filters[ctx.guild], ctx.message, ctx.author, ctx.guild.name)
+        await show_filter(self.filters[channel], ctx.message, ctx.author, channel.mention)
 
     @filter_channel.command(name='flag', aliases=['warn', 'alert', 'notice'])
     @commands.guild_only()
