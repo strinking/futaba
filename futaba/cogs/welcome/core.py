@@ -96,7 +96,7 @@ class Welcome:
         if welcome.goodbye_message and welcome.channel:
             await self.send_welcome_message(member, welcome.goodbye_message, welcome.channel)
 
-    @commands.command(name='agree', aliases=['accept'])
+    @commands.command(name='agree', aliases=['accept'], hidden=True)
     @commands.guild_only()
     async def agree(self, ctx):
         '''
