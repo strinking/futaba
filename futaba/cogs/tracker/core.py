@@ -42,6 +42,8 @@ LISTENERS = (
     'on_reaction_clear',
     'on_guild_channel_create',
     'on_guild_channel_delete',
+    'on_member_join',
+    'on_member_remove',
 )
 
 class Tracker:
@@ -175,3 +177,16 @@ class Tracker:
         logger.debug("Channel #%s (%d) was deleted", channel.name, channel.id)
         content = f'Guild channel #{channel.name} ({channel.id}) deleted'
         self.journal.send('channel/delete', channel.guild, content, icon='delete')
+
+    async def on_member_join(self, member):
+        logger.debug("Member %s (%d) joined '%s' (%d)",
+                member.name, member.id, member.guild.name, member.guild.id)
+        content = f'Member {member.mention} ({user_discrim(member)} {member.id}) joined'
+        self.journal.send('member/join', member.guild, content, icon='join', member=member)
+
+    async def on_member_remove(self, member):
+        logger.debug("Member %s (%d) left '%s' (%d)",
+                member.name, member.id, member.guild.name, member.guild.id)
+        content = f'Member {member.mention} ({user_discrim(member)} {member.id}) left'
+        self.journal.send('member/leave', member.guild, content,
+                icon='join', member=member)
