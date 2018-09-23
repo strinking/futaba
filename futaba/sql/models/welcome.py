@@ -60,7 +60,7 @@ class WelcomeStorage:
         self.goodbye_message = goodbye_message
         self.agreed_message = agreed_message
         self.delete_on_agree = delete_on_agree
-        self.welcome_channel = discord.utils.get(guild.roles, id=welcome_channel_id)
+        self.welcome_channel = discord.utils.get(guild.text_channels, id=welcome_channel_id)
 
     @property
     def channel(self):
@@ -127,6 +127,7 @@ class WelcomeModel:
         sel = select([
                     self.tb_welcome.c.welcome_message,
                     self.tb_welcome.c.goodbye_message,
+                    self.tb_welcome.c.agreed_message,
                     self.tb_welcome.c.delete_on_agree,
                     self.tb_welcome.c.welcome_channel_id,
                 ]) \
@@ -137,11 +138,19 @@ class WelcomeModel:
             self.add_welcome(guild)
             return self.cache[guild]
 
-        welcome_message, goodbye_message, delete_on_agree, welcome_channel_id = result.fetchone()
+        (
+            welcome_message,
+            goodbye_message,
+            agreed_message,
+            delete_on_agree,
+            welcome_channel_id,
+        ) = result.fetchone()
+
         welcome = WelcomeStorage(
             guild,
             welcome_message,
             goodbye_message,
+            agreed_message,
             delete_on_agree,
             welcome_channel_id,
         )
