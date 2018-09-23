@@ -21,7 +21,11 @@ import functools
 import logging
 
 import discord
+<<<<<<< HEAD
 from sqlalchemy import BigInteger, Column, Table, Unicode
+=======
+from sqlalchemy import BigInteger, Boolean, Column, Table, Unicode
+>>>>>>> Add special roles table.
 from sqlalchemy import CheckConstraint, ForeignKey, UniqueConstraint
 from sqlalchemy.sql import select
 
@@ -50,6 +54,7 @@ class SpecialRoleStorage:
         self.mute_role = self._get_role(mute_role_id)
         self.jail_role = self._get_role(jail_role_id)
 
+<<<<<<< HEAD
     def update(self, attrs):
         logger.debug("Updating special role storage: %s", attrs)
         if 'member' in attrs:
@@ -77,18 +82,23 @@ class SpecialRoleStorage:
     def jail(self):
         return self.jail_role
 
+=======
+>>>>>>> Add special roles table.
     def _get_role(self, id):
         if id is None:
             return None
 
         return discord.utils.get(self.guild.roles, id=id)
 
+<<<<<<< HEAD
     def __iter__(self):
         yield self.member_role
         yield self.guest_role
         yield self.mute_role
         yield self.jail_role
 
+=======
+>>>>>>> Add special roles table.
 class SettingsModel:
     __slots__ = (
         'sql',
