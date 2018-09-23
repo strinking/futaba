@@ -21,7 +21,7 @@ import functools
 import logging
 
 import discord
-from sqlalchemy import BigInteger, Boolean, Column, Table, Unicode
+from sqlalchemy import BigInteger, Column, Table, Unicode
 from sqlalchemy import CheckConstraint, ForeignKey, UniqueConstraint
 from sqlalchemy.sql import select
 
@@ -223,7 +223,7 @@ class SettingsModel:
         return roles
 
     def set_special_roles(self, guild, **attrs):
-        self.logger.info("Setting special role(s) for guild '%s' (%d)", guild.name, guild.id)
+        logger.info("Setting special role(s) for guild '%s' (%d)", guild.name, guild.id)
         assert attrs, "No roles to change"
 
         values = {}

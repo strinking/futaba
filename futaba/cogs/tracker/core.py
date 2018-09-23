@@ -16,13 +16,15 @@ Cog for journaling live API events such as username changes, users joining and l
 
 import asyncio
 import logging
-from collections import deque
+from collections import deque, namedtuple
+from datetime import datetime, timedelta
 
 import discord
+from discord import AuditLogAction
 from discord.ext import commands
 
 from futaba import permissions
-from futaba.enums import Reactions
+from futaba.enums import MemberLeaveType, Reactions
 from futaba.utils import user_discrim
 
 logger = logging.getLogger(__name__)
@@ -30,7 +32,13 @@ logger = logging.getLogger(__name__)
 __all__ = [
     'LISTENERS',
     'Tracker',
+    'MemberLeaveReason',
 ]
+
+MemberLeaveReason = namedtuple(
+    'MemberLeaveReason',
+    ('type', 'member', 'cause', 'left_at', 'audit_log_entry'),
+)
 
 LISTENERS = (
     'on_typing',
@@ -196,9 +204,61 @@ class Tracker:
         content = f'Member {member.mention} ({user_discrim(member)} {member.id}) joined'
         self.journal.send('member/join', member.guild, content, icon='join', member=member)
 
+    async def get_removal_cause(self, member, timestamp):
+        async for entry in member.guild.audit_logs(limit=40):
+            if entry.action == AuditLogAction.kick:
+                if entry.target == member:
+                    return MemberLeaveReason(
+                        type=MemberLeaveType.KICKED,
+                        member=member,
+                        cause=entry.user,
+                        left_at=entry.created_at,
+                        audit_log_entry=entry,
+                    )
+            elif entry.action == AuditLogAction.ban:
+                if entry.target == member:
+                    return MemberLeaveReason(
+                        type=MemberLeaveType.BANNED,
+                        member=member,
+                        cause=entry.user,
+                        left_at=entry.created_at,
+                        audit_log_entry=entry,
+                    )
+            elif entry.action == AuditLogAction.member_prune:
+                # Unfortunately the audit log entry doesn't
+                # tell us enough to determine if this member was part of
+                # the prune, so we'll just take a leap of faith and say
+                # it was if the time between events was less than 3 seconds.
+                # They aren't very common so this innacurracy shouldn't
+                # be a problem.
+
+                if abs(timestamp - entry.created_at) < timedelta(second=3):
+                    return MemberLeaveReason(
+                        type=MemberLeaveType.PRUNED,
+                        member=member,
+                        cause=entry.user,
+                        left_at=entry.created_at,
+                        audit_log_entry=entry,
+                    )
+
+        # Couldn't find anything, must be a self-delete
+        return MemberLeaveReason(
+            type=MemberLeaveType.LEFT,
+            member=member,
+            cause=member,
+            left_at=timestamp,
+            audit_log_entry=None,
+        )
+
     async def on_member_remove(self, member):
         logger.debug("Member %s (%d) left '%s' (%d)",
                 member.name, member.id, member.guild.name, member.guild.id)
+
+        # Wait for a bit so we can catch the audit log entry
+        timestamp = datetime.now()
+        await asyncio.sleep(5)
+        cause = await get_removal_cause(member, timestamp)
+
         content = f'Member {member.mention} ({user_discrim(member)} {member.id}) left'
         self.journal.send('member/leave', member.guild, content,
-                icon='join', member=member)
+                icon='join', member=member, cause=cause)
