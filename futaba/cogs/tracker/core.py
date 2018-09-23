@@ -129,7 +129,7 @@ class Tracker:
         self.journal.send('message/edit', after.guild, content, icon='edit',
                 before=before, after=after)
         self.journal.send('jump/message/edit', after.guild, after.jump_url,
-                icon='previous', message=message)
+                icon='previous', before=before, after=after)
 
     async def on_message_delete(self, message):
         if message.guild is None:
@@ -257,7 +257,7 @@ class Tracker:
         # Wait for a bit so we can catch the audit log entry
         timestamp = datetime.now()
         await asyncio.sleep(5)
-        cause = await get_removal_cause(member, timestamp)
+        cause = await self.get_removal_cause(member, timestamp)
 
         content = f'Member {member.mention} ({user_discrim(member)} {member.id}) left'
         self.journal.send('member/leave', member.guild, content,

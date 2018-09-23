@@ -85,6 +85,7 @@ class WelcomeModel:
     def del_welcome(self, guild):
         logger.info("Removing welcome message row for guild '%s' (%d)", guild.name, guild.id)
         delet = self.tb_welcome \
+                .delete() \
                 .where(self.tb_welcome.c.guild_id == guild.id)
         self.sql.execute(delet)
         self.cache.pop(guild, None)
