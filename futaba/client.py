@@ -26,7 +26,7 @@ from .cogs.journal import Journal
 from .cogs.reloader import Reloader
 from .config import Configuration
 from .enums import Reactions
-from .exceptions import InvalidCommandContext
+from .exceptions import CommandFailed, InvalidCommandContext, SendHelp
 from .journal import Broadcaster, LoggingOutputListener
 from .sql import SqlHandler
 from .utils import plural
@@ -190,9 +190,20 @@ class Bot(commands.AutoShardedBot):
             # Tell the user they don't have the permission to tun the command
             await Reactions.DENY.add(ctx.message)
 
+        elif isinstance(error, CommandFailed):
+            # The command failed, report the error message (if any) and send the FAIL reaction
+            if error.kwargs:
+                await ctx.send(**error.kwargs)
+
+            await Reactions.FAIL.add(ctx.message)
+
         elif isinstance(error, InvalidCommandContext):
             # Explicitly ignore, this command was not even meant to be invoked in the first place
-            # This is sent when we explicitly DO NOT want to add a SUCCESS reaction.
+            # This is sent when we explicitly DO NOT want to add a SUCCESS reaction
+            pass
+
+        elif isinstance(error, SendHelp):
+            # TODO send help message for error.command
             pass
 
     async def _send(self, *args, **kwargs):

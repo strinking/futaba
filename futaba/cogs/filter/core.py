@@ -24,6 +24,7 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.enums import FilterType, Reactions
+from futaba.exceptions import SendHelp
 from futaba.utils import async_partial, escape_backticks
 from .check import check_message, check_message_edit
 from .filter import Filter
@@ -91,8 +92,7 @@ class Filtering:
         '''
 
         if ctx.invoked_subcommand is None:
-            # TODO send help
-            await Reactions.FAIL.add(ctx.message)
+            raise SendHelp(ctx.command)
 
     @commands.group(name='cfilter', aliases=['content', 'filefilter', 'ffilter'])
     @commands.guild_only()
@@ -102,8 +102,7 @@ class Filtering:
         '''
 
         if ctx.invoked_subcommand is None:
-            # TODO send help
-            await Reactions.FAIL.add(ctx.message)
+            raise SendHelp(ctx.command)
 
     @cfilter.command(name='show', aliases=['display', 'list'])
     @commands.guild_only()
@@ -197,8 +196,7 @@ class Filtering:
         '''
 
         if ctx.subcommand_passed in ('immune', 'imm', 'ignore', 'ign'):
-            # TODO send help
-            await Reactions.FAIL.add(ctx.message)
+            raise SendHelp(ctx.command)
 
     @filter_immunity.command(name='add', aliases=['append', 'extend', 'new'])
     @commands.guild_only()
@@ -283,8 +281,7 @@ class Filtering:
         '''
 
         if ctx.subcommand_passed in ('server', 'srv', 's', 'guild', 'g'):
-            # TODO send help
-            await Reactions.FAIL.add(ctx.message)
+            raise SendHelp(ctx.command)
 
     @filter_guild.command(name='show', aliases=['display', 'list'])
     @commands.guild_only()
@@ -364,8 +361,7 @@ class Filtering:
         '''
 
         if ctx.subcommand_passed in ('chan', 'ch', 'c'):
-            # TODO send help
-            await Reactions.FAIL.add(ctx.message)
+            raise SendHelp(ctx.command)
 
     @filter_channel.command(name='show', aliases=['display', 'list'])
     @commands.guild_only()

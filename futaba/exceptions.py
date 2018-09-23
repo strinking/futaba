@@ -12,14 +12,27 @@
 
 __all__ = [
     'CommandFailed',
+    'SendHelp',
     'InvalidCommandContext',
     'InvalidConfigError',
 ]
 
 class CommandFailed(RuntimeError):
-    def __init__(self, **send_kwargs):
+    def __init__(self, content=None, embed=None, file=None):
         super().__init__()
-        self.send_kwargs = send_kwargs
+        self.kwargs = {}
+
+        if content is not None:
+            self.kwargs['content'] = content
+        if embed is not None:
+            self.kwargs['embed'] = embed
+        if file is not None:
+            self.kwargs['file'] = file
+
+class SendHelp(RuntimeError):
+    def __init__(self, command):
+        super().__init__()
+        self.command = command
 
 class InvalidCommandContext(RuntimeError):
     pass
