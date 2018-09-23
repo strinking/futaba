@@ -74,7 +74,7 @@ class Reloader:
             self.load_cog(cogname)
         except Exception as error:
             logger.error("Loading cog %s failed", cogname, exc_info=error)
-            embed = discord.Embed(colour=discord.Colour.red(), description=f'```{error}```')
+            embed = discord.Embed(colour=discord.Colour.red(), description=f'```\n{error}\n```')
             embed.set_author(name='Load failed')
             await asyncio.gather(
                 ctx.send(embed=embed),
@@ -82,7 +82,7 @@ class Reloader:
             )
         else:
             logger.info("Loaded cog: %s", cogname)
-            embed = discord.Embed(colour=discord.Colour.green(), description=f'```{cogname}```')
+            embed = discord.Embed(colour=discord.Colour.green(), description=f'```\n{cogname}\n```')
             embed.set_author(name='Loaded')
             await asyncio.gather(
                 ctx.send(embed=embed),
@@ -111,7 +111,7 @@ class Reloader:
             self.unload_cog(cogname)
         except Exception as error:
             logger.error("Unloading cog %s failed", cogname, exc_info=error)
-            embed = discord.Embed(colour=discord.Colour.red(), description=f'```{error}```')
+            embed = discord.Embed(colour=discord.Colour.red(), description=f'```\n{error}\n```')
             embed.set_author(name='Unload failed')
             await asyncio.gather(
                 ctx.send(embed=embed),
@@ -119,7 +119,7 @@ class Reloader:
             )
         else:
             logger.info("Unloaded cog: %s", cogname)
-            embed = discord.Embed(colour=discord.Colour.green(), description=f'```{cogname}```')
+            embed = discord.Embed(colour=discord.Colour.green(), description=f'```\n{cogname}\n```')
             embed.set_author(name='Unloaded')
             await asyncio.gather(
                 ctx.send(embed=embed),
@@ -149,7 +149,7 @@ class Reloader:
             self.load_cog(cogname)
         except Exception as error:
             logger.error("Reloading cog %s failed", cogname, exc_info=error)
-            embed = discord.Embed(colour=discord.Colour.red(), description=f'```{error}```')
+            embed = discord.Embed(colour=discord.Colour.red(), description=f'```\n{error}\n```')
             embed.set_author(name='Reload failed')
             await asyncio.gather(
                 ctx.send(embed=embed),
@@ -157,7 +157,7 @@ class Reloader:
             )
         else:
             logger.info("Reloaded cog: %s", cogname)
-            embed = discord.Embed(colour=discord.Colour.green(), description=f'```{cogname}```')
+            embed = discord.Embed(colour=discord.Colour.green(), description=f'```\n{cogname}\n```')
             embed.set_author(name='Reloaded')
             await asyncio.gather(
                 ctx.send(embed=embed),
