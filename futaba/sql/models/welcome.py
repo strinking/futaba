@@ -114,6 +114,11 @@ class WelcomeModel:
                 ]) \
                 .where(self.tb_welcome.c.guild_id == guild.id)
         result = self.sql.execute(sel)
+
+        if not result.rowcount:
+            self.add_welcome(guild)
+            return self.cache[guild]
+
         welcome_message, goodbye_message, welcome_channel_id = result.fetchone()
 
         welcome = WelcomeStorage(guild, welcome_message, goodbye_message, welcome_channel_id)
