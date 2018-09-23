@@ -192,8 +192,9 @@ class Filtering:
         '''
 
         await check_hashsums(hashsums, ctx.message)
-        content = f'Removed content jail filter for `{hashsum}`'
-        self.journal.send('content/remove', ctx.guild, content, icon='filter')
+        str_hashsums = ' '.join(f'`{hashsum}`' for hashsum in hashsums)
+        content = f'Removed content jail filter for {str_hashsums}'
+        self.journal.send('content/remove', ctx.guild, content, icon='filter', hashsums=hashsums)
         await delete_content_filter(self.bot, self.content_filters, ctx.message, hashsums)
 
     @filter.group(name='immune', aliases=['imm', 'ignore', 'ign'])
