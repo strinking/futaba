@@ -45,7 +45,7 @@ Accepted parameters:
 {mention}      - Text mentioning the user.
 {user}         - The user's name. Does not include nicknames.
 {discrim}      - The user's discriminator.
-{userdiscrim}  - Username and discriminator, in the style of "user#1000".
+{user_discrim} - Username and discriminator, in the style of "user#1000".
 {user_id}      - The user's discord ID.
 {channel}      - Text mentioning the welcome channel.
 {channel_name} - The name of the welcome channel. No "#" in front.
@@ -67,7 +67,7 @@ def format_message(welcome_message, ctx):
         mention=user.mention,
         user=user.name,
         discrim=user.discriminator,
-        userdiscrim=user_discrim(user),
+        user_discrim=user_discrim(user),
         user_id=user.id,
         channel=channel.mention,
         channel_name=channel.name,
