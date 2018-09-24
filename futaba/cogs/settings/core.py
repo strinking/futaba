@@ -115,15 +115,16 @@ class Settings:
                 return
 
         with self.bot.sql.transaction():
-            self.bot.sql.settings.set_special_roles(ctx.guild, member_role=role)
+            self.bot.sql.settings.set_special_roles(ctx.guild, member=role)
 
+        embed = discord.Embed(colour=discord.Colour.green())
         if role:
-            content = f'Set member role to {role.mention}'
+            embed.description = f'Set member role to {role.mention}'
         else:
-            content = 'Unset member role'
+            embed.description = 'Unset member role'
 
         await asyncio.gather(
-            ctx.send(content=content),
+            ctx.send(embed=embed),
             Reactions.SUCCESS.add(ctx.message),
         )
 
@@ -144,14 +145,18 @@ class Settings:
                 return
 
         with self.bot.sql.transaction():
-            self.bot.sql.settings.set_special_roles(ctx.guild, guest_role=role)
+            self.bot.sql.settings.set_special_roles(ctx.guild, guest=role)
 
+        embed = discord.Embed(colour=discord.Colour.green())
         if role:
-            content = f'Set guest role to {role.mention}'
+            embed.description = f'Set guest role to {role.mention}'
         else:
-            content = 'Unset guest role'
+            embed.description = 'Unset guest role'
 
-        await Reactions.SUCCESS.add(ctx.message)
+        await asyncio.gather(
+            ctx.send(embed=embed),
+            Reactions.SUCCESS.add(ctx.message),
+        )
 
     @commands.command(name='setmute')
     @commands.guild_only()
@@ -170,14 +175,18 @@ class Settings:
                 return
 
         with self.bot.sql.transaction():
-            self.bot.sql.settings.set_special_roles(ctx.guild, mute_role=role)
+            self.bot.sql.settings.set_special_roles(ctx.guild, mute=role)
 
+        embed = discord.Embed(colour=discord.Colour.green())
         if role:
-            content = f'Set mute role to {role.mention}'
+            embed.description = f'Set mute role to {role.mention}'
         else:
-            content = 'Unset mute role'
+            embed.description = 'Unset mute role'
 
-        await Reactions.SUCCESS.add(ctx.message)
+        await asyncio.gather(
+            ctx.send(embed=embed),
+            Reactions.SUCCESS.add(ctx.message),
+        )
 
     @commands.command(name='setjail')
     @commands.guild_only()
@@ -196,11 +205,15 @@ class Settings:
                 return
 
         with self.bot.sql.transaction():
-            self.bot.sql.settings.set_special_roles(ctx.guild, mute_role=role)
+            self.bot.sql.settings.set_special_roles(ctx.guild, jail=role)
 
+        embed = discord.Embed(colour=discord.Colour.green())
         if role:
-            content = f'Set jail role to {role.mention}'
+            embed.description = f'Set jail role to {role.mention}'
         else:
-            content = 'Unset jail role'
+            embed.description = 'Unset jail role'
 
-        await Reactions.SUCCESS.add(ctx.message)
+        await asyncio.gather(
+            ctx.send(embed=embed),
+            Reactions.SUCCESS.add(ctx.message),
+        )
