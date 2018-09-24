@@ -121,7 +121,7 @@ class Bot(commands.AutoShardedBot):
             except Exception as error:
                 # Something made the loading fail
                 # So log it with reason and tell user to check it
-                logger.debug("Load failed: %s", file, exc_info=error)
+                logger.error("Load failed: %s", file, exc_info=error)
                 continue
             else:
                 logger.info("Loaded cog: %s", file)
