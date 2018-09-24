@@ -34,7 +34,7 @@ def register_hook(name, hook):
     if name not in HOOK_NAMES:
         raise ValueError(f"No such hook type: {name}")
 
-    logger.info("Register hook %s for '%s'", hook.__name__, name)
+    logger.info("Registered hook %s for '%s'", hook.__name__, name)
     hooks[name].append(hook)
 
 def run_hooks(name, *args, **kwargs):
