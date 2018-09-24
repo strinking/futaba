@@ -39,7 +39,9 @@ ICONS = {
     'jail': '\N{POLICE OFFICER}',
     'shutdown': '\N{SKULL}',
 
-    # Roles
+
+    # Welcome / Roles
+    'agree': '\N{THUMBS UP SIGN}',
     'member': '\N{MAN}',
     'guest': '\N{EXTRATERRESTRIAL ALIEN}',
 

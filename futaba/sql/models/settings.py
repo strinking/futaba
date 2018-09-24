@@ -72,6 +72,12 @@ class SpecialRoleStorage:
 
         return discord.utils.get(self.guild.roles, id=id)
 
+    def __iter__(self):
+        yield self.member_role
+        yield self.guest_role
+        yield self.mute_role
+        yield self.jail_role
+
 class SettingsModel:
     __slots__ = (
         'sql',
@@ -229,7 +235,7 @@ class SettingsModel:
         values = {}
         for attr, role in attrs.items():
             assert attr in ('member_role', 'guest_role', 'mute_role', 'jail_role'), "Unknown column"
-            values[attr] = role.id
+            values[attr] = getattr(role, 'id', None)
 
         upd = self.tb_special_roles \
                 .update() \
