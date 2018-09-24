@@ -13,10 +13,7 @@
 import logging
 import re
 
-import discord
 from confusable_homoglyphs import confusables
-
-from futaba.enums import FilterType
 
 logger = logging.getLogger(__name__)
 

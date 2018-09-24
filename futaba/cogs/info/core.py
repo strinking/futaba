@@ -18,7 +18,6 @@ import asyncio
 import logging
 import unicodedata
 from collections import Counter
-from functools import partial
 from itertools import islice
 
 import discord
@@ -28,7 +27,7 @@ from futaba.enums import Reactions
 from futaba.parse import get_emoji, get_channel_id, get_role_id, get_user_id, similar_user_ids
 from futaba.permissions import check_mod_perm
 from futaba.utils import escape_backticks, fancy_timedelta, first, lowerbool, plural
-from futaba.unicode import UNICODE_CATEGORY_NAME, unicode_repr
+from futaba.unicode import UNICODE_CATEGORY_NAME
 
 logger = logging.getLogger(__package__)
 

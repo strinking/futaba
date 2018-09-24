@@ -10,25 +10,22 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-import asyncio
 import logging
+import re
 import subprocess
 from datetime import datetime
-
-import discord
-from discord.ext import commands
-
-from futaba import permissions
-from futaba.enums import Reactions
+from itertools import zip_longest
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
     'GIT_HASH',
+    'URL_REGEX',
     'Dummy',
     'fancy_timedelta',
     'async_partial',
     'first',
+    'chunks',
     'lowerbool',
     'plural',
     'user_discrim',
@@ -48,6 +45,10 @@ def _get_git_hash():
     return ''
 
 GIT_HASH = _get_git_hash()
+
+URL_REGEX = re.compile(
+    r'<?(https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b(?:[-a-zA-Z0-9@:%_\+.~#?&//=]*))>?'
+)
 
 class Dummy:
     '''
@@ -110,6 +111,12 @@ def first(iterable, default=None):
         if item:
             return item
     return default
+
+def chunks(iterable, count, fillvalue=None):
+    ''' Iterate over the iterable in 'count'-long chunks. '''
+
+    args = [iter(iterable)] * count
+    return zip_longest(*args, fillvalue=fillvalue)
 
 def lowerbool(value):
     ''' Returns 'true' if the expression is true, and 'false' if not. '''

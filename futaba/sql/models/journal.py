@@ -22,7 +22,7 @@ import functools
 import logging
 from collections import defaultdict, namedtuple
 
-from sqlalchemy import and_, or_
+from sqlalchemy import and_
 from sqlalchemy import BigInteger, Boolean, Column, Table, Text
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.exc import IntegrityError

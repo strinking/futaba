@@ -12,12 +12,16 @@
 
 import asyncio
 import logging
+import os
 from collections import namedtuple
+from hashlib import sha1
+from urllib.parse import urlparse
 
 import discord
 
+from futaba.download import download_links
 from futaba.enums import FilterType, LocationType
-from futaba.utils import Dummy, escape_backticks
+from futaba.utils import URL_REGEX, Dummy, escape_backticks
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +29,24 @@ __all__ = [
     'check_message',
     'check_message_edit',
 ]
+
+FoundTextViolation = namedtuple('FoundTextViolation', (
+    'journal',
+    'message',
+    'content',
+    'location_type',
+    'filter_type',
+    'filter_text'
+))
+
+FoundFileViolation = namedtuple('FoundFileViolation', (
+    'journal',
+    'message',
+    'filter_type',
+    'url',
+    'binio',
+    'hashsum',
+))
 
 JournalProperties = namedtuple('JournalProperties', ('verb', 'path', 'icon'))
 
@@ -63,6 +85,12 @@ async def check_message(cog, message):
     logger.debug("Checking message id %d (by '%s' (%d)) for filter violations",
             message.id, message.author.name, message.author.id)
 
+    await asyncio.gather(
+        check_text_filter(cog, message),
+        check_file_filter(cog, message),
+    )
+
+async def check_text_filter(cog, message):
     # Also check embed content
     parts = [message.content]
     for embed in message.embeds:
@@ -79,6 +107,7 @@ async def check_message(cog, message):
     logger.debug("Content to check: %r", content)
 
     # Iterate through all guild filters
+    triggered = None
     filter_groups = (
         (LocationType.GUILD, cog.filters[message.guild]),
         (LocationType.CHANNEL, cog.filters[message.channel]),
@@ -87,18 +116,60 @@ async def check_message(cog, message):
     for location_type, all_filters in filter_groups:
         for filter_text, (filter, filter_type) in all_filters.items():
             if filter.matches(content):
-                await found_violation(
-                    cog.journal,
-                    message,
-                    content,
-                    location_type,
-                    filter_type,
-                    filter_text
-                )
+                if triggered is None or filter_type.value > triggered.filter_type.value:
+                    triggered = FoundTextViolation(
+                        journal=cog.journal,
+                        message=message,
+                        content=content,
+                        location_type=location_type,
+                        filter_type=filter_type,
+                        filter_text=filter_text,
+                    )
 
-                return
+    if triggered is None:
+        logger.debug("No text violations found!")
+    else:
+        await found_text_violation(triggered)
 
-    logger.debug("No violations found!")
+async def check_file_filter(cog, message):
+    file_urls = URL_REGEX.findall(message.content)
+    file_urls.extend(attach.url for attach in message.attachments)
+
+    if not file_urls:
+        logger.debug("Message has no attachments, skipping")
+        return
+
+    triggered = None
+    buffers = await download_links(file_urls)
+    hashsums = {}
+
+    for binio, url in zip(buffers, file_urls):
+        if binio is not None:
+            digest = sha1(binio.getbuffer()).digest()
+            hashsums[digest] = (binio, url)
+
+    for hashsum, filter_type in cog.content_filters[message.guild].items():
+        try:
+            binio, url = hashsums[hashsum]
+        except KeyError:
+            # Hash sum not found, not a match
+            continue
+
+        if triggered is None or filter_type.value > triggered.filter_type.value:
+            triggered = FoundFileViolation(
+                            journal=cog.journal,
+                            message=message,
+                            filter_type=filter_type,
+                            url=url,
+                            binio=binio,
+                            hashsum=hashsum,
+                        )
+
+    if triggered is None:
+        logger.debug("No content violations found!")
+    else:
+        settings = cog.bot.sql.filter.get_settings(message.guild)
+        await found_file_violation(triggered, settings.reupload)
 
 async def check_message_edit(cog, before, after):
     logger.debug("Checking message edit")
@@ -117,7 +188,7 @@ def filter_immune(bot, message):
         return True
 
     # Check if bots have filter immunity
-    filter_settings = bot.sql.settings.get_filter_settings(message.guild)
+    filter_settings = bot.sql.filter.get_settings(message.guild)
     if filter_settings.bot_immune:
         if message.author.bot:
             return True
@@ -142,11 +213,18 @@ def filter_immune(bot, message):
 
     return False
 
-async def found_violation(journal, message, content, location_type, filter_type, filter_text):
+async def found_text_violation(triggered):
     '''
-    Processes a violation of the text filter. This method is responsible
+    Processes a violation of the text filter. This coroutine is responsible
     for actual enforcement, based on the filter_type.
     '''
+
+    journal = triggered.journal
+    message = triggered.message
+    content = triggered.content
+    location_type = triggered.location_type
+    filter_type = triggered.filter_type
+    filter_text = triggered.filter_text
 
     logger.info("Punishing %s filter violation (%r, level %s) by '%s' (%d)",
             location_type.value, filter_text, filter_type.value, message.author.name, message.author.id)
@@ -165,13 +243,13 @@ async def found_violation(journal, message, content, location_type, filter_type,
     async def message_violator():
         logger.debug("Sending message to user who violated the filter")
         lines = [
-            f"The message you posted in {message.channel.mention} violates a {location_type.value} "
-            f"{filter_type.value} filter disallowing `{escaped_filter_text}`."
+            f'The message you posted in {message.channel.mention} violates a {location_type.value} '
+            f'{filter_type.value} filter disallowing `{escaped_filter_text}`.'
         ]
 
         if severity >= FilterType.JAIL.level:
             lines.extend((
-                "This offense is serious enough to warrant immediate revocation of speaking privileges.",
+                "This offense is serious enough to warrant immediate revocation of posting privileges.",
                 f"As such, you have been assigned the `{jail_role.name}` role, until a moderator clears you.",
             ))
 
@@ -215,3 +293,66 @@ async def found_violation(journal, message, content, location_type, filter_type,
         # this requires the jailing/duncing mechanism to be complete
         # and having the dunce role available in settings
         logger.info("Jailing user for inappropriate message")
+
+async def found_file_violation(triggered, reupload):
+    '''
+    Processes a violation of the file content filter. This coroutine is responsible
+    for actual enforcement, based on the filter_type.
+    '''
+
+    journal = triggered.journal
+    message = triggered.message
+    filter_type = triggered.filter_type
+    url = triggered.url
+    binio = triggered.binio
+    hashsum = triggered.hashsum
+
+    logger.info("Punishing file content filter violation (%s, level %s) by '%s' (%d)",
+            hashsum.hex(), filter_type.value, message.author.name, message.author.id)
+
+    severity = filter_type.level
+    jail_role = Dummy() # FIXME
+    jail_role.name = 'Dunce Hat'
+
+    async def message_violator():
+        logger.debug("Sending message to user who violated the filter")
+        lines = [
+            f'The message you posted in {message.channel.mention} contains or links to a file '
+            f'that violates a {filter_type.value} content filter: `{hashsum.hex()}`.',
+            f'Your original link: <{url}>',
+        ]
+
+        if reupload:
+            lines.append('The filtered file has been attached to this message.')
+
+        if severity >= FilterType.JAIL.level:
+            lines.extend((
+                "This offense is serious enough to warrant immediate revocation of posting privileges.",
+                f"As such, you have been assigned the `{jail_role.name}` role, until a moderator clears you.",
+            ))
+
+        kwargs = {'content': '\n'.join(lines)}
+
+        if reupload:
+            lines.append("In case the link is broken, the file has been attached below:")
+            filename = os.path.basename(urlparse(url).path)
+            kwargs['file'] = discord.File(binio.getbuffer(), filename=filename)
+
+        await message.author.send(**kwargs)
+
+    if severity >= FilterType.FLAG.level:
+        logger.info("Notifying staff of filter violation")
+        journal_violation(journal, message, filter_type, url)
+
+    if severity >= FilterType.BLOCK.level:
+        logger.info("Deleting inappropriate message id %d and notifying user", message.id)
+        await asyncio.gather(
+            message.delete(),
+            message_violator(),
+        )
+
+    if severity >= FilterType.JAIL.level:
+        # TODO jail user
+        # this requires the jailing/duncing mechanism to be complete
+        # and having the dunce role available in settings
+        logger.info("Jailing user for inappropriate attachment")

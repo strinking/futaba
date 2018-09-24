@@ -19,19 +19,24 @@ import logging
 import random
 import sys
 from datetime import datetime
+from hashlib import sha1
 
 import discord
 from discord.ext import commands
 
 from futaba import permissions, __version__
+from futaba.download import download_links
 from futaba.enums import Reactions
-from futaba.utils import GIT_HASH, fancy_timedelta
+from futaba.str_builder import StringBuilder
+from futaba.utils import GIT_HASH, URL_REGEX, fancy_timedelta
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
     'Miscellaneous',
 ]
+
+SHA1_ERROR_MESSAGE = 'Error downloading file'.ljust(40)
 
 class Miscellaneous:
     __slots__ = (
@@ -94,6 +99,65 @@ class Miscellaneous:
 
         await asyncio.gather(
             ctx.send(content=random.choice(self.bot.emojis)),
+            Reactions.SUCCESS.add(ctx.message),
+        )
+
+    @commands.command(name='sha1sum', aliases=['sha1', 'sha', 'hashsum', 'hash'])
+    async def sha1sum(self, ctx, *urls: str):
+        ''' Gives the SHA1 hashes of any files attached to the message. '''
+
+        # Check all URLs
+        links = []
+        for url in urls:
+            match = URL_REGEX.match(url)
+            if match is None:
+                await asyncio.gather(
+                    ctx.send(content=f'Not a valid url: {url}'),
+                    Reactions.FAIL.add(ctx.message),
+                )
+                return
+            links.append(match[1])
+        links.extend(attach.url for attach in ctx.message.attachments)
+
+        # Get list of "names"
+        names = list(urls)
+        names.extend(attach.filename for attach in ctx.message.attachments)
+
+        # Send error if no URLS
+        if not links:
+            await asyncio.gather(
+                ctx.send(content='No URLs listed or files attached.'),
+                Reactions.FAIL.add(ctx.message),
+            )
+            return
+
+        # Download and check files
+        contents = []
+        content = StringBuilder('Hashes:\n```')
+        buffers = await download_links(links)
+        for i, binio in enumerate(buffers):
+            if binio is None:
+                hashsum = SHA1_ERROR_MESSAGE
+            else:
+                hashsum = sha1(binio.getbuffer()).hexdigest()
+
+            content.writeln(f'{hashsum} {names[i]}')
+            if len(content) > 1920:
+                contents.append(content)
+                if i < len(buffers) - 1:
+                    content.clear()
+                    content.writeln('```')
+
+        if len(content) > 4:
+            content.writeln('```')
+            contents.append(content)
+
+        async def send_messages():
+            for content in contents:
+                await ctx.send(content=str(content))
+
+        await asyncio.gather(
+            send_messages(),
             Reactions.SUCCESS.add(ctx.message),
         )
 

@@ -14,18 +14,20 @@
 futaba - A Discord Mod bot for the Programming server
 '''
 
-from . import client, config, enums, journal, parse, permissions, unicode, utils
+from . import client, config, download, enums, journal, parse, permissions, str_builder, unicode, utils
 
 __all__ = [
     '__version__',
     'client',
     'config',
+    'download',
     'enums',
     'journal',
     'parse',
     'permissions',
+    'str_builder',
     'unicode',
     'utils',
 ]
 
-__version__ = '0.0.5'
+__version__ = '0.1.1'

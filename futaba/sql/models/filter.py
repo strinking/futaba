@@ -22,7 +22,7 @@ import logging
 from collections import defaultdict
 
 from sqlalchemy import and_, or_
-from sqlalchemy import BigInteger, Column, Enum, LargeBinary, Table, Unicode
+from sqlalchemy import BigInteger, Boolean, Column, Enum, LargeBinary, Table, Unicode
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import select
@@ -30,8 +30,33 @@ from sqlalchemy.sql import select
 from futaba.enums import FilterType, LocationType
 from futaba.unicode import normalize_caseless
 
+from ..hooks import register_hook
+
 Column = functools.partial(Column, nullable=False)
 logger = logging.getLogger(__name__)
+
+class FilterSettingsStorage:
+    __slots__ = (
+        'bot_immune',
+        'manage_messages_immune',
+        'reupload',
+    )
+
+    def __init__(self):
+        self.bot_immune = False
+        self.manage_messages_immune = True
+        self.reupload = True
+
+    def updated(self, field, value=None):
+        '''
+        Sets 'field' if 'value' is not None. Returns the current value of 'field'.
+        Useful for getting an excluded field, and updating the storage object too.
+        '''
+
+        if value is None:
+            setattr(self, field, value)
+
+        return getattr(self, field)
 
 __all__ = [
     'FilterModel',
@@ -43,9 +68,11 @@ class FilterModel:
         'tb_filters',
         'tb_content_filters',
         'tb_filter_immune_users',
+        'tb_filter_settings',
         'filter_cache',
         'content_filter_cache',
         'immune_users_cache',
+        'settings_cache',
     )
 
     def __init__(self, sql, meta):
@@ -60,14 +87,24 @@ class FilterModel:
                 Column('guild_id', BigInteger, ForeignKey('guilds.guild_id')),
                 Column('filter_type', Enum(FilterType)),
                 Column('hashsum', LargeBinary),
+                Column('description', Unicode),
                 UniqueConstraint('guild_id', 'hashsum', name='content_filter_uq'))
         self.tb_filter_immune_users = Table('filter_immune_users', meta,
                 Column('guild_id', BigInteger, ForeignKey('guilds.guild_id')),
                 Column('user_id', BigInteger),
                 UniqueConstraint('guild_id', 'user_id', name='filter_immune_users_uq'))
+        self.tb_filter_settings = Table('filter_reupload', meta,
+                Column('guild_id', BigInteger, ForeignKey('guilds.guild_id'), primary_key=True),
+                Column('bot_immune', Boolean),
+                Column('manage_messages_immune', Boolean),
+                Column('reupload', Boolean))
         self.filter_cache = {}
         self.content_filter_cache = {}
         self.immune_users_cache = defaultdict(set)
+        self.settings_cache = {}
+
+        register_hook('on_guild_join', self.add_settings)
+        register_hook('on_guild_leave', self.remove_settings)
 
     def get_filters(self, location):
         logger.debug("Getting filters for location '%s' (%d)", location.name, location.id)
@@ -143,16 +180,23 @@ class FilterModel:
             logger.debug("Content filter list found in cache, returning")
             return self.content_filter_cache[guild]
 
-        sel = select([self.tb_content_filters.c.filter_type, self.tb_content_filters.c.hashsum]) \
+        sel = select([
+                    self.tb_content_filters.c.filter_type,
+                    self.tb_content_filters.c.hashsum,
+                    self.tb_content_filters.c.description,
+                ]) \
                 .where(self.tb_content_filters.c.guild_id == guild.id)
         result = self.sql.execute(sel)
 
-        filters = {hashsum: filter_type for (filter_type, hashsum) in result.fetchall()}
+        filters = {
+            hashsum: (filter_type, description)
+                for (filter_type, hashsum, description) in result.fetchall()
+        }
         self.content_filter_cache[guild] = filters
         return filters
 
-    def add_content_filter(self, guild, filter_type, hashsum):
-        logger.info("Adding SHA512 hash %s to filter, level '%s'", hashsum.hex(), filter_type.value)
+    def add_content_filter(self, guild, filter_type, hashsum, description):
+        logger.info("Adding SHA1 hash %s to filter, level '%s'", hashsum.hex(), filter_type.value)
 
         ins = self.tb_content_filters \
                 .insert() \
@@ -160,31 +204,31 @@ class FilterModel:
                     guild_id=guild.id,
                     filter_type=filter_type,
                     hashsum=hashsum,
+                    description=description,
                 )
 
         try:
             self.sql.execute(ins)
-            self.content_filter_cache[guild][hashsum] = filter_type
+            self.content_filter_cache[guild][hashsum] = (filter_type, description)
         except IntegrityError as error:
             logger.error("Unable to insert new content filter", exc_info=error)
             raise ValueError("This content filter already exists")
 
-    def update_content_filter(self, guild, filter_type, hashsum):
-        logger.info("Updating SHA512 hash %s to filter, level '%s'", hashsum.hex(), filter_type.value)
+    def update_content_filter(self, guild, filter_type, hashsum, description):
+        logger.info("Updating SHA1 hash %s to filter, level '%s'", hashsum.hex(), filter_type.value)
 
         upd = self.tb_content_filters \
                 .update() \
-                .values(filter_type=filter_type) \
+                .values(filter_type=filter_type, description=description) \
                 .where(and_(
                     self.tb_content_filters.c.guild_id == guild.id,
-                    self.tb_content_filters.c.filter_type == filter_type,
                     self.tb_content_filters.c.hashsum == hashsum,
                 ))
         self.sql.execute(upd)
-        self.content_filter_cache[guild][hashsum] = filter_type
+        self.content_filter_cache[guild][hashsum] = (filter_type, description)
 
     def delete_content_filter(self, guild, hashsum):
-        logger.info("Deleting SHA512 hash %s from filter", hashsum.hex())
+        logger.info("Deleting SHA1 hash %s from filter", hashsum.hex())
 
         delet = self.tb_content_filters \
                     .delete() \
@@ -245,3 +289,78 @@ class FilterModel:
         self.immune_users_cache[guild].remove(user.id)
         assert result.rowcount in (0, 1), "Only one matching user"
         return bool(result.rowcount)
+
+    def fetch_settings(self, guild):
+        logger.info("Getting filter settings for guild '%s' (%d)", guild.name, guild.id)
+
+        sel = select([
+                    self.tb_filter_settings.c.bot_immune,
+                    self.tb_filter_settings.c.manage_messages_immune,
+                    self.tb_filter_settings.c.reupload,
+                ]) \
+                .where(self.tb_filter_settings.c.guild_id == guild.id)
+        result = self.sql.execute(sel)
+        bot_immune, manage_messages_immune, reupload = result.fetchone()
+
+        # Update cache
+        storage = FilterSettingsStorage()
+        storage.bot_immune = bot_immune
+        storage.manage_messages_immune = manage_messages_immune
+        storage.reupload = reupload
+        self.settings_cache[guild] = storage
+        return storage
+
+    def get_settings(self, guild):
+        logger.info("Getting cached filter settings for guild '%s' (%d)",
+                guild.name, guild.id)
+        return self.settings_cache[guild]
+
+    def add_settings(self, guild):
+        logger.info("Adding filter settings for guild '%s' (%d)", guild.name, guild.id)
+        storage = FilterSettingsStorage()
+        ins = self.tb_filter_settings \
+                .insert() \
+                .values(
+                    guild_id=guild.id,
+                    bot_immune=storage.bot_immune,
+                    manage_messages_immune=storage.manage_messages_immune,
+                    reupload=storage.reupload,
+                )
+        self.sql.execute(ins)
+        self.settings_cache[guild] = storage
+
+    def set_reupload(self, guild, reupload):
+        logger.info("Updating filter settings for guild '%s' (%d)", guild.name, guild.id)
+
+        upd = self.tb_filter_settings \
+                .update() \
+                .where(self.tb_filter_settings.c.guild_id == guild.id) \
+                .values(reupload=reupload)
+        self.sql.execute(upd)
+        self.settings_cache[guild].reupload = reupload
+
+    def set_bot_filter_immunity(self, guild, bot_immune=None, manage_messages_immune=None):
+        storage = self.settings_cache[guild]
+        bot_immune = storage.updated('bot_immune', bot_immune)
+        manage_messages_immune = storage.updated('manage_messages_immune', manage_messages_immune)
+
+        logger.info("Updating filter settings (bot_immune='%s', manage_messages_immune='%s') for guild '%s' (%d)",
+                bot_immune, manage_messages_immune, guild.name, guild.id)
+        upd = self.tb_filter_settings \
+                .update() \
+                .where(self.tb_filter_settings.c.guild_id == guild.id) \
+                .values(
+                    bot_immune=bot_immune,
+                    manage_messages_immune=manage_messages_immune,
+                )
+        self.sql.execute(upd)
+
+    def remove_settings(self, guild):
+        logger.info("Removing filter settings for guild '%s' (%d)", guild.name, guild.id)
+
+        delet = self.tb_filter_settings \
+                    .delete() \
+                    .where(self.tb_filter_settings.c.guild_id == guild.id)
+        result = self.sql.execute(delet)
+        assert result.rowcount in (0, 1), "Only one matching settings row"
+        self.settings_cache.pop(guild, None)
