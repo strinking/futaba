@@ -17,10 +17,10 @@ kicks and ban events.
 
 import logging
 
-from ..listener import Listener
-
 from futaba.enums import MemberLeaveType
-from futaba.utils import user_discrim
+from futaba.utils import escape_backticks, user_discrim
+
+from ..listener import Listener
 
 logger = logging.getLogger(__name__)
 
@@ -35,10 +35,13 @@ class ModerationListener(Listener):
         super().__init__(router, '/member/leave', recursive=False)
         self.broadcaster = bot.get_broadcaster('/moderation')
 
-    async def handle(self, j_path, guild, j_content, attributes):
+    async def handle(self, _path, guild, _content, attributes):
         '''
         Handle the incoming leave event, and output a kick or ban journal event as appropriate.
         '''
+
+        # We want to ignore two arguments
+        # pylint: disable=arguments-differ
 
         leaver = attributes['member']
         cause = attributes['cause']
