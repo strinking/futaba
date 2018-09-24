@@ -158,6 +158,12 @@ class Welcome:
         if welcome.goodbye_message and welcome.channel:
             await self.send_welcome_message(member, welcome.goodbye_message, welcome.channel)
 
+        # Remove from recently_joined, they need to re-agree!
+        try:
+            self.recently_joined.remove(member)
+        except ValueError:
+            pass
+
     @commands.command(name='agree', aliases=['accept'], hidden=True)
     @commands.guild_only()
     async def agree(self, ctx):
@@ -168,7 +174,7 @@ class Welcome:
 
         logger.debug("Unchecked !agree command received")
 
-        welcome = self.bot.sql.get_welcome(ctx.guild)
+        welcome = self.bot.sql.welcome.get_welcome(ctx.guild)
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)
 
         if ctx.channel != welcome.channel:
