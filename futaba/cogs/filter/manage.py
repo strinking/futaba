@@ -16,6 +16,7 @@ import re
 from collections import defaultdict
 
 from futaba.enums import FilterType, Reactions
+from futaba.str_builder import StringBuilder
 from futaba.unicode import READABLE_CHAR_SET, unicode_repr
 from .filter import Filter
 
@@ -75,46 +76,38 @@ async def delete_filter(bot, filters, message, location, text):
 async def show_filter(all_filters, message, author, location_name):
     if all_filters:
         contents = []
-        lines = [f'**Filtered strings for {location_name}:**']
+        content = StringBuilder(f'**Filtered strings for {location_name}:**\n')
         filters = defaultdict(list)
 
         for filter_text, (_, filter_type) in all_filters.items():
             filters[filter_type].append(filter_text)
 
         for filter_type, filter_texts in filters.items():
-            lines.extend((
-                f'{filter_type.emoji} {filter_type.description} strings {filter_type.emoji}',
-                '```',
-            ))
-            current_len = sum(len(line) + 1 for line in lines)
+            content.writeln(f'{filter_type.emoji} {filter_type.description} strings {filter_type.emoji}')
+            content.writeln('```')
 
             if not filter_texts:
-                lines.append('(none)')
+                content.writeln('(none)')
+                continue
 
             for filter_text in filter_texts:
                 if all(ch in READABLE_CHAR_SET for ch in filter_text):
-                    line = f'- "{filter_text}"'
+                    content.writeln(f'- "{filter_text}"')
                 else:
-                    line = f'- {unicode_repr(filter_text)} ["{filter_text}"]'
+                    content.writeln(f'- {unicode_repr(filter_text)} ["{filter_text}"]')
 
-                current_len += len(line)
-
-                if current_len > 1900:
+                if len(content) > 1900:
                     # Too long, break into new message
-                    lines.append('```')
-                    contents.append('\n'.join(lines))
+                    content.writeln('```')
+                    contents.append(str(content))
 
-                    # Start lines over
-                    lines.clear()
-                    lines.append('```')
-                    lines.append(line)
-                    current_len = len(line)
-                else:
-                    lines.append(line)
+                    # Start buffer over
+                    content.clear()
+                    content.writeln('```')
 
-            lines.append('```')
-        contents.append('\n'.join(lines))
-        lines.clear()
+            content.writeln('```')
+        contents.append(str(content))
+        content.clear()
     else:
         contents = [f'**No filtered strings for {location_name}**']
 
@@ -179,10 +172,10 @@ async def delete_content_filter(bot, filters, message, hexsums):
 async def show_content_filter(all_filters, message):
     if all_filters:
         contents = []
-        lines = [f'**Filtered SHA1 hashes for {message.guild.name}:**']
+        content = StringBuilder()
+        content.writeln(f'**Filtered SHA1 hashes for {message.guild.name}:**')
 
         # Set up filter list
-        print(f'all_filters: {all_filters}')
         filters = {filter_type: [] for filter_type in FilterType}
         for hashsum, (filter_type, description) in all_filters.items():
             filters[filter_type].append((hashsum.hex(), description))
@@ -192,36 +185,30 @@ async def show_content_filter(all_filters, message):
             filter_list = filters[filter_type]
             filter_list.sort()
 
-            lines.extend((
-                f'{filter_type.emoji} {filter_type.description} hashes {filter_type.emoji}',
-                '```',
-            ))
+            content.writeln(f'{filter_type.emoji} {filter_type.description} hashes {filter_type.emoji}')
+            content.writeln('```')
 
             if not filter_list:
-                lines.extend((
-                    '(none)',
-                    '```',
-                ))
+                content.writeln('(none)')
+                content.writeln('```')
                 continue
 
             for hexsum, description in filter_list:
-                lines.append(f'{hexsum} {description}')
+                content.writeln(f'{hexsum} {description}')
 
-                # Since we know the size of each hexsum, we know how many
-                # we can fit in a message
-                if len(lines) > 45:
-                    lines.append('```')
-                    contents.append('\n'.join(lines))
-                    lines.clear()
-                    lines.append('```')
+                if len(content) > 1900:
+                    content.writeln('```')
+                    contents.append(str(content))
+                    content.clear()
+                    content.writeln('```')
 
-            if len(lines) > 1:
-                lines.append('```')
+            if len(content) > 4:
+                content.writeln('```')
             else:
-                lines.clear()
+                content.clear()
 
-        if lines:
-            contents.append('\n'.join(lines))
+        if content:
+            contents.append(str(content))
     else:
         contents = (f'**No filtered SHA1 hashes for {message.guild.name}**',)
 

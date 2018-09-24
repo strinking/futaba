@@ -22,6 +22,7 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.enums import Reactions
+from futaba.str_builder import StringBuilder
 
 COGS_DIR = 'futaba.cogs.'
 
@@ -169,13 +170,12 @@ class Reloader:
         List the cogs that are currently loaded
         '''
 
-        lines = ['```yaml', 'Cogs loaded:']
-
+        content = StringBuilder('```yaml\nCogs loaded:\n')
         if self.bot.cogs:
-            for cog in self.bot.cogs:
-                lines.append(f' - {cog}')
+            for cog in sorted(self.bot.cogs):
+                content.writeln(f' - {cog}')
         else:
-            lines.append(' - (none)')
+            content.writeln(' - (none)')
 
-        lines.append('```')
-        await ctx.send('\n'.join(lines))
+        content.writeln('```')
+        await ctx.send(content=str(content))

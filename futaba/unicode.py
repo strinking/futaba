@@ -18,6 +18,8 @@ import unicodedata
 from bisect import bisect
 from urllib.request import urlretrieve
 
+from futaba.str_builder import StringBuilder
+
 logger = logging.getLogger(__name__)
 
 __all__ = [
@@ -113,26 +115,25 @@ def unicode_repr(s):
     That is, any characters not in READABLE_CHAR_SET.
     '''
 
-    parts = []
+    result = StringBuilder('"')
     for ch in s:
         if ch == '\n':
-            parts.append('\\n')
+            result.write('\\n')
         elif ch == '\t':
-            parts.append('\\t')
+            result.write('\\t')
         elif ch == '"':
-            parts.append('\\"')
+            result.write('\\"')
         elif ch in READABLE_CHAR_SET:
-            parts.append(ch)
+            result.write(ch)
         else:
             num = ord(ch)
             if num < 0x100:
-                parts.append(f'\\x{num:02x}')
+                result.write(f'\\x{num:02x}')
             elif num < 0x10000:
-                parts.append(f'\\u{num:04x}')
+                result.write(f'\\u{num:04x}')
             elif num < 0x100000000:
-                parts.append(f'\\U{num:08x}')
+                result.write(f'\\U{num:08x}')
             else:
                 raise ValueError(f"Character {ch!r} (ord {num:x}) too big for escaping")
-
-    escaped = ''.join(parts)
-    return f'"{escaped}"'
+    result.write('"')
+    return str(result)

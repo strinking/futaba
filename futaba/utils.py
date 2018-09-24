@@ -16,6 +16,8 @@ import subprocess
 from datetime import datetime
 from itertools import zip_longest
 
+from futaba.str_builder import StringBuilder
+
 logger = logging.getLogger(__name__)
 
 __all__ = [
@@ -66,33 +68,25 @@ def fancy_timedelta(delta):
     if isinstance(delta, datetime):
         delta = datetime.now() - delta
 
-    parts = []
+    result = StringBuilder(sep=' ')
     years, days = divmod(delta.days, 365)
     months, days = divmod(days, 30)
     weeks, days = divmod(days, 7)
     hours, seconds = divmod(delta.seconds, 3600)
     minutes, seconds = divmod(seconds, 60)
+    seconds += delta.microseconds / 1e6
 
     if years:
-        parts.append(f'{years} year{plural(years)}')
+        result.write(f'{years}y')
     if months:
-        parts.append(f'{months} month{plural(months)}')
+        result.write(f'{months}m')
     if weeks:
-        parts.append(f'{weeks} week{plural(weeks)}')
+        result.write(f'{weeks}w')
     if days:
-        parts.append(f'{days} day{plural(days)}')
-    if hours:
-        parts.append(f'{hours} hour{plural(hours)}')
-    if minutes:
-        parts.append(f'{minutes} minute{plural(minutes)}')
+        result.write(f'{days}d')
 
-    seconds += delta.microseconds / 1e6
-    seconds_str = f'{seconds} second{plural(seconds)}'
-
-    if parts:
-        return f'{", ".join(parts)} and {seconds_str}'
-    else:
-        return seconds_str
+    result.write(f'{hours:02}:{minutes:02}:{seconds:02}')
+    return str(result)
 
 def async_partial(coro, *added_args, **added_kwargs):
     ''' Like functools.partial(), but for coroutines. '''

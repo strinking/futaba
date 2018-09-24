@@ -19,16 +19,25 @@ __all__ = [
 class StringBuilder:
     __slots__ = (
         'buffer',
+        'sep',
     )
 
-    def __init__(self, initial=''):
+    def __init__(self, initial='', sep=''):
         self.buffer = StringIO(initial)
+        self.buffer.seek(len(initial))
+        self.sep = sep
 
     def write(self, text):
-        self.buffer.write(text)
+        if self and self.sep:
+            self.buffer.write(self.sep)
 
-    def writeln(self, text):
-        self.buffer.writelines((text, '\n'))
+        self.buffer.write(str(text))
+
+    def writeln(self, text='', endl='\n'):
+        if self and self.sep:
+            self.buffer.write(self.sep)
+
+        self.buffer.writelines((str(text), endl))
 
     def clear(self):
         self.buffer.seek(0)
@@ -36,6 +45,9 @@ class StringBuilder:
 
     def __str__(self):
         return self.buffer.getvalue()
+
+    def __bool__(self):
+        return bool(len(self))
 
     def __len__(self):
         return self.buffer.tell()

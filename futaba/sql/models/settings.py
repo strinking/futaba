@@ -67,7 +67,7 @@ class SettingsModel:
                     .delete() \
                     .where(self.tb_prefixes.c.guild_id == guild.id)
         self.sql.execute(delet)
-        del self.prefix_cache[guild]
+        self.prefix_cache.pop(guild, None)
 
     def get_prefix(self, guild):
         logger.debug("Getting prefix for guild '%s' (%d)", guild.name, guild.id)

@@ -21,6 +21,7 @@ import discord
 
 from futaba.download import download_links
 from futaba.enums import FilterType, LocationType
+from futaba.str_builder import StringBuilder
 from futaba.utils import URL_REGEX, Dummy, escape_backticks
 
 logger = logging.getLogger(__name__)
@@ -92,19 +93,19 @@ async def check_message(cog, message):
 
 async def check_text_filter(cog, message):
     # Also check embed content
-    parts = [message.content]
+    content = StringBuilder(message.content)
     for embed in message.embeds:
         embed_dict = embed.to_dict()
-        parts.append(embed_dict.get('description', ''))
-        parts.append(embed_dict.get('title', ''))
+        content.writeln(embed_dict.get('description', ''))
+        content.writeln(embed_dict.get('title', ''))
 
         for field in embed_dict.get('fields', []):
-            parts.append(field.get('name', ''))
-            parts.append(field.get('value', ''))
+            content.writeln(field.get('name', ''))
+            content.writeln(field.get('value', ''))
 
     # This is the string we will validate against
-    content = '\n'.join(parts)
-    logger.debug("Content to check: %r", content)
+    to_check = str(content)
+    logger.debug("Content to check: %r", to_check)
 
     # Iterate through all guild filters
     triggered = None
@@ -115,12 +116,12 @@ async def check_text_filter(cog, message):
 
     for location_type, all_filters in filter_groups:
         for filter_text, (filter, filter_type) in all_filters.items():
-            if filter.matches(content):
+            if filter.matches(to_check):
                 if triggered is None or filter_type.value > triggered.filter_type.value:
                     triggered = FoundTextViolation(
                         journal=cog.journal,
                         message=message,
-                        content=content,
+                        content=to_check,
                         location_type=location_type,
                         filter_type=filter_type,
                         filter_text=filter_text,
@@ -232,6 +233,7 @@ async def found_text_violation(triggered):
     severity = filter_type.level
     jail_role = Dummy() # FIXME
     jail_role.name = 'Dunce Hat'
+    jail_role.mention = '@Dunce Hat'
 
     # Escape content for display
     escaped_filter_text = escape_backticks(filter_text)
@@ -242,22 +244,25 @@ async def found_text_violation(triggered):
 
     async def message_violator():
         logger.debug("Sending message to user who violated the filter")
-        lines = [
+        response = StringBuilder()
+        response.write(
             f'The message you posted in {message.channel.mention} violates a {location_type.value} '
-            f'{filter_type.value} filter disallowing `{escaped_filter_text}`.'
-        ]
+        )
+        response.writeln(f'{filter_type.value} filter disallowing `{escaped_filter_text}`.')
 
         if severity >= FilterType.JAIL.level:
-            lines.extend((
-                "This offense is serious enough to warrant immediate revocation of posting privileges.",
-                f"As such, you have been assigned the `{jail_role.name}` role, until a moderator clears you.",
-            ))
+            response.writeln(
+                "This offense is serious enough to warrant immediate revocation of posting privileges."
+            )
+            response.writeln(
+                f"As such, you have been assigned the {jail_role.mention} role, until a moderator clears you."
+            )
 
-        await message.author.send(content='\n'.join(lines))
-        lines.clear()
+        await message.author.send(content=str(response))
+        response.clear()
 
         if message.content != content:
-            embed_caveat = '(including text from any embeds attached to your message)'
+            embed_caveat = '(including text from all embeds attached to your message)'
         else:
             embed_caveat = ''
 
@@ -265,17 +270,14 @@ async def found_text_violation(triggered):
         embed.timestamp = discord.utils.snowflake_time(message.id)
         embed.set_author(name=message.author.display_name, icon_url=message.author.avatar_url)
         to_send = f"The content of the deleted message {embed_caveat} is:"
-        await message.author.send(content=to_send, embed=embed)
+        await message.author.send(content=content, embed=embed)
 
-        lines.extend((
-            'or, quoted:',
-            '```',
-            escaped_content,
-            '```',
-            'Contact a moderator if you have questions.',
-        ))
-
-        await message.author.send(content='\n'.join(lines))
+        response.writeln('or, quoted:')
+        response.writeln('```')
+        response.writeln(escaped_content)
+        response.writeln('```')
+        response.writeln('Contact a moderator if you have questions.')
+        await message.author.send(content=str(response))
 
     if severity >= FilterType.FLAG.level:
         logger.info("Notifying staff of filter violation")
@@ -316,28 +318,32 @@ async def found_file_violation(triggered, reupload):
 
     async def message_violator():
         logger.debug("Sending message to user who violated the filter")
-        lines = [
+        response = StringBuilder()
+        response.write(
             f'The message you posted in {message.channel.mention} contains or links to a file '
-            f'that violates a {filter_type.value} content filter: `{hashsum.hex()}`.',
-            f'Your original link: <{url}>',
-        ]
+        )
+        response.writeln(f'that violates a {filter_type.value} content filter: `{hashsum.hex()}`.')
+        response.writeln(f'Your original link: <{url}>')
 
         if reupload:
-            lines.append('The filtered file has been attached to this message.')
+            response.writeln('The filtered file has been attached to this message.')
 
         if severity >= FilterType.JAIL.level:
-            lines.extend((
-                "This offense is serious enough to warrant immediate revocation of posting privileges.",
-                f"As such, you have been assigned the `{jail_role.name}` role, until a moderator clears you.",
-            ))
+            response.writeln(
+                "This offense is serious enough to warrant immediate revocation of posting privileges."
+            )
+            response.writeln(
+                f"As such, you have been assigned the `{jail_role.name}` role, until a moderator clears you."
+            )
 
-        kwargs = {'content': '\n'.join(lines)}
 
+        kwargs = {}
         if reupload:
-            lines.append("In case the link is broken, the file has been attached below:")
+            response.writeln("In case the link is broken, the file has been attached below:")
             filename = os.path.basename(urlparse(url).path)
             kwargs['file'] = discord.File(binio.getbuffer(), filename=filename)
 
+        kwargs['content'] = str(response)
         await message.author.send(**kwargs)
 
     if severity >= FilterType.FLAG.level:

@@ -26,6 +26,7 @@ from discord.ext import commands
 from futaba.enums import Reactions
 from futaba.parse import get_emoji, get_channel_id, get_role_id, get_user_id, similar_user_ids
 from futaba.permissions import check_mod_perm
+from futaba.str_builder import StringBuilder
 from futaba.utils import escape_backticks, fancy_timedelta, first, lowerbool, plural
 from futaba.unicode import UNICODE_CATEGORY_NAME
 
@@ -179,17 +180,13 @@ class Info:
             mute = user.voice.mute or user.voice.self_mute
             deaf = user.voice.deaf or user.voice.self_deaf
 
-            states = []
+            states = StringBuilder(sep=' ')
             if mute:
-                states.append('muted')
+                states.write('muted')
             if deaf:
-                states.append('deafened')
+                states.write('deafened')
 
-            if states:
-                state = ', '.join(states)
-            else:
-                state = 'active'
-
+            state = str(states) if states else 'active'
             embed.add_field(name='Voice', value=state)
 
         # Guild join date
@@ -215,8 +212,9 @@ class Info:
         logger.info("Running ufind on '%s'", name)
         user_ids = similar_user_ids(name, self.bot.users)
         users_in_guild = set(member.id for member in getattr(ctx.guild, 'members', []))
+        found_users = False
 
-        lines = ['**Users found:**']
+        descr = StringBuilder('**Similar users found:**\n')
         for user_id in user_ids:
             user = self.bot.get_user(user_id)
             if user is None:
@@ -225,16 +223,14 @@ class Info:
             logger.debug("Result for user ID %d: %r", user_id, user)
             if user is not None:
                 extra = '' if user_id in users_in_guild else '\N{GLOBE WITH MERIDIANS}'
-                lines.append(f'- {user.mention} {extra}')
+                descr.writeln(f'- {user.mention} {extra}')
+                found_users = True
 
-        if len(lines) > 1:
-            descr = '\n'.join(lines)
-            colour = discord.Colour.teal()
+        if found_users:
+            embed = discord.Embed(description=str(descr), colour=discord.Colour.teal())
         else:
-            descr = '**No users found!**'
-            colour = discord.Colour.dark_red()
+            embed = discord.Embed(description='**No users found!**', colour=discord.Colour.dark_red())
 
-        embed = discord.Embed(description=descr, colour=colour)
         await asyncio.gather(
             ctx.send(embed=embed),
             Reactions.SUCCESS.add(ctx.message),
@@ -268,17 +264,17 @@ class Info:
         embed.add_field(name='ID', value=str(role.id))
         embed.add_field(name='Position', value=str(role.position))
 
-        lines = [role.mention]
+        descr = StringBuilder(role.mention)
         if role.mentionable:
-            lines.append('Mentionable')
+            descr.writeln('Mentionable')
         if role.hoist:
-            lines.append('Hoisted')
+            descr.writeln('Hoisted')
         if role.managed:
-            lines.append('Managed')
-        embed.description = '\n'.join(lines)
+            descr.writeln('Managed')
+        embed.description = str(descr)
 
         if role.members:
-            max_members = 15
+            max_members = 10
             members = ", ".join(map(lambda m: m.mention, islice(role.members, 0, max_members)))
             if len(role.members) > max_members:
                 diff = len(role.members) - max_members
@@ -299,36 +295,30 @@ class Info:
         ''' Lists all roles in the guild. '''
 
         contents = []
-        lines = []
-        current_len = 0
+        content = StringBuilder()
 
         logger.info("Listing roles within the guild")
         for role in ctx.guild.roles:
-            line = f'- {role.mention} id: `{role.id}`, members: `{len(role.members)}`'
-            current_len += len(line)
+            content.writeln(f'- {role.mention} id: `{role.id}`, members: `{len(role.members)}`')
 
-            if current_len > 1900:
+            if len(content) > 1900:
                 # Too long, break into new embed
-                contents.append('\n'.join(lines))
+                contents.append(str(content))
 
-                # Start lines over
-                lines.clear()
-                lines.append(line)
-                current_len = len(line)
-            else:
-                lines.append(line)
+                # Start content over
+                content.clear()
 
-        contents.append('\n'.join(lines))
-        lines.clear()
+        if content:
+            contents.append(str(content))
 
         async def post_all():
             for i, content in enumerate(contents):
                 embed = discord.Embed(description=content)
                 page = f'Page {i + 1}/{len(contents)}'
                 if i == 0:
-                    embed.set_author(name=page)
+                    embed.set_footer(text=page)
                 else:
-                    embed.set_author(name=f'{page} Roles in {ctx.guild.name}')
+                    embed.set_footer(text=f'{page} Roles in {ctx.guild.name}')
 
                 await ctx.send(embed=embed)
 
@@ -573,15 +563,14 @@ class Info:
         embed.set_author(name=ctx.guild.name)
         embed.set_thumbnail(url=ctx.guild.icon_url)
 
-        lines = [
-            f'\N{MAN} **Members:** {len(ctx.guild.members)}',
-            f'\N{MILITARY MEDAL} **Roles:** {len(ctx.guild.roles)}',
-            f'\N{BAR CHART} **Channel categories:** {len(ctx.guild.categories)}',
-            f'\N{MEMO} **Text Channels:** {len(ctx.guild.text_channels)}',
-            f'\N{STUDIO MICROPHONE} **Voice Channels:** {len(ctx.guild.voice_channels)}',
-            f'\N{CLOCK FACE TWO OCLOCK} **Age:** {fancy_timedelta(ctx.guild.created_at)}',
-            ''
-        ]
+        descr = StringBuilder()
+        descr.writeln(f'\N{MAN} **Members:** {len(ctx.guild.members)}')
+        descr.writeln(f'\N{MILITARY MEDAL} **Roles:** {len(ctx.guild.roles)}')
+        descr.writeln(f'\N{BAR CHART} **Channel categories:** {len(ctx.guild.categories)}')
+        descr.writeln(f'\N{MEMO} **Text Channels:** {len(ctx.guild.text_channels)}')
+        descr.writeln(f'\N{STUDIO MICROPHONE} **Voice Channels:** {len(ctx.guild.voice_channels)}')
+        descr.writeln(f'\N{CLOCK FACE TWO OCLOCK} **Age:** {fancy_timedelta(ctx.guild.created_at)}')
+        descr.writeln()
 
         moderators = 0
         admins = 0
@@ -599,14 +588,13 @@ class Info:
                 moderators += 1
 
         if bots:
-            lines.append(f'\N{ROBOT FACE} **Bots:** {bots}')
+            descr.writeln(f'\N{ROBOT FACE} **Bots:** {bots}')
         if moderators:
-            lines.append(f'\N{CONSTRUCTION WORKER} **Moderators:** {moderators}')
+            descr.writeln(f'\N{CONSTRUCTION WORKER} **Moderators:** {moderators}')
         if admins:
-            lines.append(f'\N{POLICE OFFICER} **Administrators:** {admins}')
-        lines.append(f'\N{CROWN} **Owner:** {ctx.guild.owner.mention}')
-
-        embed.description = '\n'.join(lines)
+            descr.writeln(f'\N{POLICE OFFICER} **Administrators:** {admins}')
+        descr.writeln(f'\N{CROWN} **Owner:** {ctx.guild.owner.mention}')
+        embed.description = str(descr)
 
         await asyncio.gather(
             ctx.send(embed=embed),

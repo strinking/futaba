@@ -24,6 +24,7 @@ from discord.ext import commands
 from futaba import permissions
 from futaba.enums import Reactions
 from futaba.journal import ChannelOutputListener, Router
+from futaba.str_builder import StringBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -67,18 +68,18 @@ class Journal:
 
         outputs = self.bot.sql.journal.get_journal_channels(ctx.guild)
         outputs.sort(key=lambda x: x.channel.name)
-        lines = []
         attributes = []
+        descr = StringBuilder()
         for output in outputs:
             if not output.settings.recursive:
                 attributes.append('exact path')
 
-            attributes_str = f'({", ".join(attributes)})' if attributes else ''
-            lines.append(f'- `{output.path}` mounted at {output.channel.mention} {attributes_str}')
+            attr_str = f'({", ".join(attributes)})' if attributes else ''
+            descr.writeln(f'- `{output.path}` mounted at {output.channel.mention} {attr_str}')
             attributes.clear()
 
-        if lines:
-            embed = discord.Embed(colour=discord.Colour.teal(), description='\n'.join(lines))
+        if outputs:
+            embed = discord.Embed(colour=discord.Colour.teal(), description=str(descr))
             embed.set_author(name='Current journal outputs')
         else:
             embed = discord.Embed(colour=discord.Colour.dark_purple())
