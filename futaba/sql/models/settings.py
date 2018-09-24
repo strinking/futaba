@@ -234,8 +234,8 @@ class SettingsModel:
 
         values = {}
         for attr, role in attrs.items():
-            assert attr in ('member_role', 'guest_role', 'mute_role', 'jail_role'), "Unknown column"
-            values[attr] = getattr(role, 'id', None)
+            assert attr in ('member', 'guest', 'mute', 'jail'), "Unknown column"
+            values[f'{attr}_role_id'] = getattr(role, 'id', None)
 
         upd = self.tb_special_roles \
                 .update() \
