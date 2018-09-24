@@ -50,6 +50,17 @@ class SpecialRoleStorage:
         self.mute_role = self._get_role(mute_role_id)
         self.jail_role = self._get_role(jail_role_id)
 
+    def update(self, attrs):
+        logger.debug("Updating special role storage: %s", attrs)
+        if 'member' in attrs:
+            self.member_role = attrs['member']
+        if 'guest' in attrs:
+            self.guest_role = attrs['guest']
+        if 'mute' in attrs:
+            self.mute_role = attrs['mute']
+        if 'jail' in attrs:
+            self.jail_role = attrs['jail']
+
     @property
     def member(self):
         return self.member_role
@@ -242,4 +253,4 @@ class SettingsModel:
                 .where(self.tb_special_roles.c.guild_id == guild.id) \
                 .values(values)
         self.sql.execute(upd)
-        self.roles_cache.update(attrs)
+        self.roles_cache[guild].update(attrs)

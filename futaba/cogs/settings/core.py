@@ -68,12 +68,12 @@ class Settings:
             Reactions.SUCCESS.add(ctx.message),
         )
 
-    async def get_role(self, ctx, name, check_roles=True):
+    async def get_role(self, ctx, name):
         role_id = get_role_id(name, ctx.guild.roles)
         role = discord.utils.get(ctx.guild.roles, id=role_id)
         embed = discord.Embed(colour=discord.Colour.dark_red())
         if role is None:
-            embed.description = 'No role with description `{escape_backticks(name)}` found'
+            embed.description = f'No role with description `{escape_backticks(name)}` found'
             await asyncio.gather(
                 ctx.send(embed=embed),
                 Reactions.FAIL.add(ctx.message),
@@ -86,17 +86,17 @@ class Settings:
                 Reactions.FAIL.add(ctx.message),
             )
             return None
-        elif check_roles:
-            special_roles = self.bot.sql.settings.get_special_roles(ctx.guild)
-            if role in special_roles:
-                embed.description = f'Cannot assign the same role for multiple purposes'
-                await asyncio.gather(
-                    ctx.send(embed=embed),
-                    Reactions.FAIL.add(ctx.message),
-                )
-                return None
-        else:
-            return role
+
+        special_roles = self.bot.sql.settings.get_special_roles(ctx.guild)
+        if role in special_roles:
+            embed.description = f'Cannot assign the same role for multiple purposes'
+            await asyncio.gather(
+                ctx.send(embed=embed),
+                Reactions.FAIL.add(ctx.message),
+            )
+            return None
+
+        return role
 
     @commands.command(name='setmember')
     @commands.guild_only()
@@ -104,7 +104,7 @@ class Settings:
     async def set_member_role(self, ctx, *, name: str = None):
         ''' Set the member role for this guild. No argument to unset. '''
 
-        logger.info("Setting member role for guild '%s' (%d) to '%s",
+        logger.info("Setting member role for guild '%s' (%d) to '%s'",
                 ctx.guild.name, ctx.guild.id, name)
 
         if name is None:
@@ -131,10 +131,10 @@ class Settings:
     @commands.command(name='setguest')
     @commands.guild_only()
     @permissions.check_mod()
-    async def set_guest_role(self, ctx, *, name: str):
-        ''' Set the guest role for this guild. '''
+    async def set_guest_role(self, ctx, *, name: str = None):
+        ''' Set the guest role for this guild. No argument to unset. '''
 
-        logger.info("Setting guest role for guild '%s' (%d) to '%s",
+        logger.info("Setting guest role for guild '%s' (%d) to '%s'",
                 ctx.guild.name, ctx.guild.id, name)
 
         if name is None:
@@ -161,10 +161,10 @@ class Settings:
     @commands.command(name='setmute')
     @commands.guild_only()
     @permissions.check_mod()
-    async def set_mute_role(self, ctx, *, name: str):
-        ''' Set the mute role for this guild. '''
+    async def set_mute_role(self, ctx, *, name: str = None):
+        ''' Set the mute role for this guild. No argument to unset. '''
 
-        logger.info("Setting mute role for guild '%s' (%d) to '%s",
+        logger.info("Setting mute role for guild '%s' (%d) to '%s'",
                 ctx.guild.name, ctx.guild.id, name)
 
         if name is None:
@@ -191,10 +191,10 @@ class Settings:
     @commands.command(name='setjail')
     @commands.guild_only()
     @permissions.check_mod()
-    async def set_jail_role(self, ctx, *, name: str):
-        ''' Set the mute role for this guild. '''
+    async def set_jail_role(self, ctx, *, name: str = None):
+        ''' Set the mute role for this guild. No argument to unset. '''
 
-        logger.info("Setting mute role for guild '%s' (%d) to '%s",
+        logger.info("Setting mute role for guild '%s' (%d) to '%s'",
                 ctx.guild.name, ctx.guild.id, name)
 
         if name is None:
