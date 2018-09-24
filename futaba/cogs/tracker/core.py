@@ -140,14 +140,15 @@ class Tracker:
     async def get_deletion_reason(self, message, timestamp):
         async for entry in message.guild.audit_logs(limit=20, action=AuditLogAction.message_delete):
             if entry.after.id == message.id:
-                return MessageDeletionReason(
-                    message=message,
-                    cause=entry.user,
-                    count=entry.extra.count,
-                    reason=entry.reason,
-                    deleted_at=timestamp,
-                    audit_log_entry=entry,
-                )
+                if abs(timestamp - entry.created_at) < timedelta(seconds=3):
+                    return MessageDeletionReason(
+                        message=message,
+                        cause=entry.user,
+                        count=entry.extra.count,
+                        reason=entry.reason,
+                        deleted_at=timestamp,
+                        audit_log_entry=entry,
+                    )
 
         # Couldn't find anything, must be a self-delete.
         return MessageDeletionReason(
@@ -168,7 +169,7 @@ class Tracker:
 
         # Wait for a bit so we can catch the audit log entry
         timestamp = datetime.now()
-        await asyncio.sleep(5)
+        await asyncio.sleep(1)
         cause = await self.get_removal_cause(message, timestamp)
 
         content = f'Message {message.id} by {user_discrim(message.author)} was deleted'
@@ -236,40 +237,42 @@ class Tracker:
     async def on_member_join(self, member):
         logger.debug("Member %s (%d) joined '%s' (%d)",
                 member.name, member.id, member.guild.name, member.guild.id)
-        content = f'Member {member.mention} ({user_discrim(member)} {member.id}) joined'
+
+        # For parity with on_member_remove(), so messages don't appear in incorrect order
+        await asyncio.sleep(2)
+
+        content = f'Member {member.mention} ({user_discrim(member)}) joined'
         self.journal.send('member/join', member.guild, content, icon='join', member=member)
 
     async def get_removal_cause(self, member, timestamp):
         async for entry in member.guild.audit_logs(limit=20):
-            if entry.action == AuditLogAction.kick:
-                if entry.target == member:
-                    return MemberLeaveReason(
-                        type=MemberLeaveType.KICKED,
-                        member=member,
-                        cause=entry.user,
-                        reason=entry.reason,
-                        left_at=entry.created_at,
-                        audit_log_entry=entry,
-                    )
-            elif entry.action == AuditLogAction.ban:
-                if entry.target == member:
-                    return MemberLeaveReason(
-                        type=MemberLeaveType.BANNED,
-                        member=member,
-                        cause=entry.user,
-                        reason=entry.reason,
-                        left_at=entry.created_at,
-                        audit_log_entry=entry,
-                    )
-            elif entry.action == AuditLogAction.member_prune:
-                # Unfortunately the audit log entry doesn't
-                # tell us enough to determine if this member was part of
-                # the prune, so we'll just take a leap of faith and say
-                # it was if the time between events was less than 3 seconds.
-                # They aren't very common so this innacurracy shouldn't
-                # be a problem.
+            if abs(timestamp - entry.created_at) < timedelta(seconds=3):
+                if entry.action == AuditLogAction.kick:
+                    if entry.target == member:
+                        return MemberLeaveReason(
+                            type=MemberLeaveType.KICKED,
+                            member=member,
+                            cause=entry.user,
+                            reason=entry.reason,
+                            left_at=entry.created_at,
+                            audit_log_entry=entry,
+                        )
+                elif entry.action == AuditLogAction.ban:
+                    if entry.target == member:
+                        return MemberLeaveReason(
+                            type=MemberLeaveType.BANNED,
+                            member=member,
+                            cause=entry.user,
+                            reason=entry.reason,
+                            left_at=entry.created_at,
+                            audit_log_entry=entry,
+                        )
+                elif entry.action == AuditLogAction.member_prune:
+                    # Unfortunately the audit log entry doesn't
+                    # tell us enough to determine if this member was part of
+                    # the prune, so we'll just take a leap of faith and say
+                    # it was so.
 
-                if abs(timestamp - entry.created_at) < timedelta(second=3):
                     return MemberLeaveReason(
                         type=MemberLeaveType.PRUNED,
                         member=member,
@@ -279,7 +282,7 @@ class Tracker:
                         audit_log_entry=entry,
                     )
 
-        # Couldn't find anything, must be a self-delete
+        # Couldn't find anything, must be a voluntary departure
         return MemberLeaveReason(
             type=MemberLeaveType.LEFT,
             member=member,
@@ -295,9 +298,9 @@ class Tracker:
 
         # Wait for a bit so we can catch the audit log entry
         timestamp = datetime.now()
-        await asyncio.sleep(5)
+        await asyncio.sleep(2)
         cause = await self.get_removal_cause(member, timestamp)
 
-        content = f'Member {member.mention} ({user_discrim(member)} {member.id}) left'
+        content = f'Member {member.mention} ({user_discrim(member)}) left'
         self.journal.send('member/leave', member.guild, content,
-                icon='join', member=member, cause=cause)
+                icon='leave', member=member, cause=cause)

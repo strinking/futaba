@@ -16,3 +16,4 @@ Module for implementations of Listeners or other subclasses.
 
 from .channel_output import ChannelOutputListener
 from .logging_output import LoggingOutputListener
+from .moderation import ModerationListener
