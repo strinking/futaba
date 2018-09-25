@@ -179,7 +179,7 @@ class SettingsModel:
         return prefix
 
     def set_prefix(self, guild, prefix):
-        logger.info("Setting prefix to '%s' for guild '%s' (%d)", prefix, guild.name, guild.id)
+        logger.info("Setting prefix to %r for guild '%s' (%d)", prefix, guild.name, guild.id)
         upd = self.tb_prefixes \
                 .update() \
                 .where(self.tb_prefixes.c.guild_id == guild.id) \

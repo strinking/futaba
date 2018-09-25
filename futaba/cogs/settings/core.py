@@ -17,6 +17,7 @@ of configured settings in between runs of the bot.
 
 import asyncio
 import logging
+import re
 
 import discord
 from discord.ext import commands
@@ -25,6 +26,7 @@ from futaba import permissions
 from futaba.emojis import ICONS
 from futaba.enums import Reactions
 from futaba.parse import get_role_id
+from futaba.permissions import mod_perm
 from futaba.utils import escape_backticks
 
 logger = logging.getLogger(__name__)
@@ -43,6 +45,61 @@ class Settings:
 
         for guild in bot.guilds:
             bot.sql.settings.get_special_roles(guild)
+
+    @commands.command(name='prefix')
+    async def prefix(self, ctx, *, prefix: str = None):
+        '''
+        Gets the current prefix. If you're a moderator, you can set it too.
+        A trailing underscore is converted into spaces. A single '_' unsets
+        the bot's prefix, and uses the default one.
+        '''
+
+        # Get prefix
+        if prefix is None:
+            bot_prefix = self.bot.prefix(ctx.message)
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
+            if ctx.guild is None:
+                embed.description = 'No command prefix, all messages are commands.'
+            else:
+                embed.description = f'Prefix for {ctx.guild.name} is `{bot_prefix}`.'
+            reaction = Reactions.SUCCESS
+
+        # Attempt to set prefix outside of guild
+        elif ctx.guild is None and prefix is not None:
+            embed = discord.Embed(colour=discord.Colour.dark_red())
+            embed.description = 'Cannot set a command prefix outside of a server!'
+            reaction = Reactions.FAIL
+
+        # Unset prefix
+        elif prefix == '_':
+            with self.bot.sql.transaction():
+                self.bot.sql.settings.set_prefix(ctx.guild, None)
+                bot_prefix = self.bot.prefix(ctx.message)
+
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
+            embed.description = f'Unset prefix for {ctx.guild.name}. (Default prefix: `{bot_prefix}`)'
+            reaction = Reactions.SUCCESS
+
+        # Lacking authority to set prefix
+        elif not mod_perm(ctx):
+            embed = discord.Embed(colour=discord.Colour.dark_red())
+            embed.description = 'You do not have permission to set the prefix'
+            reaction = Reactions.DENY
+
+        # Set prefix
+        else:
+            bot_prefix = re.sub(r'_$', ' ', prefix)
+            with self.bot.sql.transaction():
+                self.bot.sql.settings.set_prefix(ctx.guild, bot_prefix)
+
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
+            embed.description = f'Set prefix for {ctx.guild.name} to `{bot_prefix}`'
+            reaction = Reactions.SUCCESS
+
+        await asyncio.gather(
+            ctx.send(embed=embed),
+            reaction.add(ctx.message),
+        )
 
     @commands.command(name='specroles', aliases=['sroles'])
     @commands.guild_only()
