@@ -48,19 +48,22 @@ class Bot(commands.AutoShardedBot):
         self.journal_cog = None
         self.debug_chan = None
         self.sql = SqlHandler(config.database_url)
-        super().__init__(command_prefix=self.get_prefix_sql,
+
+        super().__init__(command_prefix=self.command_prefix,
                          description='futaba - A discord mod bot',
                          pm_help=True)
 
     @staticmethod
-    def get_prefix_sql(bot, message):
-        prefix = None
-
-        if message.guild is not None:
-            prefix = bot.sql.settings.get_prefix(message.guild)
-
-        prefix = prefix or bot.config.default_prefix
+    def command_prefix(bot, message):
+        prefix = bot.prefix(message)
         return commands.when_mentioned_or(prefix)(bot, message)
+
+    def prefix(self, message):
+        if message.guild is None:
+            return ''
+
+        prefix = self.sql.settings.get_prefix(message.guild)
+        return prefix or self.config.default_prefix
 
     @property
     def uptime(self):
