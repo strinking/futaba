@@ -9,18 +9,12 @@ owners = ["98633956773093376", "130012001236811776"]
 # Default bot command prefix
 prefix = "!"
 
-# The "output channel", used for dumping traceback
-# information if the bot errors from a command.
-# This is not the logging channel, you can set that
-# using an in-client command.
-#
-# Set to empty string or exclude to disable.
-# Be warned this channel will get spammed!
-debug-channel = ""
-
+# Emojis to display for certain icons within the bot
+# Set to "0" to disable
 [emojis]
 python = "490419105699069952"
 discordpy = "490419059964510210"
 
+# Path to the RDBMS futaba will use
 [database]
 url = "sqlite:///futaba.db"

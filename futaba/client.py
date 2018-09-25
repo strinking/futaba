@@ -38,7 +38,6 @@ class Bot(commands.AutoShardedBot):
         'config',
         'start_time',
         'journal_cog',
-        'debug_chan',
         'sql',
     )
 
@@ -46,7 +45,6 @@ class Bot(commands.AutoShardedBot):
         self.config = config
         self.start_time = datetime.datetime.utcnow()
         self.journal_cog = None
-        self.debug_chan = None
         self.sql = SqlHandler(config.database_url)
         super().__init__(command_prefix=self.get_prefix_sql,
                          description='futaba - A discord mod bot',
@@ -86,11 +84,6 @@ class Bot(commands.AutoShardedBot):
         Log bots username and ID
         Then load cogs
         '''
-
-        if self.config.debug_channel_id is None:
-            logger.warning("No debug channel set in config.")
-        else:
-            self.debug_chan = self.get_channel(int(self.config.debug_channel_id))
 
         # Setup mandatory cogs
         self.add_cog(Journal(self))
@@ -205,8 +198,3 @@ class Bot(commands.AutoShardedBot):
         elif isinstance(error, SendHelp):
             # TODO send help message for error.command
             pass
-
-    # Remove this?
-    async def _send(self, *args, **kwargs):
-        if self.debug_chan is not None:
-            await self.debug_chan.send(*args, **kwargs)
