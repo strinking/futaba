@@ -72,7 +72,7 @@ class Miscellaneous:
         embed.set_thumbnail(url=self.bot.user.avatar_url)
         embed.set_author(name=f'Futaba v{__version__} {GIT_HASH}')
         embed.add_field(name='Running for', value=fancy_timedelta(self.bot.uptime))
-        embed.add_field(name='Created by', value='https://discord.gg/010z0Kw1A9ql5c1Qe')
+        embed.add_field(name='Created by', value='[Programming Discord](https://discord.gg/010z0Kw1A9ql5c1Qe)')
         embed.add_field(name='Source code', value='https://github.com/strinking/futaba')
         embed.description = '\n'.join((
             f'{python_emoji} Powered by Python {pyver.major}.{pyver.minor}.{pyver.micro}',
