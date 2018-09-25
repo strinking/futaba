@@ -54,18 +54,21 @@ class Settings:
         the bot's prefix, and uses the default one.
         '''
 
-        # Attempt to set prefix outside of guild
-        if ctx.guild is None and prefix is None:
-            embed = discord.Embed(colour=discord.Colour.dark_red())
-            embed.description = 'Cannot set a bot prefix outside of a server!'
-            reaction = Reactions.FAIL
-
         # Get prefix
-        elif prefix is None:
+        if prefix is None:
             bot_prefix = self.bot.prefix(ctx.message)
             embed = discord.Embed(colour=discord.Colour.dark_teal())
-            embed.description = f'Prefix for {ctx.guild.name} is `{bot_prefix}`'
+            if ctx.guild is None:
+                embed.description = 'No command prefix, all messages are commands.'
+            else:
+                embed.description = f'Prefix for {ctx.guild.name} is `{bot_prefix}`.'
             reaction = Reactions.SUCCESS
+
+        # Attempt to set prefix outside of guild
+        elif ctx.guild is None and prefix is not None:
+            embed = discord.Embed(colour=discord.Colour.dark_red())
+            embed.description = 'Cannot set a command prefix outside of a server!'
+            reaction = Reactions.FAIL
 
         # Unset prefix
         elif prefix == '_':
