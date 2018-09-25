@@ -23,6 +23,7 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.enums import Reactions
+from futaba.exceptions import SendHelp
 from futaba.journal import ChannelOutputListener, Router
 from futaba.str_builder import StringBuilder
 
@@ -57,8 +58,7 @@ class Journal:
         ''' Configure channel output for bot journal events. '''
 
         if ctx.invoked_subcommand is None:
-            # TODO send help
-            await Reactions.FAIL.add(ctx.message)
+            raise SendHelp(ctx.command)
 
     @log.command(name='show', aliases=['display', 'list'])
     @commands.guild_only()

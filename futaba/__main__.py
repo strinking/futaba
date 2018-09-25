@@ -72,9 +72,13 @@ if __name__ == '__main__':
         discord_logger.addHandler(log_hndl)
 
     if args.stdout:
+        full_logger = logging.getLogger(__package__)
+        full_logger.setLevel(level=logging.DEBUG)
+        full_logger.addHandler(log_hndl)
+
         log_hndl = logging.StreamHandler(sys.stdout)
         log_hndl.setFormatter(log_fmtr)
-        logger.addHandler(log_hndl)
+        full_logger.addHandler(log_hndl)
         if args.discord_log:
             discord_logger.addHandler(log_hndl)
 

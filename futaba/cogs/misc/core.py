@@ -164,9 +164,7 @@ class Miscellaneous:
     @commands.command(name='shutdown', aliases=['halt'])
     @permissions.check_owner()
     async def shutdown(self, ctx):
-        '''
-        Shuts down the bot. Only able to be run by an owner.
-        '''
+        ''' Shuts down the bot. Can only able be run by an owner. '''
 
         self.journal.send('admin/shutdown', ctx.guild, 'Shutting down bot', icon='shutdown')
         await Reactions.SUCCESS.add(ctx.message)

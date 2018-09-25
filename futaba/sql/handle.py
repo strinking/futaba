@@ -18,7 +18,7 @@ import logging
 
 from sqlalchemy import create_engine, MetaData
 
-from .models import FilterModel, GuildsModel, JournalModel, SettingsModel
+from .models import FilterModel, GuildsModel, JournalModel, SettingsModel, WelcomeModel
 from .transaction import Transaction
 
 logger = logging.getLogger(__name__)
@@ -37,6 +37,7 @@ class SqlHandler:
         'guilds',
         'journal',
         'settings',
+        'welcome',
     )
 
     def __init__(self, db_path: str):
@@ -50,6 +51,7 @@ class SqlHandler:
         self.guilds = GuildsModel(self, meta)
         self.journal = JournalModel(self, meta)
         self.settings = SettingsModel(self, meta)
+        self.welcome = WelcomeModel(self, meta)
 
         meta.create_all(self.db)
         logger.info("Created all tables.")

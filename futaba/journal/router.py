@@ -61,7 +61,7 @@ class Router:
         while True:
             logger.debug("Waiting for new journal event")
             event_path, guild, content, attributes = await self.queue.get()
-            logger.info("Got journal event on %s: '%s' %s", event_path, content, attributes)
+            logger.debug("Got journal event on %s: '%s'", event_path, content)
             content = process_content(content, attributes)
             logger.debug("Journal content after processing: '%s'", content)
 

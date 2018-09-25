@@ -25,7 +25,7 @@ from discord.ext import commands
 
 from futaba.enums import Reactions
 from futaba.parse import get_emoji, get_channel_id, get_role_id, get_user_id, similar_user_ids
-from futaba.permissions import check_mod_perm
+from futaba.permissions import mod_perm
 from futaba.str_builder import StringBuilder
 from futaba.utils import escape_backticks, fancy_timedelta, first, lowerbool, plural
 from futaba.unicode import UNICODE_CATEGORY_NAME
@@ -72,6 +72,7 @@ class Info:
             embed.set_thumbnail(url=emoji.url)
             embed.add_field(name='Name', value=emoji.name)
             embed.add_field(name='Guild', value=emoji.guild.name)
+            embed.add_field(name='ID', value=str(emoji.id))
             embed.add_field(name='Managed', value=lowerbool(emoji.managed))
             embed.timestamp = emoji.created_at
         elif isinstance(emoji, str):
@@ -351,7 +352,7 @@ class Info:
 
         logger.info("Finding message IDs for dump: %s", ids)
 
-        if not check_mod_perm(ctx) and len(ids) > 3:
+        if not mod_perm(ctx) and len(ids) > 3:
             ids = islice(ids, 0, 3)
             await ctx.send(content='Too many messages requested, stopping at 3...')
 
@@ -412,7 +413,7 @@ class Info:
 
         logger.info("Finding message IDs for raws: %s", ids)
 
-        if not check_mod_perm(ctx) and len(ids) > 5:
+        if not mod_perm(ctx) and len(ids) > 5:
             ids = islice(ids, 0, 5)
             await ctx.send(content='Too many messages requested, stopping at 5...')
 

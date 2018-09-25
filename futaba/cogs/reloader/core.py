@@ -55,13 +55,13 @@ class Reloader:
     @commands.command(name='load', aliases=['l'])
     @permissions.check_owner()
     async def load(self, ctx, cogname: str):
-        ''' Loads the given cog '''
+        ''' Loads the named cog. '''
 
         logger.info("Cog load requested: %s", cogname)
 
         if cogname in Reloader.MANDATORY_COGS:
             logger.info("Cog cannot be loaded because it is mandatory")
-            embed = discord.Embed(colour=discord.Colour.red())
+            embed = discord.Embed(colour=discord.Colour.dark_red())
             embed.set_author(name='Cannot load')
             embed.description = 'Cog cannot be loaded because it is mandatory'
             await asyncio.gather(
@@ -74,7 +74,7 @@ class Reloader:
             self.load_cog(cogname)
         except Exception as error:
             logger.error("Loading cog %s failed", cogname, exc_info=error)
-            embed = discord.Embed(colour=discord.Colour.red(), description=f'```{error}```')
+            embed = discord.Embed(colour=discord.Colour.dark_red(), description=f'```\n{error}\n```')
             embed.set_author(name='Load failed')
             await asyncio.gather(
                 ctx.send(embed=embed),
@@ -82,7 +82,7 @@ class Reloader:
             )
         else:
             logger.info("Loaded cog: %s", cogname)
-            embed = discord.Embed(colour=discord.Colour.green(), description=f'```{cogname}```')
+            embed = discord.Embed(colour=discord.Colour.green(), description=f'```\n{cogname}\n```')
             embed.set_author(name='Loaded')
             await asyncio.gather(
                 ctx.send(embed=embed),
@@ -92,13 +92,13 @@ class Reloader:
     @commands.command(name='unload', aliases=['ul'])
     @permissions.check_owner()
     async def unload(self, ctx, cogname: str):
-        ''' Unloads the cog given '''
+        ''' Unloads the named cog. '''
 
         logger.info("Cog unload requested: %s", cogname)
 
         if cogname in Reloader.MANDATORY_COGS:
             logger.info("Cog cannot be unloaded because it is mandatory")
-            embed = discord.Embed(colour=discord.Colour.red())
+            embed = discord.Embed(colour=discord.Colour.dark_red())
             embed.set_author(name='Cannot unload')
             embed.description = 'Cog cannot be unloaded because it is mandatory'
             await asyncio.gather(
@@ -111,7 +111,7 @@ class Reloader:
             self.unload_cog(cogname)
         except Exception as error:
             logger.error("Unloading cog %s failed", cogname, exc_info=error)
-            embed = discord.Embed(colour=discord.Colour.red(), description=f'```{error}```')
+            embed = discord.Embed(colour=discord.Colour.dark_red(), description=f'```\n{error}\n```')
             embed.set_author(name='Unload failed')
             await asyncio.gather(
                 ctx.send(embed=embed),
@@ -119,7 +119,7 @@ class Reloader:
             )
         else:
             logger.info("Unloaded cog: %s", cogname)
-            embed = discord.Embed(colour=discord.Colour.green(), description=f'```{cogname}```')
+            embed = discord.Embed(colour=discord.Colour.green(), description=f'```\n{cogname}\n```')
             embed.set_author(name='Unloaded')
             await asyncio.gather(
                 ctx.send(embed=embed),
@@ -129,13 +129,13 @@ class Reloader:
     @commands.command(name='reload', aliases=['rl'])
     @permissions.check_owner()
     async def reload(self, ctx, cogname: str):
-        ''' Reloads the cog given '''
+        ''' Reloads the named cog. '''
 
         logger.info("Cog reload requested: %s", cogname)
 
         if cogname in Reloader.MANDATORY_COGS:
             logger.info("Cog cannot be reloaded because it is mandatory")
-            embed = discord.Embed(colour=discord.Colour.red())
+            embed = discord.Embed(colour=discord.Colour.dark_red())
             embed.set_author(name='Cannot reload')
             embed.description = 'Cog cannot be reloaded because it is mandatory'
             await asyncio.gather(
@@ -149,7 +149,7 @@ class Reloader:
             self.load_cog(cogname)
         except Exception as error:
             logger.error("Reloading cog %s failed", cogname, exc_info=error)
-            embed = discord.Embed(colour=discord.Colour.red(), description=f'```{error}```')
+            embed = discord.Embed(colour=discord.Colour.dark_red(), description=f'```\n{error}\n```')
             embed.set_author(name='Reload failed')
             await asyncio.gather(
                 ctx.send(embed=embed),
@@ -157,18 +157,16 @@ class Reloader:
             )
         else:
             logger.info("Reloaded cog: %s", cogname)
-            embed = discord.Embed(colour=discord.Colour.green(), description=f'```{cogname}```')
+            embed = discord.Embed(colour=discord.Colour.green(), description=f'```\n{cogname}\n```')
             embed.set_author(name='Reloaded')
             await asyncio.gather(
-                self.bot._send(embed=embed),
+                ctx.send(embed=embed),
                 Reactions.SUCCESS.add(ctx.message),
             )
 
     @commands.command(name='listcogs', aliases=['cogs'])
     async def listcogs(self, ctx):
-        '''
-        List the cogs that are currently loaded
-        '''
+        ''' Lists all currently loaded cogs. '''
 
         content = StringBuilder('```yaml\nCogs loaded:\n')
         if self.bot.cogs:

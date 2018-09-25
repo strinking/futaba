@@ -16,13 +16,15 @@ Cog for journaling live API events such as username changes, users joining and l
 
 import asyncio
 import logging
-from collections import deque
+from collections import deque, namedtuple
+from datetime import datetime, timedelta
 
 import discord
+from discord import AuditLogAction
 from discord.ext import commands
 
 from futaba import permissions
-from futaba.enums import Reactions
+from futaba.enums import MemberLeaveType, Reactions
 from futaba.utils import user_discrim
 
 logger = logging.getLogger(__name__)
@@ -30,7 +32,19 @@ logger = logging.getLogger(__name__)
 __all__ = [
     'LISTENERS',
     'Tracker',
+    'MessageDeletionReason',
+    'MemberLeaveReason',
 ]
+
+MessageDeletionReason = namedtuple(
+    'MessageDeletionReason',
+    ('message', 'cause', 'count', 'reason', 'deleted_at', 'audit_log_entry'),
+)
+
+MemberLeaveReason = namedtuple(
+    'MemberLeaveReason',
+    ('type', 'member', 'cause', 'reason', 'left_at', 'audit_log_entry'),
+)
 
 LISTENERS = (
     'on_typing',
@@ -42,6 +56,8 @@ LISTENERS = (
     'on_reaction_clear',
     'on_guild_channel_create',
     'on_guild_channel_delete',
+    'on_member_join',
+    'on_member_remove',
 )
 
 class Tracker:
@@ -83,7 +99,8 @@ class Tracker:
                 user.name, user.id, channel.name, channel.id)
 
         content = f'{user.name}#{user.discriminator} ({user.id}) is typing in {channel.mention}'
-        self.journal.send('typing', channel.guild, content, icon='typing')
+        self.journal.send('typing', channel.guild, content,
+                icon='typing', channel=channel, user=user, when=when)
 
     async def on_message(self, message):
         if message in self.new_messages:
@@ -98,8 +115,9 @@ class Tracker:
                 message.author.name, message.author.id, message.channel.name, message.channel.id)
 
         content = f'{user_discrim(message.author)} sent a message in {message.channel.mention}'
-        self.journal.send('message/new', message.guild, content, icon='message')
-        self.journal.send('jump/message/new', message.guild, message.jump_url, icon='previous')
+        self.journal.send('message/new', message.guild, content, icon='message', message=message)
+        self.journal.send('jump/message/new', message.guild, message.jump_url,
+                icon='previous', message=message)
 
     async def on_message_edit(self, before, after):
         if after in self.edited_messages:
@@ -114,17 +132,51 @@ class Tracker:
                 after.id, after.author.name, after.author.id, after.channel.name, after.channel.id)
 
         content = f'{user_discrim(after.author)} edited message {after.id} in {after.channel.mention}'
-        self.journal.send('message/edit', after.guild, content, icon='edit')
-        self.journal.send('jump/message/edit', after.guild, after.jump_url, icon='previous')
+        self.journal.send('message/edit', after.guild, content, icon='edit',
+                before=before, after=after)
+        self.journal.send('jump/message/edit', after.guild, after.jump_url,
+                icon='previous', before=before, after=after)
+
+    async def get_deletion_reason(self, message, timestamp):
+        async for entry in message.guild.audit_logs(limit=20, action=AuditLogAction.message_delete):
+            if entry.after.id == message.id:
+                if abs(timestamp - entry.created_at) < timedelta(seconds=3):
+                    return MessageDeletionReason(
+                        message=message,
+                        cause=entry.user,
+                        count=entry.extra.count,
+                        reason=entry.reason,
+                        deleted_at=timestamp,
+                        audit_log_entry=entry,
+                    )
+
+        # Couldn't find anything, must be a self-delete.
+        return MessageDeletionReason(
+            message=message,
+            cause=message.author,
+            count=1,
+            reason=None,
+            deleted_at=timestamp,
+            audit_log_entry=None,
+        )
 
     async def on_message_delete(self, message):
         if message.guild is None:
             return
 
-        logger.debug("Message %d by %s (%d) was deleted", message.id, message.author.name, message.author.id)
+        logger.debug("Message %d by %s (%d) was deleted",
+                message.id, message.author.name, message.author.id)
+
+        # Wait for a bit so we can catch the audit log entry
+        timestamp = datetime.now()
+        await asyncio.sleep(1)
+        cause = await self.get_removal_cause(message, timestamp)
+
         content = f'Message {message.id} by {user_discrim(message.author)} was deleted'
-        self.journal.send('message/delete', message.guild, content, icon='delete')
-        self.journal.send('jump/message/delete', message.guild, message.jump_url, icon='previous')
+        self.journal.send('message/delete', message.guild, content, icon='delete',
+                message=message, cause=cause)
+        self.journal.send('jump/message/delete', message.guild, message.jump_url,
+                icon='previous', message=message, cause=cause)
 
     async def on_reaction_add(self, reaction, user):
         if (reaction, user) in self.reactions:
@@ -141,8 +193,10 @@ class Tracker:
 
         logger.debug("Reaction %s added to message %d by %s (%d)", emoji, message.id, user.name, user.id)
         content = f'{user_discrim(user)} added reaction {emoji} to message {message.id} in {channel.mention}'
-        self.journal.send('reaction/add', message.guild, content, icon='item_add')
-        self.journal.send('jump/reaction/add', message.guild, message.jump_url, icon='previous')
+        self.journal.send('reaction/add', message.guild, content,
+                icon='item_add', reaction=reaction, user=user)
+        self.journal.send('jump/reaction/add', message.guild, message.jump_url,
+                icon='previous', message=message)
 
     async def on_reaction_remove(self, reaction, user):
         message = reaction.message
@@ -154,8 +208,10 @@ class Tracker:
 
         logger.debug("Reaction %s removed to message %d by %s (%d)", emoji, message.id, user.name, user.id)
         content = f'{user_discrim(user)} removed reaction {emoji} from message {message.id} in {channel.mention}'
-        self.journal.send('reaction/remove', message.guild, content, icon='item_remove')
-        self.journal.send('jump/reaction/remove', message.guild, message.jump_url, icon='previous')
+        self.journal.send('reaction/remove', message.guild, content,
+                icon='item_remove', reaction=reaction, user=user)
+        self.journal.send('jump/reaction/remove', message.guild, message.jump_url,
+                icon='previous', message=message)
 
     async def on_reaction_clear(self, message, reactions):
         if message.guild is None:
@@ -163,15 +219,88 @@ class Tracker:
 
         logger.debug("All reactions from message %d were removed", message.id)
         content = f'All reactions on message {message.id} in {message.channel.mention} were removed'
-        self.journal.send('reaction/clear', message.guild, content, icon='item_clear')
-        self.journal.send('jump/reaction/clear', message.guild, message.jump_url, icon='previous')
+        self.journal.send('reaction/clear', message.guild, content, icon='item_clear',
+                message=message, reactions=reactions)
+        self.journal.send('jump/reaction/clear', message.guild, message.jump_url,
+                icon='previous', message=message)
 
     async def on_guild_channel_create(self, channel):
         logger.debug("Channel #%s (%d) was created", channel.name, channel.id)
         content = f'Guild channel {channel.mention} created'
-        self.journal.send('channel/new', channel.guild, content, icon='channel')
+        self.journal.send('channel/new', channel.guild, content, icon='channel', channel=channel)
 
     async def on_guild_channel_delete(self, channel):
         logger.debug("Channel #%s (%d) was deleted", channel.name, channel.id)
         content = f'Guild channel #{channel.name} ({channel.id}) deleted'
-        self.journal.send('channel/delete', channel.guild, content, icon='delete')
+        self.journal.send('channel/delete', channel.guild, content, icon='delete', channel=channel)
+
+    async def on_member_join(self, member):
+        logger.debug("Member %s (%d) joined '%s' (%d)",
+                member.name, member.id, member.guild.name, member.guild.id)
+
+        # For parity with on_member_remove(), so messages don't appear in incorrect order
+        await asyncio.sleep(2)
+
+        content = f'Member {member.mention} ({user_discrim(member)}) joined'
+        self.journal.send('member/join', member.guild, content, icon='join', member=member)
+
+    async def get_removal_cause(self, member, timestamp):
+        async for entry in member.guild.audit_logs(limit=20):
+            if abs(timestamp - entry.created_at) < timedelta(seconds=3):
+                if entry.action == AuditLogAction.kick:
+                    if entry.target == member:
+                        return MemberLeaveReason(
+                            type=MemberLeaveType.KICKED,
+                            member=member,
+                            cause=entry.user,
+                            reason=entry.reason,
+                            left_at=entry.created_at,
+                            audit_log_entry=entry,
+                        )
+                elif entry.action == AuditLogAction.ban:
+                    if entry.target == member:
+                        return MemberLeaveReason(
+                            type=MemberLeaveType.BANNED,
+                            member=member,
+                            cause=entry.user,
+                            reason=entry.reason,
+                            left_at=entry.created_at,
+                            audit_log_entry=entry,
+                        )
+                elif entry.action == AuditLogAction.member_prune:
+                    # Unfortunately the audit log entry doesn't
+                    # tell us enough to determine if this member was part of
+                    # the prune, so we'll just take a leap of faith and say
+                    # it was so.
+
+                    return MemberLeaveReason(
+                        type=MemberLeaveType.PRUNED,
+                        member=member,
+                        cause=entry.user,
+                        reason=entry.reason,
+                        left_at=entry.created_at,
+                        audit_log_entry=entry,
+                    )
+
+        # Couldn't find anything, must be a voluntary departure
+        return MemberLeaveReason(
+            type=MemberLeaveType.LEFT,
+            member=member,
+            cause=member,
+            reason=None,
+            left_at=timestamp,
+            audit_log_entry=None,
+        )
+
+    async def on_member_remove(self, member):
+        logger.debug("Member %s (%d) left '%s' (%d)",
+                member.name, member.id, member.guild.name, member.guild.id)
+
+        # Wait for a bit so we can catch the audit log entry
+        timestamp = datetime.now()
+        await asyncio.sleep(2)
+        cause = await self.get_removal_cause(member, timestamp)
+
+        content = f'Member {member.mention} ({user_discrim(member)}) left'
+        self.journal.send('member/leave', member.guild, content,
+                icon='leave', member=member, cause=cause)

@@ -164,7 +164,6 @@ async def delete_content_filter(bot, filters, message, hexsums):
                     logger.debug("Filter was not present, not deleting")
     except Exception as error:
         logger.error("Error deleting filter(s)", exc_info=error)
-        success = False
         await Reactions.FAIL.add(message)
     else:
         await Reactions.SUCCESS.add(message)

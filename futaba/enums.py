@@ -16,6 +16,7 @@ import discord
 
 __all__ = [
     'Reactions',
+    'MemberLeaveType',
     'FilterType',
     'LocationType',
 ]
@@ -29,6 +30,13 @@ class Reactions(Enum):
 
     async def add(self, message: discord.Message):
         await message.add_reaction(self.value)
+
+@unique
+class MemberLeaveType(Enum):
+    LEFT = 'member_left'
+    PRUNED = 'pruned'
+    KICKED = 'kicked'
+    BANNED = 'banned'
 
 @unique
 class FilterType(Enum):

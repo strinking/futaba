@@ -300,6 +300,11 @@ class FilterModel:
                 ]) \
                 .where(self.tb_filter_settings.c.guild_id == guild.id)
         result = self.sql.execute(sel)
+
+        if not result.rowcount:
+            self.add_settings(guild)
+            return self.settings_cache[guild]
+
         bot_immune, manage_messages_immune, reupload = result.fetchone()
 
         # Update cache

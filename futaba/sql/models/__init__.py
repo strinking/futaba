@@ -15,17 +15,8 @@ Module that contains models for interacting with SQL tables in a clean
 and abstracted way.
 '''
 
-import os
-import sys
-
 from .filter import FilterModel
 from .guilds import GuildsModel
 from .journal import JournalModel
 from .settings import SettingsModel
-
-__all__ = [
-    'FilterModel',
-    'GuildsModel',
-    'JournalModel',
-    'SettingsModel',
-]
+from .welcome import WelcomeModel

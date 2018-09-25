@@ -1,5 +1,5 @@
 #
-# journal/impl/__init__.py
+# cogs/welcome/__init__.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
@@ -10,10 +10,14 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-'''
-Module for implementations of Listeners or other subclasses.
-'''
+from .core import Welcome
 
-from .channel_output import ChannelOutputListener
-from .logging_output import LoggingOutputListener
-from .moderation import ModerationListener
+def setup(bot):
+    '''
+    Setup for bot to add cog
+    '''
+
+    cog = Welcome(bot)
+    bot.add_listener(cog.member_join, 'on_member_join')
+    bot.add_listener(cog.member_leave, 'on_member_remove')
+    bot.add_cog(cog)

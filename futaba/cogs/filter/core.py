@@ -24,6 +24,7 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.enums import FilterType, Reactions
+from futaba.exceptions import SendHelp
 from futaba.utils import async_partial, escape_backticks
 from .check import check_message, check_message_edit
 from .filter import Filter
@@ -91,33 +92,31 @@ class Filtering:
         '''
 
         if ctx.invoked_subcommand is None:
-            # TODO send help
-            await Reactions.FAIL.add(ctx.message)
+            raise SendHelp(ctx.command)
 
-    @commands.group(name='cfilter', aliases=['content', 'filefilter', 'ffilter'])
+    @commands.group(name='ffilter', aliases=['filefilter', 'content', 'cfilter'])
     @commands.guild_only()
-    async def cfilter(self, ctx):
+    async def ffilter(self, ctx):
         '''
         Adds, removes, or lists SHA1 hashes in the content filter.
         '''
 
         if ctx.invoked_subcommand is None:
-            # TODO send help
-            await Reactions.FAIL.add(ctx.message)
+            raise SendHelp(ctx.command)
 
-    @cfilter.command(name='show', aliases=['display', 'list'])
+    @ffilter.command(name='show', aliases=['display', 'list'])
     @commands.guild_only()
-    async def cfilter_show(self, ctx):
+    async def ffilter_show(self, ctx):
         '''
         List all currently filtered SHA1 file hashes in the guild's filter.
         '''
 
         await show_content_filter(self.content_filters[ctx.guild], ctx.message)
 
-    @cfilter.command(name='flag', aliases=['warn', 'alert', 'notice'])
+    @ffilter.command(name='flag', aliases=['warn', 'alert', 'notice'])
     @commands.guild_only()
     @permissions.check_mod()
-    async def cfilter_flag(self, ctx, hashsum: str, description: str):
+    async def ffilter_flag(self, ctx, hashsum: str, description: str):
         '''
         Adds the given SHA1 hashes to the guild's flagging filter, which notifies staff when posted.
         It does not notify the user or delete the message.
@@ -126,6 +125,8 @@ class Filtering:
         '''
 
         await check_hashsums((hashsum,), ctx.message)
+        content = f'Added content flag filter for `{hashsum}`'
+        self.journal.send('content/new/flag', ctx.guild, content, icon='filter')
         await add_content_filter(
             self.bot,
             self.content_filters,
@@ -135,10 +136,10 @@ class Filtering:
             description,
         )
 
-    @cfilter.command(name='block', aliases=['deny', 'autoremove'])
+    @ffilter.command(name='block', aliases=['deny', 'autoremove'])
     @commands.guild_only()
     @permissions.check_mod()
-    async def cfilter_block(self, ctx, hashsum: str, description: str):
+    async def ffilter_block(self, ctx, hashsum: str, description: str):
         '''
         Adds the given SHA1 hashes to the guild's blocking filter, automatically deleting any messages.
         It does not notify the user or delete the message.
@@ -147,6 +148,8 @@ class Filtering:
         '''
 
         await check_hashsums((hashsum,), ctx.message)
+        content = f'Added content block filter for `{hashsum}`'
+        self.journal.send('content/new/block', ctx.guild, content, icon='filter')
         await add_content_filter(
             self.bot,
             self.content_filters,
@@ -156,10 +159,10 @@ class Filtering:
             description,
         )
 
-    @cfilter.command(name='jail', aliases=['dunce', 'punish', 'mute'])
+    @ffilter.command(name='jail', aliases=['dunce', 'punish', 'mute'])
     @commands.guild_only()
     @permissions.check_mod()
-    async def cfilter_jail(self, ctx, hashsum: str, description: str):
+    async def ffilter_jail(self, ctx, hashsum: str, description: str):
         '''
         Adds the given SHA1 hashes to the guild's jailing filter, which will automatically jail users.
         Like the blocking filter, it will also delete the message and send the user a warning.
@@ -168,6 +171,8 @@ class Filtering:
         '''
 
         await check_hashsums((hashsum,), ctx.message)
+        content = f'Added content jail filter for `{hashsum}`'
+        self.journal.send('content/new/jail', ctx.guild, content, icon='filter')
         await add_content_filter(
             self.bot,
             self.content_filters,
@@ -177,16 +182,19 @@ class Filtering:
             description,
         )
 
-    @cfilter.command(name='remove', aliases=['rm', 'delete', 'del'])
+    @ffilter.command(name='remove', aliases=['rm', 'delete', 'del'])
     @commands.guild_only()
     @permissions.check_mod()
-    async def cfilter_remove(self, ctx, *hashsums: str):
+    async def ffilter_remove(self, ctx, *hashsums: str):
         '''
         Removes the given SHA1 hashes from the guild filter.
         You don't need to specify which filter level they were for.
         '''
 
         await check_hashsums(hashsums, ctx.message)
+        str_hashsums = ' '.join(f'`{hashsum}`' for hashsum in hashsums)
+        content = f'Removed content jail filter for {str_hashsums}'
+        self.journal.send('content/remove', ctx.guild, content, icon='filter', hashsums=hashsums)
         await delete_content_filter(self.bot, self.content_filters, ctx.message, hashsums)
 
     @filter.group(name='immune', aliases=['imm', 'ignore', 'ign'])
@@ -197,8 +205,7 @@ class Filtering:
         '''
 
         if ctx.subcommand_passed in ('immune', 'imm', 'ignore', 'ign'):
-            # TODO send help
-            await Reactions.FAIL.add(ctx.message)
+            raise SendHelp(ctx.command)
 
     @filter_immunity.command(name='add', aliases=['append', 'extend', 'new'])
     @commands.guild_only()
@@ -283,8 +290,7 @@ class Filtering:
         '''
 
         if ctx.subcommand_passed in ('server', 'srv', 's', 'guild', 'g'):
-            # TODO send help
-            await Reactions.FAIL.add(ctx.message)
+            raise SendHelp(ctx.command)
 
     @filter_guild.command(name='show', aliases=['display', 'list'])
     @commands.guild_only()
@@ -364,17 +370,16 @@ class Filtering:
         '''
 
         if ctx.subcommand_passed in ('chan', 'ch', 'c'):
-            # TODO send help
-            await Reactions.FAIL.add(ctx.message)
+            raise SendHelp(ctx.command)
 
     @filter_channel.command(name='show', aliases=['display', 'list'])
     @commands.guild_only()
-    async def filter_channel_show(self, ctx):
+    async def filter_channel_show(self, ctx, channel: discord.TextChannel):
         '''
         List all currently filtered words in the channel filter.
         '''
 
-        await show_filter(self.filters[ctx.guild], ctx.message, ctx.author, ctx.guild.name)
+        await show_filter(self.filters[channel], ctx.message, ctx.author, channel.mention)
 
     @filter_channel.command(name='flag', aliases=['warn', 'alert', 'notice'])
     @commands.guild_only()

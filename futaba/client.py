@@ -26,6 +26,7 @@ from .cogs.journal import Journal
 from .cogs.reloader import Reloader
 from .config import Configuration
 from .enums import Reactions
+from .exceptions import CommandFailed, InvalidCommandContext, SendHelp
 from .journal import Broadcaster, LoggingOutputListener
 from .sql import SqlHandler
 from .utils import plural
@@ -120,7 +121,7 @@ class Bot(commands.AutoShardedBot):
             except Exception as error:
                 # Something made the loading fail
                 # So log it with reason and tell user to check it
-                logger.debug("Load failed: %s", file, exc_info=error)
+                logger.error("Load failed: %s", file, exc_info=error)
                 continue
             else:
                 logger.info("Loaded cog: %s", file)
@@ -173,7 +174,7 @@ class Bot(commands.AutoShardedBot):
 
     async def on_command_error(self, ctx, error):
         '''
-        Deals with errors when a command is invoked.
+        Handles errors when a command is invoked but raises an exception.
         '''
 
         # Complains about "context" vs "ctx".
@@ -189,6 +190,23 @@ class Bot(commands.AutoShardedBot):
             # Tell the user they don't have the permission to tun the command
             await Reactions.DENY.add(ctx.message)
 
+        elif isinstance(error, CommandFailed):
+            # The command failed, report the error message (if any) and send the FAIL reaction
+            if error.kwargs:
+                await ctx.send(**error.kwargs)
+
+            await Reactions.FAIL.add(ctx.message)
+
+        elif isinstance(error, InvalidCommandContext):
+            # Explicitly ignore, this command was not even meant to be invoked in the first place
+            # This is sent when we explicitly DO NOT want to add a SUCCESS reaction
+            pass
+
+        elif isinstance(error, SendHelp):
+            # TODO send help message for error.command
+            pass
+
+    # Remove this?
     async def _send(self, *args, **kwargs):
         if self.debug_chan is not None:
             await self.debug_chan.send(*args, **kwargs)

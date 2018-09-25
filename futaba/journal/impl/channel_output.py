@@ -49,5 +49,5 @@ class ChannelOutputListener(Listener):
         Send the message to the given channel, applying the icon if applicable.
         '''
 
-        logger.info("Received journal event on %s: '%s'", path, content)
+        logger.debug("Received journal event on %s: '%s'", path, content)
         await self.channel.send(content=content)
