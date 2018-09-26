@@ -270,7 +270,7 @@ async def found_text_violation(triggered):
         embed.timestamp = discord.utils.snowflake_time(message.id)
         embed.set_author(name=message.author.display_name, icon_url=message.author.avatar_url)
         to_send = f"The content of the deleted message {embed_caveat} is:"
-        await message.author.send(content=content, embed=embed)
+        await message.author.send(content=to_send, embed=embed)
 
         response.writeln('or, quoted:')
         response.writeln('```')
