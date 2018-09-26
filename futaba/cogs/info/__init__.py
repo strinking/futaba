@@ -10,6 +10,7 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+from .alias import Alias
 from .core import Info
 
 def setup(bot):
@@ -18,4 +19,8 @@ def setup(bot):
     '''
 
     cog = Info(bot)
+    bot.add_cog(cog)
+
+    cog = Alias(bot)
+    bot.add_listener(cog.member_update, 'on_member_update')
     bot.add_cog(cog)

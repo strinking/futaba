@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 __all__ = [
     'MAXIMUM_FILE_SIZE',
     'download_links',
+    'download_link',
 ]
 
 # Maximum size to download from foreign sites
@@ -35,10 +36,14 @@ TIMEOUT = aiohttp.ClientTimeout(total=45, sock_read=5)
 
 async def download_links(urls):
     async with aiohttp.ClientSession(timeout=TIMEOUT, trust_env=True) as session:
-        buffers = await asyncio.gather(*[download_link(session, url) for url in urls])
+        buffers = await asyncio.gather(*[download(session, url) for url in urls])
     return buffers
 
-async def download_link(session, url):
+async def download_link(url):
+    async with aiohttp.ClientSession(timeout=TIMEOUT, trust_env=True) as session:
+        return await download(session, url)
+
+async def download(session, url):
     binio = BytesIO()
     try:
         async with session.get(url) as response:
