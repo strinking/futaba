@@ -47,12 +47,12 @@ class Bot(commands.AutoShardedBot):
         self.journal_cog = None
         self.sql = SqlHandler(config.database_url)
 
-        super().__init__(command_prefix=self.command_prefix,
+        super().__init__(command_prefix=self.my_command_prefix,
                          description='futaba - A discord mod bot',
                          pm_help=True)
 
     @staticmethod
-    def command_prefix(bot, message):
+    def my_command_prefix(bot, message):
         prefix = bot.prefix(message)
         return commands.when_mentioned_or(prefix)(bot, message)
 
