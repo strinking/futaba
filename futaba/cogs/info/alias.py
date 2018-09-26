@@ -140,10 +140,10 @@ class Alias:
             )
             return
 
-        content = StringBuilder(f'**Alias information for {user_discrim(user)}:**')
+        content = StringBuilder(f'**Alias information for {user_discrim(user)}:**\n')
 
         if avatars:
-            content.writeln('__Past avatars:__')
+            content.writeln('Past avatars:')
             files = []
 
             for i, (avatar_bin, avatar_ext, timestamp) in enumerate(avatars, 1):
@@ -157,18 +157,18 @@ class Alias:
 
         content.clear()
         if usernames:
-            content.writeln('__Past usernames:__')
+            content.writeln('Past usernames:')
             for username, timestamp in usernames:
-                content.writeln(f'"{username}" set {fancy_timedelta(timestamp)} ago')
+                content.writeln(f'- `{username}` set {fancy_timedelta(timestamp)} ago')
         else:
             content.writeln('No past usernames found')
         await ctx.send(content=str(content))
 
         content.clear()
         if nicknames:
-            content.writeln(f'__Past nicknames:__')
+            content.writeln(f'Past nicknames:')
             for nickname, timestamp in nicknames:
-                content.writeln(f'"{nickname}" set {fancy_timedelta(timestamp)} ago')
+                content.writeln(f'- `{nickname}` set {fancy_timedelta(timestamp)} ago')
         else:
             content.writeln('No past nicknames found')
         await ctx.send(content=str(content))
