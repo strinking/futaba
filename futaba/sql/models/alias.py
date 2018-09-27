@@ -22,7 +22,8 @@ import logging
 
 from sqlalchemy import and_, or_
 from sqlalchemy import BigInteger, Column, DateTime, LargeBinary, String, Table, Unicode
-from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy import CheckConstraint, ForeignKey, UniqueConstraint
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import select
 
 Column = functools.partial(Column, nullable=False)
@@ -56,9 +57,13 @@ class AliasHistoryModel:
                 Column('user_id', BigInteger, primary_key=True),
                 Column('timestamp', DateTime, primary_key=True),
                 Column('nickname', Unicode))
-        #TODO
-        #self.tb_alias_possible_alts = Table('alias_possible_alts', meta,
-        #        Column('user_id', BigInteger, primary_key=True),
+        self.tb_alias_possible_alts = Table('alias_possible_alts', meta,
+                Column('guild_id', BigInteger, ForeignKey('guilds.guild_id')),
+                Column('lower_user_id', BigInteger),
+                Column('higher_user_id', BigInteger),
+                CheckConstraint('lower_user_id < high_user_id', name='alias_possible_alts_check'),
+                UniqueConstraint('guild_id', 'lower_user_id', 'higher_user_id',
+                    name='alias_possible_alts_uq'))
 
     def add_avatar(self, user, timestamp, avatar, ext):
         logger.info("Adding user avatar update for '%s' (%d)", user.name, user.id)
@@ -82,6 +87,21 @@ class AliasHistoryModel:
                 .insert() \
                 .values(user_id=user.id, timestamp=timestamp, nickname=nickname)
         self.sql.execute(ins)
+
+    def add_alias(self, guild, first_user, second_user):
+        logger.info("Adding alias relationship: '%s' (%d) <--> '%s' (%d)",
+                first_user.name, first_user.id, second_user.name, second_user.id)
+        if first_user.id > second_user.id:
+            first_user, second_user = second_user, first_user
+
+        ins = self.tb_alias_possible_alts \
+                .insert() \
+                .values(guild_id=guild.id, lower_user_id=first_user.id, higher_user_id=second_user.id)
+
+        try:
+            self.sql.execute(ins)
+        except IntegrityError:
+            pass
 
     def get_aliases(self, user, avatar_limit=4, username_limit=8, nickname_limit=12):
         logger.info("Getting aliases of user '%s' (%d)", user.name, user.id)

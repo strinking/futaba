@@ -26,7 +26,7 @@ from futaba.download import download_link
 from futaba.enums import Reactions
 from futaba.parse import get_user_id
 from futaba.str_builder import StringBuilder
-from futaba.utils import fancy_timedelta, user_discrim
+from futaba.utils import fancy_timedelta
 
 logger = logging.getLogger(__package__)
 
@@ -109,67 +109,89 @@ class Alias:
 
         logger.info("Getting and printing alias information for some user '%s'", name)
 
-        id = get_user_id(name, self.bot.users)
-        if id is None:
-            logger.debug("No user ID found!")
-            await Reactions.FAIL.add(ctx.message)
-            return
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
+        embed.set_author(name='Member alias information')
 
-        logger.debug("Fetched user ID is %d", id)
-
-        user = None
-        if ctx.guild is not None:
-            user = ctx.guild.get_member(id)
-
+        user = await self.bot.find_user(name, ctx.guild)
         if user is None:
-            user = self.bot.get_user(id)
-            if user is None:
-                user = await self.bot.get_user_info(id)
-                if user is None:
-                    logger.debug("No user with that ID found!")
-                    await Reactions.FAIL.add(ctx.message)
-                    return
+            embed.colour = discord.Colour.dark_red()
+            embed.description = f'No user information found for `{name}`'
+
+            await asyncio.gather(
+                ctx.send(embed=embed),
+                Reactions.FAIL.add(ctx.message),
+            )
+            return
 
         logger.debug("Found user! %r. Now fetching alias information...", user)
         avatars, usernames, nicknames = self.bot.sql.alias.get_aliases(user)
 
         if not any((avatars, usernames, nicknames)):
+            embed.colour = discord.Colour.dark_purple()
+            embed.description = f'No information found for {user.mention}'
+
             await asyncio.gather(
-                ctx.send(content=f'No alias information found for {user_discrim(user)}'),
+                ctx.send(embed=embed),
                 Reactions.SUCCESS.add(ctx.message),
             )
             return
 
-        content = StringBuilder(f'**Alias information for {user_discrim(user)}:**\n')
+        embed.description = f'**Alias information for {user.mention}:**\n'
+        content = StringBuilder()
+        files = []
 
         if avatars:
-            content.writeln('Past avatars:')
-            files = []
-
             for i, (avatar_bin, avatar_ext, timestamp) in enumerate(avatars, 1):
                 time_since = fancy_timedelta(timestamp)
                 content.writeln(f'#{i} set {time_since} ago')
                 files.append(discord.File(avatar_bin, filename=f'avatar {time_since}.{avatar_ext}'))
-            await ctx.send(content=str(content), files=files)
-        else:
-            content.writeln('No avatars found')
-            await ctx.send(content=str(content))
+            embed.add_field(name='Past avatars', value=str(content))
+            content.clear()
 
-        content.clear()
         if usernames:
-            content.writeln('Past usernames:')
             for username, timestamp in usernames:
                 content.writeln(f'- `{username}` set {fancy_timedelta(timestamp)} ago')
-        else:
-            content.writeln('No past usernames found')
-        await ctx.send(content=str(content))
+            embed.add_field(name='Past usernames', value=str(content))
+            content.clear()
 
-        content.clear()
         if nicknames:
-            content.writeln(f'Past nicknames:')
             for nickname, timestamp in nicknames:
                 content.writeln(f'- `{nickname}` set {fancy_timedelta(timestamp)} ago')
-        else:
-            content.writeln('No past nicknames found')
-        await ctx.send(content=str(content))
+            embed.add_field(name='Past nicknames', value=str(content))
+            content.clear()
+
+        await asyncio.gather(
+            ctx.send(embed=embed, files=files),
+            Reactions.SUCCESS.add(ctx.message),
+        )
+
+    @commands.command(name='altadd')
+    @commands.guild_only()
+    async def add_alt(self, ctx, first_name: str, second_name: str):
+        ''' Add a suspected alternate account for a user. '''
+
+        logger.info("Adding suspected alternate account pair for '%s' and '%s'", first_name, second_name)
+        first_user, second_user = await asyncio.gather(
+            self.bot.find_user(first_name, ctx.guild),
+            self.bot.find_user(second_name, ctx.guild),
+        )
+
+        embed = discord.Embed(colour=discord.Colour.dark_red())
+        content = StringBuilder()
+
+        if first_user is None:
+            content.writeln(f'No user information found for `{first_name}`')
+        if second_user is None:
+            content.writeln(f'No user information found for `{second_name}`')
+        if content:
+            embed.description = str(content)
+            await asyncio.gather(
+                ctx.send(embed=embed),
+                Reactions.FAIL.add(ctx.message),
+            )
+            return
+
+        with self.bot.sql.transaction():
+            self.bot.sql.add_alias(ctx.guild, first_user, second_user)
+
         await Reactions.SUCCESS.add(ctx.message)
