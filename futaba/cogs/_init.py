@@ -10,8 +10,6 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-# pylint: skip-file
-
 from .core import NameOfCog
 
 def setup(bot):

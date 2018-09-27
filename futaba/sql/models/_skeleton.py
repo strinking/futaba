@@ -10,9 +10,6 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-# pylint: disable-all
-# XXX _REMOVE_ME_ ^
-
 '''
 _DESCRIPTION_HERE_
 '''
