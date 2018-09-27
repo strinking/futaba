@@ -14,3 +14,10 @@ All contain the attribute `cogname`. Failures include `reason`, and if it was an
 * `/welcome/message/welcome` - The welcome message was set or unset. Attributes: `message: Optional[str]`
 * `/welcome/message/goodbye` - The goodbye message was set or unset. Attributes: `message: Optional[str]`
 * `/welcome/message/agree` - The agreement message was set or unset. Attributes: `message: Optional[str]`
+
+### Settings cog
+* `/settings/prefix` - The bot command prefix was set or unset. Attributes: `prefix: Optional[str]`, `default_prefix: str`
+* `/settings/roles/member` - The member role was set or unset. Attributes: `role: Optional[discord.Role]`
+* `/settings/roles/guest` - The guest role was set or unset. Attributes: `role: Optional[discord.Role]`
+* `/settings/roles/mute` - The mute role was set or unset. Attributes: `role: Optional[discord.Role]`
+* `/settings/roles/jail` - The jail role was set or unset. Attributes: `role: Optional[discord.Role]`

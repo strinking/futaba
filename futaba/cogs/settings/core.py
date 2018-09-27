@@ -38,10 +38,12 @@ __all__ = [
 class Settings:
     __slots__ = (
         'bot',
+        'journal',
     )
 
     def __init__(self, bot):
         self.bot = bot
+        self.journal = bot.get_broadcaster('/settings')
 
         for guild in bot.guilds:
             bot.sql.settings.get_special_roles(guild)
@@ -78,6 +80,8 @@ class Settings:
 
             embed = discord.Embed(colour=discord.Colour.dark_teal())
             embed.description = f'Unset prefix for {ctx.guild.name}. (Default prefix: `{bot_prefix}`)'
+            self.journal.send('prefix', ctx.guild, 'Unset bot command prefix', icon='settings',
+                    prefix=None, default_prefix=self.bot.config.default_prefix)
             reaction = Reactions.SUCCESS
 
         # Lacking authority to set prefix
@@ -94,6 +98,8 @@ class Settings:
 
             embed = discord.Embed(colour=discord.Colour.dark_teal())
             embed.description = f'Set prefix for {ctx.guild.name} to `{bot_prefix}`'
+            self.journal.send('prefix', ctx.guild, 'Unset bot command prefix', icon='settings',
+                    prefix=bot_prefix, default_prefix=self.bot.config.default_prefix)
             reaction = Reactions.SUCCESS
 
         await asyncio.gather(
@@ -177,13 +183,16 @@ class Settings:
         embed = discord.Embed(colour=discord.Colour.green())
         if role:
             embed.description = f'Set member role to {role.mention}'
+            content = f'Set member role to {role.mention}'
         else:
             embed.description = 'Unset member role'
+            content = 'Unset the member role'
 
         await asyncio.gather(
             ctx.send(embed=embed),
             Reactions.SUCCESS.add(ctx.message),
         )
+        self.journal.send('roles/member', ctx.guild, content, icon='settings', role=role)
 
     @commands.command(name='setguest')
     @commands.guild_only()
@@ -207,13 +216,16 @@ class Settings:
         embed = discord.Embed(colour=discord.Colour.green())
         if role:
             embed.description = f'Set guest role to {role.mention}'
+            content = f'Set the guest role to {role.mention}'
         else:
             embed.description = 'Unset guest role'
+            content = 'Unset the guest role'
 
         await asyncio.gather(
             ctx.send(embed=embed),
             Reactions.SUCCESS.add(ctx.message),
         )
+        self.journal.send('roles/guest', ctx.guild, content, icon='settings', role=role)
 
     @commands.command(name='setmute')
     @commands.guild_only()
@@ -237,13 +249,16 @@ class Settings:
         embed = discord.Embed(colour=discord.Colour.green())
         if role:
             embed.description = f'Set mute role to {role.mention}'
+            content = f'Set the mute role to {role.mention}'
         else:
             embed.description = 'Unset mute role'
+            content = 'Unset the mute role'
 
         await asyncio.gather(
             ctx.send(embed=embed),
             Reactions.SUCCESS.add(ctx.message),
         )
+        self.journal.send('roles/mute', ctx.guild, content, icon='settings', role=role)
 
     @commands.command(name='setjail')
     @commands.guild_only()
@@ -267,10 +282,13 @@ class Settings:
         embed = discord.Embed(colour=discord.Colour.green())
         if role:
             embed.description = f'Set jail role to {role.mention}'
+            content = f'Set the jail role to {role.mention}'
         else:
             embed.description = 'Unset jail role'
+            content = 'Unset the jail role'
 
         await asyncio.gather(
             ctx.send(embed=embed),
             Reactions.SUCCESS.add(ctx.message),
         )
+        self.journal.send('roles/jail', ctx.guild, content, icon='settings', role=role)
