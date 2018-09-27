@@ -19,6 +19,7 @@ A model for storing alias information reported by the 'Alias' cog.
 
 import functools
 import logging
+from collections import deque
 
 from sqlalchemy import and_, or_
 from sqlalchemy import BigInteger, Column, DateTime, LargeBinary, String, Table, Unicode
@@ -61,7 +62,7 @@ class AliasHistoryModel:
                 Column('guild_id', BigInteger, ForeignKey('guilds.guild_id')),
                 Column('lower_user_id', BigInteger),
                 Column('higher_user_id', BigInteger),
-                CheckConstraint('lower_user_id < high_user_id', name='alias_possible_alts_check'),
+                CheckConstraint('lower_user_id < higher_user_id', name='alias_possible_alts_check'),
                 UniqueConstraint('guild_id', 'lower_user_id', 'higher_user_id',
                     name='alias_possible_alts_uq'))
 
@@ -88,9 +89,10 @@ class AliasHistoryModel:
                 .values(user_id=user.id, timestamp=timestamp, nickname=nickname)
         self.sql.execute(ins)
 
-    def add_alias(self, guild, first_user, second_user):
-        logger.info("Adding alias relationship: '%s' (%d) <--> '%s' (%d)",
+    def add_possible_alt(self, guild, first_user, second_user):
+        logger.info("Adding possible alt relationship: '%s' (%d) <--> '%s' (%d)",
                 first_user.name, first_user.id, second_user.name, second_user.id)
+
         if first_user.id > second_user.id:
             first_user, second_user = second_user, first_user
 
@@ -100,10 +102,24 @@ class AliasHistoryModel:
 
         try:
             self.sql.execute(ins)
-        except IntegrityError:
-            pass
+        except IntegrityError as error:
+            logger.debug("Got integrity error, possibly double insert", exc_info=error)
 
-    def get_aliases(self, user, avatar_limit=4, username_limit=8, nickname_limit=12):
+    def all_delete_possible_alts(self, guild, user):
+        logger.info("Removing all possible alt relationships for '%s' (%d)", user.name, user.id)
+        alt_user_ids = self.get_alt_user_ids(guild, [user.id])
+        delet = self.tb_alias_possible_alts \
+                    .delete() \
+                    .where(and_(
+                        self.tb_alias_possible_alts.c.guild_id == guild.id,
+                        or_(
+                            self.tb_alias_possible_alts.c.lower_user_id.in_(alt_user_ids),
+                            self.tb_alias_possible_alts.c.higher_user_id.in_(alt_user_ids),
+                        ),
+                    ))
+        self.sql.execute(delet)
+
+    def get_aliases(self, guild, user, avatar_limit=4, username_limit=8, nickname_limit=12):
         logger.info("Getting aliases of user '%s' (%d)", user.name, user.id)
         sel = select([
                     self.tb_alias_avatars.c.avatar,
@@ -113,18 +129,52 @@ class AliasHistoryModel:
                 .where(self.tb_alias_avatars.c.user_id == user.id) \
                 .order_by(self.tb_alias_avatars.c.timestamp) \
                 .limit(avatar_limit)
-        avatars = list(self.sql.execute(sel))
+        result = self.sql.execute(sel)
+        avatars = list(result)
 
         sel = select([self.tb_alias_usernames.c.username, self.tb_alias_usernames.c.timestamp]) \
                 .where(self.tb_alias_usernames.c.user_id == user.id) \
                 .order_by(self.tb_alias_usernames.c.timestamp) \
                 .limit(username_limit)
-        usernames = list(self.sql.execute(sel))
+        result = self.sql.execute(sel)
+        usernames = list(result)
 
         sel = select([self.tb_alias_nicknames.c.nickname, self.tb_alias_nicknames.c.timestamp]) \
                 .where(self.tb_alias_nicknames.c.user_id == user.id) \
                 .order_by(self.tb_alias_nicknames.c.timestamp) \
                 .limit(nickname_limit)
-        nicknames = list(self.sql.execute(sel))
+        result = self.sql.execute(sel)
+        nicknames = list(result)
 
-        return avatars, usernames, nicknames
+        alt_user_ids = self.get_alt_user_ids(guild, [user.id])
+        return avatars, usernames, nicknames, alt_user_ids
+
+    def get_alt_user_ids(self, guild, starting_user_ids):
+        logger.info("Iteratively fetching all chained user alt connections.")
+        assert starting_user_ids, "No starting user IDs"
+        to_check = deque(starting_user_ids)
+        alt_user_ids = set()
+        while to_check:
+            user_id = to_check.pop()
+            sel = select([
+                        self.tb_alias_possible_alts.c.lower_user_id,
+                        self.tb_alias_possible_alts.c.higher_user_id,
+                    ]) \
+                    .where(and_(
+                        self.tb_alias_possible_alts.c.guild_id == guild.id,
+                        or_(
+                            self.tb_alias_possible_alts.c.lower_user_id == user_id,
+                            self.tb_alias_possible_alts.c.higher_user_id == user_id,
+                        ),
+                    ))
+            result = self.sql.execute(sel)
+            for first_id, second_id in result:
+                if first_id != user_id:
+                    alt_user_id = first_id
+                else:
+                    alt_user_id = second_id
+
+                if alt_user_id not in alt_user_ids:
+                    to_check.append(alt_user_id)
+                    alt_user_ids.add(alt_user_id)
+        return alt_user_ids

@@ -22,8 +22,10 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 
+from futaba import permissions
 from futaba.download import download_link
 from futaba.enums import Reactions
+from futaba.exceptions import SendHelp
 from futaba.parse import get_user_id
 from futaba.str_builder import StringBuilder
 from futaba.utils import fancy_timedelta
@@ -34,7 +36,7 @@ __all__ = [
     'Alias',
 ]
 
-EXTENSION_REGEX = re.compile(r'\.([a-z]+)')
+EXTENSION_REGEX = re.compile(r'\.([a-z]+)\?.+$')
 
 class MemberChanges:
     __slots__ = (
@@ -93,7 +95,10 @@ class Alias:
 
         if changes.avatar_url is not None:
             avatar = await download_link(changes.avatar_url)
-            avatar_ext = EXTENSION_REGEX.match(changes.avatar_url)[1]
+            match = EXTENSION_REGEX.match(changes.avatar_url)
+            if match is None:
+                raise ValueError(f"Avatar URL does not match extension regex: {changes.avatar_url}")
+            avatar_ext = match[1]
 
         with self.bot.sql.transaction():
             if changes.avatar_url is not None:
@@ -124,9 +129,15 @@ class Alias:
             return
 
         logger.debug("Found user! %r. Now fetching alias information...", user)
-        avatars, usernames, nicknames = self.bot.sql.alias.get_aliases(user)
+        avatars, usernames, nicknames, alt_user_ids = self.bot.sql.alias.get_aliases(ctx.guild, user)
 
-        if not any((avatars, usernames, nicknames)):
+        # Remove self from chain
+        try:
+            alt_user_ids.remove(user.id)
+        except KeyError:
+            pass
+
+        if not any((avatars, usernames, nicknames, alt_user_ids)):
             embed.colour = discord.Colour.dark_purple()
             embed.description = f'No information found for {user.mention}'
 
@@ -136,7 +147,7 @@ class Alias:
             )
             return
 
-        embed.description = f'**Alias information for {user.mention}:**\n'
+        embed.description = f'{user.mention}\n'
         content = StringBuilder()
         files = []
 
@@ -160,17 +171,33 @@ class Alias:
             embed.add_field(name='Past nicknames', value=str(content))
             content.clear()
 
+        if alt_user_ids:
+            for alt_user_id in alt_user_ids:
+                content.writeln(f'<@!{alt_user_id}>')
+            embed.add_field(name='Possible alts', value=str(content))
+
         await asyncio.gather(
             ctx.send(embed=embed, files=files),
             Reactions.SUCCESS.add(ctx.message),
         )
 
-    @commands.command(name='altadd')
+    @commands.group(name='alts')
     @commands.guild_only()
+    async def alts(self, ctx):
+        ''' Manages the list of suspected alternate accounts. '''
+
+        if ctx.invoked_subcommand is None:
+            raise SendHelp(ctx.command)
+
+    @alts.command(name='add')
+    @commands.guild_only()
+    @permissions.check_mod()
     async def add_alt(self, ctx, first_name: str, second_name: str):
         ''' Add a suspected alternate account for a user. '''
 
-        logger.info("Adding suspected alternate account pair for '%s' and '%s'", first_name, second_name)
+        logger.info("Adding suspected alternate account pair for '%s' and '%s'",
+                first_name, second_name)
+
         first_user, second_user = await asyncio.gather(
             self.bot.find_user(first_name, ctx.guild),
             self.bot.find_user(second_name, ctx.guild),
@@ -192,6 +219,27 @@ class Alias:
             return
 
         with self.bot.sql.transaction():
-            self.bot.sql.add_alias(ctx.guild, first_user, second_user)
+            self.bot.sql.alias.add_possible_alt(ctx.guild, first_user, second_user)
+
+        await Reactions.SUCCESS.add(ctx.message)
+
+    @alts.command(name='delchain')
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def del_alt_chain(self, ctx, name: str):
+        ''' Removes all suspected alternate accounts for a user. '''
+
+        user = await self.bot.find_user(name, ctx.guild)
+        if user is None:
+            embed = discord.Embed(colour=discord.Colour.dark_red())
+            embed.description = f'No user information found for `{name}`'
+            await asyncio.gather(
+                ctx.send(embed=embed),
+                Reactions.FAIL.add(ctx.message),
+            )
+            return
+
+        with self.bot.sql.transaction():
+            self.bot.sql.alias.all_delete_possible_alts(ctx.guild, user)
 
         await Reactions.SUCCESS.add(ctx.message)
