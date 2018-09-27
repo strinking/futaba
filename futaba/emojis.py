@@ -29,6 +29,9 @@ ICONS = {
     'ok': '\N{SQUARED OK}',
     'announce': '\N{CHEERING MEGAPHONE}',
 
+    # Management
+    'cog': '\N{GEAR}',
+
     # Moderation
     'ban': '\N{HAMMER}',
     'unban': '\N{FACE WITH HEAD-BANDAGE}',
@@ -38,7 +41,6 @@ ICONS = {
     'mute': '\N{ZIPPER-MOUTH FACE}',
     'jail': '\N{POLICE OFFICER}',
     'shutdown': '\N{SKULL}',
-
 
     # Welcome / Roles
     'agree': '\N{THUMBS UP SIGN}',

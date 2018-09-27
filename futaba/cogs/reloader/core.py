@@ -35,12 +35,14 @@ __all__ = [
 class Reloader:
     __slots__ = (
         'bot',
+        'journal',
     )
 
     MANDATORY_COGS = ('journal', 'reloader')
 
     def __init__(self, bot):
         self.bot = bot
+        self.journal = bot.get_broadcaster('/cog')
 
     def load_cog(self, cogname):
         if not cogname.startswith(COGS_DIR):
@@ -68,6 +70,9 @@ class Reloader:
                 ctx.send(embed=embed),
                 Reactions.FAIL.add(ctx.message),
             )
+            content = f'Unable to load cog {cogname} because it is mandatory'
+            self.journal.send('load/fail', ctx.guild, content, icon='cog',
+                    cogname=cogname, reason='mandatory')
             return
 
         try:
@@ -80,6 +85,9 @@ class Reloader:
                 ctx.send(embed=embed),
                 Reactions.FAIL.add(ctx.message),
             )
+            content = f'Error while trying to load cog {cogname}'
+            self.journal.send('load/fail', ctx.guild, content, icon='cog',
+                    cogname=cogname, reason='error', error=error)
         else:
             logger.info("Loaded cog: %s", cogname)
             embed = discord.Embed(colour=discord.Colour.green(), description=f'```\n{cogname}\n```')
@@ -88,6 +96,8 @@ class Reloader:
                 ctx.send(embed=embed),
                 Reactions.SUCCESS.add(ctx.message),
             )
+            content = f'Successfully loaded cog {cogname}'
+            self.journal.send('load', ctx.guild, content, icon='cog', cogname=cogname)
 
     @commands.command(name='unload', aliases=['ul'])
     @permissions.check_owner()
@@ -105,6 +115,9 @@ class Reloader:
                 ctx.send(embed=embed),
                 Reactions.FAIL.add(ctx.message),
             )
+            content = f'Unable to unload cog {cogname} because it is mandatory'
+            self.journal.send('unload/fail', ctx.guild, content, icon='cog',
+                    cogname=cogname, reason='mandatory')
             return
 
         try:
@@ -117,6 +130,9 @@ class Reloader:
                 ctx.send(embed=embed),
                 Reactions.FAIL.add(ctx.message),
             )
+            content = f'Error while trying to unload cog {cogname}'
+            self.journal.send('unload/fail', ctx.guild, content, icon='cog',
+                    cogname=cogname, reason='error', error=error)
         else:
             logger.info("Unloaded cog: %s", cogname)
             embed = discord.Embed(colour=discord.Colour.green(), description=f'```\n{cogname}\n```')
@@ -125,6 +141,8 @@ class Reloader:
                 ctx.send(embed=embed),
                 Reactions.SUCCESS.add(ctx.message),
             )
+            content = f'Successfully unloaded cog {cogname}'
+            self.journal.send('unload', ctx.guild, content, icon='cog', cogname=cogname)
 
     @commands.command(name='reload', aliases=['rl'])
     @permissions.check_owner()
@@ -142,6 +160,9 @@ class Reloader:
                 ctx.send(embed=embed),
                 Reactions.FAIL.add(ctx.message),
             )
+            content = f'Unable to reload cog {cogname} because it is mandatory'
+            self.journal.send('reload/fail', ctx.guild, content, icon='cog',
+                    cogname=cogname, reason='mandatory')
             return
 
         try:
@@ -155,6 +176,9 @@ class Reloader:
                 ctx.send(embed=embed),
                 Reactions.FAIL.add(ctx.message),
             )
+            content = f'Error while trying to reload cog {cogname}'
+            self.journal.send('reload/fail', ctx.guild, content, icon='cog',
+                    cogname=cogname, reason='error', error=error)
         else:
             logger.info("Reloaded cog: %s", cogname)
             embed = discord.Embed(colour=discord.Colour.green(), description=f'```\n{cogname}\n```')
@@ -163,6 +187,8 @@ class Reloader:
                 ctx.send(embed=embed),
                 Reactions.SUCCESS.add(ctx.message),
             )
+            content = f'Successfully reloaded cog {cogname}'
+            self.journal.send('reload', ctx.guild, content, icon='cog', cogname=cogname)
 
     @commands.command(name='listcogs', aliases=['cogs'])
     async def listcogs(self, ctx):
