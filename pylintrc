@@ -72,7 +72,7 @@ evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / stateme
 # all. Valid levels: HIGH, INFERENCE, INFERENCE_FAILURE, UNDEFINED
 confidence=
 enable=
-disable=missing-docstring,invalid-name,bad-continuation,unused-argument,redefined-builtin,broad-except,too-few-public-methods,no-init,too-many-instance-attributes,too-many-public-methods,no-else-return
+disable=missing-docstring,invalid-name,bad-continuation,unused-argument,redefined-builtin,broad-except,no-init,too-many-instance-attributes,too-many-public-methods,no-else-return
 
 
 [TYPECHECK]
@@ -129,7 +129,7 @@ indent-string='    '
 indent-after-paren=4
 
 # Expected format of line ending, e.g. empty (any line ending), LF or CRLF.
-expected-line-ending-format=
+expected-line-ending-format=LF
 
 
 [VARIABLES]
@@ -139,7 +139,7 @@ init-import=no
 
 # A regular expression matching the name of dummy variables (i.e. expectedly
 # not used).
-dummy-variables-rgx=_$|dummy
+dummy-variables-rgx=_\w*$
 
 # List of additional names supposed to be defined in builtins. Remember that
 # you should avoid to define new builtins when possible.
@@ -147,16 +147,16 @@ additional-builtins=
 
 # List of strings which can identify a callback function by name. A callback
 # name must start or end with one of those strings.
-callbacks=cb_,_cb
+callbacks=hook_,cbf_
 
 
 [BASIC]
 
 # List of builtins function names that should not be used, separated by a comma
-bad-functions=
+bad-functions=print
 
 # Good variable names which should always be accepted, separated by a comma
-good-names=i,j,k,ex,Run,_
+good-names=i,j,k,id,_
 
 # Bad variable names which should always be refused, separated by a comma
 bad-names=foo,bar,baz,toto,tutu,tata
@@ -240,7 +240,7 @@ docstring-min-length=-1
 [SIMILARITIES]
 
 # Minimum lines number of a similarity.
-min-similarity-lines=10
+min-similarity-lines=8
 
 # Ignore comments when computing similarities.
 ignore-comments=yes
@@ -255,7 +255,7 @@ ignore-imports=yes
 [MISCELLANEOUS]
 
 # List of note tags to take in consideration, separated by a comma.
-notes=FIXME,XXX,TODO
+notes=TODO,FIXME,XXX
 
 
 [SPELLING]
@@ -265,7 +265,7 @@ notes=FIXME,XXX,TODO
 spelling-dict=
 
 # List of comma separated words that should not be checked.
-spelling-ignore-words=
+spelling-ignore-words=futaba
 
 # A path to a file that contains private dictionary; one word per line.
 spelling-private-dict-file=
@@ -278,7 +278,7 @@ spelling-store-unknown-words=no
 [DESIGN]
 
 # Maximum number of arguments for function / method
-max-args=10
+max-args=9
 
 # Argument names that match this expression will be ignored. Default to name
 # with leading underscore
@@ -288,7 +288,7 @@ ignored-argument-names=_.*
 max-locals=15
 
 # Maximum number of return / yield for function / method body
-max-returns=6
+max-returns=8
 
 # Maximum number of branch for function / method body
 max-branches=20
@@ -297,13 +297,13 @@ max-branches=20
 max-statements=100
 
 # Maximum number of parents for a class (see R0901).
-max-parents=7
+max-parents=6
 
 # Maximum number of attributes for a class (see R0902).
 max-attributes=7
 
 # Minimum number of public methods for a class (see R0903).
-min-public-methods=2
+min-public-methods=1
 
 # Maximum number of public methods for a class (see R0904).
 max-public-methods=20
@@ -312,7 +312,7 @@ max-public-methods=20
 [CLASSES]
 
 # List of method names used to declare (i.e. assign) instance attributes.
-defining-attr-methods=__init__,__new__,setUp
+defining-attr-methods=__init__,__new__
 
 # List of valid names for the first argument in a class method.
 valid-classmethod-first-arg=cls
@@ -328,7 +328,7 @@ exclude-protected=_asdict,_fields,_replace,_source,_make
 [IMPORTS]
 
 # Deprecated modules which should not be used, separated by a comma
-deprecated-modules=stringprep,optparse
+deprecated-modules=stringprep,optparse,time
 
 # Create a graph of every (i.e. internal and external) dependencies in the
 # given file (report RP0402 must not be disabled)
