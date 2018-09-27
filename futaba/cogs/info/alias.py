@@ -109,7 +109,7 @@ class Alias:
                 self.bot.sql.alias.add_nickname(before, timestamp, changes.nickname)
 
     @commands.command(name='aliases')
-    async def aliases(self, ctx, name: str):
+    async def aliases(self, ctx, *, name: str):
         ''' Gets information about known aliases of the given user. '''
 
         logger.info("Getting and printing alias information for some user '%s'", name)
