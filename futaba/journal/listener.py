@@ -38,6 +38,8 @@ class Listener:
 
         return True
 
+    # This method is meant to provide a default implementation that can be overriden
+    # pylint: disable=no-self-use
     def filter(self, path, guild, content, attributes):
         '''
         Overridable method for further filtering listener events that are passed through.

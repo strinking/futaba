@@ -57,9 +57,11 @@ JOURNAL_PROPERTIES = {
     FilterType.JAIL: JournalProperties(verb='Jailed for', path='jail', icon='jail'),
 }
 
-def journal_violation(journal, message, filter_type, flagged_content):
+def journal_violation(journal, message, filter_type, flagged):
     props = JOURNAL_PROPERTIES[filter_type]
-    content = f'{props.verb} message content: `{flagged_content}` by {message.author.mention} in {message.channel.mention}'
+    user = message.author
+    channel = message.channel
+    content = f'{props.verb} message content: `{flagged}` by {user.mention} in {channel.mention}'
     journal.send(props.path, message.guild, content, icon=props.icon)
 
 async def check_message(cog, message):

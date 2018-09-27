@@ -19,7 +19,7 @@ persistent=no
 load-plugins=
 
 # Use multiple processes to speed up Pylint.
-jobs=2
+jobs=8
 
 # Allow loading of arbitrary C extensions. Extensions are imported into the
 # active Python interpreter and may run arbitrary code.
@@ -72,7 +72,7 @@ evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / stateme
 # all. Valid levels: HIGH, INFERENCE, INFERENCE_FAILURE, UNDEFINED
 confidence=
 enable=
-disable=missing-docstring,invalid-name,bad-continuation,unused-argument,import-error,too-many-locals,redefined-builtin,too-many-branches,undefined-loop-variable,bare-except,protected-access,broad-except,no-self-use,too-few-public-methods,no-init,too-many-instance-attributes,too-many-public-methods,no-else-return,pointless-string-statement,len-as-condition
+disable=missing-docstring,invalid-name,bad-continuation,unused-argument,redefined-builtin,broad-except,too-few-public-methods,no-init,too-many-instance-attributes,too-many-public-methods,no-else-return
 
 
 [TYPECHECK]
@@ -106,7 +106,7 @@ logging-modules=logging
 [FORMAT]
 
 # Maximum number of characters on a single line.
-max-line-length=125
+max-line-length=120
 
 # Regexp for a line that is allowed to be longer than the limit.
 ignore-long-lines=(# )?<?https?://\S+>?$
