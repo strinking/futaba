@@ -344,6 +344,8 @@ class Welcome:
         with self.bot.sql.transaction():
             self.bot.sql.welcome.set_welcome_message(ctx.guild, welcome_message or None)
 
+        content = f'{"Set" if welcome_message else "Unset"} new welcome message for the guild'
+        self.journal.send('message/welcome', ctx.guild, content, icon='welcome', message=welcome_message)
         await Reactions.SUCCESS.add(ctx.message)
 
     @welcome.command(name='goodbyemsg')
@@ -363,6 +365,8 @@ class Welcome:
         with self.bot.sql.transaction():
             self.bot.sql.welcome.set_goodbye_message(ctx.guild, goodbye_message or None)
 
+        content = f'{"Set" if goodbye_message else "Unset"} new goodbye message for the guild'
+        self.journal.send('message/goodbye', ctx.guild, content, icon='welcome', message=goodbye_message)
         await Reactions.SUCCESS.add(ctx.message)
 
     @welcome.command(name='agreemsg')
@@ -382,4 +386,6 @@ class Welcome:
         with self.bot.sql.transaction():
             self.bot.sql.welcome.set_agreed_message(ctx.guild, agreed_message)
 
+        content = f'{"Set" if agreed_message else "Unset"} new agree message for the guild'
+        self.journal.send('message/agree', ctx.guild, content, icon='welcome', message=agreed_message)
         await Reactions.SUCCESS.add(ctx.message)

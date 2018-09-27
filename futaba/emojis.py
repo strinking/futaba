@@ -43,6 +43,7 @@ ICONS = {
     'shutdown': '\N{SKULL}',
 
     # Welcome / Roles
+    'welcome': '\N{WAVING HAND SIGN}',
     'agree': '\N{THUMBS UP SIGN}',
     'member': '\N{MAN}',
     'guest': '\N{EXTRATERRESTRIAL ALIEN}',
