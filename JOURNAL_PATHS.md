@@ -62,3 +62,22 @@ All attributes (will) have `member: discord.Member`, `reason: Optional[str]`, `c
 * `/settings/roles/guest` - The guest role was set or unset. Attributes: `role: Optional[discord.Role]`
 * `/settings/roles/mute` - The mute role was set or unset. Attributes: `role: Optional[discord.Role]`
 * `/settings/roles/jail` - The jail role was set or unset. Attributes: `role: Optional[discord.Role]`
+
+### Tracker cog
+* `/tracking/typing` - Typing event. Attributes: `channel: discord.Messageable`, `user: discord.User`, `when: datetime`
+* `/tracking/message/new` - A new message was sent. Attributes: `message: discord.Message`
+* `/tracking/jump/message/new` - Jump link for new message. Same attributes.
+* `/tracking/message/edit` - A message was edited. Attributes: `before: discord.Message`, `after: discord.Message`
+* `/tracking/jump/message/edit` - Jump link for edited message. Same attributes.
+* `/tracking/message/delete` - A message was deleted. Attributes: `message: discord.Message`, `cause: MessageDeletionReason`
+* `/tracking/jump/message/delete` - Jump link for deleted message. Same attributes.
+* `/tracking/reaction/add` - A reaction was added to a message. Attributes: `reaction: discord.Reaction`, `user: discord.User`
+* `/tracking/jump/reaction/add` - Jump link for reacted message. Attributes: `message: discord.Message`
+* `/tracking/reaction/remove` - A reaction was removed to a message. Attributes: `reaction: discord.Reaction`, `user: discord.User`
+* `/tracking/jump/reaction/remove` - Jump link for reacted message. Attributes: `message: discord.Message`
+* `/tracking/reaction/clear` - All reactions were cleared from a message. Attributes: `message: discord.Message`, `reactions: List[discord.Reaction]`
+* `/tracking/jump/reactions/clear` - Jump link for reacted message. Attributes: `message: discord.Message`
+* `/tracking/channel/new` - Guild channel was created. Attributes: `channel: discord.GuildChannel`
+* `/tracking/channel/delete` - Guild channel was deleted. Attributes: `channel: discord.GuildChannel`
+* `/tracking/member/join` - Member joined the guild. Attributes: `member: discord.Member`
+* `/tracking/member/leave` - Member left the guild. Includes kicks, bans, etc. Attributes: `member: discord.Member`, `cause: MemberLeaveReason`.
