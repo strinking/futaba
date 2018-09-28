@@ -8,6 +8,10 @@ All contain the attribute `cogname`. Failures include `reason`, and if it was an
 * `/cog/reload`
 * `/cog/reload/fail`
 
+### Journal cog
+* `/journal/channel/add` - When a journal output channel is added. Attributes: `channel: discord.TextChannel, path: str, recursive: bool`
+* `/journal/channel/remove` - When a journal output channel is removed. Attributes: `channel: discord.TextChannel, path: str`
+
 ### Welcome cog
 * `/welcome/member/agree` - Member agrees to the rules. Attributes: `user: discord.Member`
 * `/welcome/channel/set` - When the welcome change is changed. Attributes: `channel: Optional[discord.TextChannel]`, `cause: discord.Member`
