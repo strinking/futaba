@@ -106,7 +106,6 @@ ICONS = {
     'previous': '\N{UPWARDS BLACK ARROW}',
     'hourglass': '\N{HOURGLASS WITH FLOWING SAND}',
     'person': '\N{BUST IN SILHOUETTE}',
-    'navigate': '\N{COMPASS}',
     'bot': '\N{ROBOT FACE}',
     'news': '\N{NEWSPAPER}',
     'art': '\N{ARTIST PALETTE}',
