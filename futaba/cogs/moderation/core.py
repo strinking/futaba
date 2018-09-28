@@ -10,8 +10,6 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-# pylint: skip-file
-
 '''
 Collection of moderation commands such as Ban/Kick
 '''
@@ -60,11 +58,8 @@ class Moderation:
             embed = discord.Embed(description='Done! User Kicked')
             embed.add_field(name='Reason', value=reason)
 
-            mod = user_discrim(ctx.author)
-            kicked = user_discrim(member)
-
             await asyncio.gather(
-                ctx.guild.kick(member, reason=f'{reason} - {mod}'),
+                ctx.guild.kick(member, reason=f'{reason} - {user_discrim(ctx.author)}'),
                 ctx.send(embed=embed),
                 Reactions.SUCCESS.add(ctx.message)
             )
