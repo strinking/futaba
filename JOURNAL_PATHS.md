@@ -1,6 +1,6 @@
 ## Futaba Journal Paths
 ### Cog management
-All contain the attribute `cogname`. Failures include `reason`, and if it was an error, `error`.
+All contain the attribute `cogname: str`. Failures include `reason: str`, and if it was an error, `error: Exception`.
 * `/cog/load`
 * `/cog/load/fail`
 * `/cog/unload`
@@ -11,6 +11,14 @@ All contain the attribute `cogname`. Failures include `reason`, and if it was an
 ### Journal cog
 * `/journal/channel/add` - When a journal output channel is added. Attributes: `channel: discord.TextChannel, path: str, recursive: bool`
 * `/journal/channel/remove` - When a journal output channel is removed. Attributes: `channel: discord.TextChannel, path: str`
+
+### Moderation
+Actually handled in the tracking cog. This behavior is in the middle of changing.
+All attributes (will) have `member: discord.Member`, `reason: Optional[str]`, `cause: discord.Member`.
+* `/moderation/member/kick` - A member was kicked. TODO
+* `/moderation/member/ban` - A member was banned. TODO
+* `/moderation/member/softban` - A member was soft-banned. TODO
+* `/moderation/member/unban` - A member was unbanned. TODO
 
 ### Welcome cog
 * `/welcome/member/agree` - Member agrees to the rules. Attributes: `user: discord.Member`
