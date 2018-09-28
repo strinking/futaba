@@ -141,7 +141,7 @@ class Journal:
         )
         content = f'Added journal logger to {channel.mention} for `{path}`'
         self.journal.send('channel/add', ctx.guild, content, icon='journal',
-                channel=channel, paths=paths, recursive=recursive)
+                channel=channel, path=path, recursive=recursive)
 
     @log.command(name='remove', aliases=['rm', 'delete', 'del'])
     @commands.guild_only()
