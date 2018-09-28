@@ -111,6 +111,7 @@ ICONS = {
     'person': '\N{BUST IN SILHOUETTE}',
     'navigate': '\N{COMPASS}',
     'bot': '\N{ROBOT FACE}',
+    'fun': '\N{FACE WITH STUCK-OUT TONGUE}',
     'news': '\N{NEWSPAPER}',
     'art': '\N{ARTIST PALETTE}',
     'tag': '\N{TICKET}',

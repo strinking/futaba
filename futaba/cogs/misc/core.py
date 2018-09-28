@@ -54,11 +54,13 @@ class Miscellaneous:
 
         duration = datetime.now() - discord.utils.snowflake_time(ctx.message.id)
         ms = duration.microseconds / 1000
+        content = f'Pong! `{ms} ms`'
 
         await asyncio.gather(
-            ctx.send(content=f"Pong! `{ms} ms`"),
+            ctx.send(content=content),
             Reactions.SUCCESS.add(ctx.message),
         )
+        self.journal.send('ping', ctx.guild, content, icon='ok')
 
     @commands.command(name='about', aliases=['aboutme', 'botinfo'])
     async def about(self, ctx):
@@ -97,10 +99,14 @@ class Miscellaneous:
             await Reactions.FAIL.add(ctx.message)
             return
 
+        emoji = random.choice(self.bot.emojis)
         await asyncio.gather(
-            ctx.send(content=random.choice(self.bot.emojis)),
+            ctx.send(content=str(emoji)),
             Reactions.SUCCESS.add(ctx.message),
         )
+        content = f'Sent random emoji {emoji} to {ctx.channel.mention}.'
+        self.journal.send('emoji/random', ctx.guild, content, icon='fun',
+                channel=ctx.channel, emoji=emoji)
 
     @commands.command(name='sha1sum', aliases=['sha1', 'sha', 'hashsum', 'hash'])
     async def sha1sum(self, ctx, *urls: str):
