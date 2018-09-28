@@ -8,6 +8,30 @@ All contain the attribute `cogname: str`. Failures include `reason: str`, and if
 * `/cog/reload`
 * `/cog/reload/fail`
 
+### Filter cog
+Adding a new content/file filter. Has attributes `hashsum: str`, `description: str`, and `cause: discord.Member`.
+* `/filter/content/new/flag`
+* `/filter/content/new/block`
+* `/filter/content/new/jail`
+
+Removing a group of content filters.
+* `/filter/content/remove` - Attributes: `hashsums: List[str]`
+
+Managing text filters. Has attributes `text: str`, `cause: discord.Member`.
+Additionally, channel filters have the `channel: discord.TextChannel` attribute.
+* `/filter/guild/new/flag`
+* `/filter/guild/new/block`
+* `/filter/guild/new/jail`
+* `/filter/guild/remove`
+* `/filter/channel/new/flag`
+* `/filter/channel/new/block`
+* `/filter/channel/new/jail`
+* `/filter/channel/remove`
+
+Managing user filter immunity. Has attributes: `member: discord.Member`, `cause: discord.Member`.
+* `/filter/immunity/new` - Adds a user to the immune list.
+* `/filter/immunity/remove` - Removes a user from the immune list.
+
 ### Journal cog
 * `/journal/channel/add` - When a journal output channel is added. Attributes: `channel: discord.TextChannel, path: str, recursive: bool`
 * `/journal/channel/remove` - When a journal output channel is removed. Attributes: `channel: discord.TextChannel, path: str`

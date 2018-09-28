@@ -126,7 +126,8 @@ class Filtering:
 
         await check_hashsums((hashsum,), ctx.message)
         content = f'Added content flag filter for `{hashsum}`'
-        self.journal.send('content/new/flag', ctx.guild, content, icon='filter')
+        self.journal.send('content/new/flag', ctx.guild, content, icon='filter',
+                hashsum=hashsum, description=description, cause=ctx.author)
         await add_content_filter(
             self.bot,
             self.content_filters,
@@ -230,7 +231,8 @@ class Filtering:
 
         for member in members:
             content = f'Added {member.name}#{member.discriminator} to filter immunity list'
-            self.journal.send('immunity/new', ctx.guild, content, icon='person')
+            self.journal.send('immunity/new', ctx.guild, content, icon='person',
+                    member=member, cause=ctx.author)
 
         await Reactions.SUCCESS.add(ctx.message)
 
@@ -314,7 +316,8 @@ class Filtering:
         '''
 
         content = f'Added guild flag filter for `{escape_backticks(text)}`'
-        self.journal.send('guild/new/flag', ctx.guild, content, icon='filter')
+        self.journal.send('guild/new/flag', ctx.guild, content, icon='filter',
+                text=text, cause=ctx.author)
         await add_filter(self.bot, self.filters, ctx.message, ctx.guild, FilterType.FLAG, text)
 
     @filter_guild.command(name='block', aliases=['deny', 'autoremove'])
@@ -359,7 +362,8 @@ class Filtering:
         '''
 
         content = f'Removed guild filter for `{escape_backticks(text)}`'
-        self.journal.send('guild/remove', ctx.guild, content, icon='filter')
+        self.journal.send('guild/remove', ctx.guild, content, icon='filter',
+                text=text, cause=ctx.author)
         await delete_filter(self.bot, self.filters, ctx.message, ctx.guild, text)
 
     @filter.group(name='channel', aliases=['chan', 'ch', 'c'])
@@ -394,7 +398,8 @@ class Filtering:
         '''
 
         content = f'Added channel flag filter in {channel.mention} for `{escape_backticks(text)}`'
-        self.journal.send('channel/new/flag', ctx.guild, content, icon='filter')
+        self.journal.send('channel/new/flag', ctx.guild, content, icon='filter',
+                text=text, channel=channel, cause=ctx.author)
         await add_filter(self.bot, self.filters, ctx.message, channel, FilterType.FLAG, text)
 
     @filter_channel.command(name='block', aliases=['deny', 'autoremove'])
@@ -410,7 +415,8 @@ class Filtering:
         '''
 
         content = f'Added channel block filter in {channel.mention} for `{escape_backticks(text)}`'
-        self.journal.send('channel/new/block', ctx.guild, content, icon='filter')
+        self.journal.send('channel/new/block', ctx.guild, content, icon='filter',
+                text=text, channel=channel, cause=ctx.author)
         await add_filter(self.bot, self.filters, ctx.message, channel, FilterType.BLOCK, text)
 
     @filter_channel.command(name='jail', aliases=['dunce', 'punish', 'mute'])
@@ -426,7 +432,8 @@ class Filtering:
         '''
 
         content = f'Added channel jail filter in {channel.mention} for `{escape_backticks(text)}`'
-        self.journal.send('channel/new/jail', ctx.guild, content, icon='filter')
+        self.journal.send('channel/new/jail', ctx.guild, content, icon='filter',
+                text=text, channel=channel, cause=ctx.author)
         await add_filter(self.bot, self.filters, ctx.message, channel, FilterType.JAIL, text)
 
     @filter_channel.command(name='remove', aliases=['rm', 'delete', 'del'])
@@ -439,5 +446,6 @@ class Filtering:
         '''
 
         content = f'Removed channel filter in {channel.mention} for `{escape_backticks(text)}`'
-        self.journal.send('channel/remove', ctx.guild, content, icon='filter')
+        self.journal.send('channel/remove', ctx.guild, content, icon='filter',
+                text=text, channel=channel, cause=ctx.author)
         await delete_filter(self.bot, self.filters, ctx.message, channel, text)
