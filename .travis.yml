@@ -13,7 +13,7 @@ matrix:
   fast_finish: true
 
 install:
-  - sudo apt install pylint
+  - pip install pylint
   - pip install -r requirements.txt
 
 script:
@@ -21,7 +21,7 @@ script:
   - pylint --reports=yes futaba || true
 
   # Only fail on errors
-  - pylint --errors-only futaba > /dev/null
+  - pylint --errors-only futaba
 
 notifications:
   email:
