@@ -14,7 +14,7 @@
 futaba - A Discord Mod bot for the Programming server
 '''
 
-from . import client, config, download, emojis, enums, exceptions, journal
-from . import parse, permissions, sql, str_builder, unicode, utils
+from . import client, config, download, emojis, enums, exceptions, \
+        journal, parse, permissions, sql, str_builder, unicode, utils
 
 __version__ = '0.1.2'
