@@ -29,6 +29,7 @@ __all__ = [
     'fancy_timedelta',
     'async_partial',
     'map_or',
+    'if_not_null',
     'message_to_dict',
     'first',
     'chunks',
@@ -36,7 +37,6 @@ __all__ = [
     'plural',
     'user_discrim',
     'escape_backticks',
-    'if_not_null',
 ]
 
 def _get_git_hash():
@@ -106,6 +106,17 @@ def map_or(func, obj):
         return obj
 
     return func(obj)
+
+def if_not_null(obj, alt):
+    ''' Returns 'obj' if it's not None, 'alt' otherwise. '''
+
+    if obj is None:
+        if callable(alt):
+            return alt()
+        else:
+            return alt
+
+    return obj
 
 def message_to_dict(message: discord.Message):
     ''' Converts a message into a JSON-safe python dictionary. '''
@@ -219,14 +230,3 @@ def escape_backticks(content):
     '''
 
     return content.replace('`', '\N{ARMENIAN COMMA}').replace(':', '\N{RATIO}')
-
-def if_not_null(obj, alt):
-    ''' Returns 'obj' if it's not None, 'alt' otherwise. '''
-
-    if obj is None:
-        if callable(alt):
-            return alt()
-        else:
-            return alt
-
-    return obj

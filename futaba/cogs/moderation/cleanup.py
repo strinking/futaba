@@ -24,13 +24,29 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.enums import Reactions
-from futaba.utils import message_to_dict
+from futaba.exceptions import CommandFailed
+from futaba.unicode import normalize_caseless
+from futaba.utils import escape_backticks, message_to_dict
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
     'Cleanup',
 ]
+
+class _Counter:
+    __slots__ = (
+        'value',
+    )
+
+    def __init__(self, value=0):
+        self.value = value
+
+    def __lt__(self, other):
+        return self.value < other
+
+    def incr(self):
+        self.value += 1
 
 class Cleanup:
     __slots__ = (
@@ -44,37 +60,107 @@ class Cleanup:
         self.journal = bot.get_broadcaster('/moderation/cleanup')
         self.dump = bot.get_max_delete_messages('/dump/moderation/cleanup')
 
-    @commands.command(name='cleanup', aliases=['clean'])
-    @commands.guild_only()
-    @permissions.check_mod()
-    async def cleanup(self, ctx, count: int, channel: discord.TextChannel = None):
-        ''' Deletes the last <count> messages, not including this command. '''
-
+    async def check_count(self, ctx, count):
         max_count = self.bot.sql.settings.get_max_delete_messages()
         if count < 1:
             await asyncio.gather(
                 ctx.send(content=f'Invalid message count: {count}'),
                 Reactions.FAIL.add(ctx.message),
             )
-            return
+            raise CommandFailed(content='TODO replace with above message')
         elif count > max_count:
             await asyncio.gather(
                 ctx.send(content=f'Count too high. Maximum configured for this guild is {max_count}.'),
                 Reactions.FAIL.add(ctx.message),
             )
-            return
+            raise CommandFailed(content='TODO replace with above message')
+
+    @staticmethod
+    def dump_messages(messages):
+        buffer = BytesIO()
+        json.dump(list(map(message_to_dict, messages)), buffer)
+        return discord.File(buffer, filename='deleted-messages.json')
+
+    @commands.command(name='cleanup', aliases=['clean'])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def cleanup(self, ctx, count: int, channel: discord.TextChannel = None):
+        ''' Deletes the last <count> messages, not including this command. '''
+
+        await self.check_count(ctx, count)
 
         if channel is None:
             channel = ctx.channel
 
         # Delete the messages
-        messages = await channel.purge(limit=count, before=ctx.message, bulk=True)
-        content = f'Deleted {count} messages from {channel.mention}'
-        self.journal.send('count', ctx.guild, content, icon='delete',
-                count=count, channel=channel, cause=ctx.author)
+        messages = await channel.purge(limit=count, before=ctx.message, reverse=True, bulk=True)
 
-        # Dump deleted messages to JSON
-        buffer = BytesIO()
-        json.dump(list(map(message_to_dict, messages)), buffer)
-        file = discord.File(buffer, filename='deleted-messages.json')
+        # Send journal events
+        content = f'Deleted {len(messages)} messages in {channel.mention}'
+        self.journal.send('count', ctx.guild, content, icon='delete',
+                count=count, channel=channel, messages=messages, cause=ctx.author)
+
+        file = self.dump_messages(messages)
         self.dump.send('count', ctx.guild, content, icon='delete', file=file)
+
+    @commands.command(name='cleanupuser', aliases=['cleanuser'])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def cleanup_user(self, ctx, user: discord.User, count: int, channel: discord.TextChannel = None):
+        ''' Deletes the last <count> messages created by the given user. '''
+
+        await self.check_count(ctx, count)
+
+        if channel is None:
+            channel = ctx.channel
+
+        # Deletes the messages by the user
+        deleted = _Counter()
+        def check(message):
+            if deleted < count:
+                if user == message.author:
+                    deleted.incr()
+                    return True
+            return False
+
+        messages = await channel.purge(limit=count * 2, check=check, before=ctx.message, reverse=True)
+
+        # Send journal events
+        content = f'Deleted {len(messages)} messages in {channel.mention} by {user.mention}'
+        self.journal.send('user', ctx.guild, content, icon='delete',
+                count=count, channel=channel, messages=messages, user=user, cause=ctx.author)
+
+        file = self.dump_messages(messages)
+        self.dump.send('user', ctx.guild, content, icon='delete', file=file)
+
+    @commands.command(name='cleanuptext', aliases=['cleantext'])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def cleanup_text(self, ctx, text: str, count: int, channel: discord.TextChannel = None):
+        ''' Deletes the last <count> messages with the given text. '''
+
+        await self.check_count(ctx, count)
+
+        if channel is None:
+            channel = ctx.channel
+
+        # Deletes the messages with the text
+        text = normalize_caseless(text)
+        deleted = _Counter()
+        def check(message):
+            if deleted < count:
+                if text in normalize_caseless(message.content):
+                    deleted.incr()
+                    return True
+            return False
+
+        messages = await channel.purge(limit=count * 2, check=check, before=ctx.message, reverse=True)
+
+        # Send journal events
+        text = escape_backticks(text)
+        content = f'Deleted {len(messages)} messages in {channel.mention} matching `{text}`'
+        self.journal.send('text', ctx.guild, content, icon='delete',
+                count=count, channel=channel, messags=messages, text=text, cause=ctx.author)
+
+        file = self.dump_messages(messages)
+        self.dump.send('text', ctx.guild, content, icon='delete', file=file)
