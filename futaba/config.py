@@ -40,9 +40,9 @@ Configuration = namedtuple(
 def _get(config, field, path=None):
     if field not in config:
         if path is None:
-            return InvalidConfigError(f"No '{field}' section found in configuration.", config)
+            raise InvalidConfigError(f"No '{field}' section found in configuration.", config)
         else:
-            return InvalidConfigError(f"No '{path}.{field}' field found in configuration.", config)
+            raise InvalidConfigError(f"No '{path}.{field}' field found in configuration.", config)
 
     return config[field]
 
