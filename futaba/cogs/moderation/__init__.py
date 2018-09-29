@@ -10,12 +10,16 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+from .cleanup import Cleanup
 from .core import Moderation
 
 def setup(bot):
     '''
     Setup for bot to add cog
     '''
+
+    cog = Cleanup(bot)
+    bot.add_cog(cog)
 
     cog = Moderation(bot)
     bot.add_cog(cog)

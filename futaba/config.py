@@ -30,6 +30,7 @@ Configuration = namedtuple(
         'token',
         'owner_ids',
         'default_prefix',
+        'max_cleanup_messages',
         'python_emoji_id',
         'discord_py_emoji_id',
         'database_url',
@@ -58,6 +59,15 @@ def load_config(path):
     except ValueError:
         raise InvalidConfigError("Owner IDs must be integers", config)
 
+    config_moderation = _get(config, 'moderation')
+
+    try:
+        max_cleanup_messages = int(_get(config_moderation, 'max-cleanup-messages', 'moderation'))
+        if max_cleanup_messages <= 0:
+            raise ValueError
+    except ValueError:
+        raise InvalidConfigError("Maximum cleanup messages value must be a positive integer", config)
+
     config_emoji = _get(config, 'emojis')
 
     try:
@@ -73,6 +83,7 @@ def load_config(path):
         token=token,
         owner_ids=owner_ids,
         default_prefix=prefix,
+        max_cleanup_messages=max_cleanup_messages,
         python_emoji_id=python_emoji_id,
         discord_py_emoji_id=discord_py_emoji_id,
         database_url=db_url,

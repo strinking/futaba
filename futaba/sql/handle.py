@@ -32,6 +32,7 @@ class SqlHandler:
         'db',
         'conn',
         'trans',
+        'max_cleanup_messages',
 
         'filter',
         'guilds',
@@ -40,7 +41,8 @@ class SqlHandler:
         'welcome',
     )
 
-    def __init__(self, db_path: str):
+    def __init__(self, db_path: str, max_cleanup_messages=500):
+        self.max_cleanup_messages = max_cleanup_messages
         self.db = create_engine(db_path)
         self.conn = self.db.connect()
         self.trans = None

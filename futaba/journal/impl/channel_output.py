@@ -50,4 +50,8 @@ class ChannelOutputListener(Listener):
         '''
 
         logger.debug("Received journal event on %s: '%s'", path, content)
-        await self.channel.send(content=content)
+        kwargs = {}
+        for key in ('content', 'embed', 'file', 'files'):
+            if key in attributes:
+                kwargs[key] = attributes[key]
+        await self.channel.send(**kwargs)
