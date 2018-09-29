@@ -40,8 +40,8 @@ class GuildSettingsStorage:
         'max_delete_messages',
     )
 
-    def __init__(self, max_delete_messages):
-        self.prefix = None
+    def __init__(self, prefix, max_delete_messages):
+        self.prefix = prefix
         self.max_delete_messages = max_delete_messages
 
 class SpecialRoleStorage:
@@ -162,7 +162,7 @@ class SettingsModel:
                     max_delete_messages=self.sql.max_delete_messages,
                 )
         self.sql.execute(ins)
-        self.guild_settings_cache[guild] = GuildSettingsStorage(self.sql.max_delete_messages)
+        self.guild_settings_cache[guild] = GuildSettingsStorage(None, self.sql.max_delete_messages)
 
     def del_guild_settings(self, guild):
         logger.info("Removing guild settings row for departing guild '%s' (%d)", guild.name, guild.id)
@@ -172,13 +172,10 @@ class SettingsModel:
         self.sql.execute(delet)
         self.guild_settings_cache.pop(guild, None)
 
-    def get_prefix(self, guild):
-        logger.debug("Getting prefix for guild '%s' (%d)", guild.name, guild.id)
-        if guild in self.guild_settings_cache:
-            logger.debug("Prefix was found in cache, returning")
-            return self.guild_settings_cache[guild].prefix
+    def fetch_guild_settings(self, guild):
+        logger.info("Getting guild settings for guild '%s' (%d)", guild.name, guild.id)
 
-        sel = select([self.tb_guild_settings.c.prefix]) \
+        sel = select([self.tb_guild_settings.c.prefix, self.tb_guild_settings.c.max_delete_messages]) \
                 .where(self.tb_guild_settings.c.guild_id == guild.id)
         result = self.sql.execute(sel)
 
@@ -186,9 +183,15 @@ class SettingsModel:
             self.add_guild_settings(guild)
             return None
 
-        prefix, = result.fetchone()
-        self.guild_settings_cache[guild].prefix = prefix
-        return prefix
+        prefix, max_delete_messages = result.fetchone()
+        self.guild_settings_cache[guild] = GuildSettingsStorage(prefix, max_delete_messages)
+
+    def get_prefix(self, guild):
+        logger.debug("Getting prefix for guild '%s' (%d)", guild.name, guild.id)
+        if guild not in self.guild_settings_cache:
+            self.fetch_guild_settings(guild)
+
+        return self.guild_settings_cache[guild].prefix
 
     def set_prefix(self, guild, prefix):
         logger.info("Setting prefix to %r for guild '%s' (%d)", prefix, guild.name, guild.id)
@@ -201,21 +204,10 @@ class SettingsModel:
 
     def get_max_delete_messages(self, guild):
         logger.info("Getting maximum delete messages for guild '%s' (%d)", guild.name, guild.id)
-        if guild in self.guild_settings_cache:
-            logger.debug("Maximum delete message count found in cache, returning")
-            return self.guild_settings_cache[guild].max_delete_messages
+        if guild not in self.guild_settings_cache:
+            self.fetch_guild_settings(guild)
 
-        sel = select([self.tb_guild_settings.c.max_delete_messages]) \
-                .where(self.tb_guild_settings.c.guild_id == guild.id)
-        result = self.sql.execute(sel)
-
-        if not result.rowcount:
-            self.add_guild_settings(guild)
-            return None
-
-        max_delete_messages, = result.fetchone()
-        self.guild_settings_cache[guild].max_delete_messages = max_delete_messages
-        return max_delete_messages
+        return self.guild_settings_cache[guild].max_delete_messages
 
     def set_max_delete_messages(self, guild, max_delete_messages):
         logger.info("Setting maximum delete messages to %d for guild '%s' (%d)",
