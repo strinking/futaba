@@ -26,7 +26,7 @@ from futaba import permissions
 from futaba.enums import Reactions
 from futaba.exceptions import CommandFailed
 from futaba.unicode import normalize_caseless
-from futaba.utils import escape_backticks, message_to_dict
+from futaba.utils import escape_backticks, message_to_dict, user_discrim
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +35,8 @@ __all__ = [
 ]
 
 class _Counter:
+    ''' Counter that escapes issues with local scoping by being modifiable in-place. '''
+
     __slots__ = (
         'value',
     )
@@ -48,6 +50,23 @@ class _Counter:
     def incr(self):
         self.value += 1
 
+class _StringWriteWrap:
+    ''' Wrapper for BytesIO to auto-encode strings written. '''
+
+    __slots__ = (
+        'buffer',
+    )
+
+    def __init__(self, buffer):
+        self.buffer = buffer
+
+    def write(self, content):
+        self.buffer.write(content.encode('utf-8'))
+        return len(content)
+
+    def close(self):
+        pass
+
 class Cleanup:
     __slots__ = (
         'bot',
@@ -58,10 +77,10 @@ class Cleanup:
     def __init__(self, bot):
         self.bot = bot
         self.journal = bot.get_broadcaster('/moderation/cleanup')
-        self.dump = bot.get_max_delete_messages('/dump/moderation/cleanup')
+        self.dump = bot.get_broadcaster('/dump/moderation/cleanup')
 
     async def check_count(self, ctx, count):
-        max_count = self.bot.sql.settings.get_max_delete_messages()
+        max_count = self.bot.sql.settings.get_max_delete_messages(ctx.guild)
         if count < 1:
             await asyncio.gather(
                 ctx.send(content=f'Invalid message count: {count}'),
@@ -78,7 +97,8 @@ class Cleanup:
     @staticmethod
     def dump_messages(messages):
         buffer = BytesIO()
-        json.dump(list(map(message_to_dict, messages)), buffer)
+        wrap = _StringWriteWrap(buffer)
+        json.dump(list(map(message_to_dict, reversed(messages))), wrap, ensure_ascii=True)
         return discord.File(buffer, filename='deleted-messages.json')
 
     @commands.command(name='cleanup', aliases=['clean'])
@@ -93,15 +113,20 @@ class Cleanup:
             channel = ctx.channel
 
         # Delete the messages
-        messages = await channel.purge(limit=count, before=ctx.message, reverse=True, bulk=True)
+        messages = await channel.purge(limit=count, before=ctx.message, bulk=True)
 
         # Send journal events
-        content = f'Deleted {len(messages)} messages in {channel.mention}'
+        causer = user_discrim(ctx.author)
+        content = f'{causer} deleted {len(messages)} messages in {channel.mention}'
         self.journal.send('count', ctx.guild, content, icon='delete',
                 count=count, channel=channel, messages=messages, cause=ctx.author)
 
         file = self.dump_messages(messages)
+        content = f'Cleanup by {causer} in {channel.mention} deleted these messages:'
         self.dump.send('count', ctx.guild, content, icon='delete', file=file)
+
+        # Done
+        await Reactions.SUCCESS.add(ctx.message)
 
     @commands.command(name='cleanupuser', aliases=['cleanuser'])
     @commands.guild_only()
@@ -123,15 +148,20 @@ class Cleanup:
                     return True
             return False
 
-        messages = await channel.purge(limit=count * 2, check=check, before=ctx.message, reverse=True)
+        messages = await channel.purge(limit=count * 2, check=check, before=ctx.message, bulk=True)
 
         # Send journal events
-        content = f'Deleted {len(messages)} messages in {channel.mention} by {user.mention}'
+        causer = user_discrim(ctx.author)
+        content = f'{causer} deleted {len(messages)} messages in {channel.mention} by {user.mention}'
         self.journal.send('user', ctx.guild, content, icon='delete',
                 count=count, channel=channel, messages=messages, user=user, cause=ctx.author)
 
         file = self.dump_messages(messages)
+        content = f'Cleanup by {causer} of {user.mention} in {channel.mention} deleted these messages:'
         self.dump.send('user', ctx.guild, content, icon='delete', file=file)
+
+        # Done
+        await Reactions.SUCCESS.add(ctx.message)
 
     @commands.command(name='cleanuptext', aliases=['cleantext'])
     @commands.guild_only()
@@ -154,13 +184,18 @@ class Cleanup:
                     return True
             return False
 
-        messages = await channel.purge(limit=count * 2, check=check, before=ctx.message, reverse=True)
+        messages = await channel.purge(limit=count * 2, check=check, before=ctx.message, bulk=True)
 
         # Send journal events
         text = escape_backticks(text)
-        content = f'Deleted {len(messages)} messages in {channel.mention} matching `{text}`'
+        causer = user_discrim(ctx.author)
+        content = f'{causer} deleted {len(messages)} messages in {channel.mention} matching `{text}`'
         self.journal.send('text', ctx.guild, content, icon='delete',
                 count=count, channel=channel, messags=messages, text=text, cause=ctx.author)
 
         file = self.dump_messages(messages)
+        content = f'Cleanup by {causer} in {channel.mention} of `{text}` deleted these messages:'
         self.dump.send('text', ctx.guild, content, icon='delete', file=file)
+
+        # Done
+        await Reactions.SUCCESS.add(ctx.message)
