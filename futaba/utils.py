@@ -52,6 +52,7 @@ URL_REGEX = re.compile(
     r'<?(https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b(?:[-a-zA-Z0-9@:%_\+.~#?&//=]*))>?'
 )
 
+# pylint: disable=too-few-public-methods
 class Dummy:
     '''
     Dummy class that can freely be assigned any fields or members.

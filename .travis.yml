@@ -1,0 +1,30 @@
+language: python
+dist: trusty
+sudo: false
+cache: pip
+
+python:
+  - '3.6'
+  - '3.7-dev'
+  - 'nightly'
+
+matrix:
+  allow_failures:
+    - python: nightly
+  fast_finish: true
+
+install:
+  - pip install pylint
+  - pip install -r requirements.txt
+
+script:
+  # Display all lints and a report
+  - pylint --reports=yes futaba || true
+
+  # Only fail on errors
+  - pylint --errors-only futaba
+
+notifications:
+  email:
+    on_success: change
+    on_failure: always

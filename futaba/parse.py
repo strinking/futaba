@@ -137,7 +137,7 @@ def get_emoji(name, emojis) -> Optional[Union[str, discord.Emoji]]:
     '''
 
     logger.debug("get_emoji: checking if it's not ASCII")
-    if not any(map(str.isascii, name)):
+    if not any(map(lambda c: ord(c) < 127, name)):
         return name
 
     # Search case-insensitively

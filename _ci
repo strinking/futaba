@@ -1,7 +1,0 @@
-## placeholder until we set up travis ci ##
-
-# Display all lints
-pylint --reports=yes futaba || true
-
-# Only fail if there are errors
-pylint --errors-only futaba
