@@ -37,11 +37,13 @@ class Journal:
     __slots__ = (
         'bot',
         'router',
+        'journal',
     )
 
     def __init__(self, bot):
         self.bot = bot
         self.router = Router()
+        self.journal = bot.get_broadcaster('/journal')
         bot.journal_cog = self
 
         logger.info("Loading journal output channels from the database")
@@ -137,6 +139,9 @@ class Journal:
             channel.send(content=self.log_updated_message(channel)),
             Reactions.SUCCESS.add(ctx.message),
         )
+        content = f'Added journal logger to {channel.mention} for `{path}`'
+        self.journal.send('channel/add', ctx.guild, content, icon='journal',
+                channel=channel, path=path, recursive=recursive)
 
     @log.command(name='remove', aliases=['rm', 'delete', 'del'])
     @commands.guild_only()
@@ -167,6 +172,9 @@ class Journal:
             channel.send(content=self.log_updated_message(channel)),
             Reactions.SUCCESS.add(ctx.message),
         )
+        content = f'Removed journal logger to {channel.mention} for `{path}`'
+        self.journal.send('channel/remove', ctx.guild, content, icon='journal',
+                channel=channel, path=path)
 
     @log.command(name='send', aliases=['broadcast'])
     @commands.guild_only()

@@ -131,7 +131,8 @@ class Moderation:
 
             await ctx.guild.unban(member, reason=f'{reason} - {mod}')
 
-            self.journal.send('member/softban', ctx.guild, content, icon='soft')
+            self.journal.send('member/softban', ctx.guild, content, icon='soft',
+                    member=member, reason=reason, cause=ctx.author)
 
         except discord.errors.Forbidden:
             await asyncio.gather(
@@ -167,7 +168,7 @@ class Moderation:
                 Reactions.SUCCESS.add(ctx.message)
             )
 
-            self.journal.send('member/unban', ctx.guild, content, icon='unban')
+            self.journal.send('member/unban', ctx.guild, content, icon='unban', member=member)
 
         except discord.errors.Forbidden:
             await asyncio.gather(

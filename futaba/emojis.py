@@ -29,6 +29,9 @@ ICONS = {
     'ok': '\N{SQUARED OK}',
     'announce': '\N{CHEERING MEGAPHONE}',
 
+    # Management
+    'cog': '\N{GEAR}',
+
     # Moderation
     'ban': '\N{HAMMER}',
     'unban': '\N{FACE WITH HEAD-BANDAGE}',
@@ -39,8 +42,8 @@ ICONS = {
     'jail': '\N{POLICE OFFICER}',
     'shutdown': '\N{SKULL}',
 
-
     # Welcome / Roles
+    'welcome': '\N{WAVING HAND SIGN}',
     'agree': '\N{THUMBS UP SIGN}',
     'member': '\N{MAN}',
     'guest': '\N{EXTRATERRESTRIAL ALIEN}',
@@ -107,6 +110,7 @@ ICONS = {
     'hourglass': '\N{HOURGLASS WITH FLOWING SAND}',
     'person': '\N{BUST IN SILHOUETTE}',
     'bot': '\N{ROBOT FACE}',
+    'fun': '\N{FACE WITH STUCK-OUT TONGUE}',
     'news': '\N{NEWSPAPER}',
     'art': '\N{ARTIST PALETTE}',
     'tag': '\N{TICKET}',
