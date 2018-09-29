@@ -181,7 +181,6 @@ class SettingsModel:
 
         if not result.rowcount:
             self.add_guild_settings(guild)
-            return None
 
         prefix, max_delete_messages = result.fetchone()
         self.guild_settings_cache[guild] = GuildSettingsStorage(prefix, max_delete_messages)

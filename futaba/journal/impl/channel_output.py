@@ -17,9 +17,9 @@ A Listener that outputs messages to the configured Discord channel.
 import logging
 from io import BytesIO
 
-from ..listener import Listener
-
 import discord
+
+from ..listener import Listener
 
 logger = logging.getLogger(__name__)
 
