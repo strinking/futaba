@@ -54,24 +54,27 @@ class Settings:
         the bot's prefix, and uses the default one.
         '''
 
-        # Get prefix
         if prefix is None:
+            # Get prefix
             bot_prefix = self.bot.prefix(ctx.message)
             embed = discord.Embed(colour=discord.Colour.dark_teal())
             if ctx.guild is None:
-                embed.description = 'No command prefix, all messages are commands.'
+                embed.description = 'No command prefix, all messages are commands'
             else:
-                embed.description = f'Prefix for {ctx.guild.name} is `{bot_prefix}`.'
+                embed.description = f'Prefix for {ctx.guild.name} is `{bot_prefix}`'
             reaction = Reactions.SUCCESS
-
-        # Attempt to set prefix outside of guild
         elif ctx.guild is None and prefix is not None:
+            # Attempt to set prefix outside of guild
             embed = discord.Embed(colour=discord.Colour.dark_red())
             embed.description = 'Cannot set a command prefix outside of a server!'
             reaction = Reactions.FAIL
-
-        # Unset prefix
+        elif not mod_perm(ctx):
+            # Lacking authority to set prefix
+            embed = discord.Embed(colour=discord.Colour.dark_red())
+            embed.description = 'You do not have permission to set the prefix'
+            reaction = Reactions.DENY
         elif prefix == '_':
+            # Unset prefix
             with self.bot.sql.transaction():
                 self.bot.sql.settings.set_prefix(ctx.guild, None)
                 bot_prefix = self.bot.prefix(ctx.message)
@@ -79,15 +82,8 @@ class Settings:
             embed = discord.Embed(colour=discord.Colour.dark_teal())
             embed.description = f'Unset prefix for {ctx.guild.name}. (Default prefix: `{bot_prefix}`)'
             reaction = Reactions.SUCCESS
-
-        # Lacking authority to set prefix
-        elif not mod_perm(ctx):
-            embed = discord.Embed(colour=discord.Colour.dark_red())
-            embed.description = 'You do not have permission to set the prefix'
-            reaction = Reactions.DENY
-
-        # Set prefix
         else:
+            # Set prefix
             bot_prefix = re.sub(r'_$', ' ', prefix)
             with self.bot.sql.transaction():
                 self.bot.sql.settings.set_prefix(ctx.guild, bot_prefix)
