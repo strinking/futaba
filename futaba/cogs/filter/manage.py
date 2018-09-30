@@ -10,12 +10,12 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-import asyncio
 import logging
 import re
 from collections import defaultdict
 
-from futaba.enums import FilterType, Reactions
+from futaba.enums import FilterType
+from futaba.exceptions import CommandFailed
 from futaba.str_builder import StringBuilder
 from futaba.unicode import READABLE_CHAR_SET, unicode_repr
 from .filter import Filter
@@ -39,7 +39,7 @@ __all__ = [
 ]
 
 
-async def add_filter(bot, filters, message, location, level, text):
+async def add_filter(bot, filters, location, level, text):
     logger.info("Adding %r to server filter '%s' for '%s' (%d)",
             text, level.value, location.name, location.id)
 
@@ -51,12 +51,11 @@ async def add_filter(bot, filters, message, location, level, text):
                 bot.sql.filter.add_filter(location, level, text)
     except Exception as error:
         logger.error("Error adding filter", exc_info=error)
-        await Reactions.FAIL.add(message)
+        raise CommandFailed()
     else:
         filters[location][text] = (Filter(text), level)
-        await Reactions.SUCCESS.add(message)
 
-async def delete_filter(bot, filters, message, location, text):
+async def delete_filter(bot, filters, location, text):
     logger.info("Removing %r from server filter for '%s' (%d)",
             text, location.name, location.id)
 
@@ -65,15 +64,14 @@ async def delete_filter(bot, filters, message, location, text):
             if bot.sql.filter.delete_filter(location, text):
                 filters[location].pop(text, None)
                 logger.debug("Succesfully removed filter")
-                await Reactions.SUCCESS.add(message)
             else:
                 logger.debug("Filter was not present, deletion failed")
-                await Reactions.FAIL.add(message)
+                raise CommandFailed()
     except Exception as error:
         logger.error("Error deleting filter", exc_info=error)
-        await Reactions.FAIL.add(message)
+        raise CommandFailed()
 
-async def show_filter(all_filters, message, author, location_name):
+async def show_filter(all_filters, author, location_name):
     if all_filters:
         contents = []
         content = StringBuilder(f'**Filtered strings for {location_name}:**\n')
@@ -111,62 +109,49 @@ async def show_filter(all_filters, message, author, location_name):
     else:
         contents = [f'**No filtered strings for {location_name}**']
 
-    async def post_all():
-        for content in contents:
-            await author.send(content=content)
+    for content in contents:
+        await author.send(content=content)
 
-    await asyncio.gather(
-        post_all(),
-        Reactions.SUCCESS.add(message),
-    )
-
-async def check_hashsums(hashsums, message):
+async def check_hashsums(*hashsums):
     if not hashsums:
-        await Reactions.FAIL.add(message)
+        raise CommandFailed()
     elif not all(map(lambda h: len(h) == 40 and HEXADECIMAL_REGEX.match(h), hashsums)):
-        await asyncio.gather(
-            message.channel.send(content='SHA1 hashes are 40 hex digits long.'),
-            Reactions.FAIL.add(message),
-        )
+        raise CommandFailed(content='SHA1 hashes are 40 hex digits long.')
 
-async def add_content_filter(bot, filters, message, level, hexsum, description):
+async def add_content_filter(bot, guild, filters, level, hexsum, description):
     logger.info("Adding SHA1 to guild content filter '%s': %s", level.value, hexsum)
 
     try:
         hashsum = bytes.fromhex(hexsum)
         with bot.sql.transaction():
-            if hashsum in filters[message.guild]:
+            if hashsum in filters[guild]:
                 logger.debug("Updating existing content filter")
-                bot.sql.filter.update_content_filter(message.guild, level, hashsum, description)
+                bot.sql.filter.update_content_filter(guild, level, hashsum, description)
             else:
                 logger.debug("Adding new content filter")
-                bot.sql.filter.add_content_filter(message.guild, level, hashsum, description)
+                bot.sql.filter.add_content_filter(guild, level, hashsum, description)
 
-        filters[message.guild][hashsum] = (level, description)
+        filters[guild][hashsum] = (level, description)
     except Exception as error:
         logger.error("Error adding content filter", exc_info=error)
-        await Reactions.FAIL.add(message)
-    else:
-        await Reactions.SUCCESS.add(message)
+        raise CommandFailed()
 
-async def delete_content_filter(bot, filters, message, hexsums):
+async def delete_content_filter(bot, guild, filters, hexsums):
     logger.info("Removing SHA1s from guild content filter: %s", f'[", ".join(hexsums)]')
 
     try:
         hashsums = [bytes.fromhex(hexsum) for hexsum in hexsums]
         with bot.sql.transaction():
             for hashsum in hashsums:
-                if hashsum in filters[message.guild]:
-                    bot.sql.filter.delete_filter(message.guild, hashsum)
-                    filters[message.guild].pop(hashsum, None)
+                if hashsum in filters[guild]:
+                    bot.sql.filter.delete_filter(guild, hashsum)
+                    filters[guild].pop(hashsum, None)
                     logger.debug("Succesfully removed hashsum from filter")
                 else:
                     logger.debug("Filter was not present, not deleting")
     except Exception as error:
         logger.error("Error deleting filter(s)", exc_info=error)
-        await Reactions.FAIL.add(message)
-    else:
-        await Reactions.SUCCESS.add(message)
+        raise CommandFailed()
 
 async def show_content_filter(all_filters, message):
     if all_filters:
@@ -211,11 +196,5 @@ async def show_content_filter(all_filters, message):
     else:
         contents = (f'**No filtered SHA1 hashes for {message.guild.name}**',)
 
-    async def post_all():
-        for content in contents:
-            await message.author.send(content=content)
-
-    await asyncio.gather(
-        post_all(),
-        Reactions.SUCCESS.add(message),
-    )
+    for content in contents:
+        await message.author.send(content=content)

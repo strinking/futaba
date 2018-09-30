@@ -64,12 +64,11 @@ class Settings:
                 embed.description = 'No command prefix, all messages are commands'
             else:
                 embed.description = f'Prefix for {ctx.guild.name} is `{bot_prefix}`'
-            reaction = Reactions.SUCCESS
         elif ctx.guild is None and prefix is not None:
             # Attempt to set prefix outside of guild
             embed = discord.Embed(colour=discord.Colour.red())
             embed.description = 'Cannot set a command prefix outside of a server!'
-            reaction = Reactions.FAIL
+            raise CommandFailed(embed=embed)
         elif not mod_perm(ctx):
             # Lacking authority to set prefix
             embed = discord.Embed(colour=discord.Colour.red())
@@ -98,10 +97,7 @@ class Settings:
                     prefix=bot_prefix, default_prefix=self.bot.config.default_prefix)
             reaction = Reactions.SUCCESS
 
-        await asyncio.gather(
-            ctx.send(embed=embed),
-            reaction.add(ctx.message),
-        )
+        await ctx.send(embed=embed)
 
     @commands.command(name='maxdelete', aliases=['maxdeletemsg'])
     @commands.guild_only()
