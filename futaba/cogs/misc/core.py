@@ -64,8 +64,8 @@ class Miscellaneous:
         ''' Prints information about the running bot. '''
 
         pyver = sys.version_info
-        python_emoji = self.bot.get_emoji(490419105699069952) or ''
-        discord_emoji = self.bot.get_emoji(490419059964510210) or ''
+        python_emoji = self.bot.get_emoji(self.bot.config.python_emoji_id) or ''
+        discord_emoji = self.bot.get_emoji(self.bot.config.discord_emoji_id) or ''
 
         embed = discord.Embed()
         embed.set_thumbnail(url=self.bot.user.avatar_url)
