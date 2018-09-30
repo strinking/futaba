@@ -50,8 +50,11 @@ async def similar_users(bot, argument, max_entries=10) -> Iterable[discord.User]
     '''
 
     # Get exact matches, if any
-    user = await get_user(bot, argument, bot.users)
-    matching = [user] if user else []
+    try:
+        user = await get_user(bot, argument, bot.users)
+        matching = [user]
+    except BadArgument:
+        matching = []
 
     # Search case-insensitively
     argument = normalize_caseless(argument)
@@ -62,7 +65,8 @@ async def similar_users(bot, argument, max_entries=10) -> Iterable[discord.User]
         similar = similar_text(argument, normalize_caseless(user.name))
         if getattr(user, 'nick', None) is not None:
             similar = max(similar, similar_text(argument, normalize_caseless(user.nick)))
-        users.append((user, similar))
+        if user not in matching:
+            users.append((user, similar))
 
     # Sort by similarity
     users.sort(key=lambda p: p[1], reverse=True)
@@ -94,7 +98,7 @@ async def get_user(bot, argument, user_list):
             return user
 
     logger.debug("Checking if it's a username")
-    user = discord.utils.find(lambda u: name == normalize_caseless(u.name), user_list)
+    user = discord.utils.find(lambda u: argument == normalize_caseless(u.name), user_list)
     if user is not None:
         return user
 
@@ -110,7 +114,7 @@ async def get_user(bot, argument, user_list):
         return user
 
     logger.debug("No results found")
-    return BadArgument(f'Unable to find user with description "{argument}"')
+    raise BadArgument(f'Unable to find user with description "{argument}"')
 
 class UserConv(Converter):
     async def convert(self, ctx, argument) -> discord.User:

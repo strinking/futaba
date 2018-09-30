@@ -52,7 +52,7 @@ async def get_channel(bot, argument):
             return chan
 
     logger.debug("No results found")
-    return BadArgument(f'Unable to find channel with description "{argument}"')
+    raise BadArgument(f'Unable to find channel with description "{argument}"')
 
 class TextChannelConv(Converter):
     async def convert(self, ctx, argument) -> discord.TextChannel:

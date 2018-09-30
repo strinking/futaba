@@ -62,4 +62,5 @@ class RoleConv(Converter):
         if argument in ('@everyone', 'everyone', '@here', 'here', 'default'):
             return ctx.guild.default_role
 
-        return BadArgument(f'Unable to find role with description "{argument}"')
+        logger.debug("No results found")
+        raise BadArgument(f'Unable to find role with description "{argument}"')

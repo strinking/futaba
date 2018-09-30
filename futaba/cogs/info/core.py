@@ -23,7 +23,7 @@ from itertools import islice
 import discord
 from discord.ext import commands
 
-from futaba.converters import EmojiConv, GuildChanConv, RoleConv, UserConv
+from futaba.converters import EmojiConv, GuildChannelConv, RoleConv, UserConv
 from futaba.enums import Reactions
 from futaba.exceptions import CommandFailed
 from futaba.permissions import mod_perm
@@ -208,7 +208,7 @@ class Info:
         '''
 
         logger.info("Running ufind on '%s'", name)
-        users = similar_users(name, self.bot.users)
+        users = await similar_users(self.bot, name)
         users_not_in_guild = set(member.id for member in ctx.guild.members) if ctx.guild else set()
         descr = StringBuilder()
 
