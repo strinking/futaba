@@ -32,9 +32,8 @@ class CommandFailed(CommandError):
             self.kwargs['file'] = file
 
 class SendHelp(CommandError):
-    def __init__(self, command):
+    def __init__(self):
         super().__init__()
-        self.command = command
 
 class InvalidCommandContext(CommandError):
     pass

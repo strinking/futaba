@@ -92,7 +92,7 @@ class Filtering:
         '''
 
         if ctx.invoked_subcommand is None:
-            raise SendHelp(ctx.command)
+            raise SendHelp()
 
     @commands.group(name='ffilter', aliases=['filefilter', 'content', 'cfilter'])
     @commands.guild_only()
@@ -102,7 +102,7 @@ class Filtering:
         '''
 
         if ctx.invoked_subcommand is None:
-            raise SendHelp(ctx.command)
+            raise SendHelp()
 
     @ffilter.command(name='show', aliases=['display', 'list'])
     @commands.guild_only()
@@ -285,7 +285,7 @@ class Filtering:
         '''
 
         if ctx.subcommand_passed in ('server', 'srv', 's', 'guild', 'g'):
-            raise SendHelp(ctx.command)
+            raise SendHelp()
 
     @filter_guild.command(name='show', aliases=['display', 'list'])
     @commands.guild_only()
@@ -367,7 +367,7 @@ class Filtering:
         '''
 
         if ctx.subcommand_passed in ('chan', 'ch', 'c'):
-            raise SendHelp(ctx.command)
+            raise SendHelp()
 
     @filter_channel.command(name='show', aliases=['display', 'list'])
     @commands.guild_only()

@@ -182,7 +182,7 @@ class Alias:
         ''' Manages the list of suspected alternate accounts. '''
 
         if ctx.invoked_subcommand is None:
-            raise SendHelp(ctx.command)
+            raise SendHelp()
 
     @alts.command(name='add')
     @commands.guild_only()

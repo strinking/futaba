@@ -60,7 +60,7 @@ class Journal:
         ''' Configure channel output for bot journal events. '''
 
         if ctx.invoked_subcommand is None:
-            raise SendHelp(ctx.command)
+            raise SendHelp()
 
     @log.command(name='show', aliases=['display', 'list'])
     @commands.guild_only()
