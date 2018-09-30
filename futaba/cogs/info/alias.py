@@ -25,8 +25,7 @@ from discord.ext import commands
 from futaba import permissions
 from futaba.converters import UserConv
 from futaba.download import download_link
-from futaba.enums import Reactions
-from futaba.exceptions import SendHelp
+from futaba.exceptions import CommandFaild, SendHelp
 from futaba.str_builder import StringBuilder
 from futaba.utils import fancy_timedelta, user_discrim
 
@@ -207,11 +206,7 @@ class Alias:
             content.writeln(f'No user information found for `{second_name}`')
         if content:
             embed.description = str(content)
-            await asyncio.gather(
-                ctx.send(embed=embed),
-                Reactions.FAIL.add(ctx.message),
-            )
-            return
+            raise CommandFaild(embed=embed)
 
         with self.bot.sql.transaction():
             self.bot.sql.alias.add_possible_alt(ctx.guild, first_user, second_user)
@@ -229,11 +224,7 @@ class Alias:
         if user is None:
             embed = discord.Embed(colour=discord.Colour.red())
             embed.description = f'No user information found for `{name}`'
-            await asyncio.gather(
-                ctx.send(embed=embed),
-                Reactions.FAIL.add(ctx.message),
-            )
-            return
+            raise CommandFaild(embed=embed)
 
         with self.bot.sql.transaction():
             self.bot.sql.alias.all_delete_possible_alts(ctx.guild, user)
