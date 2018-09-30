@@ -56,10 +56,7 @@ class Miscellaneous:
         ms = duration.microseconds / 1000
         content = f'Pong! `{ms} ms`'
 
-        await asyncio.gather(
-            ctx.send(content=content),
-            Reactions.SUCCESS.add(ctx.message),
-        )
+        await ctx.send(content=content)
         self.journal.send('ping', ctx.guild, content, icon='ok')
 
     @commands.command(name='about', aliases=['aboutme', 'botinfo'])
@@ -84,10 +81,7 @@ class Miscellaneous:
         if ctx.guild is not None:
             embed.colour = ctx.guild.me.colour
 
-        await asyncio.gather(
-            ctx.send(embed=embed),
-            Reactions.SUCCESS.add(ctx.message),
-        )
+        await ctx.send(embed=embed)
 
     @commands.command(name='randomemoji', aliases=['randemoji', 'remoji'])
     async def random_emoji(self, ctx):
@@ -100,10 +94,7 @@ class Miscellaneous:
             return
 
         emoji = random.choice(self.bot.emojis)
-        await asyncio.gather(
-            ctx.send(content=str(emoji)),
-            Reactions.SUCCESS.add(ctx.message),
-        )
+        await ctx.send(content=str(emoji))
         content = f'Sent random emoji {emoji} to {ctx.channel.mention}.'
         self.journal.send('emoji/random', ctx.guild, content, icon='fun',
                 channel=ctx.channel, emoji=emoji)
@@ -158,14 +149,8 @@ class Miscellaneous:
             content.writeln('```')
             contents.append(content)
 
-        async def send_messages():
-            for content in contents:
-                await ctx.send(content=str(content))
-
-        await asyncio.gather(
-            send_messages(),
-            Reactions.SUCCESS.add(ctx.message),
-        )
+        for content in contents:
+            await ctx.send(content=str(content))
 
     @commands.command(name='shutdown', aliases=['halt'])
     @permissions.check_owner()

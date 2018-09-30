@@ -61,7 +61,6 @@ class Moderation:
             await asyncio.gather(
                 ctx.guild.kick(member, reason=f'{reason} - {user_discrim(ctx.author)}'),
                 ctx.send(embed=embed),
-                Reactions.SUCCESS.add(ctx.message)
             )
 
         except discord.errors.Forbidden:
@@ -91,7 +90,6 @@ class Moderation:
             await asyncio.gather(
                 ctx.guild.ban(member, reason=f'{reason} - {mod}'),
                 ctx.send(embed=embed),
-                Reactions.SUCCESS.add(ctx.message)
             )
 
             self.journal.send('member/ban', ctx.guild, content, icon='ban')
@@ -126,7 +124,6 @@ class Moderation:
             await asyncio.gather(
                 ctx.guild.ban(member, reason=f'{reason} - {mod}', delete_message_days=1),
                 ctx.send(embed=embed),
-                Reactions.SUCCESS.add(ctx.message)
             )
 
             await ctx.guild.unban(member, reason=f'{reason} - {mod}')
@@ -162,7 +159,6 @@ class Moderation:
             await asyncio.gather(
                 ctx.guild.unban(member, reason=f'{reason} - {mod}'),
                 ctx.send(embed=embed),
-                Reactions.SUCCESS.add(ctx.message)
             )
 
             self.journal.send('member/unban', ctx.guild, content, icon='unban', member=member)

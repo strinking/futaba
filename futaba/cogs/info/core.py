@@ -91,10 +91,7 @@ class Info:
         else:
             raise ValueError(f"Unknown emoji object returned: {emoji!r}")
 
-        await asyncio.gather(
-            ctx.send(embed=embed),
-            Reactions.SUCCESS.add(ctx.message),
-        )
+        await ctx.send(embed=embed)
 
     async def get_user(self, ctx, name):
         if name is None:
@@ -194,10 +191,7 @@ class Info:
         embed.add_field(name='Account age', value=fancy_timedelta(user.created_at))
 
         # Send them
-        await asyncio.gather(
-            Reactions.SUCCESS.add(ctx.message),
-            ctx.send(embed=embed),
-        )
+        await ctx.send(embed=embed)
 
     @commands.command(name='ufind', aliases=['userfind', 'usearch', 'usersearch'])
     async def ufind(self, ctx, *, name: str):
@@ -221,10 +215,7 @@ class Info:
         else:
             embed = discord.Embed(description='**No users found!**', colour=discord.Colour.red())
 
-        await asyncio.gather(
-            ctx.send(embed=embed),
-            Reactions.SUCCESS.add(ctx.message),
-        )
+        await ctx.send(embed=embed)
 
     @commands.command(name='rinfo', aliases=['roleinfo', 'role'])
     @commands.guild_only()
@@ -276,10 +267,7 @@ class Info:
 
         embed.add_field(name='Members', value=members)
 
-        await asyncio.gather(
-            ctx.send(embed=embed),
-            Reactions.SUCCESS.add(ctx.message),
-        )
+        await ctx.send(embed=embed)
 
     @commands.command(name='roles', aliases=['lroles', 'listroles'])
     @commands.guild_only()
@@ -303,21 +291,15 @@ class Info:
         if content:
             contents.append(str(content))
 
-        async def post_all():
-            for i, content in enumerate(contents):
-                embed = discord.Embed(description=content)
-                page = f'Page {i + 1}/{len(contents)}'
-                if i == 0:
-                    embed.set_footer(text=page)
-                else:
-                    embed.set_footer(text=f'{page} Roles in {ctx.guild.name}')
+        for i, content in enumerate(contents):
+            embed = discord.Embed(description=content)
+            page = f'Page {i + 1}/{len(contents)}'
+            if i == 0:
+                embed.set_footer(text=page)
+            else:
+                embed.set_footer(text=f'{page} Roles in {ctx.guild.name}')
 
-                await ctx.send(embed=embed)
-
-        await asyncio.gather(
-            post_all(),
-            Reactions.SUCCESS.add(ctx.message),
-        )
+            await ctx.send(embed=embed)
 
     @staticmethod
     async def get_messages(channels, ids):
@@ -393,8 +375,6 @@ class Info:
         for message, id in zip(messages, ids):
             await ctx.send(embed=make_embed(message, id))
 
-        await Reactions.SUCCESS.add(ctx.message)
-
     @commands.command(name='rawmessage', aliases=['raw', 'rawmsg'])
     @commands.guild_only()
     async def raw_message(self, ctx, *ids: int):
@@ -416,8 +396,6 @@ class Info:
                 escape_backticks(message.content),
                 '```',
             )))
-
-        await Reactions.SUCCESS.add(ctx.message)
 
     @commands.command(name='embeds')
     @commands.guild_only()
@@ -442,16 +420,11 @@ class Info:
             logger.debug("This message does not have any embeds")
             embed = discord.Embed(colour=discord.Colour.teal())
             embed.description = 'This message contains no embeds.'
-            await asyncio.gather(
-                ctx.send(embed=embed),
-                Reactions.SUCCESS.add(ctx.message),
-            )
+            await ctx.send(embed=embed)
             return
 
         for i, embed in enumerate(message.embeds, 1):
             await ctx.send(content=f'#{i}:', embed=embed)
-
-        await Reactions.SUCCESS.add(ctx.message)
 
     @commands.command(name='cinfo', aliases=['chaninfo', 'channelinfo'])
     @commands.guild_only()
@@ -506,10 +479,7 @@ class Info:
         else:
             raise ValueError(f"Unknown guild channel: {channel!r}")
 
-        await asyncio.gather(
-            ctx.send(embed=embed),
-            Reactions.SUCCESS.add(ctx.message),
-        )
+        await ctx.send(embed=embed)
 
     @commands.command(name='channels', aliases=['chans', 'listchannels', 'listchans'])
     @commands.guild_only()
@@ -542,10 +512,7 @@ class Info:
         embed.add_field(name='\N{STUDIO MICROPHONE} Voice channels', value=voice_channels)
         embed.add_field(name='\N{BAR CHART} Channel categories', value=channel_categories)
 
-        await asyncio.gather(
-            ctx.send(embed=embed),
-            Reactions.SUCCESS.add(ctx.message),
-        )
+        await ctx.send(embed=embed)
 
     @commands.command(name='ginfo', aliases=['guildinfo'])
     @commands.guild_only()
@@ -590,7 +557,4 @@ class Info:
         descr.writeln(f'\N{CROWN} **Owner:** {ctx.guild.owner.mention}')
         embed.description = str(descr)
 
-        await asyncio.gather(
-            ctx.send(embed=embed),
-            Reactions.SUCCESS.add(ctx.message),
-        )
+        await ctx.send(embed=embed)

@@ -244,10 +244,7 @@ class Welcome:
             embed = discord.Embed(colour=discord.Colour.dark_purple())
             embed.description = 'No welcome channel set for this guild!'
 
-        await asyncio.gather(
-            ctx.send(embed=embed),
-            Reactions.SUCCESS.add(ctx.message),
-        )
+        await ctx.send(embed=embed)
 
     @welcome.command(name='setchan')
     @commands.guild_only()
@@ -265,8 +262,6 @@ class Welcome:
         self.journal.send('channel/set', ctx.guild, content, icon='settings',
                 channel=channel, cause=ctx.author)
 
-        await Reactions.SUCCESS.add(ctx.message)
-
     @welcome.command(name='unsetchan')
     @commands.guild_only()
     @permissions.check_admin()
@@ -283,8 +278,6 @@ class Welcome:
         self.journal.send('channel/set', ctx.guild, content, icon='settings',
                 channel=None, cause=ctx.author)
 
-        await Reactions.SUCCESS.add(ctx.message)
-
     @welcome.command(name='format')
     async def format(self, ctx):
         ''' Lists all parameters accepted when formatting welcome messages. '''
@@ -299,8 +292,6 @@ class Welcome:
                 ctx.send(content="I don't have permission to DM you"),
                 Reactions.FAIL.add(ctx.message),
             )
-        else:
-            await Reactions.SUCCESS.add(ctx.message)
 
     @welcome.command(name='getmsg')
     @commands.guild_only()
@@ -322,10 +313,7 @@ class Welcome:
             f'**Agree message**: {agreed_message}',
         ))
 
-        await asyncio.gather(
-            ctx.send(embed=embed),
-            Reactions.SUCCESS.add(ctx.message),
-        )
+        await ctx.send(embed=embed)
 
     @welcome.command(name='welcomemsg')
     @commands.guild_only()
@@ -346,7 +334,6 @@ class Welcome:
 
         content = f'{"Set" if welcome_message else "Unset"} new welcome message for the guild'
         self.journal.send('message/welcome', ctx.guild, content, icon='welcome', message=welcome_message)
-        await Reactions.SUCCESS.add(ctx.message)
 
     @welcome.command(name='goodbyemsg')
     @commands.guild_only()
@@ -367,7 +354,6 @@ class Welcome:
 
         content = f'{"Set" if goodbye_message else "Unset"} new goodbye message for the guild'
         self.journal.send('message/goodbye', ctx.guild, content, icon='welcome', message=goodbye_message)
-        await Reactions.SUCCESS.add(ctx.message)
 
     @welcome.command(name='agreemsg')
     @commands.guild_only()
@@ -388,4 +374,3 @@ class Welcome:
 
         content = f'{"Set" if agreed_message else "Unset"} new agree message for the guild'
         self.journal.send('message/agree', ctx.guild, content, icon='welcome', message=agreed_message)
-        await Reactions.SUCCESS.add(ctx.message)

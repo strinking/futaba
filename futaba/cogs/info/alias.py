@@ -140,10 +140,7 @@ class Alias:
             embed.colour = discord.Colour.dark_purple()
             embed.description = f'No information found for {user.mention}'
 
-            await asyncio.gather(
-                ctx.send(embed=embed),
-                Reactions.SUCCESS.add(ctx.message),
-            )
+            await ctx.send(embed=embed)
             return
 
         embed.description = f'{user.mention}\n'
@@ -175,15 +172,9 @@ class Alias:
                 content.writeln(f'<@!{alt_user_id}>')
             embed.add_field(name='Possible alts', value=str(content))
 
-        async def send():
-            await ctx.send(embed=embed)
-            for i, file in enumerate(files, 1):
-                await ctx.send(content=f'#{i}', file=file)
-
-        await asyncio.gather(
-            send(),
-            Reactions.SUCCESS.add(ctx.message),
-        )
+        await ctx.send(embed=embed)
+        for i, file in enumerate(files, 1):
+            await ctx.send(content=f'#{i}', file=file)
 
     @commands.group(name='alts')
     @commands.guild_only()
@@ -227,7 +218,6 @@ class Alias:
 
         content = f'Added {first_user.mention} and {second_user.mention} as possible alt accounts.'
         self.journal.send('alt/add', ctx.guild, content, icon='item_add', users=[first_user, second_user])
-        await Reactions.SUCCESS.add(ctx.message)
 
     @alts.command(name='delchain')
     @commands.guild_only()
@@ -250,4 +240,3 @@ class Alias:
 
         content = f"Removed all alt accounts in {user.mention}'s chain"
         self.journal.send('alt/clear', ctx.guild, content, icon='item_clear', user=user)
-        await Reactions.SUCCESS.add(ctx.message)
