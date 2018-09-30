@@ -12,7 +12,6 @@
 
 import logging
 import re
-import unicodedata
 
 import discord
 from discord.ext.commands import BadArgument, Converter

@@ -21,7 +21,7 @@ import functools
 import logging
 from collections import defaultdict
 
-from sqlalchemy import and_, or_
+from sqlalchemy import and_
 from sqlalchemy import BigInteger, Boolean, Column, Enum, LargeBinary, Table, Unicode
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.exc import IntegrityError

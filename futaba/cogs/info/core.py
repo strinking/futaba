@@ -25,6 +25,7 @@ from discord.ext import commands
 
 from futaba.converters import EmojiConv, GuildChanConv, RoleConv, UserConv
 from futaba.enums import Reactions
+from futaba.exceptions import CommandFailed
 from futaba.permissions import mod_perm
 from futaba.similar import similar_users
 from futaba.str_builder import StringBuilder
@@ -95,19 +96,13 @@ class Info:
             Reactions.SUCCESS.add(ctx.message),
         )
 
-    @commands.command(name='uinfo', aliases=['userinfo'])
-    async def uinfo(self, ctx, *, name: str = None):
-        '''
-        Fetch information about a user, whether they are in the guild or not.
-        If no argument is passed, the caller is checked instead.
-        '''
-
+    async def get_user(self, ctx, name):
         if name is None:
-            user = ctx.author
+            return ctx.author
         else:
             conv = UserConv()
             try:
-                user = await conv.convert(ctx, name)
+                return await conv.convert(ctx, name)
             except commands.BadArgument:
                 name = escape_backticks(name)
                 prefix = self.bot.prefix(ctx.guild)
@@ -117,8 +112,16 @@ class Info:
                     ctx.send(embed=embed),
                     Reactions.FAIL.add(ctx.message),
                 )
-                return
+                raise CommandFailed(embed=embed)
 
+    @commands.command(name='uinfo', aliases=['userinfo'])
+    async def uinfo(self, ctx, *, name: str = None):
+        '''
+        Fetch information about a user, whether they are in the guild or not.
+        If no argument is passed, the caller is checked instead.
+        '''
+
+        user = await self.get_user(ctx, name)
         logger.info("Running uinfo on '%s' (%d)", user.name, user.id)
 
         # Status

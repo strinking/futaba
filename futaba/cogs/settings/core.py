@@ -29,7 +29,6 @@ from futaba.emojis import ICONS
 from futaba.enums import Reactions
 from futaba.exceptions import CommandFailed
 from futaba.permissions import admin_perm, mod_perm
-from futaba.utils import escape_backticks
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +116,7 @@ class Settings:
             # Get max delete messages
             max_delete_messages = self.bot.sql.settings.get_max_delete_messages(ctx.guild)
             embed = discord.Embed(colour=discord.Colour.dark_teal())
-            embed.description = f'Maximum number of messages that can be deleted in a single bulk operation is `{max_delete_messages}`'
+            embed.description = f'Maximum number of messages that can be deleted in bulk is `{max_delete_messages}`'
             reaction = Reactions.SUCCESS
         elif not admin_perm(ctx):
             # Lacking authority to set max delete messages
@@ -128,12 +127,12 @@ class Settings:
             # Negative value
             embed = discord.Embed(colour=discord.Colour.dark_red())
             embed.description = 'This value must be a positive, non-zero integer'
-            reation = Reactions.FAIL
+            reaction = Reactions.FAIL
         elif count >= 2 ** 32 - 1:
             # Over a sane upper limit
             embed = discord.Embed(colour=discord.Colour.dark_red())
             embed.description = 'This value is way too high. Try a more reasonable value.'
-            reation = Reactions.FAIL
+            reaction = Reactions.FAIL
         else:
             # Set max delete messages
             with self.bot.sql.transaction():
