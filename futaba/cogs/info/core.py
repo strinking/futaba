@@ -23,11 +23,12 @@ from itertools import islice
 import discord
 from discord.ext import commands
 
+from futaba.converters import EmojiConv, GuildChanConv, RoleConv, UserConv
 from futaba.enums import Reactions
-from futaba.parse import get_emoji, get_channel_id, get_role_id, get_user_id, similar_user_ids
 from futaba.permissions import mod_perm
+from futaba.similar import similar_users
 from futaba.str_builder import StringBuilder
-from futaba.utils import escape_backticks, fancy_timedelta, first, lowerbool, plural
+from futaba.utils import escape_backticks, fancy_timedelta, first, lowerbool, plural, user_discrim
 from futaba.unicode import UNICODE_CATEGORY_NAME
 
 logger = logging.getLogger(__package__)
@@ -49,18 +50,19 @@ class Info:
         self.bot = bot
 
     @commands.command(name='emoji', aliases=['emojis'])
-    async def emoji(self, ctx, name: str):
+    async def emoji(self, ctx, *, name: str):
         '''
         Fetches information about the given emojis.
         This supports both Discord and unicode emojis, and will check
         all guilds the bot is in.
         '''
 
-        if not name:
-            await Reactions.FAIL.add(ctx.message)
-            return
+        conv = EmojiConv()
+        try:
+            emoji = await conv.convert(ctx, name)
+        except commands.BadArgument:
+            emoji = None
 
-        emoji = get_emoji(name, self.bot.emojis)
         if emoji is None:
             embed = discord.Embed(colour=discord.Colour.dark_red())
             embed.set_author(name=name)
@@ -101,18 +103,21 @@ class Info:
         '''
 
         if name is None:
-            name = str(ctx.message.author.id)
+            user = ctx.author
+        else:
+            conv = UserConv()
+            try:
+                user = await conv.convert(ctx, name)
+            except commands.BadArgument:
+                embed = discord.Embed(colour=discord.Colour.dark_purple())
+                embed.description = f'No user found for `{name}`. Try `{self.bot.prefix(ctx.guild)}ufind`.'
+                await asyncio.gather(
+                    ctx.send(embed=embed),
+                    Reactions.FAIL.add(ctx.message),
+                )
+                return
 
-        logger.info("Running uinfo on '%s'", name)
-        user = await self.bot.find_user(name, ctx.guild)
-        if user is None:
-            embed = discord.Embed(colour=discord.Colour.dark_purple())
-            embed.description = f'No user found for `{name}`. Try `{self.bot.prefix(ctx.guild)}ufind`.'
-            await asyncio.gather(
-                ctx.send(embed=embed),
-                Reactions.FAIL.add(ctx.message),
-            )
-            return
+        logger.info("Running uinfo on '%s' (%d)", user.name, user.id)
 
         # Status
         if getattr(user, 'status', None):
@@ -123,7 +128,7 @@ class Info:
 
         embed = discord.Embed(description=descr)
         embed.timestamp = user.created_at
-        embed.set_author(name=f'{user.name}#{user.discriminator}')
+        embed.set_author(name=user_discrim(user))
         embed.set_thumbnail(url=user.avatar_url)
 
         # User colour
@@ -194,26 +199,19 @@ class Info:
         '''
         Perform a fuzzy search to find users who match the given name.
         They are listed with the closest matches first.
+        Users not in this guild are marked with a \N{GLOBE WITH MERIDIANS}.
         '''
 
         logger.info("Running ufind on '%s'", name)
-        user_ids = similar_user_ids(name, self.bot.users)
-        users_in_guild = set(member.id for member in getattr(ctx.guild, 'members', []))
-        found_users = False
+        users = similar_users(name, self.bot.users)
+        users_not_in_guild = set(member.id for member in ctx.guild.members) if ctx.guild else set()
+        descr = StringBuilder()
 
-        descr = StringBuilder('**Similar users found:**\n')
-        for user_id in user_ids:
-            user = self.bot.get_user(user_id)
-            if user is None:
-                user = await self.bot.get_user_info(user_id)
+        for user in users:
+            extra = '\N{GLOBE WITH MERIDIANS}' if user in users_not_in_guild else ''
+            descr.writeln(f'- {user.mention} {extra}')
 
-            logger.debug("Result for user ID %d: %r", user_id, user)
-            if user is not None:
-                extra = '' if user_id in users_in_guild else '\N{GLOBE WITH MERIDIANS}'
-                descr.writeln(f'- {user.mention} {extra}')
-                found_users = True
-
-        if found_users:
+        if users:
             embed = discord.Embed(description=str(descr), colour=discord.Colour.teal())
         else:
             embed = discord.Embed(description='**No users found!**', colour=discord.Colour.dark_red())
@@ -231,20 +229,17 @@ class Info:
         If no role is specified, it displays information about the default role.
         '''
 
-        if name in (None, '@everyone', 'everyone', '@here', 'here', 'default'):
+        if name is None:
             role = ctx.guild.default_role
         else:
-            id = get_role_id(name, ctx.guild.roles)
-            if id is None:
-                role = None
-            else:
-                role = discord.utils.get(ctx.guild.roles, id=id)
+            conv = RoleConv()
+            try:
+                role = await conv.convert(ctx, name)
+            except commands.BadArgument:
+                await Reactions.FAIL.add(ctx.message)
+                return
 
-        if role is None:
-            await Reactions.FAIL.add(ctx.message)
-            return
-
-        logger.info("Running rinfo on '%s'", role)
+        logger.info("Running rinfo on '%s' (%d)", role.name, role.id)
 
         embed = discord.Embed(colour=role.colour)
         embed.timestamp = role.created_at
@@ -457,17 +452,16 @@ class Info:
         '''
 
         if name is None:
-            name = str(ctx.channel.mention)
+            channel = ctx.channel
+        else:
+            conv = GuildChanConv()
+            try:
+                channel = await conv.convert(ctx, name)
+            except commands.BadArgument:
+                await Reactions.FAIL.add(ctx.message)
+                return
 
-        id = get_channel_id(name, ctx.guild.channels)
-        if id is None:
-            logger.debug("No user ID found!")
-            await Reactions.FAIL.add(ctx.message)
-            return
-
-        channel = ctx.guild.get_channel(id)
-        logger.info("Running cinfo on '%s'", channel.name)
-
+        logger.info("Running cinfo on '%s' (%d)", channel.name, channel.id)
         embed = discord.Embed()
         embed.timestamp = channel.created_at
         embed.add_field(name='ID', value=str(channel.id))

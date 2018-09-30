@@ -15,8 +15,8 @@ import re
 from itertools import islice
 from typing import Iterable
 
-import discord
 import textdistance
+import discord
 from discord.ext.commands import BadArgument, Converter
 
 from futaba.unicode import normalize_caseless
@@ -46,8 +46,7 @@ def similar_text(word1, word2) -> float:
 async def similar_users(bot, argument, max_entries=10) -> Iterable[discord.User]:
     '''
     Gets a list of user IDs that are similar to the argument.
-    They are ranked in order of similarity, marking users who are
-    not in the this guild.
+    They are ranked in order of similarity.
     '''
 
     # Get exact matches, if any
@@ -58,16 +57,16 @@ async def similar_users(bot, argument, max_entries=10) -> Iterable[discord.User]
     argument = normalize_caseless(argument)
 
     # Do a fuzzy text search among users
-    similar_users = []
+    users = []
     for user in bot.users:
         similar = similar_text(argument, normalize_caseless(user.name))
         if getattr(user, 'nick', None) is not None:
             similar = max(similar, similar_text(argument, normalize_caseless(user.nick)))
-        similar_users.append((user, similar))
+        users.append((user, similar))
 
     # Sort by similarity
-    similar_users.sort(key=lambda p: p[1], reverse=True)
-    matching.extend(user for user, similar in similar_users if similar > 0.3)
+    users.sort(key=lambda p: p[1], reverse=True)
+    matching.extend(user for user, similar in users if similar > 0.3)
 
     # Done
     return islice(matching, 0, max_entries)
