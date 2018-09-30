@@ -229,7 +229,7 @@ class Welcome:
         ''' Manages the welcome cog for managing new users and roles. '''
 
         if ctx.invoked_subcommand is None:
-            raise SendHelp(ctx.command)
+            raise SendHelp()
 
     @welcome.command(name='getchan')
     @commands.guild_only()

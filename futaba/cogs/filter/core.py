@@ -206,7 +206,7 @@ class Filtering:
         '''
 
         if ctx.subcommand_passed in ('immune', 'imm', 'ignore', 'ign'):
-            raise SendHelp(ctx.command)
+            raise SendHelp()
 
     @filter_immunity.command(name='add', aliases=['append', 'extend', 'new'])
     @commands.guild_only()
