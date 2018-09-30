@@ -17,7 +17,7 @@ max-cleanup-messages = "500"
 # Emojis to display for certain icons within the bot
 # Set to "0" to disable
 [emojis]
-futaba = "348727970074066944"
+anger = "496085813881470986"
 python = "490419105699069952"
 discordpy = "490419059964510210"
 

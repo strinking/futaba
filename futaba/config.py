@@ -31,7 +31,7 @@ Configuration = namedtuple(
         'owner_ids',
         'default_prefix',
         'max_cleanup_messages',
-        'futaba_emoji_id',
+        'anger_emoji_id',
         'python_emoji_id',
         'discord_py_emoji_id',
         'database_url',
@@ -72,7 +72,7 @@ def load_config(path):
     config_emoji = _get(config, 'emojis')
 
     try:
-        futaba_emoji_id = int(_get(config_emoji, 'futaba', 'emojis'))
+        anger_emoji_id = int(_get(config_emoji, 'anger', 'emojis'))
         python_emoji_id = int(_get(config_emoji, 'python', 'emojis'))
         discord_py_emoji_id = int(_get(config_emoji, 'discordpy', 'emojis'))
     except ValueError:
@@ -86,7 +86,7 @@ def load_config(path):
         owner_ids=owner_ids,
         default_prefix=prefix,
         max_cleanup_messages=max_cleanup_messages,
-        futaba_emoji_id=futaba_emoji_id,
+        anger_emoji_id=anger_emoji_id,
         python_emoji_id=python_emoji_id,
         discord_py_emoji_id=discord_py_emoji_id,
         database_url=db_url,

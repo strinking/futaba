@@ -236,9 +236,11 @@ class Bot(commands.AutoShardedBot):
         else:
             # Other exception, probably not meant to happen. Send it as an embed.
             logger.error("Unexpected error during command!", exc_info=error)
-            futaba_emoji = self.get_emoji(self.config.futaba_emoji_id) or '\N{GIRL}'
-            traceback_msg = traceback.format_exception(type(error), error, error.__traceback__)
+            anger_emoji = self.get_emoji(self.config.anger_emoji_id) or '\N{ANGER SYMBOL}'
+            traceback_lines = traceback.format_exception(type(error), error, error.__traceback__, limit=1)
+            traceback_lines.insert(0, '```py')
+            traceback_lines.append('```')
             embed = discord.Embed(colour=discord.Colour.red())
-            embed.title = f'{futaba_emoji}\N{ANGER SYMBOL}'
-            embed.description = f'```py\n{traceback_msg}\n```'
+            embed.title = f'{anger_emoji} Unexpected error occurred!'
+            embed.description = '\n'.join(traceback_lines)
             await ctx.send(embed=embed)
