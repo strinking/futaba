@@ -170,6 +170,13 @@ class Bot(commands.AutoShardedBot):
         with self.sql.transaction():
             self.sql.guilds.add_guild(guild)
 
+    async def on_command_completion(self, ctx):
+        '''
+        Add success reaction when any command completes successfully
+        '''
+
+        await Reactions.SUCCESS.add(ctx.message)
+    
     async def on_command_error(self, ctx, error):
         '''
         Handles errors when a command is invoked but raises an exception.
