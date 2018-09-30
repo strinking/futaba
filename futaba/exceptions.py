@@ -10,6 +10,8 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+from discord.ext.commands import CommandError
+
 __all__ = [
     'CommandFailed',
     'SendHelp',
@@ -17,7 +19,7 @@ __all__ = [
     'InvalidConfigError',
 ]
 
-class CommandFailed(RuntimeError):
+class CommandFailed(CommandError):
     def __init__(self, content=None, embed=None, file=None):
         super().__init__()
         self.kwargs = {}
@@ -29,12 +31,12 @@ class CommandFailed(RuntimeError):
         if file is not None:
             self.kwargs['file'] = file
 
-class SendHelp(RuntimeError):
+class SendHelp(CommandError):
     def __init__(self, command):
         super().__init__()
         self.command = command
 
-class InvalidCommandContext(RuntimeError):
+class InvalidCommandContext(CommandError):
     pass
 
 class InvalidConfigError(RuntimeError):
