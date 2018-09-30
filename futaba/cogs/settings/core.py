@@ -23,11 +23,11 @@ import discord
 from discord.ext import commands
 
 from futaba import permissions
+from futaba.converters import RoleConv
 from futaba.emojis import ICONS
 from futaba.enums import Reactions
-from futaba.parse import get_role_id
+from futaba.exceptions import CommandFailed
 from futaba.permissions import admin_perm, mod_perm
-from futaba.utils import escape_backticks
 
 logger = logging.getLogger(__name__)
 
@@ -115,7 +115,7 @@ class Settings:
             # Get max delete messages
             max_delete_messages = self.bot.sql.settings.get_max_delete_messages(ctx.guild)
             embed = discord.Embed(colour=discord.Colour.dark_teal())
-            embed.description = f'Maximum number of messages that can be deleted in a single bulk operation is `{max_delete_messages}`'
+            embed.description = f'Maximum number of messages that can be deleted in bulk is `{max_delete_messages}`'
             reaction = Reactions.SUCCESS
         elif not admin_perm(ctx):
             # Lacking authority to set max delete messages
@@ -126,12 +126,12 @@ class Settings:
             # Negative value
             embed = discord.Embed(colour=discord.Colour.dark_red())
             embed.description = 'This value must be a positive, non-zero integer'
-            reation = Reactions.FAIL
+            reaction = Reactions.FAIL
         elif count >= 2 ** 32 - 1:
             # Over a sane upper limit
             embed = discord.Embed(colour=discord.Colour.dark_red())
             embed.description = 'This value is way too high. Try a more reasonable value.'
-            reation = Reactions.FAIL
+            reaction = Reactions.FAIL
         else:
             # Set max delete messages
             with self.bot.sql.transaction():
@@ -170,24 +170,15 @@ class Settings:
             Reactions.SUCCESS.add(ctx.message),
         )
 
-    async def get_role(self, ctx, name):
-        role_id = get_role_id(name, ctx.guild.roles)
-        role = discord.utils.get(ctx.guild.roles, id=role_id)
+    async def check_role(self, ctx, role):
         embed = discord.Embed(colour=discord.Colour.dark_red())
-        if role is None:
-            embed.description = f'No role with description `{escape_backticks(name)}` found'
-            await asyncio.gather(
-                ctx.send(embed=embed),
-                Reactions.FAIL.add(ctx.message),
-            )
-            return None
-        elif role.is_default():
+        if role.is_default():
             embed.description = '@everyone role cannot be assigned for this purpose'
             await asyncio.gather(
                 ctx.send(embed=embed),
                 Reactions.FAIL.add(ctx.message),
             )
-            return None
+            raise CommandFailed(embed=embed)
 
         special_roles = self.bot.sql.settings.get_special_roles(ctx.guild)
         if role in special_roles:
@@ -196,25 +187,19 @@ class Settings:
                 ctx.send(embed=embed),
                 Reactions.FAIL.add(ctx.message),
             )
-            return None
-
-        return role
+            raise CommandFailed(embed=embed)
 
     @commands.command(name='setmember')
     @commands.guild_only()
     @permissions.check_mod()
-    async def set_member_role(self, ctx, *, name: str = None):
+    async def set_member_role(self, ctx, *, role: RoleConv = None):
         ''' Set the member role for this guild. No argument to unset. '''
 
         logger.info("Setting member role for guild '%s' (%d) to '%s'",
-                ctx.guild.name, ctx.guild.id, name)
+                ctx.guild.name, ctx.guild.id, role)
 
-        if name is None:
-            role = None
-        else:
-            role = await self.get_role(ctx, name)
-            if role is None:
-                return
+        if role is not None:
+            await self.check_role(ctx, role)
 
         with self.bot.sql.transaction():
             self.bot.sql.settings.set_special_roles(ctx.guild, member=role)
@@ -236,18 +221,14 @@ class Settings:
     @commands.command(name='setguest')
     @commands.guild_only()
     @permissions.check_mod()
-    async def set_guest_role(self, ctx, *, name: str = None):
+    async def set_guest_role(self, ctx, *, role: RoleConv = None):
         ''' Set the guest role for this guild. No argument to unset. '''
 
         logger.info("Setting guest role for guild '%s' (%d) to '%s'",
-                ctx.guild.name, ctx.guild.id, name)
+                ctx.guild.name, ctx.guild.id, role)
 
-        if name is None:
-            role = None
-        else:
-            role = await self.get_role(ctx, name)
-            if role is None:
-                return
+        if role is not None:
+            await self.check_role(ctx, role)
 
         with self.bot.sql.transaction():
             self.bot.sql.settings.set_special_roles(ctx.guild, guest=role)
@@ -269,18 +250,14 @@ class Settings:
     @commands.command(name='setmute')
     @commands.guild_only()
     @permissions.check_mod()
-    async def set_mute_role(self, ctx, *, name: str = None):
+    async def set_mute_role(self, ctx, *, role: RoleConv = None):
         ''' Set the mute role for this guild. No argument to unset. '''
 
         logger.info("Setting mute role for guild '%s' (%d) to '%s'",
-                ctx.guild.name, ctx.guild.id, name)
+                ctx.guild.name, ctx.guild.id, role)
 
-        if name is None:
-            role = None
-        else:
-            role = await self.get_role(ctx, name)
-            if role is None:
-                return
+        if role is not None:
+            await self.check_role(ctx, role)
 
         with self.bot.sql.transaction():
             self.bot.sql.settings.set_special_roles(ctx.guild, mute=role)
@@ -302,18 +279,14 @@ class Settings:
     @commands.command(name='setjail')
     @commands.guild_only()
     @permissions.check_mod()
-    async def set_jail_role(self, ctx, *, name: str = None):
+    async def set_jail_role(self, ctx, *, role: RoleConv = None):
         ''' Set the mute role for this guild. No argument to unset. '''
 
         logger.info("Setting mute role for guild '%s' (%d) to '%s'",
-                ctx.guild.name, ctx.guild.id, name)
+                ctx.guild.name, ctx.guild.id, role)
 
-        if name is None:
-            role = None
-        else:
-            role = await self.get_role(ctx, name)
-            if role is None:
-                return
+        if role is not None:
+            await self.check_role(ctx, role)
 
         with self.bot.sql.transaction():
             self.bot.sql.settings.set_special_roles(ctx.guild, jail=role)

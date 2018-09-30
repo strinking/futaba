@@ -1,5 +1,5 @@
 #
-# __init__.py
+# converters/utils.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
@@ -10,12 +10,10 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-'''
-futaba - A Discord Mod bot for the Programming server
-'''
+import re
 
-from . import client, config, converters, download, emojis, enums, \
-        exceptions, journal, permissions, similar, sql, str_builder, \
-        unicode, utils
+__all__ = [
+    'ID_REGEX',
+]
 
-__version__ = '0.1.2'
+ID_REGEX = re.compile(r'([0-9]{15,21})$')

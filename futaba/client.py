@@ -18,7 +18,6 @@ import logging
 import datetime
 import os
 import sys
-from typing import Optional
 
 import discord
 from discord.ext import commands
@@ -29,7 +28,6 @@ from .config import Configuration
 from .enums import Reactions
 from .exceptions import CommandFailed, InvalidCommandContext, SendHelp
 from .journal import Broadcaster, LoggingOutputListener
-from .parse import get_user_id
 from .sql import SqlHandler
 from .utils import plural
 
@@ -203,20 +201,3 @@ class Bot(commands.AutoShardedBot):
         elif isinstance(error, SendHelp):
             # TODO send help message for error.command
             pass
-
-    async def find_user(self, name, guild=None) -> Optional[discord.User]:
-        ''' Gets the user described by the given string '''
-        id = get_user_id(name, self.users)
-        if id is None:
-            return None
-
-        user = None
-        if guild is not None:
-            user = guild.get_member(id)
-
-        if user is None:
-            user = self.get_user(id)
-            if user is None:
-                user = await self.get_user_info(id)
-
-        return user

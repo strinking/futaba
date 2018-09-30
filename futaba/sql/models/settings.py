@@ -22,7 +22,7 @@ import logging
 
 import discord
 from sqlalchemy import BigInteger, Column, Table, Unicode
-from sqlalchemy import CheckConstraint, ForeignKey, SmallInteger, UniqueConstraint
+from sqlalchemy import CheckConstraint, ForeignKey, SmallInteger
 from sqlalchemy.sql import select
 
 from ..hooks import register_hook
