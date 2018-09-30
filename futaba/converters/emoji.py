@@ -61,7 +61,7 @@ class EmojiConv(Converter):
                 return emoji
 
         logger.debug("Checking if it's the name of a discord emoji")
-        emoji = discord.utils.find(lamba e: name == normalize_caseless(e.name), ctx.bot.emojis)
+        emoji = discord.utils.find(lambda e: argument == normalize_caseless(e.name), ctx.bot.emojis)
         if emoji is not None:
             return emoji
 

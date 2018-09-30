@@ -12,7 +12,6 @@
 
 import logging
 import re
-import unicodedata
 
 import discord
 from discord.ext.commands import BadArgument, Converter
@@ -63,8 +62,8 @@ class TextChannelConv(Converter):
         return chan
 
 class GuildChannelConv(Converter):
-    async def convert(self, ctx, argument) -> discord.GuildChannel:
+    async def convert(self, ctx, argument) -> discord.abc.GuildChannel:
         chan = await get_channel(ctx.bot, argument)
-        if not isinstance(chan, discord.GuildChannel):
+        if not isinstance(chan, discord.abc.GuildChannel):
             raise BadArgument(f'Found channel that matched "{argument}", but was not a guild channel')
         return chan
