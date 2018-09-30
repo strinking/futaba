@@ -234,8 +234,6 @@ class Filtering:
             self.journal.send('immunity/new', ctx.guild, content, icon='person',
                     member=member, cause=ctx.author)
 
-        await Reactions.SUCCESS.add(ctx.message)
-
     @filter_immunity.command(name='remove', aliases=['rm', 'delete', 'del'])
     @commands.guild_only()
     @permissions.check_admin()
@@ -261,8 +259,6 @@ class Filtering:
             content = f'Removed {member.name}#{member.discriminator} from filter immunity list'
             self.journal.send('immunity/remove', ctx.guild, content, icon='person')
 
-        await Reactions.SUCCESS.add(ctx.message)
-
     @filter_immunity.command(name='show', aliases=['display', 'list'])
     @commands.guild_only()
     async def filter_immunity_show(self, ctx):
@@ -279,10 +275,7 @@ class Filtering:
             embed = discord.Embed()
             embed.set_author(name='No members with special filter immunity')
 
-        await asyncio.gather(
-            ctx.send(embed=embed),
-            Reactions.SUCCESS.add(ctx.message),
-        )
+        await ctx.send(embed=embed)
 
     @filter.group(name='server', aliases=['srv', 's', 'guild', 'g'])
     @commands.guild_only()

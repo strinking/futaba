@@ -165,10 +165,7 @@ class Settings:
             f'{ICONS["jail"]} Jail: {mention(roles.jail)}',
         ))
 
-        await asyncio.gather(
-            ctx.send(embed=embed),
-            Reactions.SUCCESS.add(ctx.message),
-        )
+        await ctx.send(embed=embed)
 
     async def check_role(self, ctx, role):
         embed = discord.Embed(colour=discord.Colour.red())
@@ -212,10 +209,7 @@ class Settings:
             embed.description = 'Unset member role'
             content = 'Unset the member role'
 
-        await asyncio.gather(
-            ctx.send(embed=embed),
-            Reactions.SUCCESS.add(ctx.message),
-        )
+        await ctx.send(embed=embed)
         self.journal.send('roles/member', ctx.guild, content, icon='settings', role=role)
 
     @commands.command(name='setguest')
@@ -241,10 +235,7 @@ class Settings:
             embed.description = 'Unset guest role'
             content = 'Unset the guest role'
 
-        await asyncio.gather(
-            ctx.send(embed=embed),
-            Reactions.SUCCESS.add(ctx.message),
-        )
+        await ctx.send(embed=embed)
         self.journal.send('roles/guest', ctx.guild, content, icon='settings', role=role)
 
     @commands.command(name='setmute')
@@ -270,10 +261,7 @@ class Settings:
             embed.description = 'Unset mute role'
             content = 'Unset the mute role'
 
-        await asyncio.gather(
-            ctx.send(embed=embed),
-            Reactions.SUCCESS.add(ctx.message),
-        )
+        await ctx.send(embed=embed)
         self.journal.send('roles/mute', ctx.guild, content, icon='settings', role=role)
 
     @commands.command(name='setjail')
@@ -299,8 +287,5 @@ class Settings:
             embed.description = 'Unset jail role'
             content = 'Unset the jail role'
 
-        await asyncio.gather(
-            ctx.send(embed=embed),
-            Reactions.SUCCESS.add(ctx.message),
-        )
+        await ctx.send(embed=embed)
         self.journal.send('roles/jail', ctx.guild, content, icon='settings', role=role)

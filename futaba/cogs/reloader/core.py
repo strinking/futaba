@@ -92,10 +92,7 @@ class Reloader:
             logger.info("Loaded cog: %s", cogname)
             embed = discord.Embed(colour=discord.Colour.green(), description=f'```\n{cogname}\n```')
             embed.set_author(name='Loaded')
-            await asyncio.gather(
-                ctx.send(embed=embed),
-                Reactions.SUCCESS.add(ctx.message),
-            )
+            await ctx.send(embed=embed)
             content = f'Successfully loaded cog {cogname}'
             self.journal.send('load', ctx.guild, content, icon='cog', cogname=cogname)
 
@@ -137,10 +134,7 @@ class Reloader:
             logger.info("Unloaded cog: %s", cogname)
             embed = discord.Embed(colour=discord.Colour.green(), description=f'```\n{cogname}\n```')
             embed.set_author(name='Unloaded')
-            await asyncio.gather(
-                ctx.send(embed=embed),
-                Reactions.SUCCESS.add(ctx.message),
-            )
+            await ctx.send(embed=embed)
             content = f'Successfully unloaded cog {cogname}'
             self.journal.send('unload', ctx.guild, content, icon='cog', cogname=cogname)
 
@@ -183,10 +177,7 @@ class Reloader:
             logger.info("Reloaded cog: %s", cogname)
             embed = discord.Embed(colour=discord.Colour.green(), description=f'```\n{cogname}\n```')
             embed.set_author(name='Reloaded')
-            await asyncio.gather(
-                ctx.send(embed=embed),
-                Reactions.SUCCESS.add(ctx.message),
-            )
+            await ctx.send(embed=embed)
             content = f'Successfully reloaded cog {cogname}'
             self.journal.send('reload', ctx.guild, content, icon='cog', cogname=cogname)
 

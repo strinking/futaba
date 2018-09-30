@@ -87,10 +87,7 @@ class Journal:
             embed = discord.Embed(colour=discord.Colour.dark_purple())
             embed.set_author(name=f'No journal outputs!')
 
-        await asyncio.gather(
-            ctx.send(embed=embed),
-            Reactions.SUCCESS.add(ctx.message),
-        )
+        await ctx.send(embed=embed)
 
     def log_updated_message(self, channel):
         outputs = list(self.bot.sql.journal.get_journals_on_channel(channel))
@@ -135,10 +132,7 @@ class Journal:
             else:
                 journal_sql.add_journal_channel(channel, path, recursive)
 
-        await asyncio.gather(
-            channel.send(content=self.log_updated_message(channel)),
-            Reactions.SUCCESS.add(ctx.message),
-        )
+        await channel.send(content=self.log_updated_message(channel))
         content = f'Added journal logger to {channel.mention} for `{path}`'
         self.journal.send('channel/add', ctx.guild, content, icon='journal',
                 channel=channel, path=path, recursive=recursive)
@@ -168,10 +162,7 @@ class Journal:
         with self.bot.sql.transaction():
             self.bot.sql.journal.delete_journal_channel(channel, path)
 
-        await asyncio.gather(
-            channel.send(content=self.log_updated_message(channel)),
-            Reactions.SUCCESS.add(ctx.message),
-        )
+        await channel.send(content=self.log_updated_message(channel))
         content = f'Removed journal logger to {channel.mention} for `{path}`'
         self.journal.send('channel/remove', ctx.guild, content, icon='journal',
                 channel=channel, path=path)

@@ -125,9 +125,6 @@ class Cleanup:
         content = f'Cleanup by {causer} in {channel.mention} deleted these messages:'
         self.dump.send('count', ctx.guild, content, icon='delete', file=file)
 
-        # Done
-        await Reactions.SUCCESS.add(ctx.message)
-
     @commands.command(name='cleanupuser', aliases=['cleanuser'])
     @commands.guild_only()
     @permissions.check_mod()
@@ -159,9 +156,6 @@ class Cleanup:
         file = self.dump_messages(messages)
         content = f'Cleanup by {causer} of {user.mention} in {channel.mention} deleted these messages:'
         self.dump.send('user', ctx.guild, content, icon='delete', file=file)
-
-        # Done
-        await Reactions.SUCCESS.add(ctx.message)
 
     @commands.command(name='cleanuptext', aliases=['cleantext'])
     @commands.guild_only()
@@ -196,6 +190,3 @@ class Cleanup:
         file = self.dump_messages(messages)
         content = f'Cleanup by {causer} in {channel.mention} of `{text}` deleted these messages:'
         self.dump.send('text', ctx.guild, content, icon='delete', file=file)
-
-        # Done
-        await Reactions.SUCCESS.add(ctx.message)
