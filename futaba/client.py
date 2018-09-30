@@ -29,7 +29,7 @@ from .cogs.reloader import Reloader
 from .config import Configuration
 from .converters.annotations import ANNOTATIONS
 from .enums import Reactions
-from .exceptions import CommandFailed, InvalidCommandContext, SendHelp
+from .exceptions import CommandFailed, InvalidCommandContext, ManualCheckFailure, SendHelp
 from .journal import Broadcaster, LoggingOutputListener
 from .sql import SqlHandler
 from .utils import plural
@@ -190,12 +190,6 @@ class Bot(commands.AutoShardedBot):
             # Ignore no command found as we don't care if it wasn't one of our commands
             pass
 
-        elif isinstance(error, commands.errors.CheckFailure):
-            # Tell the user they don't have the permission to tun the command
-
-            logger.info("Permission check for command failed")
-            await Reactions.DENY.add(ctx.message)
-
         elif isinstance(error, commands.MissingRequiredArgument):
             # Tell you user they are missing a required argument
 
@@ -214,6 +208,21 @@ class Bot(commands.AutoShardedBot):
                 ctx.send(embed=embed),
                 Reactions.MISSING.add(ctx.message),
             )
+
+        elif isinstance(error, commands.errors.CheckFailure):
+            # Tell the user they don't have the permission to tun the command
+
+            logger.info("Permission check for command failed")
+            await Reactions.DENY.add(ctx.message)
+
+        elif isinstance(error, ManualCheckFailure):
+            # Tell the user they don't have permission and reprt the error message if any
+            logger.info("Manual permission check for command failed")
+
+            if error.kwargs:
+                await ctx.send(**error.kwargs)
+
+            await Reactions.DENY.add(ctx.message)
 
         elif isinstance(error, CommandFailed):
             # The command failed, report the error message (if any) and send the FAIL reaction
