@@ -19,6 +19,7 @@ import logging
 import datetime
 import os
 import sys
+import traceback
 
 import discord
 from discord.ext import commands
@@ -227,3 +228,13 @@ class Bot(commands.AutoShardedBot):
         elif isinstance(error, SendHelp):
             # TODO send help message for error.command
             pass
+
+        else:
+            # Other exception, probably not meant to happen. Send it as an embed.
+            logger.error("Unexpected error during command!", exc_info=error)
+            futaba_emoji = self.get_emoji(self.config.futaba_emoji_id) or '\N{GIRL}'
+            traceback_msg = traceback.format_exception(type(error), error, error.__traceback__)
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.title = f'{futaba_emoji}\N{ANGER SYMBOL}'
+            embed.description = f'```py\n{traceback_msg}\n```'
+            await ctx.send(embed=embed)
