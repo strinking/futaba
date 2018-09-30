@@ -65,7 +65,7 @@ class Info:
             emoji = None
 
         if emoji is None:
-            embed = discord.Embed(colour=discord.Colour.dark_red())
+            embed = discord.Embed(colour=discord.Colour.red())
             embed.set_author(name=name)
             embed.description = 'No emoji with this name found or not in the same guild.'
         elif isinstance(emoji, discord.Emoji):
@@ -106,7 +106,7 @@ class Info:
             except commands.BadArgument:
                 name = escape_backticks(name)
                 prefix = self.bot.prefix(ctx.guild)
-                embed = discord.Embed(colour=discord.Colour.dark_red())
+                embed = discord.Embed(colour=discord.Colour.red())
                 embed.description = f'No user found for `{name}`. Try `{prefix}ufind`.'
                 await asyncio.gather(
                     ctx.send(embed=embed),
@@ -219,7 +219,7 @@ class Info:
         if users:
             embed = discord.Embed(description=str(descr), colour=discord.Colour.teal())
         else:
-            embed = discord.Embed(description='**No users found!**', colour=discord.Colour.dark_red())
+            embed = discord.Embed(description='**No users found!**', colour=discord.Colour.red())
 
         await asyncio.gather(
             ctx.send(embed=embed),
@@ -241,7 +241,7 @@ class Info:
             try:
                 role = await conv.convert(ctx, name)
             except commands.BadArgument:
-                embed = discord.Embed(colour=discord.Colour.dark_red())
+                embed = discord.Embed(colour=discord.Colour.red())
                 embed.description = f'No role found in this guild for `{escape_backticks(name)}`.'
                 await asyncio.gather(
                     ctx.send(embed=embed),
@@ -349,7 +349,7 @@ class Info:
 
         def make_embed(message, id):
             if message is None:
-                embed = discord.Embed(colour=discord.Colour.dark_red())
+                embed = discord.Embed(colour=discord.Colour.red())
                 embed.description = f'No message with id `{id}` found'
                 embed.timestamp = discord.utils.snowflake_time(id)
             else:
@@ -430,7 +430,7 @@ class Info:
         message = await self.get_message(ctx.guild.text_channels, id)
         if message is None:
             logger.debug("No message with this id found")
-            embed = discord.Embed(colour=discord.Colour.dark_red())
+            embed = discord.Embed(colour=discord.Colour.red())
             embed.description = f'No message with id `{id}` found'
             await asyncio.gather(
                 ctx.send(embed=embed),
@@ -469,7 +469,7 @@ class Info:
                 channel = await conv.convert(ctx, name)
             except commands.BadArgument:
                 logger.debug("No channel with this description found")
-                embed = discord.Embed(colour=discord.Colour.dark_red())
+                embed = discord.Embed(colour=discord.Colour.red())
                 embed.description = f'No channel found in this guild for `{escape_backticks(name)}`'
                 await Reactions.FAIL.add(ctx.message)
                 return
