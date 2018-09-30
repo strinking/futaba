@@ -41,10 +41,10 @@ class Journal:
     )
 
     def __init__(self, bot):
+        bot.journal_cog = self
         self.bot = bot
         self.router = Router()
         self.journal = bot.get_broadcaster('/journal')
-        bot.journal_cog = self
 
         logger.info("Loading journal output channels from the database")
         with bot.sql.transaction():
