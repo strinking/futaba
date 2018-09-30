@@ -37,5 +37,6 @@ class Broadcaster:
         path = self.path.joinpath(subpath)
 
         # Queue up event
-        logger.debug("Sending journal entry to %s: '%s'", path, content)
+        logger.debug("Sending journal entry to %s: '%s'. Attributes: %s.",
+                path, content, ', '.join(attributes.keys()) or '(none)')
         self.router.queue.put_nowait((path, guild, content, attributes))

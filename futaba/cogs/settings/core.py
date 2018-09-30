@@ -26,7 +26,7 @@ from futaba import permissions
 from futaba.emojis import ICONS
 from futaba.enums import Reactions
 from futaba.parse import get_role_id
-from futaba.permissions import mod_perm
+from futaba.permissions import admin_perm, mod_perm
 from futaba.utils import escape_backticks
 
 logger = logging.getLogger(__name__)
@@ -56,24 +56,27 @@ class Settings:
         the bot's prefix, and uses the default one.
         '''
 
-        # Get prefix
         if prefix is None:
+            # Get prefix
             bot_prefix = self.bot.prefix(ctx.message)
             embed = discord.Embed(colour=discord.Colour.dark_teal())
             if ctx.guild is None:
-                embed.description = 'No command prefix, all messages are commands.'
+                embed.description = 'No command prefix, all messages are commands'
             else:
-                embed.description = f'Prefix for {ctx.guild.name} is `{bot_prefix}`.'
+                embed.description = f'Prefix for {ctx.guild.name} is `{bot_prefix}`'
             reaction = Reactions.SUCCESS
-
-        # Attempt to set prefix outside of guild
         elif ctx.guild is None and prefix is not None:
+            # Attempt to set prefix outside of guild
             embed = discord.Embed(colour=discord.Colour.dark_red())
             embed.description = 'Cannot set a command prefix outside of a server!'
             reaction = Reactions.FAIL
-
-        # Unset prefix
+        elif not mod_perm(ctx):
+            # Lacking authority to set prefix
+            embed = discord.Embed(colour=discord.Colour.dark_red())
+            embed.description = 'You do not have permission to set the prefix'
+            reaction = Reactions.DENY
         elif prefix == '_':
+            # Unset prefix
             with self.bot.sql.transaction():
                 self.bot.sql.settings.set_prefix(ctx.guild, None)
                 bot_prefix = self.bot.prefix(ctx.message)
@@ -83,15 +86,8 @@ class Settings:
             self.journal.send('prefix', ctx.guild, 'Unset bot command prefix', icon='settings',
                     prefix=None, default_prefix=self.bot.config.default_prefix)
             reaction = Reactions.SUCCESS
-
-        # Lacking authority to set prefix
-        elif not mod_perm(ctx):
-            embed = discord.Embed(colour=discord.Colour.dark_red())
-            embed.description = 'You do not have permission to set the prefix'
-            reaction = Reactions.DENY
-
-        # Set prefix
         else:
+            # Set prefix
             bot_prefix = re.sub(r'_$', ' ', prefix)
             with self.bot.sql.transaction():
                 self.bot.sql.settings.set_prefix(ctx.guild, bot_prefix)
@@ -100,6 +96,49 @@ class Settings:
             embed.description = f'Set prefix for {ctx.guild.name} to `{bot_prefix}`'
             self.journal.send('prefix', ctx.guild, 'Unset bot command prefix', icon='settings',
                     prefix=bot_prefix, default_prefix=self.bot.config.default_prefix)
+            reaction = Reactions.SUCCESS
+
+        await asyncio.gather(
+            ctx.send(embed=embed),
+            reaction.add(ctx.message),
+        )
+
+    @commands.command(name='maxdelete', aliases=['maxdeletemsg'])
+    @commands.guild_only()
+    async def max_delete(self, ctx, count: int = None):
+        '''
+        Gets the current setting for maximum messages to bulk delete.
+        If you're an administraotr, you can change this value.
+        '''
+
+        if count is None:
+            # Get max delete messages
+            max_delete_messages = self.bot.sql.settings.get_max_delete_messages(ctx.guild)
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
+            embed.description = f'Maximum number of messages that can be deleted in a single bulk operation is `{max_delete_messages}`'
+            reaction = Reactions.SUCCESS
+        elif not admin_perm(ctx):
+            # Lacking authority to set max delete messages
+            embed = discord.Embed(colour=discord.Colour.dark_red())
+            embed.description = 'You do not have permission to set the maximum deletable messages'
+            reaction = Reactions.DENY
+        elif count <= 0:
+            # Negative value
+            embed = discord.Embed(colour=discord.Colour.dark_red())
+            embed.description = 'This value must be a positive, non-zero integer'
+            reation = Reactions.FAIL
+        elif count >= 2 ** 32 - 1:
+            # Over a sane upper limit
+            embed = discord.Embed(colour=discord.Colour.dark_red())
+            embed.description = 'This value is way too high. Try a more reasonable value.'
+            reation = Reactions.FAIL
+        else:
+            # Set max delete messages
+            with self.bot.sql.transaction():
+                self.bot.sql.settings.set_max_delete_messages(ctx.guild, count)
+
+            embed = discord.Embed(colour=discord.Colour.teal())
+            embed.description = f'Set maximum deletable messages to `{count}`'
             reaction = Reactions.SUCCESS
 
         await asyncio.gather(

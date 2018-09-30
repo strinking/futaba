@@ -9,6 +9,11 @@ owners = ["98633956773093376", "130012001236811776"]
 # Default bot command prefix
 prefix = "!"
 
+[moderation]
+# Maximum number of messages that may be specified
+# when doing a bulk message cleanup
+max-cleanup-messages = "500"
+
 # Emojis to display for certain icons within the bot
 # Set to "0" to disable
 [emojis]

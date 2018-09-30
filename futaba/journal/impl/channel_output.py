@@ -15,6 +15,9 @@ A Listener that outputs messages to the configured Discord channel.
 '''
 
 import logging
+from io import BytesIO
+
+import discord
 
 from ..listener import Listener
 
@@ -23,6 +26,14 @@ logger = logging.getLogger(__name__)
 __all__ = [
     'ChannelOutputListener',
 ]
+
+def copy_file(file: discord.File):
+    if isinstance(file.fp, str):
+        # Copying is unnecessary, it's going to read from disk
+        return file
+
+    new_buffer = BytesIO(file.fp.getbuffer().tobytes())
+    return discord.File(new_buffer, file.filename)
 
 class ChannelOutputListener(Listener):
     def __init__(self, router, path, channel, recursive=True):
@@ -50,4 +61,13 @@ class ChannelOutputListener(Listener):
         '''
 
         logger.debug("Received journal event on %s: '%s'", path, content)
-        await self.channel.send(content=content)
+        kwargs = {'content': content}
+
+        if 'embed' in attributes:
+            kwargs['embed'] = attributes['embed']
+        if 'file' in attributes:
+            kwargs['file'] = copy_file(attributes['file'])
+        if 'files' in attributes:
+            kwargs['files'] = list(map(copy_file, attributes['files']))
+
+        await self.channel.send(**kwargs)

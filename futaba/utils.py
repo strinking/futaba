@@ -16,6 +16,8 @@ import subprocess
 from datetime import datetime
 from itertools import zip_longest
 
+import discord
+
 from futaba.str_builder import StringBuilder
 
 logger = logging.getLogger(__name__)
@@ -26,13 +28,15 @@ __all__ = [
     'Dummy',
     'fancy_timedelta',
     'async_partial',
+    'map_or',
+    'if_not_null',
+    'message_to_dict',
     'first',
     'chunks',
     'lowerbool',
     'plural',
     'user_discrim',
     'escape_backticks',
-    'if_not_null',
 ]
 
 def _get_git_hash():
@@ -101,6 +105,95 @@ def async_partial(coro, *added_args, **added_kwargs):
         return await coro(*added_args, *args, **added_kwargs, **kwargs)
     return wrapped
 
+def map_or(func, obj):
+    ''' Applies func to obj if it is not None. '''
+
+    if obj is None:
+        return obj
+
+    return func(obj)
+
+def if_not_null(obj, alt):
+    ''' Returns 'obj' if it's not None, 'alt' otherwise. '''
+
+    if obj is None:
+        if callable(alt):
+            return alt()
+        else:
+            return alt
+
+    return obj
+
+def message_to_dict(message: discord.Message):
+    ''' Converts a message into a JSON-safe python dictionary. '''
+
+    def user_dict(user):
+        return {
+            'id': str(user.id),
+            'name': user.name,
+            'nick': getattr(user, 'nick', None),
+            'discriminator': user.discriminator,
+        }
+
+    def named_dict(obj):
+        return {
+            'id': str(obj.id),
+            'name': obj.name,
+        }
+
+    def attachment_dict(attach):
+        return {
+            'id': str(attach.id),
+            'size': attach.size,
+            'height': attach.height,
+            'width': attach.width,
+            'filename': attach.filename,
+            'url': attach.url,
+            'proxy_url': attach.proxy_url,
+        }
+
+    def emoji_dict(emoji):
+        if isinstance(emoji, str):
+            return emoji
+        else:
+            return {
+                'id': str(emoji.id),
+                'name': emoji.name,
+                'animated': emoji.animated,
+                'managed': emoji.managed,
+                'guild_id': str(emoji.guild_id),
+                'url': emoji.url,
+            }
+
+    def reaction_dict(react):
+        return {
+            'emoji': emoji_dict(react.emoji),
+            'count': react.count,
+        }
+
+    # Build the final dictionary
+    return {
+        'id': str(message.id),
+        'tts': message.tts,
+        'type': message.type.name,
+        'author': user_dict(message.author),
+        'content': message.content or message.system_content,
+        'embeds': [embed.to_dict() for embed in message.embeds],
+        'channel': named_dict(message.channel),
+        'mention_everyone': message.mention_everyone,
+        'user_mentions': [user_dict(user) for user in message.mentions],
+        'channel_mentions': [named_dict(chan) for chan in message.channel_mentions],
+        'role_mentions': [named_dict(role) for role in message.role_mentions],
+        'pinned': message.pinned,
+        'webhook_id': map_or(str, message.webhook_id),
+        'attachments': [attachment_dict(attach) for attach in message.attachments],
+        'reactions': [reaction_dict(react) for react in message.reactions],
+        'activity': message.activity,
+        'application': message.application,
+        'guild_id': map_or(lambda g: str(g.id), message.guild),
+        'edited_at': map_or(str, message.edited_at),
+    }
+
 def first(iterable, default=None):
     '''
     Returns the first item in the iterable that is truthy.
@@ -143,14 +236,3 @@ def escape_backticks(content):
     '''
 
     return content.replace('`', '\N{ARMENIAN COMMA}').replace(':', '\N{RATIO}')
-
-def if_not_null(obj, alt):
-    ''' Returns 'obj' if it's not None, 'alt' otherwise. '''
-
-    if obj is None:
-        if callable(alt):
-            return alt()
-        else:
-            return alt
-
-    return obj
