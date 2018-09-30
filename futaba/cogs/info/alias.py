@@ -23,10 +23,10 @@ import discord
 from discord.ext import commands
 
 from futaba import permissions
+from futaba.converters import UserConv
 from futaba.download import download_link
 from futaba.enums import Reactions
 from futaba.exceptions import SendHelp
-from futaba.parse import get_user_id
 from futaba.str_builder import StringBuilder
 from futaba.utils import fancy_timedelta, user_discrim
 
@@ -119,26 +119,12 @@ class Alias:
                 before=before, after=after, changes=changes)
 
     @commands.command(name='aliases')
-    async def aliases(self, ctx, *, name: str):
+    async def aliases(self, ctx, *, user: UserConv):
         ''' Gets information about known aliases of the given user. '''
 
-        logger.info("Getting and printing alias information for some user '%s'", name)
+        logger.info("Getting and printing alias information for some user '%s' (%d)",
+                user.name, user.id)
 
-        embed = discord.Embed(colour=discord.Colour.dark_teal())
-        embed.set_author(name='Member alias information')
-
-        user = await self.bot.find_user(name, ctx.guild)
-        if user is None:
-            embed.colour = discord.Colour.dark_red()
-            embed.description = f'No user information found for `{name}`'
-
-            await asyncio.gather(
-                ctx.send(embed=embed),
-                Reactions.FAIL.add(ctx.message),
-            )
-            return
-
-        logger.debug("Found user! %r. Now fetching alias information...", user)
         avatars, usernames, nicknames, alt_user_ids = self.bot.sql.alias.get_aliases(ctx.guild, user)
 
         # Remove self from chain
@@ -146,6 +132,9 @@ class Alias:
             alt_user_ids.remove(user.id)
         except KeyError:
             pass
+
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
+        embed.set_author(name='Member alias information')
 
         if not any((avatars, usernames, nicknames, alt_user_ids)):
             embed.colour = discord.Colour.dark_purple()

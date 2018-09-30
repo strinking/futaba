@@ -21,9 +21,8 @@ import functools
 import logging
 
 import discord
-from sqlalchemy import and_, or_
 from sqlalchemy import BigInteger, Boolean, Column, Table, Unicode
-from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy import ForeignKey
 from sqlalchemy.sql import select
 
 from futaba.utils import lowerbool
