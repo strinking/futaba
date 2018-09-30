@@ -26,7 +26,7 @@ ANNOTATIONS = {
 
     # Discord.py
     "ClientUser": "Bot Client",
-    "RelationShip": "User Relationship",
+    "Relationship": "User Relationship",
     "User": "Discord User",
     "Attachment": "Message Attachment",
     "Message": "Discord Message",
