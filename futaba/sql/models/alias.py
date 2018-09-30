@@ -70,7 +70,12 @@ class AliasHistoryModel:
         logger.info("Adding user avatar update for '%s' (%d)", user.name, user.id)
         ins = self.tb_alias_avatars \
                 .insert() \
-                .values(user_id=user.id, timestamp=timestamp, avatar=avatar, avatar_ext=ext)
+                .values(
+                    user_id=user.id,
+                    timestamp=timestamp,
+                    avatar=avatar.getbuffer().tobytes(),
+                    avatar_ext=ext,
+                )
         self.sql.execute(ins)
 
     def add_username(self, user, timestamp, username):

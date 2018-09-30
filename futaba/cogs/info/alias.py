@@ -36,7 +36,7 @@ __all__ = [
     'Alias',
 ]
 
-EXTENSION_REGEX = re.compile(r'\.([a-z]+)\?.+$')
+EXTENSION_REGEX = re.compile(r'/\w+\.(\w+)(?:\?.+)?$')
 
 class MemberChanges:
     __slots__ = (
@@ -97,10 +97,10 @@ class Alias:
 
         if changes.avatar_url is not None:
             avatar = await download_link(changes.avatar_url)
-            match = EXTENSION_REGEX.match(changes.avatar_url)
-            if match is None:
+            match = EXTENSION_REGEX.findall(changes.avatar_url)
+            if not match:
                 raise ValueError(f"Avatar URL does not match extension regex: {changes.avatar_url}")
-            avatar_ext = match[1]
+            avatar_ext = match[0]
 
         attrs = StringBuilder(sep=', ')
         with self.bot.sql.transaction():
@@ -164,7 +164,7 @@ class Alias:
         if avatars:
             for i, (avatar_bin, avatar_ext, timestamp) in enumerate(avatars, 1):
                 time_since = fancy_timedelta(timestamp)
-                content.writeln(f'#{i} set {time_since} ago')
+                content.writeln(f'**{i}.** set {time_since} ago')
                 files.append(discord.File(avatar_bin, filename=f'avatar {time_since}.{avatar_ext}'))
             embed.add_field(name='Past avatars', value=str(content))
             content.clear()
@@ -186,8 +186,13 @@ class Alias:
                 content.writeln(f'<@!{alt_user_id}>')
             embed.add_field(name='Possible alts', value=str(content))
 
+        async def send():
+            await ctx.send(embed=embed)
+            for i, file in enumerate(files, 1):
+                await ctx.send(content=f'#{i}', file=file)
+
         await asyncio.gather(
-            ctx.send(embed=embed, files=files),
+            send(),
             Reactions.SUCCESS.add(ctx.message),
         )
 
