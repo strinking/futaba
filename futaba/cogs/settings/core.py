@@ -18,7 +18,6 @@ of configured settings in between runs of the bot.
 import asyncio
 import logging
 import re
-from typing import Optional
 
 import discord
 from discord.ext import commands
@@ -193,11 +192,11 @@ class Settings:
     @commands.command(name='setmember')
     @commands.guild_only()
     @permissions.check_mod()
-    async def set_member_role(self, ctx, *, role: Optional[RoleConv]):
+    async def set_member_role(self, ctx, *, role: RoleConv = None):
         ''' Set the member role for this guild. No argument to unset. '''
 
-        logger.info("Setting member role for guild '%s' (%d) to '%s' (%d)",
-                ctx.guild.name, ctx.guild.id, role.name, role.id)
+        logger.info("Setting member role for guild '%s' (%d) to '%s'",
+                ctx.guild.name, ctx.guild.id, role)
 
         if role is not None:
             await self.check_role(ctx, role)
@@ -222,11 +221,11 @@ class Settings:
     @commands.command(name='setguest')
     @commands.guild_only()
     @permissions.check_mod()
-    async def set_guest_role(self, ctx, *, role: Optional[RoleConv]):
+    async def set_guest_role(self, ctx, *, role: RoleConv = None):
         ''' Set the guest role for this guild. No argument to unset. '''
 
-        logger.info("Setting guest role for guild '%s' (%d) to '%s' (%d)",
-                ctx.guild.name, ctx.guild.id, role.name, role.id)
+        logger.info("Setting guest role for guild '%s' (%d) to '%s'",
+                ctx.guild.name, ctx.guild.id, role)
 
         if role is not None:
             await self.check_role(ctx, role)
@@ -251,11 +250,11 @@ class Settings:
     @commands.command(name='setmute')
     @commands.guild_only()
     @permissions.check_mod()
-    async def set_mute_role(self, ctx, *, role: Optional[RoleConv]):
+    async def set_mute_role(self, ctx, *, role: RoleConv = None):
         ''' Set the mute role for this guild. No argument to unset. '''
 
-        logger.info("Setting mute role for guild '%s' (%d) to '%s' (%d)",
-                ctx.guild.name, ctx.guild.id, role.name, role.id)
+        logger.info("Setting mute role for guild '%s' (%d) to '%s'",
+                ctx.guild.name, ctx.guild.id, role)
 
         if role is not None:
             await self.check_role(ctx, role)
@@ -280,11 +279,11 @@ class Settings:
     @commands.command(name='setjail')
     @commands.guild_only()
     @permissions.check_mod()
-    async def set_jail_role(self, ctx, *, role: Optional[RoleConv]):
+    async def set_jail_role(self, ctx, *, role: RoleConv = None):
         ''' Set the mute role for this guild. No argument to unset. '''
 
-        logger.info("Setting mute role for guild '%s' (%d) to '%s' (%d)",
-                ctx.guild.name, ctx.guild.id, role.name, role.id)
+        logger.info("Setting mute role for guild '%s' (%d) to '%s'",
+                ctx.guild.name, ctx.guild.id, role)
 
         if role is not None:
             await self.check_role(ctx, role)

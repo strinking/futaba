@@ -256,7 +256,7 @@ class Info:
         embed.add_field(name='ID', value=str(role.id))
         embed.add_field(name='Position', value=str(role.position))
 
-        descr = StringBuilder(role.mention)
+        descr = StringBuilder(f'{role.mention}\n')
         if role.mentionable:
             descr.writeln('Mentionable')
         if role.hoist:

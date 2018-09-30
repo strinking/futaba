@@ -45,7 +45,7 @@ class Moderation:
         self.bot = bot
         self.journal = bot.get_broadcaster('/moderation')
 
-    @commands.command()
+    @commands.command(name='kick')
     @commands.guild_only()
     @permissions.check_mod()
     async def kick(self, ctx, member: MemberConv, *, reason: str):
@@ -70,7 +70,7 @@ class Moderation:
                 Reactions.DENY.add(ctx.message)
             )
 
-    @commands.command()
+    @commands.command(name='ban')
     @commands.guild_only()
     @permissions.check_admin()
     async def ban(self, ctx, member: MemberConv, *, reason: str):
@@ -140,7 +140,7 @@ class Moderation:
                 Reactions.DENY.add(ctx.message)
             )
 
-    @commands.command()
+    @commands.command(name='unban', aliases=['pardon'])
     @commands.guild_only()
     @permissions.check_admin()
     async def unban(self, ctx, member: UserConv, *, reason: str):
