@@ -109,8 +109,10 @@ class Info:
             try:
                 user = await conv.convert(ctx, name)
             except commands.BadArgument:
-                embed = discord.Embed(colour=discord.Colour.dark_purple())
-                embed.description = f'No user found for `{name}`. Try `{self.bot.prefix(ctx.guild)}ufind`.'
+                name = escape_backticks(name)
+                prefix = self.bot.prefix(ctx.guild)
+                embed = discord.Embed(colour=discord.Colour.dark_red())
+                embed.description = f'No user found for `{name}`. Try `{prefix}ufind`.'
                 await asyncio.gather(
                     ctx.send(embed=embed),
                     Reactions.FAIL.add(ctx.message),
@@ -236,7 +238,12 @@ class Info:
             try:
                 role = await conv.convert(ctx, name)
             except commands.BadArgument:
-                await Reactions.FAIL.add(ctx.message)
+                embed = discord.Embed(colour=discord.Colour.dark_red())
+                embed.description = f'No role found in this guild for `{escape_backticks(name)}`.'
+                await asyncio.gather(
+                    ctx.send(embed=embed),
+                    Reactions.FAIL.add(ctx.message),
+                )
                 return
 
         logger.info("Running rinfo on '%s' (%d)", role.name, role.id)
@@ -458,6 +465,9 @@ class Info:
             try:
                 channel = await conv.convert(ctx, name)
             except commands.BadArgument:
+                logger.debug("No channel with this description found")
+                embed = discord.Embed(colour=discord.Colour.dark_red())
+                embed.description = f'No channel found in this guild for `{escape_backticks(name)}`'
                 await Reactions.FAIL.add(ctx.message)
                 return
 
