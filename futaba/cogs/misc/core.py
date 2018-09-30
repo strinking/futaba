@@ -56,7 +56,7 @@ class Miscellaneous:
         ms = duration.microseconds / 1000
         content = f'Pong! `{ms} ms`'
 
-        await ctx.send(content=content),
+        await ctx.send(content=content)
         self.journal.send('ping', ctx.guild, content, icon='ok')
 
     @commands.command(name='about', aliases=['aboutme', 'botinfo'])

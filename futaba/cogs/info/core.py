@@ -420,7 +420,7 @@ class Info:
             logger.debug("This message does not have any embeds")
             embed = discord.Embed(colour=discord.Colour.teal())
             embed.description = 'This message contains no embeds.'
-            await ctx.send(embed=embed),
+            await ctx.send(embed=embed)
             return
 
         for i, embed in enumerate(message.embeds, 1):
