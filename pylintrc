@@ -72,7 +72,17 @@ evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / stateme
 # all. Valid levels: HIGH, INFERENCE, INFERENCE_FAILURE, UNDEFINED
 confidence=
 enable=
-disable=missing-docstring,invalid-name,bad-continuation,unused-argument,redefined-builtin,broad-except,no-init,too-many-instance-attributes,too-few-public-methods,too-many-public-methods,no-else-return
+disable=missing-docstring,
+        invalid-name,
+        bad-continuation,
+        unused-argument,
+        redefined-builtin,
+        broad-except,
+        no-init,
+        too-many-instance-attributes,
+        too-few-public-methods,
+        too-many-public-methods,
+        no-else-return
 
 
 [TYPECHECK]
