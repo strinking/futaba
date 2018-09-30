@@ -18,6 +18,7 @@ import logging
 import datetime
 import os
 import sys
+import asyncio
 
 import discord
 from discord.ext import commands
@@ -30,6 +31,7 @@ from .exceptions import CommandFailed, InvalidCommandContext, SendHelp
 from .journal import Broadcaster, LoggingOutputListener
 from .sql import SqlHandler
 from .utils import plural
+from .converters.annotations import ANNOTATIONS
 
 logger = logging.getLogger(__name__)
 
@@ -192,6 +194,23 @@ class Bot(commands.AutoShardedBot):
         elif isinstance(error, commands.errors.CheckFailure):
             # Tell the user they don't have the permission to tun the command
             await Reactions.DENY.add(ctx.message)
+
+        elif isinstance(error, commands.MissingRequiredArgument):
+            # Tell you user they are missing a required argument
+
+            # Create the embed to tell user what argument is missing
+            embed = discord.Embed(title="Required Argument Missing")
+            embed.colour = discord.Colour.red()
+            embed.add_field(name='Argument', value=error.param.name)
+            
+            # Convert the annotation to be more readable
+            annotation = ANNOTATIONS[error.param.annotation.__name__]
+            embed.add_field(name='Annotation', value=annotation)
+
+            await asyncio.gather(
+                ctx.send(embed=embed),
+                Reactions.MISSING.add(ctx.message)
+            )
 
         elif isinstance(error, CommandFailed):
             # The command failed, report the error message (if any) and send the FAIL reaction
