@@ -27,6 +27,7 @@ from discord.ext import commands
 from futaba import permissions, __version__
 from futaba.download import download_links
 from futaba.enums import Reactions
+from futaba.exceptions import CommandFailed
 from futaba.str_builder import StringBuilder
 from futaba.utils import GIT_HASH, URL_REGEX, fancy_timedelta
 
@@ -96,8 +97,7 @@ class Miscellaneous:
         '''
 
         if not self.bot.emojis:
-            await Reactions.FAIL.add(ctx.message)
-            return
+            raise CommandFailed()
 
         emoji = random.choice(self.bot.emojis)
         await ctx.send(content=str(emoji))
@@ -114,11 +114,7 @@ class Miscellaneous:
         for url in urls:
             match = URL_REGEX.match(url)
             if match is None:
-                await asyncio.gather(
-                    ctx.send(content=f'Not a valid url: {url}'),
-                    Reactions.FAIL.add(ctx.message),
-                )
-                return
+                raise CommandFailed(content=f'Not a valid url: {url}')
             links.append(match[1])
         links.extend(attach.url for attach in ctx.message.attachments)
 
@@ -128,11 +124,7 @@ class Miscellaneous:
 
         # Send error if no URLS
         if not links:
-            await asyncio.gather(
-                ctx.send(content='No URLs listed or files attached.'),
-                Reactions.FAIL.add(ctx.message),
-            )
-            return
+            raise CommandFailed(content='No URLs listed or files attached.')
 
         # Download and check files
         contents = []

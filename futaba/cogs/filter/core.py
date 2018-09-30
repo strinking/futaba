@@ -23,8 +23,8 @@ import discord
 from discord.ext import commands
 
 from futaba import permissions
-from futaba.enums import FilterType, Reactions
-from futaba.exceptions import SendHelp
+from futaba.enums import FilterType
+from futaba.exceptions import CommandFailed, SendHelp
 from futaba.utils import async_partial, escape_backticks
 from .check import check_message, check_message_edit
 from .filter import Filter
@@ -217,8 +217,7 @@ class Filtering:
         '''
 
         if not members:
-            await Reactions.FAIL.add(ctx.message)
-            return
+            raise CommandFailed()
 
         member_names = ', '.join((f"'{member.name}' ({member.id})" for member in members))
         logger.info("Adding members to guild '%s' (%d) filter immunity list: %s",
@@ -243,8 +242,7 @@ class Filtering:
         '''
 
         if not members:
-            await Reactions.FAIL.add(ctx.message)
-            return
+            raise CommandFailed()
 
         member_names = ', '.join((f"'{member.name}' ({member.id})" for member in members))
         logger.info("Removing members to guild '%s' (%d) filter immunity list: %s",
