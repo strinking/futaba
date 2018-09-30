@@ -21,8 +21,8 @@ import discord
 from discord.ext import commands
 
 from futaba import permissions
+from futaba.converters import MemberConv, UserConv
 from futaba.enums import Reactions
-from futaba.parse import get_user_id
 from futaba.utils import escape_backticks, user_discrim
 
 logger = logging.getLogger(__name__)
@@ -48,7 +48,7 @@ class Moderation:
     @commands.command()
     @commands.guild_only()
     @permissions.check_mod()
-    async def kick(self, ctx, member: discord.Member, *, reason: str):
+    async def kick(self, ctx, member: MemberConv, *, reason: str):
         '''
         Kicks the user from the guild with a reason
         If guild has moderation logging enabled, it is logged
@@ -73,7 +73,7 @@ class Moderation:
     @commands.command()
     @commands.guild_only()
     @permissions.check_admin()
-    async def ban(self, ctx, member: discord.Member, *, reason: str):
+    async def ban(self, ctx, member: MemberConv, *, reason: str):
         '''
         Bans the user from the guild with a reason
         If guild has moderation logging enabled, it is logged
@@ -105,7 +105,7 @@ class Moderation:
     @commands.command(name='softban', aliases=['soft', 'sban'])
     @commands.guild_only()
     @permissions.check_admin()
-    async def softban(self, ctx, member: discord.Member, *, reason: str):
+    async def softban(self, ctx, member: MemberConv, *, reason: str):
         '''
         Soft-bans the user from the guild with a reason.
         If guild has moderation logging enabled, it is logged
@@ -143,16 +143,13 @@ class Moderation:
     @commands.command()
     @commands.guild_only()
     @permissions.check_admin()
-    async def unban(self, ctx, name: str, *, reason: str):
+    async def unban(self, ctx, member: UserConv, *, reason: str):
         '''
         Unbans the id from the guild with a reason.
         If guild has moderation logging enabled, it is logged
         '''
 
         try:
-            user_id = get_user_id(name)
-            member = self.bot.get_user(user_id)
-
             embed = discord.Embed(description='Done! User Unbanned')
             embed.add_field(name='Reason', value=reason)
 
