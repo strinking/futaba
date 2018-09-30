@@ -27,6 +27,7 @@ class Reactions(Enum):
     WARNING = '\N{WARNING SIGN}'
     FAIL = '\N{CROSS MARK}'
     DENY = '\N{NO ENTRY SIGN}'
+    MISSING = '\N{Black Question Mark Ornament}'
 
     async def add(self, message: discord.Message):
         await message.add_reaction(self.value)
