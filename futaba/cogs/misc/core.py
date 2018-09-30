@@ -14,7 +14,6 @@
 Cog for misceallaneous commands that don't really belong anywhere else.
 '''
 
-import asyncio
 import logging
 import random
 import sys

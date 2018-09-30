@@ -15,7 +15,6 @@ Cog to handle text filtering, including both hard and soft enforcement,
 similar unicode characters, and stripping unicode whitespace.
 '''
 
-import asyncio
 import logging
 from collections import defaultdict
 

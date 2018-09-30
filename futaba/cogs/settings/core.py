@@ -15,7 +15,6 @@ Cog for all commands that change bot settings. It ensures persistence
 of configured settings in between runs of the bot.
 '''
 
-import asyncio
 import logging
 import re
 

@@ -23,7 +23,6 @@ import discord
 from discord.ext import commands
 
 from futaba import permissions
-from futaba.enums import Reactions
 from futaba.exceptions import CommandFailed
 from futaba.unicode import normalize_caseless
 from futaba.utils import escape_backticks, message_to_dict, user_discrim
@@ -82,17 +81,9 @@ class Cleanup:
     async def check_count(self, ctx, count):
         max_count = self.bot.sql.settings.get_max_delete_messages(ctx.guild)
         if count < 1:
-            await asyncio.gather(
-                ctx.send(content=f'Invalid message count: {count}'),
-                Reactions.FAIL.add(ctx.message),
-            )
-            raise CommandFailed(content='TODO replace with above message')
+            raise CommandFailed(content=f'Invalid message count: {count}')
         elif count > max_count:
-            await asyncio.gather(
-                ctx.send(content=f'Count too high. Maximum configured for this guild is {max_count}.'),
-                Reactions.FAIL.add(ctx.message),
-            )
-            raise CommandFailed(content='TODO replace with above message')
+            raise CommandFailed(content=f'Count too high. Maximum configured for this guild is {max_count}.')
 
     @staticmethod
     def dump_messages(messages):

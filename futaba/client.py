@@ -239,7 +239,6 @@ class Bot(commands.AutoShardedBot):
             pass
 
         elif isinstance(error, SendHelp):
-            # TODO send help message for error.command
             logger.info("Manually sending help for command")
             command = ctx.invoked_subcommand or ctx.command
             pages = await self.formatter.format_help_for(ctx, command)
