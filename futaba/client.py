@@ -14,11 +14,11 @@
 Holds the custom discord client
 '''
 
+import asyncio
 import logging
 import datetime
 import os
 import sys
-import asyncio
 
 import discord
 from discord.ext import commands
@@ -199,8 +199,8 @@ class Bot(commands.AutoShardedBot):
             # Tell you user they are missing a required argument
 
             # Create the embed to tell user what argument is missing
-            embed = discord.Embed(title="Required Argument Missing")
-            embed.colour = discord.Colour.red()
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.title = "Required Argument Missing"
             embed.add_field(name='Argument', value=error.param.name)
             
             # Convert the annotation to be more readable
@@ -209,7 +209,7 @@ class Bot(commands.AutoShardedBot):
 
             await asyncio.gather(
                 ctx.send(embed=embed),
-                Reactions.MISSING.add(ctx.message)
+                Reactions.MISSING.add(ctx.message),
             )
 
         elif isinstance(error, CommandFailed):

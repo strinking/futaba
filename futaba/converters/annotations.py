@@ -10,48 +10,48 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-'''
+"""
 Module for managing the command annotations
-'''
+"""
 
 __all__ = [
-    'ANNOTATIONS',
+    "ANNOTATIONS",
 ]
 
 ANNOTATIONS = {
     # Built-in
-    'int': 'Integer',
-    'str': 'String',
-    'bool': 'Boolean',
+    "int": "Integer",
+    "str": "String",
+    "bool": "Boolean",
 
     # Discord.py
-    'ClientUser': 'Bot Client',
-    'RelationShip': 'User Relationship',
-    'User': 'Discord User',
-    'Attachment': 'Message Attachment',
-    'Message': 'Discord Message',
-    'Reaction': 'Message Reaction',
-    'CallMessage': 'Group Call Message',
-    'GroupCall': 'Discord Group Call',
-    'Guild': 'Discord Guild/Server',
-    'Member': 'Guild/Server Member',
-    'Spotify': 'User\'s Spotify Activity',
-    'VoiceState': 'User\'s Voice State',
-    'Emoji': 'Discord Emoji',
-    'PartialEmoji': '"Partial" Emoji',
-    'Role': 'Discord Role',
-    'TextChannel': 'Discord Text Channel',
-    'VoiceChannel': 'Discord Voice Channel',
-    'CategoryChannel': 'Discord Channel Category',
-    'DMChannel': 'Discord Direct Message Channel',
-    'GroupChannel': 'Discord Group Channel',
-    'Invite': 'Discord Invite',
+    "ClientUser": "Bot Client",
+    "RelationShip": "User Relationship",
+    "User": "Discord User",
+    "Attachment": "Message Attachment",
+    "Message": "Discord Message",
+    "Reaction": "Message Reaction",
+    "CallMessage": "Group Call Message",
+    "GroupCall": "Discord Group Call",
+    "Guild": "Discord Guild/Server",
+    "Member": "Guild/Server Member",
+    "Spotify": "User's Spotify Activity",
+    "VoiceState": "User's Voice State",
+    "Emoji": "Discord Emoji",
+    "PartialEmoji": "'Partial' Emoji",
+    "Role": "Discord Role",
+    "TextChannel": "Discord Text Channel",
+    "VoiceChannel": "Discord Voice Channel",
+    "CategoryChannel": "Discord Channel Category",
+    "DMChannel": "Discord Direct Message Channel",
+    "GroupChannel": "Discord Group Channel",
+    "Invite": "Discord Invite",
 
     # futaba
-    'TextChannelConv': 'Discord Text Channel',
-    'GuildChannelConv': 'Discord Guild Channel',
-    'EmojiConv': 'Discord Emoji',
-    'RoleConv': 'Discord Role',
-    'MemberConv': 'Guild/Server Member',
-    'UserConv': 'Discord User'
+    "TextChannelConv": "Discord Text Channel",
+    "GuildChannelConv": "Discord Guild Channel",
+    "EmojiConv": "Discord Emoji",
+    "RoleConv": "Discord Role",
+    "MemberConv": "Guild/Server Member",
+    "UserConv": "Discord User"
 }
