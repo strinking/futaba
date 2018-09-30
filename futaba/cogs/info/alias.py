@@ -172,12 +172,9 @@ class Alias:
                 content.writeln(f'<@!{alt_user_id}>')
             embed.add_field(name='Possible alts', value=str(content))
 
-        async def send():
-            await ctx.send(embed=embed)
-            for i, file in enumerate(files, 1):
-                await ctx.send(content=f'#{i}', file=file)
-
-        await send()
+        await ctx.send(embed=embed)
+        for i, file in enumerate(files, 1):
+            await ctx.send(content=f'#{i}', file=file)
 
     @commands.group(name='alts')
     @commands.guild_only()

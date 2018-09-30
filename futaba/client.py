@@ -176,7 +176,7 @@ class Bot(commands.AutoShardedBot):
         '''
 
         await Reactions.SUCCESS.add(ctx.message)
-    
+
     async def on_command_error(self, ctx, error):
         '''
         Handles errors when a command is invoked but raises an exception.
@@ -202,7 +202,7 @@ class Bot(commands.AutoShardedBot):
             embed = discord.Embed(colour=discord.Colour.red())
             embed.title = "Required Argument Missing"
             embed.add_field(name='Argument', value=error.param.name)
-            
+
             # Convert the annotation to be more readable
             annotation = ANNOTATIONS[error.param.annotation.__name__]
             embed.add_field(name='Annotation', value=annotation)

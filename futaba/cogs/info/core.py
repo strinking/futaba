@@ -291,18 +291,15 @@ class Info:
         if content:
             contents.append(str(content))
 
-        async def post_all():
-            for i, content in enumerate(contents):
-                embed = discord.Embed(description=content)
-                page = f'Page {i + 1}/{len(contents)}'
-                if i == 0:
-                    embed.set_footer(text=page)
-                else:
-                    embed.set_footer(text=f'{page} Roles in {ctx.guild.name}')
+        for i, content in enumerate(contents):
+            embed = discord.Embed(description=content)
+            page = f'Page {i + 1}/{len(contents)}'
+            if i == 0:
+                embed.set_footer(text=page)
+            else:
+                embed.set_footer(text=f'{page} Roles in {ctx.guild.name}')
 
-                await ctx.send(embed=embed)
-
-        await post_all()
+            await ctx.send(embed=embed)
 
     @staticmethod
     async def get_messages(channels, ids):

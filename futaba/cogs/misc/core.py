@@ -149,11 +149,8 @@ class Miscellaneous:
             content.writeln('```')
             contents.append(content)
 
-        async def send_messages():
-            for content in contents:
-                await ctx.send(content=str(content))
-
-        await send_messages()
+        for content in contents:
+            await ctx.send(content=str(content))
 
     @commands.command(name='shutdown', aliases=['halt'])
     @permissions.check_owner()
