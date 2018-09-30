@@ -59,6 +59,12 @@ class Miscellaneous:
         await ctx.send(content=content)
         self.journal.send('ping', ctx.guild, content, icon='ok')
 
+    @commands.command(name='testerror')
+    async def test_error(self, ctx):
+        ''' Deliberately raises an exception to test the bot's error handling. '''
+
+        raise RuntimeError("Intentionally raised exception")
+
     @commands.command(name='about', aliases=['aboutme', 'botinfo'])
     async def about(self, ctx):
         ''' Prints information about the running bot. '''
