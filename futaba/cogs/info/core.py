@@ -104,29 +104,15 @@ class Info:
             name = str(ctx.message.author.id)
 
         logger.info("Running uinfo on '%s'", name)
-
-        id = get_user_id(name, self.bot.users)
-        if id is None:
-            logger.debug("No user ID found!")
-            await Reactions.FAIL.add(ctx.message)
-            return
-
-        logger.debug("Fetched user ID is %d", id)
-
-        user = None
-        if ctx.guild is not None:
-            user = ctx.guild.get_member(id)
-
+        user = await self.bot.find_user(name, ctx.guild)
         if user is None:
-            user = self.bot.get_user(id)
-            if user is None:
-                user = await self.bot.get_user_info(id)
-                if user is None:
-                    logger.debug("No user with that ID found!")
-                    await Reactions.FAIL.add(ctx.message)
-                    return
-
-        logger.debug("Found user! %r", user)
+            embed = discord.Embed(colour=discord.Colour.dark_purple())
+            embed.description = f'No user found for `{name}`. Try `{self.bot.prefix(ctx.guild)}ufind`.'
+            await asyncio.gather(
+                ctx.send(embed=embed),
+                Reactions.FAIL.add(ctx.message),
+            )
+            return
 
         # Status
         if getattr(user, 'status', None):

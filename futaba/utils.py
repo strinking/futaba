@@ -85,8 +85,13 @@ def fancy_timedelta(delta):
         result.write(f'{weeks}w')
     if days:
         result.write(f'{days}d')
+    if hours:
+        result.write(f'{hours}h')
+    if minutes:
+        result.write(f'{minutes}m')
+    if seconds:
+        result.write(f'{seconds}s')
 
-    result.write(f'{hours:02}:{minutes:02}:{seconds:02}')
     return str(result)
 
 def async_partial(coro, *added_args, **added_kwargs):

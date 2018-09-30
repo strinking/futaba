@@ -18,7 +18,7 @@ import logging
 
 from sqlalchemy import create_engine, MetaData
 
-from .models import FilterModel, GuildsModel, JournalModel, SettingsModel, WelcomeModel
+from .models import AliasHistoryModel, FilterModel, GuildsModel, JournalModel, SettingsModel, WelcomeModel
 from .transaction import Transaction
 
 logger = logging.getLogger(__name__)
@@ -33,6 +33,7 @@ class SqlHandler:
         'conn',
         'trans',
 
+        'alias',
         'filter',
         'guilds',
         'journal',
@@ -47,6 +48,7 @@ class SqlHandler:
         logger.info("Connected to '%s'...", db_path)
         meta = MetaData(self.db)
 
+        self.alias = AliasHistoryModel(self, meta)
         self.filter = FilterModel(self, meta)
         self.guilds = GuildsModel(self, meta)
         self.journal = JournalModel(self, meta)

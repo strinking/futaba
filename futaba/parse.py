@@ -287,7 +287,7 @@ def get_channel_id(name, channels) -> Optional[int]:
     logger.debug("get_channel_id found no results!")
     return None
 
-def similar_user_ids(name, users, max_entries=5) -> Iterable[int]:
+def similar_user_ids(name, users, max_entries=15) -> Iterable[int]:
     '''
     Gets a list of user IDs that are similar to the string 'name'.
     They are ranked in order of similarity, marking users who are
@@ -332,7 +332,7 @@ def similar_user_ids(name, users, max_entries=5) -> Iterable[int]:
 
     # Sort by similarity
     similar_users.sort(key=lambda p: p[1], reverse=True)
-    matching_ids.extend(user.id for user, similar in similar_users if similar > 0.3)
+    matching_ids.extend(user.id for user, similar in similar_users if similar > 0.4)
 
     # Done
     return islice(matching_ids, 0, max_entries)
