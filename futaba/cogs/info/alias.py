@@ -28,7 +28,7 @@ from futaba.enums import Reactions
 from futaba.exceptions import SendHelp
 from futaba.parse import get_user_id
 from futaba.str_builder import StringBuilder
-from futaba.utils import fancy_timedelta
+from futaba.utils import fancy_timedelta, user_discrim
 
 logger = logging.getLogger(__package__)
 
@@ -63,10 +63,12 @@ class Alias:
 
     __slots__ = (
         'bot',
+        'journal',
     )
 
     def __init__(self, bot):
         self.bot = bot
+        self.journal = bot.get_broadcaster('/alias')
 
     async def member_update(self, before, after):
         ''' Handles update of member information. '''
@@ -100,13 +102,21 @@ class Alias:
                 raise ValueError(f"Avatar URL does not match extension regex: {changes.avatar_url}")
             avatar_ext = match[1]
 
+        attrs = StringBuilder(sep=', ')
         with self.bot.sql.transaction():
             if changes.avatar_url is not None:
                 self.bot.sql.alias.add_avatar(before, timestamp, avatar, avatar_ext)
+                attrs.write(f'avatar: {changes.avatar_url}')
             if changes.username is not None:
                 self.bot.sql.alias.add_username(before, timestamp, changes.username)
+                attrs.write(f'name: {changes.username}')
             if changes.nickname is not None:
                 self.bot.sql.alias.add_nickname(before, timestamp, changes.nickname)
+                attrs.write(f'nick: {changes.nickname}')
+
+        content = f'Member {user_discrim(before)} was updated: {attrs}'
+        self.journal.send('member/update', before.guild, content, icon='person',
+                before=before, after=after, changes=changes)
 
     @commands.command(name='aliases')
     async def aliases(self, ctx, *, name: str):
@@ -221,6 +231,8 @@ class Alias:
         with self.bot.sql.transaction():
             self.bot.sql.alias.add_possible_alt(ctx.guild, first_user, second_user)
 
+        content = f'Added {first_user.mention} and {second_user.mention} as possible alt accounts.'
+        self.journal.send('alt/add', ctx.guild, content, icon='item_add', users=[first_user, second_user])
         await Reactions.SUCCESS.add(ctx.message)
 
     @alts.command(name='delchain')
@@ -242,4 +254,6 @@ class Alias:
         with self.bot.sql.transaction():
             self.bot.sql.alias.all_delete_possible_alts(ctx.guild, user)
 
+        content = f"Removed all alt accounts in {user.mention}'s chain"
+        self.journal.send('alt/clear', ctx.guild, content, icon='item_clear', user=user)
         await Reactions.SUCCESS.add(ctx.message)

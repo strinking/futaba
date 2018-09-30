@@ -32,6 +32,11 @@ Managing user filter immunity. Has attributes: `member: discord.Member`, `cause:
 * `/filter/immunity/new` - Adds a user to the immune list.
 * `/filter/immunity/remove` - Removes a user from the immune list.
 
+### Information cog
+* `/alias/member/update` - Whenever a member is updated and that information is tracked by the alias logger. Attributes: `before, after: discord.Member`, `changes: MemberChanges`.
+* `/alias/alt/add` - A possible alt account is added. Attributes: `users: List[discord.Member, 2]`.
+* `/alias/alt/clear` - Removes all alt accounts associated to the user. Attributes: `user: discord.Member`.
+
 ### Journal cog
 * `/journal/channel/add` - When a journal output channel is added. Attributes: `channel: discord.TextChannel, path: str, recursive: bool`
 * `/journal/channel/remove` - When a journal output channel is removed. Attributes: `channel: discord.TextChannel, path: str`
