@@ -22,7 +22,7 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.converters import MemberConv, UserConv
-from futaba.enums import Reactions
+from futaba.exceptions import ManualCheckFailure
 from futaba.utils import escape_backticks, user_discrim
 
 logger = logging.getLogger(__name__)
@@ -58,16 +58,11 @@ class Moderation:
             embed = discord.Embed(description='Done! User Kicked')
             embed.add_field(name='Reason', value=reason)
 
-            await asyncio.gather(
-                ctx.guild.kick(member, reason=f'{reason} - {user_discrim(ctx.author)}'),
-                ctx.send(embed=embed),
-            )
+            await ctx.guild.kick(member, reason=f'{reason} - {user_discrim(ctx.author)}')
+            await ctx.send(embed=embed)
 
         except discord.errors.Forbidden:
-            await asyncio.gather(
-                ctx.send("Can't do that user has higher role than me"),
-                Reactions.DENY.add(ctx.message)
-            )
+            raise ManualCheckFailure(content="I don't have permissions to kick this user")
 
     @commands.command(name='ban')
     @commands.guild_only()
@@ -87,18 +82,13 @@ class Moderation:
             clean_reason = escape_backticks(reason)
             content = f'{mod} banned {member.mention} ({banned}) with reason: `{clean_reason}`'
 
-            await asyncio.gather(
-                ctx.guild.ban(member, reason=f'{reason} - {mod}'),
-                ctx.send(embed=embed),
-            )
+            await ctx.guild.ban(member, reason=f'{reason} - {mod}')
+            await ctx.send(embed=embed)
 
             self.journal.send('member/ban', ctx.guild, content, icon='ban')
 
         except discord.errors.Forbidden:
-            await asyncio.gather(
-                ctx.send("Can't do that user has higher role than me"),
-                Reactions.DENY.add(ctx.message)
-            )
+            raise ManualCheckFailure(content="I don't have permissions to ban this user")
 
     @commands.command(name='softban', aliases=['soft', 'sban'])
     @commands.guild_only()
@@ -121,21 +111,16 @@ class Moderation:
             content = f'{mod} soft-banned {member.mention} ({banned}) with reason: `{clean_reason}`'
 
             # TODO add to tracker and add handler to journal event to prevent ban/softban event
-            await asyncio.gather(
-                ctx.guild.ban(member, reason=f'{reason} - {mod}', delete_message_days=1),
-                ctx.send(embed=embed),
-            )
-
+            await ctx.guild.ban(member, reason=f'{reason} - {mod}', delete_message_days=1)
+            await asyncio.sleep(0.1)
             await ctx.guild.unban(member, reason=f'{reason} - {mod}')
+            await ctx.send(embed=embed)
 
             self.journal.send('member/softban', ctx.guild, content, icon='soft',
                     member=member, reason=reason, cause=ctx.author)
 
         except discord.errors.Forbidden:
-            await asyncio.gather(
-                ctx.send("Can't do that user has higher role than me"),
-                Reactions.DENY.add(ctx.message)
-            )
+            raise ManualCheckFailure(content="I don't have permissions to soft-ban this user")
 
     @commands.command(name='unban', aliases=['pardon'])
     @commands.guild_only()
@@ -156,15 +141,10 @@ class Moderation:
             clean_reason = escape_backticks(reason)
             content = f'{mod} unbanned {member.mention} ({unbanned}) with reason: `{clean_reason}`'
 
-            await asyncio.gather(
-                ctx.guild.unban(member, reason=f'{reason} - {mod}'),
-                ctx.send(embed=embed),
-            )
+            await ctx.guild.unban(member, reason=f'{reason} - {mod}')
+            await ctx.send(embed=embed)
 
             self.journal.send('member/unban', ctx.guild, content, icon='unban', member=member)
 
         except discord.errors.Forbidden:
-            await asyncio.gather(
-                ctx.send("Can't do that user has higher role than me"),
-                Reactions.DENY.add(ctx.message)
-            )
+            raise ManualCheckFailure(content="I don't have permissions to unban this user")
