@@ -12,8 +12,11 @@
 
 import logging
 import re
+from itertools import islice
+from typing import Iterable
 
 import discord
+import textdistance
 from discord.ext.commands import BadArgument, Converter
 
 from futaba.unicode import normalize_caseless
@@ -23,12 +26,51 @@ from .utils import ID_REGEX
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    'similar_text',
+    'similar_users',
     'MemberConv',
     'UserConv',
 ]
 
 MENTION_REGEX = re.compile(r'<@!?([0-9]{15,21})>$')
 USERNAME_DISCRIM_REGEX = re.compile(r'(.+)#([0-9]{4})')
+
+def similar_text(word1, word2) -> float:
+    '''
+    Determines if the two strings are similar enough given the passed threshold.
+    An alias for textdistance.overlap.similarity().
+    '''
+
+    return textdistance.overlap.similarity(word1, word2)
+
+async def similar_users(bot, argument, max_entries=10) -> Iterable[discord.User]:
+    '''
+    Gets a list of user IDs that are similar to the argument.
+    They are ranked in order of similarity, marking users who are
+    not in the this guild.
+    '''
+
+    # Get exact matches, if any
+    user = await get_user(bot, argument, bot.users)
+    matching = [user] if user else []
+
+    # Search case-insensitively
+    argument = normalize_caseless(argument)
+
+    # Do a fuzzy text search among users
+    similar_users = []
+    for user in bot.users:
+        similar = similar_text(argument, normalize_caseless(user.name))
+        if getattr(user, 'nick', None) is not None:
+            similar = max(similar, similar_text(argument, normalize_caseless(user.nick)))
+        similar_users.append((user, similar))
+
+    # Sort by similarity
+    similar_users.sort(key=lambda p: p[1], reverse=True)
+    matching.extend(user for user, similar in similar_users if similar > 0.3)
+
+    # Done
+    return islice(matching, 0, max_entries)
 
 async def get_user(bot, argument, user_list):
     argument = normalize_caseless(argument)
