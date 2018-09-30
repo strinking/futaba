@@ -207,7 +207,7 @@ class Alias:
             self.bot.find_user(second_name, ctx.guild),
         )
 
-        embed = discord.Embed(colour=discord.Colour.dark_red())
+        embed = discord.Embed(colour=discord.Colour.red())
         content = StringBuilder()
 
         if first_user is None:
@@ -237,7 +237,7 @@ class Alias:
 
         user = await self.bot.find_user(name, ctx.guild)
         if user is None:
-            embed = discord.Embed(colour=discord.Colour.dark_red())
+            embed = discord.Embed(colour=discord.Colour.red())
             embed.description = f'No user information found for `{name}`'
             await asyncio.gather(
                 ctx.send(embed=embed),

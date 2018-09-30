@@ -67,12 +67,12 @@ class Settings:
             reaction = Reactions.SUCCESS
         elif ctx.guild is None and prefix is not None:
             # Attempt to set prefix outside of guild
-            embed = discord.Embed(colour=discord.Colour.dark_red())
+            embed = discord.Embed(colour=discord.Colour.red())
             embed.description = 'Cannot set a command prefix outside of a server!'
             reaction = Reactions.FAIL
         elif not mod_perm(ctx):
             # Lacking authority to set prefix
-            embed = discord.Embed(colour=discord.Colour.dark_red())
+            embed = discord.Embed(colour=discord.Colour.red())
             embed.description = 'You do not have permission to set the prefix'
             reaction = Reactions.DENY
         elif prefix == '_':
@@ -119,17 +119,17 @@ class Settings:
             reaction = Reactions.SUCCESS
         elif not admin_perm(ctx):
             # Lacking authority to set max delete messages
-            embed = discord.Embed(colour=discord.Colour.dark_red())
+            embed = discord.Embed(colour=discord.Colour.red())
             embed.description = 'You do not have permission to set the maximum deletable messages'
             reaction = Reactions.DENY
         elif count <= 0:
             # Negative value
-            embed = discord.Embed(colour=discord.Colour.dark_red())
+            embed = discord.Embed(colour=discord.Colour.red())
             embed.description = 'This value must be a positive, non-zero integer'
             reaction = Reactions.FAIL
         elif count >= 2 ** 32 - 1:
             # Over a sane upper limit
-            embed = discord.Embed(colour=discord.Colour.dark_red())
+            embed = discord.Embed(colour=discord.Colour.red())
             embed.description = 'This value is way too high. Try a more reasonable value.'
             reaction = Reactions.FAIL
         else:
@@ -171,7 +171,7 @@ class Settings:
         )
 
     async def check_role(self, ctx, role):
-        embed = discord.Embed(colour=discord.Colour.dark_red())
+        embed = discord.Embed(colour=discord.Colour.red())
         if role.is_default():
             embed.description = '@everyone role cannot be assigned for this purpose'
             await asyncio.gather(
