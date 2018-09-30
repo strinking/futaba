@@ -464,7 +464,7 @@ class Info:
         if name is None:
             channel = ctx.channel
         else:
-            conv = GuildChanConv()
+            conv = GuildChannelConv()
             try:
                 channel = await conv.convert(ctx, name)
             except commands.BadArgument:
