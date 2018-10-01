@@ -52,6 +52,8 @@ class Bot(commands.AutoShardedBot):
 
         super().__init__(command_prefix=self.my_command_prefix,
                          description='futaba - A discord mod bot',
+                         max_messages=100000,
+                         fetch_offline_members=True,
                          pm_help=True)
 
     @staticmethod
@@ -190,14 +192,13 @@ class Bot(commands.AutoShardedBot):
             # Ignore no command found as we don't care if it wasn't one of our commands
             pass
 
-        elif isinstance(error, commands.MissingRequiredArgument):
-            # Tell you user they are missing a required argument
-
+        elif isinstance(error, commands.errors.MissingRequiredArgument):
+            # Tell the user they are missing a required argument
             logger.info("User was missing required argument for command")
 
             # Create the embed to tell user what argument is missing
             embed = discord.Embed(colour=discord.Colour.red())
-            embed.title = "Required Argument Missing"
+            embed.title = 'Required argument missing'
             embed.add_field(name='Argument', value=error.param.name)
 
             # Convert the annotation to be more readable
@@ -209,9 +210,22 @@ class Bot(commands.AutoShardedBot):
                 Reactions.MISSING.add(ctx.message),
             )
 
+        elif isinstance(error, commands.errors.BadArgument):
+            # Tell the user they couldn't find what they were looking for
+            logger.info("User specified argument that does not compute")
+
+            # Create the embed to tell user what argument was invalid
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.title = 'Unable to retrieve argument'
+            embed.description = str(error)
+
+            await asyncio.gather(
+                ctx.send(embed=embed),
+                Reactions.MISSING.add(ctx.message),
+            )
+
         elif isinstance(error, commands.errors.CheckFailure):
             # Tell the user they don't have the permission to tun the command
-
             logger.info("Permission check for command failed")
             await Reactions.DENY.add(ctx.message)
 

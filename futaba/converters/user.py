@@ -81,9 +81,15 @@ async def get_user(bot, argument, user_list):
     logger.debug("Checking if it's a user ID or mention")
     match = ID_REGEX.match(argument) or MENTION_REGEX.match(argument)
     if match is not None:
-        user = await bot.get_user_info(int(match[1]))
+        id = int(match[1])
+        user = discord.utils.get(user_list, id=id)
         if user is not None:
             return user
+
+        try:
+            return await bot.get_user_info(id)
+        except discord.NotFound:
+            pass
 
     logger.debug("Checking if it's in the form username#discriminator")
     match = USERNAME_DISCRIM_REGEX.match(argument)
