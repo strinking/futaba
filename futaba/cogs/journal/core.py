@@ -15,15 +15,13 @@ Cog for configuring Futaba journalling output, directing certain kinds
 of messages to different logging channels.
 '''
 
-import asyncio
 import logging
 
 import discord
 from discord.ext import commands
 
 from futaba import permissions
-from futaba.enums import Reactions
-from futaba.exceptions import SendHelp
+from futaba.exceptions import CommandFailed, SendHelp
 from futaba.journal import ChannelOutputListener, Router
 from futaba.str_builder import StringBuilder
 
@@ -60,7 +58,7 @@ class Journal:
         ''' Configure channel output for bot journal events. '''
 
         if ctx.invoked_subcommand is None:
-            raise SendHelp(ctx.command)
+            raise SendHelp()
 
     @log.command(name='show', aliases=['display', 'list'])
     @commands.guild_only()
@@ -115,11 +113,7 @@ class Journal:
             if flag == '-exact':
                 recursive = False
             else:
-                await asyncio.gather(
-                    Reactions.FAIL.add(ctx.message),
-                    ctx.send(content=f'No such flag: `{flag}`')
-                )
-                return
+                raise CommandFailed(content=f'No such flag: `{flag}`')
 
         logger.debug("Registering route")
         self.router.register(ChannelOutputListener(self.router, path, channel))
@@ -151,11 +145,7 @@ class Journal:
         listener = self.router.get(path, channel=channel)
         if listener is None:
             # No listener found
-            await asyncio.gather(
-                ctx.send(content=f'No output on `{path}` found for {channel.mention}'),
-                Reactions.FAIL.add(ctx.message),
-            )
-            return
+            raise CommandFailed(content=f'No output on `{path}` found for {channel.mention}')
 
         self.router.unregister(listener)
 
@@ -179,11 +169,7 @@ class Journal:
         '''
 
         if path == '/':
-            await asyncio.gather(
-                ctx.send(content='Cannot broadcast on /'),
-                Reactions.FAIL.add(ctx.message),
-            )
-            return
+            raise CommandFailed(content='Cannot broadcast on /')
 
         journal_attributes = {}
         for attribute in attributes:
@@ -191,11 +177,7 @@ class Journal:
                 key, value = attribute.split('=')
                 journal_attributes[key] = value
             except ValueError:
-                await asyncio.gather(
-                    ctx.send(content='All attributes must be in the form KEY=VALUE'),
-                    Reactions.FAIL.add(ctx.message),
-                )
-                return
+                raise CommandFailed(content='All attributes must be in the form KEY=VALUE')
 
         logging.info("Sending manual journal event: '%s' (attrs: %s)", content, journal_attributes)
         self.bot.get_broadcaster(path).send('', ctx.guild, content, **journal_attributes)

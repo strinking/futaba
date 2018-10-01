@@ -19,6 +19,7 @@ import logging
 import datetime
 import os
 import sys
+import traceback
 
 import discord
 from discord.ext import commands
@@ -26,12 +27,12 @@ from discord.ext import commands
 from .cogs.journal import Journal
 from .cogs.reloader import Reloader
 from .config import Configuration
+from .converters.annotations import ANNOTATIONS
 from .enums import Reactions
-from .exceptions import CommandFailed, InvalidCommandContext, SendHelp
+from .exceptions import CommandFailed, InvalidCommandContext, ManualCheckFailure, SendHelp
 from .journal import Broadcaster, LoggingOutputListener
 from .sql import SqlHandler
 from .utils import plural
-from .converters.annotations import ANNOTATIONS
 
 logger = logging.getLogger(__name__)
 
@@ -185,18 +186,14 @@ class Bot(commands.AutoShardedBot):
         # Complains about "context" vs "ctx".
         # pylint: disable=arguments-differ
 
-        logger.error("Error during command!", exc_info=error)
-
         if isinstance(error, commands.errors.CommandNotFound):
             # Ignore no command found as we don't care if it wasn't one of our commands
             pass
 
-        elif isinstance(error, commands.errors.CheckFailure):
-            # Tell the user they don't have the permission to tun the command
-            await Reactions.DENY.add(ctx.message)
-
         elif isinstance(error, commands.MissingRequiredArgument):
             # Tell you user they are missing a required argument
+
+            logger.info("User was missing required argument for command")
 
             # Create the embed to tell user what argument is missing
             embed = discord.Embed(colour=discord.Colour.red())
@@ -212,8 +209,25 @@ class Bot(commands.AutoShardedBot):
                 Reactions.MISSING.add(ctx.message),
             )
 
+        elif isinstance(error, commands.errors.CheckFailure):
+            # Tell the user they don't have the permission to tun the command
+
+            logger.info("Permission check for command failed")
+            await Reactions.DENY.add(ctx.message)
+
+        elif isinstance(error, ManualCheckFailure):
+            # Tell the user they don't have permission and reprt the error message if any
+            logger.info("Manual permission check for command failed")
+
+            if error.kwargs:
+                await ctx.send(**error.kwargs)
+
+            await Reactions.DENY.add(ctx.message)
+
         elif isinstance(error, CommandFailed):
             # The command failed, report the error message (if any) and send the FAIL reaction
+            logger.info("Command failed, sending output: %r", error.kwargs)
+
             if error.kwargs:
                 await ctx.send(**error.kwargs)
 
@@ -225,5 +239,21 @@ class Bot(commands.AutoShardedBot):
             pass
 
         elif isinstance(error, SendHelp):
-            # TODO send help message for error.command
-            pass
+            logger.info("Manually sending help for command")
+            command = ctx.invoked_subcommand or ctx.command
+            pages = await self.formatter.format_help_for(ctx, command)
+            for page in pages:
+                await ctx.author.send(content=page)
+            await Reactions.SUCCESS.add(ctx.message)
+
+        else:
+            # Other exception, probably not meant to happen. Send it as an embed.
+            logger.error("Unexpected error during command!", exc_info=error)
+            anger_emoji = self.get_emoji(self.config.anger_emoji_id) or '\N{ANGER SYMBOL}'
+            traceback_lines = traceback.format_exception(type(error), error, error.__traceback__, limit=1)
+            traceback_lines.insert(0, '```py')
+            traceback_lines.append('```')
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.title = f'{anger_emoji} Unexpected error occurred!'
+            embed.description = '\n'.join(traceback_lines)
+            await ctx.send(embed=embed)

@@ -24,7 +24,6 @@ import discord
 from discord.ext import commands
 
 from futaba.converters import EmojiConv, GuildChannelConv, RoleConv, UserConv
-from futaba.enums import Reactions
 from futaba.exceptions import CommandFailed
 from futaba.permissions import mod_perm
 from futaba.similar import similar_users
@@ -105,10 +104,6 @@ class Info:
                 prefix = self.bot.prefix(ctx.guild)
                 embed = discord.Embed(colour=discord.Colour.red())
                 embed.description = f'No user found for `{name}`. Try `{prefix}ufind`.'
-                await asyncio.gather(
-                    ctx.send(embed=embed),
-                    Reactions.FAIL.add(ctx.message),
-                )
                 raise CommandFailed(embed=embed)
 
     @commands.command(name='uinfo', aliases=['userinfo'])
@@ -234,11 +229,7 @@ class Info:
             except commands.BadArgument:
                 embed = discord.Embed(colour=discord.Colour.red())
                 embed.description = f'No role found in this guild for `{escape_backticks(name)}`.'
-                await asyncio.gather(
-                    ctx.send(embed=embed),
-                    Reactions.FAIL.add(ctx.message),
-                )
-                return
+                raise CommandFailed(embed=embed)
 
         logger.info("Running rinfo on '%s' (%d)", role.name, role.id)
 
@@ -410,11 +401,7 @@ class Info:
             logger.debug("No message with this id found")
             embed = discord.Embed(colour=discord.Colour.red())
             embed.description = f'No message with id `{id}` found'
-            await asyncio.gather(
-                ctx.send(embed=embed),
-                Reactions.FAIL.add(ctx.message),
-            )
-            return
+            raise CommandFailed(embed=embed)
 
         if not message.embeds:
             logger.debug("This message does not have any embeds")
@@ -444,8 +431,7 @@ class Info:
                 logger.debug("No channel with this description found")
                 embed = discord.Embed(colour=discord.Colour.red())
                 embed.description = f'No channel found in this guild for `{escape_backticks(name)}`'
-                await Reactions.FAIL.add(ctx.message)
-                return
+                raise CommandFailed(embed=embed)
 
         logger.info("Running cinfo on '%s' (%d)", channel.name, channel.id)
         embed = discord.Embed()

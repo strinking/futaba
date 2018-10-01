@@ -14,7 +14,6 @@
 Cog for misceallaneous commands that don't really belong anywhere else.
 '''
 
-import asyncio
 import logging
 import random
 import sys
@@ -27,6 +26,7 @@ from discord.ext import commands
 from futaba import permissions, __version__
 from futaba.download import download_links
 from futaba.enums import Reactions
+from futaba.exceptions import CommandFailed
 from futaba.str_builder import StringBuilder
 from futaba.utils import GIT_HASH, URL_REGEX, fancy_timedelta
 
@@ -64,8 +64,8 @@ class Miscellaneous:
         ''' Prints information about the running bot. '''
 
         pyver = sys.version_info
-        python_emoji = self.bot.get_emoji(490419105699069952) or ''
-        discord_emoji = self.bot.get_emoji(490419059964510210) or ''
+        python_emoji = self.bot.get_emoji(self.bot.config.python_emoji_id) or ''
+        discord_emoji = self.bot.get_emoji(self.bot.config.discord_emoji_id) or ''
 
         embed = discord.Embed()
         embed.set_thumbnail(url=self.bot.user.avatar_url)
@@ -90,8 +90,7 @@ class Miscellaneous:
         '''
 
         if not self.bot.emojis:
-            await Reactions.FAIL.add(ctx.message)
-            return
+            raise CommandFailed()
 
         emoji = random.choice(self.bot.emojis)
         await ctx.send(content=str(emoji))
@@ -108,11 +107,7 @@ class Miscellaneous:
         for url in urls:
             match = URL_REGEX.match(url)
             if match is None:
-                await asyncio.gather(
-                    ctx.send(content=f'Not a valid url: {url}'),
-                    Reactions.FAIL.add(ctx.message),
-                )
-                return
+                raise CommandFailed(content=f'Not a valid url: {url}')
             links.append(match[1])
         links.extend(attach.url for attach in ctx.message.attachments)
 
@@ -122,11 +117,7 @@ class Miscellaneous:
 
         # Send error if no URLS
         if not links:
-            await asyncio.gather(
-                ctx.send(content='No URLs listed or files attached.'),
-                Reactions.FAIL.add(ctx.message),
-            )
-            return
+            raise CommandFailed(content='No URLs listed or files attached.')
 
         # Download and check files
         contents = []
@@ -152,7 +143,14 @@ class Miscellaneous:
         for content in contents:
             await ctx.send(content=str(content))
 
-    @commands.command(name='shutdown', aliases=['halt'])
+    @commands.command(name='testerror', hidden=True)
+    @permissions.check_owner()
+    async def test_error(self, ctx):
+        ''' Deliberately raises an exception to test the bot's error handling. '''
+
+        raise RuntimeError("Intentionally raised exception")
+
+    @commands.command(name='shutdown', aliases=['halt'], hidden=True)
     @permissions.check_owner()
     async def shutdown(self, ctx):
         ''' Shuts down the bot. Can only able be run by an owner. '''

@@ -15,7 +15,6 @@ Cog for all commands that change bot settings. It ensures persistence
 of configured settings in between runs of the bot.
 '''
 
-import asyncio
 import logging
 import re
 
@@ -25,8 +24,7 @@ from discord.ext import commands
 from futaba import permissions
 from futaba.converters import RoleConv
 from futaba.emojis import ICONS
-from futaba.enums import Reactions
-from futaba.exceptions import CommandFailed
+from futaba.exceptions import CommandFailed, ManualCheckFailure
 from futaba.permissions import admin_perm, mod_perm
 
 logger = logging.getLogger(__name__)
@@ -64,17 +62,16 @@ class Settings:
                 embed.description = 'No command prefix, all messages are commands'
             else:
                 embed.description = f'Prefix for {ctx.guild.name} is `{bot_prefix}`'
-            reaction = Reactions.SUCCESS
         elif ctx.guild is None and prefix is not None:
             # Attempt to set prefix outside of guild
             embed = discord.Embed(colour=discord.Colour.red())
             embed.description = 'Cannot set a command prefix outside of a server!'
-            reaction = Reactions.FAIL
+            raise CommandFailed(embed=embed)
         elif not mod_perm(ctx):
             # Lacking authority to set prefix
             embed = discord.Embed(colour=discord.Colour.red())
             embed.description = 'You do not have permission to set the prefix'
-            reaction = Reactions.DENY
+            raise ManualCheckFailure(embed=embed)
         elif prefix == '_':
             # Unset prefix
             with self.bot.sql.transaction():
@@ -85,7 +82,6 @@ class Settings:
             embed.description = f'Unset prefix for {ctx.guild.name}. (Default prefix: `{bot_prefix}`)'
             self.journal.send('prefix', ctx.guild, 'Unset bot command prefix', icon='settings',
                     prefix=None, default_prefix=self.bot.config.default_prefix)
-            reaction = Reactions.SUCCESS
         else:
             # Set prefix
             bot_prefix = re.sub(r'_$', ' ', prefix)
@@ -96,12 +92,8 @@ class Settings:
             embed.description = f'Set prefix for {ctx.guild.name} to `{bot_prefix}`'
             self.journal.send('prefix', ctx.guild, 'Unset bot command prefix', icon='settings',
                     prefix=bot_prefix, default_prefix=self.bot.config.default_prefix)
-            reaction = Reactions.SUCCESS
 
-        await asyncio.gather(
-            ctx.send(embed=embed),
-            reaction.add(ctx.message),
-        )
+        await ctx.send(embed=embed)
 
     @commands.command(name='maxdelete', aliases=['maxdeletemsg'])
     @commands.guild_only()
@@ -116,22 +108,21 @@ class Settings:
             max_delete_messages = self.bot.sql.settings.get_max_delete_messages(ctx.guild)
             embed = discord.Embed(colour=discord.Colour.dark_teal())
             embed.description = f'Maximum number of messages that can be deleted in bulk is `{max_delete_messages}`'
-            reaction = Reactions.SUCCESS
         elif not admin_perm(ctx):
             # Lacking authority to set max delete messages
             embed = discord.Embed(colour=discord.Colour.red())
             embed.description = 'You do not have permission to set the maximum deletable messages'
-            reaction = Reactions.DENY
+            raise ManualCheckFailure(embed=embed)
         elif count <= 0:
             # Negative value
             embed = discord.Embed(colour=discord.Colour.red())
             embed.description = 'This value must be a positive, non-zero integer'
-            reaction = Reactions.FAIL
+            raise CommandFailed(embed=embed)
         elif count >= 2 ** 32 - 1:
             # Over a sane upper limit
             embed = discord.Embed(colour=discord.Colour.red())
             embed.description = 'This value is way too high. Try a more reasonable value.'
-            reaction = Reactions.FAIL
+            raise CommandFailed(embed=embed)
         else:
             # Set max delete messages
             with self.bot.sql.transaction():
@@ -139,12 +130,8 @@ class Settings:
 
             embed = discord.Embed(colour=discord.Colour.teal())
             embed.description = f'Set maximum deletable messages to `{count}`'
-            reaction = Reactions.SUCCESS
 
-        await asyncio.gather(
-            ctx.send(embed=embed),
-            reaction.add(ctx.message),
-        )
+        await ctx.send(embed=embed)
 
     @commands.command(name='specroles', aliases=['sroles'])
     @commands.guild_only()
@@ -171,19 +158,11 @@ class Settings:
         embed = discord.Embed(colour=discord.Colour.red())
         if role.is_default():
             embed.description = '@everyone role cannot be assigned for this purpose'
-            await asyncio.gather(
-                ctx.send(embed=embed),
-                Reactions.FAIL.add(ctx.message),
-            )
             raise CommandFailed(embed=embed)
 
         special_roles = self.bot.sql.settings.get_special_roles(ctx.guild)
         if role in special_roles:
             embed.description = f'Cannot assign the same role for multiple purposes'
-            await asyncio.gather(
-                ctx.send(embed=embed),
-                Reactions.FAIL.add(ctx.message),
-            )
             raise CommandFailed(embed=embed)
 
     @commands.command(name='setmember')

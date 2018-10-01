@@ -23,7 +23,6 @@ import discord
 from discord.ext import commands
 
 from futaba import permissions
-from futaba.enums import Reactions
 from futaba.exceptions import CommandFailed, InvalidCommandContext, SendHelp
 from futaba.journal import ModerationListener
 from futaba.utils import user_discrim
@@ -125,11 +124,6 @@ class Welcome:
             response = 'Invalid syntax'
 
         if response is not None:
-            await asyncio.gather(
-                ctx.send(content=response),
-                Reactions.FAIL.add(ctx.message),
-            )
-            # TODO remove above when command exception handling stuff is added
             raise CommandFailed(content=response)
 
     async def member_join(self, member):
@@ -229,7 +223,7 @@ class Welcome:
         ''' Manages the welcome cog for managing new users and roles. '''
 
         if ctx.invoked_subcommand is None:
-            raise SendHelp(ctx.command)
+            raise SendHelp()
 
     @welcome.command(name='getchan')
     @commands.guild_only()
@@ -288,10 +282,7 @@ class Welcome:
         try:
             await ctx.author.send(content=FORMAT_HELP_LIST)
         except discord.Forbidden:
-            await asyncio.gather(
-                ctx.send(content="I don't have permission to DM you"),
-                Reactions.FAIL.add(ctx.message),
-            )
+            raise CommandFailed(content="I don't have permission to DM you")
 
     @welcome.command(name='getmsg')
     @commands.guild_only()
