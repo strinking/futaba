@@ -8,12 +8,12 @@ Requires Python 3.5 or later. There is a sample configuration file at `misc/conf
 ## Running locally
 Setup:
 ```
-pip3 install --user -r requirements.txt
+$ pip3 install --user -r requirements.txt
 ```
 
 To run:
 ```
-python3 -m futaba <config.toml>
+$ python3 -m futaba <config.toml>
 ```
 
 ## Deployment
@@ -22,7 +22,7 @@ You can set up a production system, complete with a systemd service file, you ca
 
 Usage:
 ```
-./deploy.sh <config.toml>
+$ ./deploy.sh <config.toml>
 ```
 
 Installs dependencies, installs the service and configuration files, then restarts the unit.
