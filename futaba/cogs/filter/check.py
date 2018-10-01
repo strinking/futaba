@@ -258,7 +258,6 @@ async def found_text_violation(triggered, roles):
             response.writeln(
                 f"As such, you have been assigned the {roles.jail.mention} role, until a moderator clears you."
             )
-            await message.author.add_roles(roles.jail, reason='Jailed for violating text filter')
 
         await message.author.send(content=str(response))
         response.clear()
@@ -293,10 +292,8 @@ async def found_text_violation(triggered, roles):
         )
 
     if severity >= FilterType.JAIL.level:
-        # TODO jail user
-        # this requires the jailing/duncing mechanism to be complete
-        # and having the dunce role available in settings
         logger.info("Jailing user for inappropriate message")
+        await message.author.add_roles(roles.jail, reason='Jailed for violating file filter')
 
 async def found_file_violation(roles, triggered, reupload):
     '''
@@ -335,7 +332,6 @@ async def found_file_violation(roles, triggered, reupload):
             response.writeln(
                 f"As such, you have been assigned the `{roles.jail.name}` role, until a moderator clears you."
             )
-            await message.author.add_roles(roles.jail, reason='Jailed for violating file filter')
 
         kwargs = {}
         if reupload:
@@ -358,7 +354,5 @@ async def found_file_violation(roles, triggered, reupload):
         )
 
     if severity >= FilterType.JAIL.level:
-        # TODO jail user
-        # this requires the jailing/duncing mechanism to be complete
-        # and having the dunce role available in settings
         logger.info("Jailing user for inappropriate attachment")
+        await message.author.add_roles(roles.jail, reason='Jailed for violating text filter')
