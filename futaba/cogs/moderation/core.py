@@ -108,8 +108,8 @@ class Moderation:
 
         # TODO store punishment in table
         mod = user_discrim(ctx.author)
-        fmt_reason = f': {reason}' if reason else ''
-        full_reason = f'Unmuted by {mod} with reason{fmt_reason}'
+        fmt_reason = f'with reason: {reason}' if reason else ''
+        full_reason = f'Unmuted by {mod} {fmt_reason}'
 
         # TODO replace with navi
         async def remove_mute():
@@ -144,7 +144,7 @@ class Moderation:
 
         # TODO store punishment in table
         mod = user_discrim(ctx.author)
-        await member.add_roles(roles.jail, reason=f'Jailed by {mod} for reason: {reason}')
+        await member.add_roles(roles.jail, reason=f'Jailed by {mod} with reason: {reason}')
 
     @commands.command(name='unjail', aliases=['undunce'])
     @commands.guild_only()
@@ -164,8 +164,8 @@ class Moderation:
 
         # TODO store punishment in table
         mod = user_discrim(ctx.author)
-        fmt_reason = ': {reason}' if reason else ''
-        await member.remove_roles(roles.jail, reason=f'Jail removed by {mod} for reason{fmt_reason}')
+        fmt_reason = f'with reason: {reason}' if reason else ''
+        await member.remove_roles(roles.jail, reason=f'Jail removed by {mod} {fmt_reason}')
 
     @commands.command(name='kick')
     @commands.guild_only()
