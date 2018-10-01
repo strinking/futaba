@@ -15,7 +15,6 @@ Cog for configuring Futaba journalling output, directing certain kinds
 of messages to different logging channels.
 '''
 
-import asyncio
 import logging
 
 import discord

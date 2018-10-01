@@ -14,7 +14,6 @@
 Commands related to cleaning up messages in bulk.
 '''
 
-import asyncio
 import json
 import logging
 from io import BytesIO

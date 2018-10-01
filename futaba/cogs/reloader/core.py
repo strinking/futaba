@@ -14,7 +14,6 @@
 Cog for loading, unloading, or reloading other cogs.
 '''
 
-import asyncio
 import logging
 
 import discord
