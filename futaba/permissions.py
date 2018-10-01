@@ -11,13 +11,15 @@
 #
 
 '''
-Holds custom decorators to check permissions for commands
+Holds custom decorators to check permissions for commands.
+Also has other helper commands for checking permissions within a guild.
 '''
 
 import discord
 from discord.ext import commands
 
 __all__ = [
+    'role_elevated_perms',
     'owner_perm',
     'admin_perm',
     'mod_perm',
@@ -25,6 +27,46 @@ __all__ = [
     'check_admin',
     'check_mod',
 ]
+
+ELEVATED_PERMISSION_NAMES = (
+    'mention_everyone',
+    'manage_messages',
+    'manage_channel',
+    'manage_guild',
+    'mute_members',
+    'deafen_members',
+    'move_members',
+    'kick_members',
+    'ban_members',
+    'manage_nicknames',
+    'manage_roles',
+    'manage_emojis',
+    'administrator',
+)
+
+def role_elevated_perms(guild, role):
+    '''
+    Outputs a list of permissions and channels where this role has elevated permissions.
+    If an empty list is returned it is "safe" to apply.
+    '''
+
+    # Format [(guild or channel, perm_name)...]
+    elevated = []
+
+    perms = role.permissions
+    for perm, value in perms:
+        if perm in ELEVATED_PERMISSION_NAMES:
+            if value is True:
+                elevated.append((guild, perm))
+
+    for channel in guild.channels:
+        perms = channel.overwrites_for(role)
+        for perm, value in perms:
+            if perm in ELEVATED_PERMISSION_NAMES:
+                if value is True:
+                    elevated.append((channel, perm))
+
+    return elevated
 
 def owner_perm(ctx: commands.Context):
     ''' Check if user is a owner of the bot from config '''
