@@ -22,7 +22,7 @@ import discord
 from futaba.download import download_links
 from futaba.enums import FilterType, LocationType
 from futaba.str_builder import StringBuilder
-from futaba.utils import URL_REGEX, Dummy, escape_backticks
+from futaba.utils import URL_REGEX, escape_backticks
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +132,8 @@ async def check_text_filter(cog, message):
     if triggered is None:
         logger.debug("No text violations found!")
     else:
-        await found_text_violation(triggered)
+        roles = cog.bot.sql.settings.get_special_roles(message.guild)
+        await found_text_violation(triggered, roles)
 
 async def check_file_filter(cog, message):
     file_urls = URL_REGEX.findall(message.content)
@@ -171,8 +172,9 @@ async def check_file_filter(cog, message):
     if triggered is None:
         logger.debug("No content violations found!")
     else:
+        roles = cog.bot.sql.settings.get_special_roles(message.guild)
         settings = cog.bot.sql.filter.get_settings(message.guild)
-        await found_file_violation(triggered, settings.reupload)
+        await found_file_violation(triggered, roles, settings.reupload)
 
 async def check_message_edit(cog, before, after):
     logger.debug("Checking message edit")
@@ -216,7 +218,7 @@ def filter_immune(bot, message):
 
     return False
 
-async def found_text_violation(triggered):
+async def found_text_violation(triggered, roles):
     '''
     Processes a violation of the text filter. This coroutine is responsible
     for actual enforcement, based on the filter_type.
@@ -233,9 +235,6 @@ async def found_text_violation(triggered):
             location_type.value, filter_text, filter_type.value, message.author.name, message.author.id)
 
     severity = filter_type.level
-    jail_role = Dummy() # FIXME
-    jail_role.name = 'Dunce Hat'
-    jail_role.mention = '@Dunce Hat'
 
     # Escape content for display
     escaped_filter_text = escape_backticks(filter_text)
@@ -257,7 +256,7 @@ async def found_text_violation(triggered):
                 "This offense is serious enough to warrant immediate revocation of posting privileges."
             )
             response.writeln(
-                f"As such, you have been assigned the {jail_role.mention} role, until a moderator clears you."
+                f"As such, you have been assigned the {roles.jail.mention} role, until a moderator clears you."
             )
 
         await message.author.send(content=str(response))
@@ -293,12 +292,10 @@ async def found_text_violation(triggered):
         )
 
     if severity >= FilterType.JAIL.level:
-        # TODO jail user
-        # this requires the jailing/duncing mechanism to be complete
-        # and having the dunce role available in settings
         logger.info("Jailing user for inappropriate message")
+        await message.author.add_roles(roles.jail, reason='Jailed for violating file filter')
 
-async def found_file_violation(triggered, reupload):
+async def found_file_violation(roles, triggered, reupload):
     '''
     Processes a violation of the file content filter. This coroutine is responsible
     for actual enforcement, based on the filter_type.
@@ -315,8 +312,6 @@ async def found_file_violation(triggered, reupload):
             hashsum.hex(), filter_type.value, message.author.name, message.author.id)
 
     severity = filter_type.level
-    jail_role = Dummy() # FIXME
-    jail_role.name = 'Dunce Hat'
 
     async def message_violator():
         logger.debug("Sending message to user who violated the filter")
@@ -335,9 +330,8 @@ async def found_file_violation(triggered, reupload):
                 "This offense is serious enough to warrant immediate revocation of posting privileges."
             )
             response.writeln(
-                f"As such, you have been assigned the `{jail_role.name}` role, until a moderator clears you."
+                f"As such, you have been assigned the `{roles.jail.name}` role, until a moderator clears you."
             )
-
 
         kwargs = {}
         if reupload:
@@ -360,7 +354,5 @@ async def found_file_violation(triggered, reupload):
         )
 
     if severity >= FilterType.JAIL.level:
-        # TODO jail user
-        # this requires the jailing/duncing mechanism to be complete
-        # and having the dunce role available in settings
         logger.info("Jailing user for inappropriate attachment")
+        await message.author.add_roles(roles.jail, reason='Jailed for violating text filter')

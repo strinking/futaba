@@ -19,12 +19,9 @@ import logging
 from collections import deque, namedtuple
 from datetime import datetime, timedelta
 
-import discord
 from discord import AuditLogAction
-from discord.ext import commands
 
-from futaba import permissions
-from futaba.enums import MemberLeaveType, Reactions
+from futaba.enums import MemberLeaveType
 from futaba.utils import user_discrim
 
 logger = logging.getLogger(__name__)

@@ -22,8 +22,8 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.converters import MemberConv, UserConv
-from futaba.exceptions import ManualCheckFailure
-from futaba.utils import escape_backticks, user_discrim
+from futaba.exceptions import CommandFailed, ManualCheckFailure
+from futaba.utils import escape_backticks, plural, user_discrim
 
 logger = logging.getLogger(__name__)
 
@@ -39,11 +39,133 @@ class Moderation:
     __slots__ = (
         'bot',
         'journal',
+        'mute_jobs',
     )
 
     def __init__(self, bot):
         self.bot = bot
         self.journal = bot.get_broadcaster('/moderation')
+        self.mute_jobs = {}
+
+    @commands.command(name='mute', aliases=['shitpost'])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def mute(self, ctx, member: MemberConv, minutes: int, *, reason: str):
+        '''
+        Mutes the user for the given number of minutes.
+        Requires a mute role to be configured.
+        '''
+
+        logger.info("Muting user '%s' (%d) for %d minutes", member.name, member.id, minutes)
+
+        if minutes == 0:
+            raise CommandFailed()
+
+        roles = self.bot.sql.settings.get_special_roles(ctx.guild)
+        if roles.mute is None:
+            raise CommandFailed(content='No configured mute role')
+
+        if member.top_role > ctx.me.top_role:
+            raise ManualCheckFailure("I don't have permissions to mute this user")
+
+        # TODO store punishment in table
+        mod = user_discrim(ctx.author)
+        full_reason = f'Muted by {mod} for {minutes} minute{plural(minutes)} with reason: {reason}'
+        await member.add_roles(roles.mute, reason=full_reason)
+
+        # TODO replace with navi
+        async def remove_mute():
+            await asyncio.sleep(minutes * 60)
+            logger.info("Timed mute expired, removing role from '%s' (%d)", member.name, member.id)
+            await member.remove_roles(roles.mute, reason='Mute expired')
+
+        # Cancel old task, if any
+        old_task = self.mute_jobs.get(member, None)
+        if old_task is not None:
+            old_task.cancel()
+
+        # Add new task
+        task = self.bot.loop.create_task(remove_mute())
+        self.mute_jobs[member] = task
+
+    @commands.command(name='unmute', aliases=['unshitpost'])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def unmute(self, ctx, member: MemberConv, minutes: int = 0, *, reason: str = None):
+        '''
+        Unmutes the user, with an optional delay in minutes.
+        Requires a mute role to be configured.
+        '''
+
+        logger.info("Unmuting user '%s' (%d) in %d minutes", member.name, member.id, minutes)
+
+        roles = self.bot.sql.settings.get_special_roles(ctx.guild)
+        if roles.mute is None:
+            raise CommandFailed(content='No configured mute role')
+
+        if member.top_role > ctx.me.top_role:
+            raise ManualCheckFailure("I don't have permissions to unmute this user")
+
+        # TODO store punishment in table
+        mod = user_discrim(ctx.author)
+        fmt_reason = f'with reason: {reason}' if reason else ''
+        full_reason = f'Unmuted by {mod} {fmt_reason}'
+
+        # TODO replace with navi
+        async def remove_mute():
+            await asyncio.sleep(minutes * 60)
+            logger.info("Timed unmute expired, removing role from '%s' (%d)", member.name, member.id)
+            await member.remove_roles(roles.mute, reason=full_reason)
+
+        # Cancel old task, if any
+        old_task = self.mute_jobs.get(member, None)
+        if old_task is not None:
+            old_task.cancel()
+
+        # Add new task
+        task = self.bot.loop.create_task(remove_mute())
+        self.mute_jobs[member] = task
+
+    @commands.command(name='jail', aliases=['dunce'])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def jail(self, ctx, member: MemberConv, *, reason: str):
+        '''
+        Jails the user.
+        Requires a jail role to be configured.
+        '''
+
+        roles = self.bot.sql.settings.get_special_roles(ctx.guild)
+        if roles.jail is None:
+            raise CommandFailed(content='No configured jail role')
+
+        if member.top_role > ctx.me.top_role:
+            raise ManualCheckFailure("I don't have permissions to jail this user")
+
+        # TODO store punishment in table
+        mod = user_discrim(ctx.author)
+        await member.add_roles(roles.jail, reason=f'Jailed by {mod} with reason: {reason}')
+
+    @commands.command(name='unjail', aliases=['undunce'])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def unjail(self, ctx, member: MemberConv, *, reason: str = None):
+        '''
+        Removes a user from the jail.
+        Requires a jail role to be configured.
+        '''
+
+        roles = self.bot.sql.settings.get_special_roles(ctx.guild)
+        if roles.jail is None:
+            raise CommandFailed(content='No configured jail role')
+
+        if member.top_role > ctx.me.top_role:
+            raise ManualCheckFailure("I don't have permissions to unjail this user")
+
+        # TODO store punishment in table
+        mod = user_discrim(ctx.author)
+        fmt_reason = f'with reason: {reason}' if reason else ''
+        await member.remove_roles(roles.jail, reason=f'Jail removed by {mod} {fmt_reason}')
 
     @commands.command(name='kick')
     @commands.guild_only()
