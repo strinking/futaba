@@ -59,12 +59,6 @@ class Miscellaneous:
         await ctx.send(content=content)
         self.journal.send('ping', ctx.guild, content, icon='ok')
 
-    @commands.command(name='testerror')
-    async def test_error(self, ctx):
-        ''' Deliberately raises an exception to test the bot's error handling. '''
-
-        raise RuntimeError("Intentionally raised exception")
-
     @commands.command(name='about', aliases=['aboutme', 'botinfo'])
     async def about(self, ctx):
         ''' Prints information about the running bot. '''
@@ -149,7 +143,14 @@ class Miscellaneous:
         for content in contents:
             await ctx.send(content=str(content))
 
-    @commands.command(name='shutdown', aliases=['halt'])
+    @commands.command(name='testerror', hidden=True)
+    @permissions.check_owner()
+    async def test_error(self, ctx):
+        ''' Deliberately raises an exception to test the bot's error handling. '''
+
+        raise RuntimeError("Intentionally raised exception")
+
+    @commands.command(name='shutdown', aliases=['halt'], hidden=True)
     @permissions.check_owner()
     async def shutdown(self, ctx):
         ''' Shuts down the bot. Can only able be run by an owner. '''
