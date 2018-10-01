@@ -22,7 +22,7 @@ import discord
 from futaba.download import download_links
 from futaba.enums import FilterType, LocationType
 from futaba.str_builder import StringBuilder
-from futaba.utils import URL_REGEX, Dummy, escape_backticks
+from futaba.utils import URL_REGEX, escape_backticks
 
 logger = logging.getLogger(__name__)
 
