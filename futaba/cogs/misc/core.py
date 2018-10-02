@@ -65,7 +65,7 @@ class Miscellaneous:
 
         pyver = sys.version_info
         python_emoji = self.bot.get_emoji(self.bot.config.python_emoji_id) or ''
-        discord_emoji = self.bot.get_emoji(self.bot.config.discord_emoji_id) or ''
+        discord_py_emoji = self.bot.get_emoji(self.bot.config.discord_py_emoji_id) or ''
 
         embed = discord.Embed()
         embed.set_thumbnail(url=self.bot.user.avatar_url)
@@ -75,7 +75,7 @@ class Miscellaneous:
         embed.add_field(name='Source code', value='https://github.com/strinking/futaba')
         embed.description = '\n'.join((
             f'{python_emoji} Powered by Python {pyver.major}.{pyver.minor}.{pyver.micro}',
-            f'{discord_emoji} Using discord.py {discord.__version__}',
+            f'{discord_py_emoji} Using discord.py {discord.__version__}',
         ))
 
         if ctx.guild is not None:
