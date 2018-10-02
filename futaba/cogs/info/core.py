@@ -79,7 +79,6 @@ class Info:
             embed.timestamp = emoji.created_at
         elif isinstance(emoji, str):
             category = lambda ch: UNICODE_CATEGORY_NAME[unicodedata.category(ch)]
-
             embed = discord.Embed(colour=discord.Colour.dark_gold())
             embed.description = emoji
             embed.set_author(name=name)
@@ -99,14 +98,14 @@ class Info:
             conv = UserConv()
             try:
                 return await conv.convert(ctx, name)
-            except commands.BadArgument:
+            except commands.errors.BadArgument:
                 name = escape_backticks(name)
                 prefix = self.bot.prefix(ctx.guild)
                 embed = discord.Embed(colour=discord.Colour.red())
                 embed.description = f'No user found for `{name}`. Try `{prefix}ufind`.'
                 raise CommandFailed(embed=embed)
 
-    @commands.command(name='uinfo', aliases=['userinfo'])
+    @commands.command(name='uinfo', aliases=['userinfo', 'memberinfo'])
     async def uinfo(self, ctx, *, name: str = None):
         '''
         Fetch information about a user, whether they are in the guild or not.

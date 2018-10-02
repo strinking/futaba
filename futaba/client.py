@@ -58,14 +58,14 @@ class Bot(commands.AutoShardedBot):
 
     @staticmethod
     def my_command_prefix(bot, message):
-        prefix = bot.prefix(message)
+        prefix = bot.prefix(message.guild)
         return commands.when_mentioned_or(prefix)(bot, message)
 
-    def prefix(self, message):
-        if message.guild is None:
+    def prefix(self, guild):
+        if guild is None:
             return ''
 
-        prefix = self.sql.settings.get_prefix(message.guild)
+        prefix = self.sql.settings.get_prefix(guild)
         return prefix or self.config.default_prefix
 
     @property

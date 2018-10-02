@@ -12,7 +12,7 @@
 
 import logging
 import re
-from itertools import islice
+from itertools import chain, islice
 from typing import Iterable
 
 import textdistance
@@ -95,40 +95,53 @@ async def get_user(bot, argument, user_list):
     match = USERNAME_DISCRIM_REGEX.match(argument)
     if match is not None:
         name, discrim = normalize_caseless(match[1]), int(match[2])
-        def check(user):
+        def user_discrim_check(user):
             uname = normalize_caseless(user.name)
             udiscrim = user.discriminator
             return name == uname and discrim == udiscrim
-        user = discord.utils.find(check, user_list)
+        user = discord.utils.find(user_discrim_check, user_list)
         if user is not None:
             return user
+        del name, discrim
 
-    logger.debug("Checking if it's a username")
-    user = discord.utils.find(lambda u: argument == normalize_caseless(u.name), user_list)
-    if user is not None:
-        return user
+    logger.debug("Checking if it's a username or nickname")
+    def name_check(user):
+        if argument == normalize_caseless(user.name):
+            return True
 
-    logger.debug("Checking if it's a nickname")
-    def check_user(user):
         nick = getattr(user, 'nick', None)
-        if nick is None:
-            return False
-        return name == normalize_caseless(nick)
+        if nick is not None:
+            if argument == normalize_caseless(nick):
+                return True
 
-    user = discord.utils.find(check_user, user_list)
+        return False
+
+    user = discord.utils.find(name_check, user_list)
     if user is not None:
         return user
 
     logger.debug("No results found")
     raise BadArgument(f'Unable to find user with description "{argument}"')
 
+def get_member_if_exists(guild, user):
+    if guild is not None:
+        if not isinstance(user, discord.Member):
+            member = discord.utils.get(guild.members, id=user.id)
+            if member is not None:
+                return member
+    return user
+
 class UserConv(Converter):
     async def convert(self, ctx, argument) -> discord.User:
-        return await get_user(ctx.bot, argument, ctx.bot.users)
+        user_list = tuple(chain(ctx.guild.members, ctx.bot.users))
+        user = await get_user(ctx.bot, argument, user_list)
+        user = get_member_if_exists(ctx.guild, user)
+        return user
 
 class MemberConv(Converter):
     async def convert(self, ctx, argument) -> discord.Member:
         user = await get_user(ctx.bot, argument, ctx.guild.members)
+        user = get_member_if_exists(ctx.guild, user)
         if not isinstance(user, discord.Member):
             raise BadArgument(f'Found user that matched "{argument}", but they were not a member')
         return user
