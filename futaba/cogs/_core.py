@@ -20,12 +20,17 @@ import logging
 import discord
 from discord.ext import commands
 
+from futaba import permissions
+from futaba.exceptions import CommandFailed
+
 logger = logging.getLogger(__package__)
 
 class NameOfCog:
-    '''
-    <description>
-    '''
+    __slots__ = (
+        'bot',
+        'journal',
+    )
 
     def __init__(self, bot):
         self.bot = bot
+        self.journal = bot.get_broadcaster('/A PATH THAT MAKES SENSE FOR THIS COG')
