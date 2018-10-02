@@ -20,7 +20,7 @@ from urllib.parse import urlparse
 import discord
 
 from futaba.download import download_links
-from futaba.enums import FilterType, LocationType
+from futaba.enums import FilterType, LocationType, NameType
 from futaba.str_builder import StringBuilder
 from futaba.utils import URL_REGEX, escape_backticks
 
@@ -72,8 +72,8 @@ def journal_violation(journal, head, message, filter_type, flagged):
 
 def journal_name_violation(journal, member, name_type, filter_type, flagged):
     props = JOURNAL_PROPERTIES[filter_type]
-    content = f'{props.verb} {name_type}: `{flagged}` by {member.mention}'
-    journal.send(f'{name_type}/{props.path}', member.guild, content, icon=props.icon)
+    content = f'{props.verb} {name_type.value}: `{flagged}` by {member.mention}'
+    journal.send(f'{name_type.value}/{props.path}', member.guild, content, icon=props.icon)
 
 async def check_text_filter(cog, message):
     # Also check embed content
@@ -344,11 +344,9 @@ async def found_file_violation(roles, triggered, reupload):
             logger.info("Jailing user for inappropriate file")
             await message.author.add_roles(roles.jail, reason='Jailed for violating file filter')
 
-async def check_name_filter(cog, name, name_type, member, can_renick):
+async def check_name_filter(cog, name, name_type, member):
     '''
-    Checks the given name against all filters, and enforces with
-    a dunce. If can_renick is set, then delete-level filters are
-    instead enforced with a renick.
+    Checks the given name against all filters, and enforces with a dunce.
     '''
 
     logger.debug("Checking name: %r", name)
@@ -380,7 +378,7 @@ async def check_name_filter(cog, name, name_type, member, can_renick):
 
     async def message_violator(jailed):
         response = StringBuilder(
-            f'The {name_type} you just set violates a {filter_type.value} text filter '
+            f'The {name_type.value} you just set violates a {filter_type.value} text filter '
             f'disallowing `{escaped_filter_text}`.\n'
         )
 
@@ -399,17 +397,29 @@ async def check_name_filter(cog, name, name_type, member, can_renick):
         await member.send(content=str(response))
 
     severity = filter_type.level
+    jail_anyways = False
 
     if severity >= FilterType.FLAG.level:
         logger.info("Notifying staff of filter violation")
         journal_name_violation(cog.journal, member, name_type, filter_type, escaped_name)
 
-    if filter_type == FilterType.BLOCK and can_renick:
-        await asyncio.gather(
-            message_violator(False),
-            member.edit(nick=None, reason=f'Violated {filter_type.value} level name filter')
-        )
-    elif severity >= FilterType.BLOCK.level:
+    if severity >= FilterType.BLOCK.level:
+        logger.info("Removing bad %s from member", name_type.value)
+        if name_type == NameType.USER:
+            jail_anyways = True
+            await member.edit(
+                nick='XXX',
+                reason='Hid username for violating {filter_type.value} level name filter',
+            )
+        elif name_type == NameType.NICK:
+            await member.edit(
+                nick=None,
+                reason=f'Removed nickname for violating {filter_type.value} level name filter',
+            )
+        else:
+            raise ValueError(f"Unknown value for NameType: {name_type!r}")
+
+    if severity >= FilterType.JAIL.level or jail_anyways:
         if roles.jail is None:
             logger.info("Jailing user for inappropriate name, except there is no jail role configured!")
             content = f'Cannot jail {member.mention} for name violation because no jail role is set!'
@@ -417,7 +427,7 @@ async def check_name_filter(cog, name, name_type, member, can_renick):
         else:
             logger.info("Jailing user for inappropriate name")
             await asyncio.gather(
-                message_violator(True),
+                message_violator(jailed=True),
                 member.add_roles(roles.jail, reason='Jailed for violating name filter')
             )
 
@@ -479,9 +489,9 @@ async def check_member_join(cog, member):
         return
 
     # Cannot be parallelized because we can only renick if the username is ok
-    await check_name_filter(cog, member.name, 'username', member, False)
+    await check_name_filter(cog, member.name, NameType.USER, member)
     if member.nick is not None:
-        await check_name_filter(cog, member.nick, 'nickname', member, True)
+        await check_name_filter(cog, member.nick, NameType.NICK, member)
 
 async def check_member_update(cog, before, after):
     '''
@@ -500,7 +510,7 @@ async def check_member_update(cog, before, after):
 
     # Cannot be parallelized because we can only renick if the username is ok
     if before.name != after.name:
-        await check_name_filter(cog, after.name, 'username', after, False)
+        await check_name_filter(cog, after.name, NameType.USER, after)
 
     if before.nick != after.nick and after.nick is not None:
-        await check_name_filter(cog, after.nick, 'nickname', after, True)
+        await check_name_filter(cog, after.nick, NameType.NICK, after)
