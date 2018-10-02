@@ -36,14 +36,14 @@ class RoleConv(Converter):
         logger.debug("Checking if it's a role ID")
         match = ID_REGEX.match(argument)
         if match is not None:
-            role = ctx.guild.get_role(int(match[1]))
+            role = discord.utils.get(ctx.guild.roles, id=int(match[1]))
             if role is not None:
                 return role
 
         logger.debug("Checking if it's a role mention")
         match = ROLE_MENTION_REGEX.match(argument)
         if match is not None:
-            role = ctx.guild.get_role(int(match[1]))
+            role = discord.utils.get(ctx.guild.roles, id=int(match[1]))
             if role is not None:
                 return role
 
