@@ -230,10 +230,11 @@ async def found_text_violation(triggered, roles):
         )
 
         if severity >= FilterType.JAIL.level:
-            response.writeln(
-                'This offense is serious enough to warrant immediate revocation of posting privileges.\n'
-                f'As such, you have been assigned the {roles.jail.mention} role, until a moderator clears you.'
-            )
+            if roles.jail is not None:
+                response.writeln(
+                    'This offense is serious enough to warrant immediate revocation of posting privileges.\n'
+                    f'As such, you have been assigned the `{roles.jail.name}` role, until a moderator clears you.'
+                )
 
         await message.author.send(content=str(response))
         response.clear()
@@ -268,8 +269,13 @@ async def found_text_violation(triggered, roles):
         )
 
     if severity >= FilterType.JAIL.level:
-        logger.info("Jailing user for inappropriate message")
-        await message.author.add_roles(roles.jail, reason='Jailed for violating file filter')
+        if roles.jail is None:
+            logger.info("Jailing user for inappropriate message, except there is no jail role configured!")
+            content = f'Cannot jail {message.author.mention} for filter violation because no jail role is set!'
+            journal.send('text/jail', message.guild, content, icon='warning')
+        else:
+            logger.info("Jailing user for inappropriate message")
+            await message.author.add_roles(roles.jail, reason='Jailed for violating file filter')
 
 async def found_file_violation(roles, triggered, reupload):
     '''
@@ -302,12 +308,11 @@ async def found_file_violation(roles, triggered, reupload):
             response.writeln('The filtered file has been attached to this message.')
 
         if severity >= FilterType.JAIL.level:
-            response.writeln(
-                "This offense is serious enough to warrant immediate revocation of posting privileges."
-            )
-            response.writeln(
-                f"As such, you have been assigned the `{roles.jail.name}` role, until a moderator clears you."
-            )
+            if roles.jail is not None:
+                response.writeln(
+                    'This offense is serious enough to warrant immediate revocation of posting privileges.\n'
+                    f'As such, you have been assigned the `{roles.jail.name}` role, until a moderator clears you.'
+                )
 
         kwargs = {}
         if reupload:
@@ -330,8 +335,14 @@ async def found_file_violation(roles, triggered, reupload):
         )
 
     if severity >= FilterType.JAIL.level:
-        logger.info("Jailing user for inappropriate attachment")
-        await message.author.add_roles(roles.jail, reason='Jailed for violating text filter')
+
+        if roles.jail is None:
+            logger.info("Jailing user for inappropriate file, except there is no jail role configured!")
+            content = f'Cannot jail {message.author.mention} for filter violation because no jail role is set!'
+            journal.send('file/jail', message.guild, content, icon='warning')
+        else:
+            logger.info("Jailing user for inappropriate file")
+            await message.author.add_roles(roles.jail, reason='Jailed for violating file filter')
 
 async def check_name_filter(cog, name, name_type, member, can_renick):
     '''
@@ -357,14 +368,15 @@ async def check_name_filter(cog, name, name_type, member, can_renick):
         logger.debug("No name violations found!")
         return
 
-    roles = cog.bot.sql.settings.get_special_roles(member.guild)
-    logger.info("Punishing name filter violation (%r, level %s) by '%s' (%d)",
-            filter_text, filter_type.value, member.name, member.id)
-
     filter_type = triggered.filter_type
     filter_text = triggered.filter_text
     escaped_name = escape_backticks(name)
     escaped_filter_text = escape_backticks(filter_text)
+
+    logger.info("Punishing name filter violation (%r, level %s) by '%s' (%d)",
+            filter_text, filter_type.value, member.name, member.id)
+
+    roles = cog.bot.sql.settings.get_special_roles(member.guild)
 
     async def message_violator(jailed):
         response = StringBuilder(
@@ -373,10 +385,11 @@ async def check_name_filter(cog, name, name_type, member, can_renick):
         )
 
         if jailed:
-            response.writeln(
-                f'In the mean time, you have been assigned the `{roles.jail.name}` role, '
-                'revoking your posting privileges until a moderator clears you.'
-            )
+            if roles.jail is not None:
+                response.writeln(
+                    f'In the mean time, you have been assigned the `{roles.jail.name}` role, '
+                    'revoking your posting privileges until a moderator clears you.'
+                )
         else:
             response.writeln(
                 'Your name has been manually cleared. Please do not set your name to '
@@ -397,10 +410,16 @@ async def check_name_filter(cog, name, name_type, member, can_renick):
             member.edit(nick=None, reason=f'Violated {filter_type.value} level name filter')
         )
     elif severity >= FilterType.BLOCK.level:
-        await asyncio.gather(
-            message_violator(True),
-            member.add_roles(roles.jail, reason='Jailed for violating name filter')
-        )
+        if roles.jail is None:
+            logger.info("Jailing user for inappropriate name, except there is no jail role configured!")
+            content = f'Cannot jail {member.mention} for name violation because no jail role is set!'
+            cog.journal.send('name/jail', member.guild, content, icon='warning')
+        else:
+            logger.info("Jailing user for inappropriate name")
+            await asyncio.gather(
+                message_violator(True),
+                member.add_roles(roles.jail, reason='Jailed for violating name filter')
+            )
 
 async def check_message(cog, message):
     '''
