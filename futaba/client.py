@@ -270,4 +270,7 @@ class Bot(commands.AutoShardedBot):
             embed = discord.Embed(colour=discord.Colour.red())
             embed.title = f'{anger_emoji} Unexpected error occurred!'
             embed.description = '\n'.join(traceback_lines)
-            await ctx.send(embed=embed)
+            await asyncio.gather(
+                ctx.send(embed=embed),
+                Reactions.FAIL.add(ctx.message),
+            )
