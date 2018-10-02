@@ -1,5 +1,5 @@
 # futaba
-![futaba looking at the camera](https://cdn.discordapp.com/avatars/130012001236811776/855aec7be21b28afda86e1a2d4f7cc7e.png)
+![futaba looking at the camera](images/futaba-portrait.png)
 
 A Discord bot for the [Programming server](https://discord.gg/010z0Kw1A9ql5c1Qe).
 
