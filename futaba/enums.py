@@ -63,7 +63,7 @@ class FilterType(Enum):
         elif self == FilterType.BLOCK:
             return '\N{NO ENTRY SIGN}'
         elif self == FilterType.JAIL:
-            return '\N{POLICE CARS REVOLVING LIGHT}'
+            return '\N{POLICE OFFICER}'
         else:
             raise ValueError(f"Invalid enum value: {self!r}")
 
