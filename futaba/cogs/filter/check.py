@@ -181,8 +181,8 @@ def filter_immune(bot, guild, member, channel=None):
         return True
 
     # Check admins
+    perms = channel.permissions_for(member)
     if channel is not None:
-        perms = channel.permissions_for(member)
         if perms.manage_guild:
             return True
 
@@ -345,9 +345,9 @@ async def check_name_filter(cog, name, name_type, member, can_renick):
     # Iterate through all guild filters
     triggered = None
 
-    for filter_text, (filter, filter_type) in cog.filters[member.guild]:
+    for filter_text, (filter, filter_type) in cog.filters[member.guild].items():
         if filter.matches(name):
-            if triggered is None and filter_type.value > triggered.filter_type.value:
+            if triggered is None or filter_type.value > triggered.filter_type.value:
                 triggered = FoundNameViolation(
                     filter_type=filter_type,
                     filter_text=filter_text,
@@ -369,13 +369,13 @@ async def check_name_filter(cog, name, name_type, member, can_renick):
     async def message_violator(jailed):
         response = StringBuilder(
             f'The {name_type} you just set violates a {filter_type.value} text filter '
-            f'disallowing `{escaped_filter_text}`.'
+            f'disallowing `{escaped_filter_text}`.\n'
         )
 
         if jailed:
             response.writeln(
-                'In the mean time, you have been assigned the {roles.jail.mention}, revoking your '
-                'posting privileges until a moderator clears you.'
+                f'In the mean time, you have been assigned the `{roles.jail.name}` role, '
+                'revoking your posting privileges until a moderator clears you.'
             )
         else:
             response.writeln(
@@ -396,7 +396,7 @@ async def check_name_filter(cog, name, name_type, member, can_renick):
             message_violator(False),
             member.edit(nick=None, reason=f'Violated {filter_type.value} level name filter')
         )
-    elif severity >= FilterType.BLOCK:
+    elif severity >= FilterType.BLOCK.level:
         await asyncio.gather(
             message_violator(True),
             member.add_roles(roles.jail, reason='Jailed for violating name filter')
