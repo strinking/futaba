@@ -26,6 +26,7 @@ from futaba.converters import RoleConv
 from futaba.emojis import ICONS
 from futaba.exceptions import CommandFailed, ManualCheckFailure
 from futaba.permissions import admin_perm, mod_perm
+from futaba.str_builder import StringBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -151,7 +152,6 @@ class Settings:
             f'{ICONS["mute"]} Mute: {mention(roles.mute)}',
             f'{ICONS["jail"]} Jail: {mention(roles.jail)}',
         ))
-
         await ctx.send(embed=embed)
 
     async def check_role(self, ctx, role):
@@ -164,6 +164,21 @@ class Settings:
         if role in special_roles:
             embed.description = f'Cannot assign the same role for multiple purposes'
             raise CommandFailed(embed=embed)
+
+        elevated_perms = permissions.role_elevated_perms(ctx.guild, role)
+        if elevated_perms:
+            embed.colour = discord.Colour.gold()
+            embed.title = f'\N{WARNING SIGN} Role gives elevated permissions'
+            descr = StringBuilder()
+            for location, perm in elevated_perms:
+                if isinstance(location, discord.Guild):
+                    descr.writeln(f'- {perm}')
+                elif isinstance(location, discord.TextChannel):
+                    descr.writeln(f'- {perm} {location.mention}')
+                else:
+                    descr.writeln(f'- {perm} {location.name}')
+            embed.description = str(descr)
+            await ctx.send(embed=embed)
 
     @commands.command(name='setmember')
     @commands.guild_only()
