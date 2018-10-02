@@ -122,13 +122,23 @@ async def get_user(bot, argument, user_list):
     logger.debug("No results found")
     raise BadArgument(f'Unable to find user with description "{argument}"')
 
+def get_member_if_exists(guild, user):
+    if not isinstance(user, discord.Member):
+        member = discord.utils.get(guild.members, id=user.id)
+        if member is not None:
+            return member
+    return user
+
 class UserConv(Converter):
     async def convert(self, ctx, argument) -> discord.User:
-        return await get_user(ctx.bot, argument, ctx.bot.users)
+        user = await get_user(ctx.bot, argument, ctx.bot.users)
+        user = get_member_if_exists(ctx.guild, user)
+        return user
 
 class MemberConv(Converter):
     async def convert(self, ctx, argument) -> discord.Member:
         user = await get_user(ctx.bot, argument, ctx.guild.members)
+        user = get_member_if_exists(ctx.guild, user)
         if not isinstance(user, discord.Member):
             raise BadArgument(f'Found user that matched "{argument}", but they were not a member')
         return user
