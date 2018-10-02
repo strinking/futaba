@@ -27,10 +27,14 @@ from futaba.utils import URL_REGEX, escape_backticks
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    'MASK_NICK',
     'check_message',
     'check_message_edit',
     'check_member_update',
 ]
+
+# The nickname to apply to cover up an offensive username
+MASK_NICK = 'XXX'
 
 FoundTextViolation = namedtuple('FoundTextViolation', (
     'journal',
@@ -408,7 +412,7 @@ async def check_name_filter(cog, name, name_type, member):
         if name_type == NameType.USER:
             jail_anyways = True
             await member.edit(
-                nick='XXX',
+                nick=MASK_NICK,
                 reason='Hid username for violating {filter_type.value} level name filter',
             )
         elif name_type == NameType.NICK:
@@ -513,4 +517,8 @@ async def check_member_update(cog, before, after):
         await check_name_filter(cog, after.name, NameType.USER, after)
 
     if before.nick != after.nick and after.nick is not None:
+        if after.nick == MASK_NICK:
+            logger.debug("User has masked nickname, ignoring")
+            return
+
         await check_name_filter(cog, after.nick, NameType.NICK, after)
