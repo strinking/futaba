@@ -70,7 +70,7 @@ def fancy_timedelta(delta):
     '''
 
     if isinstance(delta, datetime):
-        delta = datetime.now() - delta
+        delta = abs(datetime.now() - delta)
 
     result = StringBuilder(sep=' ')
     years, days = divmod(delta.days, 365)
