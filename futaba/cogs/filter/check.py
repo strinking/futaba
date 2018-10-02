@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 __all__ = [
     'check_message',
     'check_message_edit',
+    'check_member_update',
 ]
 
 FoundTextViolation = namedtuple('FoundTextViolation', (
@@ -49,6 +50,11 @@ FoundFileViolation = namedtuple('FoundFileViolation', (
     'hashsum',
 ))
 
+FoundNameViolation = namedtuple('FoundNameViolation', (
+    'filter_type',
+    'filter_text',
+))
+
 JournalProperties = namedtuple('JournalProperties', ('verb', 'path', 'icon'))
 
 JOURNAL_PROPERTIES = {
@@ -57,41 +63,17 @@ JOURNAL_PROPERTIES = {
     FilterType.JAIL: JournalProperties(verb='Jailed for', path='jail', icon='jail'),
 }
 
-def journal_violation(journal, message, filter_type, flagged):
+def journal_violation(journal, head, message, filter_type, flagged):
     props = JOURNAL_PROPERTIES[filter_type]
     user = message.author
     channel = message.channel
     content = f'{props.verb} message content: `{flagged}` by {user.mention} in {channel.mention}'
-    journal.send(props.path, message.guild, content, icon=props.icon)
+    journal.send(f'{head}/{props.path}', message.guild, content, icon=props.icon)
 
-async def check_message(cog, message):
-    '''
-    Checks the message against all applicable filters, and takes
-    the appropriate action if necessary.
-    '''
-
-    # Don't filter PMs
-    if message.guild is None:
-        logger.debug("Not checking message because it's not from a guild")
-        return
-
-    # Check that we actually have permissions to delete
-    if not message.channel.permissions_for(message.guild.me).manage_messages:
-        logger.debug("I don't have permission to delete messages here")
-        return
-
-    # Check filter immunity
-    if filter_immune(cog.bot, message):
-        logger.debug("This user is immune to the filter")
-        return
-
-    logger.debug("Checking message id %d (by '%s' (%d)) for filter violations",
-            message.id, message.author.name, message.author.id)
-
-    await asyncio.gather(
-        check_text_filter(cog, message),
-        check_file_filter(cog, message),
-    )
+def journal_name_violation(journal, member, name_type, filter_type, flagged):
+    props = JOURNAL_PROPERTIES[filter_type]
+    content = f'{props.verb} {name_type}: `{flagged}` by {member.mention}'
+    journal.send(f'{name_type}/{props.path}', member.guild, content, icon=props.icon)
 
 async def check_text_filter(cog, message):
     # Also check embed content
@@ -176,11 +158,7 @@ async def check_file_filter(cog, message):
         settings = cog.bot.sql.filter.get_settings(message.guild)
         await found_file_violation(triggered, roles, settings.reupload)
 
-async def check_message_edit(cog, before, after):
-    logger.debug("Checking message edit")
-    await check_message(cog, after)
-
-def filter_immune(bot, message):
+def filter_immune(bot, guild, member, channel=None):
     '''
     Checks for certain people who are not subject to the filter's effects.
     '''
@@ -189,23 +167,24 @@ def filter_immune(bot, message):
     # pylint: disable=too-many-return-statements
 
     # Don't trigger on ourselves
-    if message.author == bot:
+    if member == bot:
         return True
 
     # Check if bots have filter immunity
-    filter_settings = bot.sql.filter.get_settings(message.guild)
+    filter_settings = bot.sql.filter.get_settings(guild)
     if filter_settings.bot_immune:
-        if message.author.bot:
+        if member.bot:
             return True
 
     # Ignore owners
-    if message.author.id in bot.config.owner_ids:
+    if member.id in bot.config.owner_ids:
         return True
 
     # Check admins
-    perms = message.channel.permissions_for(message.author)
-    if perms.manage_guild:
-        return True
+    if channel is not None:
+        perms = channel.permissions_for(member)
+        if perms.manage_guild:
+            return True
 
     # Check moderators (if enabled)
     if filter_settings.manage_messages_immune:
@@ -213,7 +192,7 @@ def filter_immune(bot, message):
             return True
 
     # Check manually-added users
-    if bot.sql.filter.user_is_filter_immune(message.guild, message.author):
+    if bot.sql.filter.user_is_filter_immune(guild, member):
         return True
 
     return False
@@ -245,18 +224,15 @@ async def found_text_violation(triggered, roles):
 
     async def message_violator():
         logger.debug("Sending message to user who violated the filter")
-        response = StringBuilder()
-        response.write(
+        response = StringBuilder(
             f'The message you posted in {message.channel.mention} violates a {location_type.value} '
+            f'{filter_type.value} filter disallowing `{escaped_filter_text}`.'
         )
-        response.writeln(f'{filter_type.value} filter disallowing `{escaped_filter_text}`.')
 
         if severity >= FilterType.JAIL.level:
             response.writeln(
-                "This offense is serious enough to warrant immediate revocation of posting privileges."
-            )
-            response.writeln(
-                f"As such, you have been assigned the {roles.jail.mention} role, until a moderator clears you."
+                'This offense is serious enough to warrant immediate revocation of posting privileges.\n'
+                f'As such, you have been assigned the {roles.jail.mention} role, until a moderator clears you.'
             )
 
         await message.author.send(content=str(response))
@@ -282,7 +258,7 @@ async def found_text_violation(triggered, roles):
 
     if severity >= FilterType.FLAG.level:
         logger.info("Notifying staff of filter violation")
-        journal_violation(journal, message, filter_type, escaped_content)
+        journal_violation(journal, 'text', message, filter_type, escaped_content)
 
     if severity >= FilterType.BLOCK.level:
         logger.info("Deleting inappropriate message id %d and notifying user", message.id)
@@ -344,7 +320,7 @@ async def found_file_violation(roles, triggered, reupload):
 
     if severity >= FilterType.FLAG.level:
         logger.info("Notifying staff of filter violation")
-        journal_violation(journal, message, filter_type, url)
+        journal_violation(journal, 'file', message, filter_type, url)
 
     if severity >= FilterType.BLOCK.level:
         logger.info("Deleting inappropriate message id %d and notifying user", message.id)
@@ -356,3 +332,156 @@ async def found_file_violation(roles, triggered, reupload):
     if severity >= FilterType.JAIL.level:
         logger.info("Jailing user for inappropriate attachment")
         await message.author.add_roles(roles.jail, reason='Jailed for violating text filter')
+
+async def check_name_filter(cog, name, name_type, member, can_renick):
+    '''
+    Checks the given name against all filters, and enforces with
+    a dunce. If can_renick is set, then delete-level filters are
+    instead enforced with a renick.
+    '''
+
+    logger.debug("Checking name: %r", name)
+
+    # Iterate through all guild filters
+    triggered = None
+
+    for filter_text, (filter, filter_type) in cog.filters[member.guild]:
+        if filter.matches(name):
+            if triggered is None and filter_type.value > triggered.filter_type.value:
+                triggered = FoundNameViolation(
+                    filter_type=filter_type,
+                    filter_text=filter_text,
+                )
+
+    if triggered is None:
+        logger.debug("No name violations found!")
+        return
+
+    roles = cog.bot.sql.settings.get_special_roles(member.guild)
+    logger.info("Punishing name filter violation (%r, level %s) by '%s' (%d)",
+            filter_text, filter_type.value, member.name, member.id)
+
+    filter_type = triggered.filter_type
+    filter_text = triggered.filter_text
+    escaped_name = escape_backticks(name)
+    escaped_filter_text = escape_backticks(filter_text)
+
+    async def message_violator(jailed):
+        response = StringBuilder(
+            f'The {name_type} you just set violates a {filter_type.value} text filter '
+            f'disallowing `{escaped_filter_text}`.'
+        )
+
+        if jailed:
+            response.writeln(
+                'In the mean time, you have been assigned the {roles.jail.mention}, revoking your '
+                'posting privileges until a moderator clears you.'
+            )
+        else:
+            response.writeln(
+                'Your name has been manually cleared. Please do not set your name to '
+                'anything offensive in the future.'
+            )
+
+        await member.send(content=str(response))
+
+    severity = filter_type.level
+
+    if severity >= FilterType.FLAG.level:
+        logger.info("Notifying staff of filter violation")
+        journal_name_violation(cog.journal, member, name_type, filter_type, escaped_name)
+
+    if filter_type == FilterType.BLOCK and can_renick:
+        await asyncio.gather(
+            message_violator(False),
+            member.edit(nick=None, reason=f'Violated {filter_type.value} level name filter')
+        )
+    elif severity >= FilterType.BLOCK:
+        await asyncio.gather(
+            message_violator(True),
+            member.add_roles(roles.jail, reason='Jailed for violating name filter')
+        )
+
+async def check_message(cog, message):
+    '''
+    Checks the message against all applicable filters, and takes
+    the appropriate action if necessary.
+    '''
+
+    # Don't filter PMs
+    if message.guild is None:
+        logger.debug("Not checking message because it's not from a guild")
+        return
+
+    # Check that we actually have permissions to delete
+    if not message.channel.permissions_for(message.guild.me).manage_messages:
+        logger.debug("I don't have permission to delete messages here")
+        return
+
+    # Check filter immunity
+    if filter_immune(cog.bot, message.guild, message.author, message.channel):
+        logger.debug("This user is immune to the filter")
+        return
+
+    logger.debug("Checking message id %d (by '%s' (%d)) for filter violations",
+            message.id, message.author.name, message.author.id)
+
+    await asyncio.gather(
+        check_text_filter(cog, message),
+        check_file_filter(cog, message),
+    )
+
+async def check_message_edit(cog, before, after):
+    '''
+    Checks the edited message against all applicable filters, and
+    takes appropriate action if necessary.
+    '''
+
+    logger.debug("Checking message edit")
+    await check_message(cog, after)
+
+async def check_member_join(cog, member):
+    '''
+    Checks a new member against all text filters to ensure
+    they don't have an inappropriate username or nickname.
+    '''
+
+    logger.debug("Checking member join")
+    guild = member.guild
+
+    # Check that we actually have permissions to manage roles
+    if not guild.me.guild_permissions.manage_roles:
+        logger.debug("I don't have permission to manage roles here")
+        return
+
+    # Check filter immunity
+    if filter_immune(cog.bot, guild, member):
+        logger.debug("This user is immune to the filter")
+        return
+
+    # Cannot be parallelized because we can only renick if the username is ok
+    await check_name_filter(cog, member.name, 'username', member, False)
+    if member.nick is not None:
+        await check_name_filter(cog, member.nick, 'nickname', member, True)
+
+async def check_member_update(cog, before, after):
+    '''
+    Checks the member update against all text filters to ensure
+    they didn't change their username or nickname to something
+    inappropriate.
+    '''
+
+    logger.debug("Checking member update")
+    guild = before.guild
+
+    # Check that we actually have permissions to manage roles
+    if not guild.me.guild_permissions.manage_roles:
+        logger.debug("I don't have permission to manage roles here")
+        return
+
+    # Cannot be parallelized because we can only renick if the username is ok
+    if before.name != after.name:
+        await check_name_filter(cog, after.name, 'username', after, False)
+
+    if before.nick != after.nick and after.nick is not None:
+        await check_name_filter(cog, after.nick, 'nickname', after, True)
