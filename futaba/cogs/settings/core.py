@@ -56,7 +56,7 @@ class Settings:
 
         if prefix is None:
             # Get prefix
-            bot_prefix = self.bot.prefix(ctx.message)
+            bot_prefix = self.bot.prefix(ctx.guild)
             embed = discord.Embed(colour=discord.Colour.dark_teal())
             if ctx.guild is None:
                 embed.description = 'No command prefix, all messages are commands'
@@ -76,7 +76,7 @@ class Settings:
             # Unset prefix
             with self.bot.sql.transaction():
                 self.bot.sql.settings.set_prefix(ctx.guild, None)
-                bot_prefix = self.bot.prefix(ctx.message)
+                bot_prefix = self.bot.prefix(ctx.guild)
 
             embed = discord.Embed(colour=discord.Colour.dark_teal())
             embed.description = f'Unset prefix for {ctx.guild.name}. (Default prefix: `{bot_prefix}`)'
