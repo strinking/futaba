@@ -18,8 +18,11 @@ Also has other helper commands for checking permissions within a guild.
 import discord
 from discord.ext import commands
 
+from futaba.str_builder import StringBuilder
+
 __all__ = [
-    'role_elevated_perms',
+    'elevated_role_perms',
+    'elevated_role_embed',
     'owner_perm',
     'admin_perm',
     'mod_perm',
@@ -44,7 +47,7 @@ ELEVATED_PERMISSION_NAMES = (
     'manage_emojis',
 )
 
-def role_elevated_perms(guild, role):
+def elevated_role_perms(guild, role):
     '''
     Outputs a list of permissions and channels where this role has elevated permissions.
     If an empty list is returned it is "safe" to apply.
@@ -69,6 +72,40 @@ def role_elevated_perms(guild, role):
                     break
 
     return elevated
+
+def elevated_role_embed(guild, role, level):
+    '''
+    Takes the result of elevated_role_perms() and produces an embed listing the permissions.
+    The parameter level must be 'warning' or 'error'.
+    '''
+
+    elevated = elevated_role_perms(guild, role)
+    if not elevated:
+        return None
+
+    if level == 'warning':
+        colour = discord.Colour.gold()
+        icon = '\N{WARNING SIGN}'
+    elif level == 'error':
+        colour = discord.Colour.red()
+        icon = '\N{NO ENTRY}'
+    else:
+        raise ValueError(f"Unknown severity level: '{level}'")
+
+    embed = discord.Embed()
+    embed.colour = colour
+    embed.title = f'{icon} Role gives elevated permissions'
+    descr = StringBuilder()
+    for location, perm in elevated:
+        perm = perm.replace('_', ' ').title()
+        if isinstance(location, discord.Guild):
+            descr.writeln(f'- {perm}')
+        elif isinstance(location, discord.TextChannel):
+            descr.writeln(f'- {perm} in {location.mention}')
+        else:
+            descr.writeln(f'- {perm} in {location.name}')
+    embed.description = str(descr)
+    return embed
 
 def owner_perm(ctx: commands.Context):
     ''' Check if user is a owner of the bot from config '''

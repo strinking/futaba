@@ -26,7 +26,6 @@ from futaba.converters import RoleConv
 from futaba.emojis import ICONS
 from futaba.exceptions import CommandFailed, ManualCheckFailure
 from futaba.permissions import admin_perm, mod_perm
-from futaba.str_builder import StringBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -165,20 +164,8 @@ class Settings:
             embed.description = f'Cannot assign the same role for multiple purposes'
             raise CommandFailed(embed=embed)
 
-        elevated_perms = permissions.role_elevated_perms(ctx.guild, role)
-        if elevated_perms:
-            embed.colour = discord.Colour.gold()
-            embed.title = f'\N{WARNING SIGN} Role gives elevated permissions'
-            descr = StringBuilder()
-            for location, perm in elevated_perms:
-                perm = perm.replace('_', ' ').title()
-                if isinstance(location, discord.Guild):
-                    descr.writeln(f'- {perm}')
-                elif isinstance(location, discord.TextChannel):
-                    descr.writeln(f'- {perm} {location.mention}')
-                else:
-                    descr.writeln(f'- {perm} {location.name}')
-            embed.description = str(descr)
+        embed = permissions.elevated_role_embed(ctx.guild, role, 'warning')
+        if embed is not None:
             await ctx.send(embed=embed)
 
     @commands.command(name='setmember')
