@@ -47,6 +47,20 @@ class Moderation:
         self.journal = bot.get_broadcaster('/moderation')
         self.mute_jobs = {}
 
+    @commands.command(name='nick', aliases=['nickname', 'renick'])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def nick(self, ctx, member: MemberConv, nick: str = None):
+        ''' Changes or reset a member's nickname. '''
+
+        logger.info("Setting the nickname of user '%s' (%d) to %r", member.name, member.id, nick)
+
+        if member.top_role >= ctx.me.top_role:
+            raise ManualCheckFailure("I don't have permission to nick this user")
+
+        mod = user_discrim(ctx.author)
+        await member.edit(nick=nick, reason=f'{mod} {"un" if nick is None else ""}set nickname')
+
     @commands.command(name='mute', aliases=['shitpost'])
     @commands.guild_only()
     @permissions.check_mod()
