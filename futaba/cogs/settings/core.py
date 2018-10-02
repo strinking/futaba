@@ -171,6 +171,7 @@ class Settings:
             embed.title = f'\N{WARNING SIGN} Role gives elevated permissions'
             descr = StringBuilder()
             for location, perm in elevated_perms:
+                perm = perm.replace('_', ' ').title()
                 if isinstance(location, discord.Guild):
                     descr.writeln(f'- {perm}')
                 elif isinstance(location, discord.TextChannel):
