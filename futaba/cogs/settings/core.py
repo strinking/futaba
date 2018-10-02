@@ -151,7 +151,6 @@ class Settings:
             f'{ICONS["mute"]} Mute: {mention(roles.mute)}',
             f'{ICONS["jail"]} Jail: {mention(roles.jail)}',
         ))
-
         await ctx.send(embed=embed)
 
     async def check_role(self, ctx, role):
@@ -164,6 +163,10 @@ class Settings:
         if role in special_roles:
             embed.description = f'Cannot assign the same role for multiple purposes'
             raise CommandFailed(embed=embed)
+
+        embed = permissions.elevated_role_embed(ctx.guild, role, 'warning')
+        if embed is not None:
+            await ctx.send(embed=embed)
 
     @commands.command(name='setmember')
     @commands.guild_only()
