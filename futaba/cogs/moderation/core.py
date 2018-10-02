@@ -47,6 +47,20 @@ class Moderation:
         self.journal = bot.get_broadcaster('/moderation')
         self.mute_jobs = {}
 
+    @commands.command(name='nick', aliases=['nickname', 'renick'])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def nick(self, ctx, member: MemberConv, nick: str = None):
+        ''' Changes or reset a member's nickname. '''
+
+        logger.info("Setting the nickname of user '%s' (%d) to %r", member.name, member.id, nick)
+
+        if member.top_role >= ctx.me.top_role:
+            raise ManualCheckFailure("I don't have permission to nick this user")
+
+        mod = user_discrim(ctx.author)
+        await member.edit(nick=nick, reason=f'{mod} {"un" if nick is None else ""}set nickname')
+
     @commands.command(name='mute', aliases=['shitpost'])
     @commands.guild_only()
     @permissions.check_mod()
@@ -66,7 +80,7 @@ class Moderation:
             raise CommandFailed(content='No configured mute role')
 
         if member.top_role > ctx.me.top_role:
-            raise ManualCheckFailure("I don't have permissions to mute this user")
+            raise ManualCheckFailure("I don't have permission to mute this user")
 
         # TODO store punishment in table
         mod = user_discrim(ctx.author)
@@ -104,7 +118,7 @@ class Moderation:
             raise CommandFailed(content='No configured mute role')
 
         if member.top_role > ctx.me.top_role:
-            raise ManualCheckFailure("I don't have permissions to unmute this user")
+            raise ManualCheckFailure("I don't have permission to unmute this user")
 
         # TODO store punishment in table
         mod = user_discrim(ctx.author)
@@ -140,7 +154,7 @@ class Moderation:
             raise CommandFailed(content='No configured jail role')
 
         if member.top_role > ctx.me.top_role:
-            raise ManualCheckFailure("I don't have permissions to jail this user")
+            raise ManualCheckFailure("I don't have permission to jail this user")
 
         # TODO store punishment in table
         mod = user_discrim(ctx.author)
@@ -160,7 +174,7 @@ class Moderation:
             raise CommandFailed(content='No configured jail role')
 
         if member.top_role > ctx.me.top_role:
-            raise ManualCheckFailure("I don't have permissions to unjail this user")
+            raise ManualCheckFailure("I don't have permission to unjail this user")
 
         # TODO store punishment in table
         mod = user_discrim(ctx.author)
@@ -184,7 +198,7 @@ class Moderation:
             await ctx.send(embed=embed)
 
         except discord.errors.Forbidden:
-            raise ManualCheckFailure(content="I don't have permissions to kick this user")
+            raise ManualCheckFailure(content="I don't have permission to kick this user")
 
     @commands.command(name='ban')
     @commands.guild_only()
@@ -210,7 +224,7 @@ class Moderation:
             self.journal.send('member/ban', ctx.guild, content, icon='ban')
 
         except discord.errors.Forbidden:
-            raise ManualCheckFailure(content="I don't have permissions to ban this user")
+            raise ManualCheckFailure(content="I don't have permission to ban this user")
 
     @commands.command(name='softban', aliases=['soft', 'sban'])
     @commands.guild_only()
@@ -242,7 +256,7 @@ class Moderation:
                     member=member, reason=reason, cause=ctx.author)
 
         except discord.errors.Forbidden:
-            raise ManualCheckFailure(content="I don't have permissions to soft-ban this user")
+            raise ManualCheckFailure(content="I don't have permission to soft-ban this user")
 
     @commands.command(name='unban', aliases=['pardon'])
     @commands.guild_only()
@@ -269,4 +283,4 @@ class Moderation:
             self.journal.send('member/unban', ctx.guild, content, icon='unban', member=member)
 
         except discord.errors.Forbidden:
-            raise ManualCheckFailure(content="I don't have permissions to unban this user")
+            raise ManualCheckFailure(content="I don't have permission to unban this user")
