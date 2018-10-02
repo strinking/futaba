@@ -29,9 +29,10 @@ __all__ = [
 ]
 
 ELEVATED_PERMISSION_NAMES = (
+    'administrator',
     'mention_everyone',
     'manage_messages',
-    'manage_channel',
+    'manage_channels',
     'manage_guild',
     'mute_members',
     'deafen_members',
@@ -41,7 +42,6 @@ ELEVATED_PERMISSION_NAMES = (
     'manage_nicknames',
     'manage_roles',
     'manage_emojis',
-    'administrator',
 )
 
 def role_elevated_perms(guild, role):
@@ -54,17 +54,19 @@ def role_elevated_perms(guild, role):
     elevated = []
 
     perms = role.permissions
-    for perm, value in perms:
-        if perm in ELEVATED_PERMISSION_NAMES:
-            if value is True:
-                elevated.append((guild, perm))
+    for perm in ELEVATED_PERMISSION_NAMES:
+        if getattr(perms, perm) is True:
+            elevated.append((guild, perm))
+            if perm == 'administrator':
+                break
 
     for channel in guild.channels:
         perms = channel.overwrites_for(role)
-        for perm, value in perms:
-            if perm in ELEVATED_PERMISSION_NAMES:
-                if value is True:
-                    elevated.append((channel, perm))
+        for perm in ELEVATED_PERMISSION_NAMES:
+            if getattr(perms, perm) is True:
+                elevated.append((channel, perm))
+                if perm == 'administrator':
+                    break
 
     return elevated
 
