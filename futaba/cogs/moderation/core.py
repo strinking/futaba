@@ -80,7 +80,7 @@ class Moderation:
             raise CommandFailed(content='No configured mute role')
 
         if member.top_role > ctx.me.top_role:
-            raise ManualCheckFailure("I don't have permissions to mute this user")
+            raise ManualCheckFailure("I don't have permission to mute this user")
 
         # TODO store punishment in table
         mod = user_discrim(ctx.author)
@@ -118,7 +118,7 @@ class Moderation:
             raise CommandFailed(content='No configured mute role')
 
         if member.top_role > ctx.me.top_role:
-            raise ManualCheckFailure("I don't have permissions to unmute this user")
+            raise ManualCheckFailure("I don't have permission to unmute this user")
 
         # TODO store punishment in table
         mod = user_discrim(ctx.author)
@@ -154,7 +154,7 @@ class Moderation:
             raise CommandFailed(content='No configured jail role')
 
         if member.top_role > ctx.me.top_role:
-            raise ManualCheckFailure("I don't have permissions to jail this user")
+            raise ManualCheckFailure("I don't have permission to jail this user")
 
         # TODO store punishment in table
         mod = user_discrim(ctx.author)
@@ -174,7 +174,7 @@ class Moderation:
             raise CommandFailed(content='No configured jail role')
 
         if member.top_role > ctx.me.top_role:
-            raise ManualCheckFailure("I don't have permissions to unjail this user")
+            raise ManualCheckFailure("I don't have permission to unjail this user")
 
         # TODO store punishment in table
         mod = user_discrim(ctx.author)
@@ -198,7 +198,7 @@ class Moderation:
             await ctx.send(embed=embed)
 
         except discord.errors.Forbidden:
-            raise ManualCheckFailure(content="I don't have permissions to kick this user")
+            raise ManualCheckFailure(content="I don't have permission to kick this user")
 
     @commands.command(name='ban')
     @commands.guild_only()
@@ -224,7 +224,7 @@ class Moderation:
             self.journal.send('member/ban', ctx.guild, content, icon='ban')
 
         except discord.errors.Forbidden:
-            raise ManualCheckFailure(content="I don't have permissions to ban this user")
+            raise ManualCheckFailure(content="I don't have permission to ban this user")
 
     @commands.command(name='softban', aliases=['soft', 'sban'])
     @commands.guild_only()
@@ -256,7 +256,7 @@ class Moderation:
                     member=member, reason=reason, cause=ctx.author)
 
         except discord.errors.Forbidden:
-            raise ManualCheckFailure(content="I don't have permissions to soft-ban this user")
+            raise ManualCheckFailure(content="I don't have permission to soft-ban this user")
 
     @commands.command(name='unban', aliases=['pardon'])
     @commands.guild_only()
@@ -283,4 +283,4 @@ class Moderation:
             self.journal.send('member/unban', ctx.guild, content, icon='unban', member=member)
 
         except discord.errors.Forbidden:
-            raise ManualCheckFailure(content="I don't have permissions to unban this user")
+            raise ManualCheckFailure(content="I don't have permission to unban this user")
