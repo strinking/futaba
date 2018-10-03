@@ -13,14 +13,15 @@
 from .alias import Alias
 from .core import Info
 
+
 def setup(bot):
-    '''
+    """
     Setup for bot to add cog
-    '''
+    """
 
     cog = Info(bot)
     bot.add_cog(cog)
 
     cog = Alias(bot)
-    bot.add_listener(cog.member_update, 'on_member_update')
+    bot.add_listener(cog.member_update, "on_member_update")
     bot.add_cog(cog)

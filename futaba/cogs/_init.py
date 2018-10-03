@@ -12,10 +12,11 @@
 
 from .core import NameOfCog
 
+
 def setup(bot):
-    '''
+    """
     Setup for bot to add cog
-    '''
+    """
 
     cog = NameOfCog(bot)
     bot.add_cog(cog)
