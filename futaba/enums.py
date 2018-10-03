@@ -108,6 +108,10 @@ class ValueRelationship(Enum):
     def comparator(self):
         return VALUE_RELATIONSHIP_COMPARATORS[self]
 
+    @property
+    def symbol(self):
+        return VALUE_RELATIONSHIP_SYMBOLS[self]
+
 
 VALUE_RELATIONSHIP_COMPARATORS = {
     ValueRelationship.LESS_THAN: lambda x, y: x < y,
@@ -116,7 +120,17 @@ VALUE_RELATIONSHIP_COMPARATORS = {
     ValueRelationship.GREATER_OR_EQUAL: lambda x, y: x >= y,
     ValueRelationship.EQUAL_TO: lambda x, y: x == y,
     ValueRelationship.NOT_EQUAL: lambda x, y: x != y,
-    ValueRelationship.CONTAINS: lambda x, y: x in y,
+    ValueRelationship.CONTAINS: lambda x, y: y in x,
+}
+
+VALUE_RELATIONSHIP_SYMBOLS = {
+    ValueRelationship.LESS_THAN: "<",
+    ValueRelationship.LESS_OR_EQUAL: "\N{LESS-THAN OR EQUAL TO}",
+    ValueRelationship.GREATER_THAN: ">",
+    ValueRelationship.GREATER_OR_EQUAL: "\N{GREATER-THAN OR EQUAL TO}",
+    ValueRelationship.EQUAL_TO: "=",
+    ValueRelationship.NOT_EQUAL: "\N{NOT EQUAL TO}",
+    ValueRelationship.CONTAINS: "\N{ALMOST EQUAL TO}",
 }
 
 

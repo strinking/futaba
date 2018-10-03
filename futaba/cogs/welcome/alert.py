@@ -25,6 +25,7 @@ from discord.ext import commands
 from futaba import permissions
 from futaba.enums import JoinAlertKey, ValueRelationship
 from futaba.exceptions import BadArgument, CommandFailed, SendHelp
+from futaba.str_builder import StringBuilder
 from futaba.unicode import normalize_caseless
 
 logger = logging.getLogger(__package__)
@@ -45,7 +46,7 @@ class JoinAlert:
         if isinstance(value, str) and isinstance(member_value, str):
             value = normalize_caseless(value)
             member_value = normalize_caseless(member_value)
-        return self.op.comparator(value, member_value)
+        return self.op.comparator(member_value, value)
 
 
 class Alert:
@@ -53,7 +54,7 @@ class Alert:
 
     def __init__(self, bot):
         self.bot = bot
-        self.journal = bot.get_broadcaster("/welcome")
+        self.journal = bot.get_broadcaster("/welcome/alert")
         self.alerts = defaultdict(dict)
 
         for guild in bot.guilds:
@@ -73,6 +74,31 @@ class Alert:
 
         if ctx.invoked_subcommand is None:
             raise SendHelp()
+
+    @alert.command(name="show", aliases=["display", "list"])
+    @commands.guild_only()
+    async def alert_show(self, ctx):
+        """ Lists all join alerts for this guild. """
+
+        logging.info(
+            "Showing all join alerts for '%s' (%d)", ctx.guild.name, ctx.guild.id
+        )
+
+        embed = discord.Embed()
+        embed.set_author(name="Join alerts")
+        descr = StringBuilder()
+
+        for alert in self.alerts[ctx.guild].values():
+            descr.writeln(f"`{alert.key}`: {alert.op.symbol} {alert.value}")
+
+        if descr:
+            embed.colour = discord.Colour.dark_teal()
+            embed.description = str(descr)
+        else:
+            embed.colour = discord.Colour.dark_purple()
+            embed.description = "No alerts for this guild"
+
+        await ctx.send(embed=embed)
 
     @alert.command(name="add", aliases=["append", "extend"])
     @commands.guild_only()
@@ -106,12 +132,47 @@ class Alert:
         except ValueError as error:
             raise BadArgument(str(error))
 
-        logging.info("Adding join alert: %s %s %s", attribute, relationship, amount)
+        logging.info("Adding join alert: %s %s %s", key, op, value)
         alert = JoinAlert(key, op, value)
 
         with self.bot.sql.transaction():
             self.bot.sql.welcome.add_alert(ctx.guild, alert)
 
-        self.alerts[ctx.guild] = alert
+        self.alerts[ctx.guild][key] = alert
 
-    # TODO list and remove
+        # Notify the user
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
+        embed.set_author(name="Successfully added join alert")
+        embed.description = (
+            f"`{alert.key}`: {alert.op.symbol} {alert.value}\n"
+            "To get these notifications in a channel, add a logger for path `/welcome/alert`"
+        )
+
+        await ctx.send(embed=embed)
+
+    @alert.command(name="remove", aliases=["rm", "delete", "del"])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def alert_remove(self, ctx, attribute: str):
+        """
+        If there exists a join alert tracking the given attribute, delete it.
+
+        Possible attributes: id, created, name, discrim, avatar, status
+        """
+
+        logging.info(
+            "Got request to delete join alert for '%s' (%d)",
+            ctx.guild.name,
+            ctx.guild.id,
+        )
+
+        try:
+            key = JoinAlertKey.parse(attribute)
+        except ValueError:
+            raise BadArgument(f"Invalid attribute: {attribute}")
+
+        logging.info("Removing join alert: %s", key)
+        with self.bot.sql.transaction():
+            self.bot.sql.welcome.remove_alert(ctx.guild, key)
+
+        self.alerts[ctx.guild].pop(key, None)
