@@ -1,2 +1,2 @@
-black
+git+https://github.com/ambv/black
 pylint>=2.1
