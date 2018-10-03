@@ -25,7 +25,7 @@ from futaba import permissions
 from futaba.enums import FilterType
 from futaba.exceptions import CommandFailed, SendHelp
 from futaba.utils import async_partial, escape_backticks
-from .check import check_message, check_message_edit
+from .check import check_message, check_message_edit, check_member_join, check_member_update
 from .filter import Filter
 from .manage import add_filter, delete_filter, show_filter
 from .manage import check_hashsums, add_content_filter, delete_content_filter, show_content_filter
@@ -44,6 +44,8 @@ class Filtering:
         'content_filters',
         'check_message',
         'check_message_edit',
+        'check_member_join',
+        'check_member_update',
     )
 
     def __init__(self, bot):
@@ -53,6 +55,8 @@ class Filtering:
         self.content_filters = defaultdict(dict)
         self.check_message = async_partial(check_message, self)
         self.check_message_edit = async_partial(check_message_edit, self)
+        self.check_member_join = async_partial(check_member_join, self)
+        self.check_member_update = async_partial(check_member_update, self)
 
         logger.info("Fetching previously stored filters")
         sql = self.bot.sql.filter

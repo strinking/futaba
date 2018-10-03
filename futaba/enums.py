@@ -40,6 +40,11 @@ class MemberLeaveType(Enum):
     BANNED = 'banned'
 
 @unique
+class NameType(Enum):
+    USER = 'username'
+    NICK = 'nickname'
+
+@unique
 class FilterType(Enum):
     FLAG = 'flag'
     BLOCK = 'block'
