@@ -10,9 +10,9 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-'''
+"""
 Cog for misceallaneous commands that don't really belong anywhere else.
-'''
+"""
 
 import logging
 import random
@@ -32,82 +32,89 @@ from futaba.utils import GIT_HASH, URL_REGEX, fancy_timedelta
 
 logger = logging.getLogger(__name__)
 
-__all__ = [
-    'Miscellaneous',
-]
+__all__ = ["Miscellaneous"]
 
-SHA1_ERROR_MESSAGE = 'Error downloading file'.ljust(40)
+SHA1_ERROR_MESSAGE = "Error downloading file".ljust(40)
+
 
 class Miscellaneous:
-    __slots__ = (
-        'bot',
-        'journal',
-    )
+    __slots__ = ("bot", "journal")
 
     def __init__(self, bot):
         self.bot = bot
-        self.journal = bot.get_broadcaster('/misc')
+        self.journal = bot.get_broadcaster("/misc")
 
-    @commands.command(name='ping')
+    @commands.command(name="ping")
     async def ping(self, ctx):
-        ''' Determines the bot's current latency. '''
+        """ Determines the bot's current latency. """
 
         duration = datetime.now() - discord.utils.snowflake_time(ctx.message.id)
         ms = duration.microseconds / 1000
-        content = f'Pong! `{ms} ms`'
+        content = f"Pong! `{ms} ms`"
 
         await ctx.send(content=content)
-        self.journal.send('ping', ctx.guild, content, icon='ok')
+        self.journal.send("ping", ctx.guild, content, icon="ok")
 
-    @commands.command(name='about', aliases=['futaba', 'aboutme', 'botinfo'])
+    @commands.command(name="about", aliases=["futaba", "aboutme", "botinfo"])
     async def about(self, ctx):
-        ''' Prints information about the running bot. '''
+        """ Prints information about the running bot. """
 
         pyver = sys.version_info
-        python_emoji = self.bot.get_emoji(self.bot.config.python_emoji_id) or ''
-        discord_py_emoji = self.bot.get_emoji(self.bot.config.discord_py_emoji_id) or ''
+        python_emoji = self.bot.get_emoji(self.bot.config.python_emoji_id) or ""
+        discord_py_emoji = self.bot.get_emoji(self.bot.config.discord_py_emoji_id) or ""
 
         embed = discord.Embed()
         embed.set_thumbnail(url=self.bot.user.avatar_url)
-        embed.set_author(name=f'Futaba v{__version__} {GIT_HASH}')
-        embed.add_field(name='Running for', value=fancy_timedelta(self.bot.uptime))
-        embed.add_field(name='Created by', value='[Programming Discord](https://discord.gg/010z0Kw1A9ql5c1Qe)')
-        embed.add_field(name='Source code', value='https://github.com/strinking/futaba')
-        embed.description = '\n'.join((
-            f'{python_emoji} Powered by Python {pyver.major}.{pyver.minor}.{pyver.micro}',
-            f'{discord_py_emoji} Using discord.py {discord.__version__}',
-        ))
+        embed.set_author(name=f"Futaba v{__version__} {GIT_HASH}")
+        embed.add_field(name="Running for", value=fancy_timedelta(self.bot.uptime))
+        embed.add_field(
+            name="Created by",
+            value="[Programming Discord](https://discord.gg/010z0Kw1A9ql5c1Qe)",
+        )
+        embed.add_field(name="Source code", value="https://github.com/strinking/futaba")
+        embed.description = "\n".join(
+            (
+                f"{python_emoji} Powered by Python {pyver.major}.{pyver.minor}.{pyver.micro}",
+                f"{discord_py_emoji} Using discord.py {discord.__version__}",
+            )
+        )
 
         if ctx.guild is not None:
             embed.colour = ctx.guild.me.colour
 
         await ctx.send(embed=embed)
 
-    @commands.command(name='randomemoji', aliases=['randemoji', 'remoji'])
+    @commands.command(name="randomemoji", aliases=["randemoji", "remoji"])
     async def random_emoji(self, ctx):
-        '''
+        """
         Sends a random emoji from any the servers the bot is connected to.
-        '''
+        """
 
         if not self.bot.emojis:
             raise CommandFailed()
 
         emoji = random.choice(self.bot.emojis)
         await ctx.send(content=str(emoji))
-        content = f'Sent random emoji {emoji} to {ctx.channel.mention}.'
-        self.journal.send('emoji/random', ctx.guild, content, icon='fun',
-                channel=ctx.channel, emoji=emoji)
+        content = f"Sent random emoji {emoji} to {ctx.channel.mention}."
+        self.journal.send(
+            "emoji/random",
+            ctx.guild,
+            content,
+            icon="fun",
+            channel=ctx.channel,
+            emoji=emoji,
+        )
 
-    @commands.command(name='sha1sum', aliases=['sha1', 'sha', 'hashsum', 'hash'])
+    @commands.command(name="sha1sum", aliases=["sha1", "sha", "hashsum", "hash"])
     async def sha1sum(self, ctx, *urls: str):
-        ''' Gives the SHA1 hashes of any files attached to the message. '''
+        """ Gives the SHA1 hashes of any files attached to the message. """
 
         # Check all URLs
         links = []
         for url in urls:
             match = URL_REGEX.match(url)
             if match is None:
-                raise CommandFailed(content=f'Not a valid url: {url}')
+                raise CommandFailed(content=f"Not a valid url: {url}")
             links.append(match[1])
         links.extend(attach.url for attach in ctx.message.attachments)
 
@@ -117,11 +124,11 @@ class Miscellaneous:
 
         # Send error if no URLS
         if not links:
-            raise CommandFailed(content='No URLs listed or files attached.')
+            raise CommandFailed(content="No URLs listed or files attached.")
 
         # Download and check files
         contents = []
-        content = StringBuilder('Hashes:\n```')
+        content = StringBuilder("Hashes:\n```")
         buffers = await download_links(links)
         for i, binio in enumerate(buffers):
             if binio is None:
@@ -129,32 +136,34 @@ class Miscellaneous:
             else:
                 hashsum = sha1(binio.getbuffer()).hexdigest()
 
-            content.writeln(f'{hashsum} {names[i]}')
+            content.writeln(f"{hashsum} {names[i]}")
             if len(content) > 1920:
                 contents.append(content)
                 if i < len(buffers) - 1:
                     content.clear()
-                    content.writeln('```')
+                    content.writeln("```")
 
         if len(content) > 4:
-            content.writeln('```')
+            content.writeln("```")
             contents.append(content)
 
         for content in contents:
             await ctx.send(content=str(content))
 
-    @commands.command(name='testerror', hidden=True)
+    @commands.command(name="testerror", hidden=True)
     @permissions.check_owner()
     async def test_error(self, ctx):
-        ''' Deliberately raises an exception to test the bot's error handling. '''
+        """ Deliberately raises an exception to test the bot's error handling. """
 
         raise RuntimeError("Intentionally raised exception")
 
-    @commands.command(name='shutdown', aliases=['halt'], hidden=True)
+    @commands.command(name="shutdown", aliases=["halt"], hidden=True)
     @permissions.check_owner()
     async def shutdown(self, ctx):
-        ''' Shuts down the bot. Can only able be run by an owner. '''
+        """ Shuts down the bot. Can only able be run by an owner. """
 
-        self.journal.send('admin/shutdown', ctx.guild, 'Shutting down bot', icon='shutdown')
+        self.journal.send(
+            "admin/shutdown", ctx.guild, "Shutting down bot", icon="shutdown"
+        )
         await Reactions.SUCCESS.add(ctx.message)
         exit()

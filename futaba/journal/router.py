@@ -22,15 +22,11 @@ from .process import process_content
 
 logger = logging.getLogger(__name__)
 
-__all__ = [
-    'Router',
-]
+__all__ = ["Router"]
+
 
 class Router:
-    __slots__ = (
-        'paths',
-        'queue',
-    )
+    __slots__ = ("paths", "queue")
 
     def __init__(self):
         self.paths = defaultdict(list)
@@ -41,8 +37,11 @@ class Router:
         eventloop.create_task(self.handle_events())
 
     def get(self, path, **attrs):
-        logger.debug("Getting first listener on path '%s' that matches attributes: %r",
-            path, attrs)
+        logger.debug(
+            "Getting first listener on path '%s' that matches attributes: %r",
+            path,
+            attrs,
+        )
 
         path = PurePath(path)
         return discord.utils.get(self.paths[path], **attrs)
@@ -69,7 +68,9 @@ class Router:
             for path in chain((event_path,), event_path.parents):
                 for listener in self.paths[path]:
                     if listener.check(path, guild, content, attributes):
-                        events.append(listener.handle(event_path, guild, content, attributes))
+                        events.append(
+                            listener.handle(event_path, guild, content, attributes)
+                        )
 
             # Run all the event handlers
             await asyncio.gather(*events)

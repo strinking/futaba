@@ -10,27 +10,26 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-'''
+"""
 A Listener that outputs messages to the special logger "futaba.meta.journal".
-'''
+"""
 
 import logging
 
 from ..listener import Listener
 
-logger = logging.getLogger('futaba.meta.journal')
+logger = logging.getLogger("futaba.meta.journal")
 
-__all__ = [
-    'LoggingOutputListener',
-]
+__all__ = ["LoggingOutputListener"]
+
 
 class LoggingOutputListener(Listener):
     async def handle(self, path, guild, content, attributes):
-        '''
+        """
         Logs the message to the output.
-        '''
+        """
 
-        level = attributes.get('level', 'info')
-        assert level in ('error', 'warning', 'info', 'debug')
+        level = attributes.get("level", "info")
+        assert level in ("error", "warning", "info", "debug")
         log = getattr(logger, level)
         log("'%s' (%d) %s: %s", guild.name, guild.id, path, content)

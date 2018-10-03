@@ -14,41 +14,40 @@ from enum import Enum, unique
 
 import discord
 
-__all__ = [
-    'Reactions',
-    'MemberLeaveType',
-    'FilterType',
-    'LocationType',
-]
+__all__ = ["Reactions", "MemberLeaveType", "FilterType", "LocationType"]
+
 
 @unique
 class Reactions(Enum):
-    SUCCESS = '\N{WHITE HEAVY CHECK MARK}'
-    WARNING = '\N{WARNING SIGN}'
-    FAIL = '\N{CROSS MARK}'
-    DENY = '\N{NO ENTRY SIGN}'
-    MISSING = '\N{BLACK QUESTION MARK ORNAMENT}'
+    SUCCESS = "\N{WHITE HEAVY CHECK MARK}"
+    WARNING = "\N{WARNING SIGN}"
+    FAIL = "\N{CROSS MARK}"
+    DENY = "\N{NO ENTRY SIGN}"
+    MISSING = "\N{BLACK QUESTION MARK ORNAMENT}"
 
     async def add(self, message: discord.Message):
         await message.add_reaction(self.value)
 
+
 @unique
 class MemberLeaveType(Enum):
-    LEFT = 'member_left'
-    PRUNED = 'pruned'
-    KICKED = 'kicked'
-    BANNED = 'banned'
+    LEFT = "member_left"
+    PRUNED = "pruned"
+    KICKED = "kicked"
+    BANNED = "banned"
+
 
 @unique
 class NameType(Enum):
-    USER = 'username'
-    NICK = 'nickname'
+    USER = "username"
+    NICK = "nickname"
+
 
 @unique
 class FilterType(Enum):
-    FLAG = 'flag'
-    BLOCK = 'block'
-    JAIL = 'jail'
+    FLAG = "flag"
+    BLOCK = "block"
+    JAIL = "jail"
 
     @property
     def level(self):
@@ -64,29 +63,30 @@ class FilterType(Enum):
     @property
     def emoji(self):
         if self == FilterType.FLAG:
-            return '\N{WARNING SIGN}'
+            return "\N{WARNING SIGN}"
         elif self == FilterType.BLOCK:
-            return '\N{NO ENTRY SIGN}'
+            return "\N{NO ENTRY SIGN}"
         elif self == FilterType.JAIL:
-            return '\N{POLICE OFFICER}'
+            return "\N{POLICE OFFICER}"
         else:
             raise ValueError(f"Invalid enum value: {self!r}")
 
     @property
     def description(self):
         if self == FilterType.FLAG:
-            return 'Flagged'
+            return "Flagged"
         elif self == FilterType.BLOCK:
-            return 'Blocked'
+            return "Blocked"
         elif self == FilterType.JAIL:
-            return 'Auto-jail'
+            return "Auto-jail"
         else:
             raise ValueError(f"Invalid enum value: {self!r}")
 
+
 @unique
 class LocationType(Enum):
-    CHANNEL = 'channel'
-    GUILD = 'guild'
+    CHANNEL = "channel"
+    GUILD = "guild"
 
     @staticmethod
     def of(location):

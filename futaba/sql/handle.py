@@ -10,36 +10,41 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-'''
+"""
 Module for abstractly interfacing with the RDBMS.
-'''
+"""
 
 import logging
 
 from sqlalchemy import create_engine, MetaData
 
-from .models import AliasHistoryModel, FilterModel, GuildsModel, JournalModel, SettingsModel, WelcomeModel
+from .models import (
+    AliasHistoryModel,
+    FilterModel,
+    GuildsModel,
+    JournalModel,
+    SettingsModel,
+    WelcomeModel,
+)
 from .transaction import Transaction
 
 logger = logging.getLogger(__name__)
 
-__all__ = [
-    'SqlHandler',
-]
+__all__ = ["SqlHandler"]
+
 
 class SqlHandler:
     __slots__ = (
-        'db',
-        'conn',
-        'trans',
-        'max_delete_messages',
-
-        'alias',
-        'filter',
-        'guilds',
-        'journal',
-        'settings',
-        'welcome',
+        "db",
+        "conn",
+        "trans",
+        "max_delete_messages",
+        "alias",
+        "filter",
+        "guilds",
+        "journal",
+        "settings",
+        "welcome",
     )
 
     def __init__(self, db_path: str, max_delete_messages=500):

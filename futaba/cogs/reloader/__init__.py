@@ -12,10 +12,11 @@
 
 from .core import Reloader
 
+
 def setup(bot):
-    '''
+    """
     Setup for bot to add cog
-    '''
+    """
 
     cog = Reloader(bot)
     bot.add_cog(cog)

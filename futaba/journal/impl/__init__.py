@@ -10,9 +10,9 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-'''
+"""
 Module for implementations of Listeners or other subclasses.
-'''
+"""
 
 from .channel_output import ChannelOutputListener
 from .logging_output import LoggingOutputListener

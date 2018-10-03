@@ -10,9 +10,9 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-'''
+"""
 _DESCRIPTION_HERE_
-'''
+"""
 
 # False positive when using SQLAlchemy decorators
 # pylint: disable=no-value-for-parameter
@@ -28,9 +28,8 @@ from sqlalchemy.sql import select
 Column = functools.partial(Column, nullable=False)
 logger = logging.getLogger(__name__)
 
-__all__ = [
-    '_SKELETON_Model',
-]
+__all__ = ["_SKELETON_Model"]
+
 
 class _SKELETON_Model:
     pass
