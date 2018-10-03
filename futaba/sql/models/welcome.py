@@ -34,7 +34,7 @@ from ..hooks import register_hook
 Column = functools.partial(Column, nullable=False)
 logger = logging.getLogger(__name__)
 
-__all__ = ["WelcomeModel", "WelcomeStorage", "JoinAlertStorage"]
+__all__ = ["WelcomeModel", "WelcomeStorage"]
 
 
 class WelcomeStorage:
@@ -78,19 +78,6 @@ class WelcomeStorage:
         return getattr(self.welcome_channel, "id", None)
 
 
-class JoinAlertStorage:
-    __slots__ = ("guild", "key", "op", "value")
-
-    def __init__(self, guild, key, op, value):
-        self.guild = guild
-        self.key = key
-        self.op = op
-        self.value = value
-
-    def to_tuple(self):
-        return (self.key, self.op, self.value)
-
-
 class WelcomeModel:
     __slots__ = ("sql", "tb_welcome", "tb_join_alerts", "welcome_cache", "alerts_cache")
 
@@ -122,8 +109,8 @@ class WelcomeModel:
         self.alerts_cache = defaultdict(dict)
 
         register_hook("on_guild_join", self.add_welcome)
-        register_hook("on_guild_leave", self.del_welcome)
-        register_hook("on_guild_leave", self.del_all_alerts)
+        register_hook("on_guild_leave", self.remove_welcome)
+        register_hook("on_guild_leave", self.remove_all_alerts)
 
     def add_welcome(self, guild):
         logger.info(
@@ -140,7 +127,7 @@ class WelcomeModel:
         self.sql.execute(ins)
         self.welcome_cache[guild] = storage
 
-    def del_welcome(self, guild):
+    def remove_welcome(self, guild):
         logger.info(
             "Removing welcome message row for guild '%s' (%d)", guild.name, guild.id
         )
@@ -302,31 +289,21 @@ class WelcomeModel:
                 value=str(alert.value),
             )
             self.sql.execute(ins)
-        self.alerts_cache[guild][alert.key] = alert
 
-    def del_alert(self, guild, alert):
+    def remove_alert(self, guild, key):
         logger.info("Remove join alert for guild '%s' (%d)", guild.name, guild.id)
 
         delet = self.tb_join_alerts.delete().where(
             and_(
                 self.tb_join_alerts.c.guild_id == guild.id,
-                self.tb_join_alerts.c.alert_key == alert.key,
+                self.tb_join_alerts.c.alert_key == key,
             )
         )
         result = self.sql.execute(delet)
         assert result.rowcount() in (0, 1), "Multiple rows deleted"
-        self.alerts_cache[guild].pop(alert.key, None)
 
     def get_all_alerts(self, guild):
         logger.info("Getting all join alerts for guild '%s' (%d)", guild.name, guild.id)
-
-        if guild in self.alerts_cache:
-            logger.debug("Alerts found in cache, returning")
-
-            alerts = []
-            for alerts in self.alerts_cache[guild].values():
-                alerts.extend(alert.to_tuple() for alert in alerts)
-            return alerts
 
         sel = select(
             [
@@ -341,10 +318,9 @@ class WelcomeModel:
         for key, op, raw_value in result.fetchall():
             value = key.parse_value(raw_value)
             alerts.append((key, op, value))
-            self.alerts_cache[guild][key] = JoinAlertStorage(guild, key, op, value)
         return alerts
 
-    def del_all_alerts(self, guild):
+    def remove_all_alerts(self, guild):
         logger.info(
             "Deleting all join alerts for guild '%s' (%d)", guild.name, guild.id
         )
@@ -353,4 +329,3 @@ class WelcomeModel:
             self.tb_join_alerts.c.guild_id == guild.id
         )
         self.sql.execute(delet)
-        self.alerts_cache.pop(guild, None)
