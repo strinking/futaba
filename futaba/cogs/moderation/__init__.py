@@ -13,11 +13,10 @@
 from .cleanup import Cleanup
 from .core import Moderation
 
-
 def setup(bot):
-    """
+    '''
     Setup for bot to add cog
-    """
+    '''
 
     cog = Cleanup(bot)
     bot.add_cog(cog)

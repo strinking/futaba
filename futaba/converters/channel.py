@@ -22,10 +22,12 @@ from .utils import ID_REGEX
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["TextChannelConv", "GuildChannelConv"]
+__all__ = [
+    'TextChannelConv',
+    'GuildChannelConv',
+]
 
-CHANNEL_MENTION_REGEX = re.compile(r"<#([0-9]+)>")
-
+CHANNEL_MENTION_REGEX = re.compile(r'<#([0-9]+)>')
 
 async def get_channel(bot, argument):
     argument = normalize_caseless(argument)
@@ -52,22 +54,16 @@ async def get_channel(bot, argument):
     logger.debug("No results found")
     raise BadArgument(f'Unable to find channel with description "{argument}"')
 
-
 class TextChannelConv(Converter):
     async def convert(self, ctx, argument) -> discord.TextChannel:
         chan = await get_channel(ctx.bot, argument)
         if not isinstance(chan, discord.TextChannel):
-            raise BadArgument(
-                f'Found channel that matched "{argument}", but was not a text channel'
-            )
+            raise BadArgument(f'Found channel that matched "{argument}", but was not a text channel')
         return chan
-
 
 class GuildChannelConv(Converter):
     async def convert(self, ctx, argument) -> discord.abc.GuildChannel:
         chan = await get_channel(ctx.bot, argument)
         if not isinstance(chan, discord.abc.GuildChannel):
-            raise BadArgument(
-                f'Found channel that matched "{argument}", but was not a guild channel'
-            )
+            raise BadArgument(f'Found channel that matched "{argument}", but was not a guild channel')
         return chan

@@ -10,11 +10,17 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-__all__ = ["Transaction"]
-
+__all__ = [
+    'Transaction',
+]
 
 class Transaction:
-    __slots__ = ("sql", "conn", "logger", "ok")
+    __slots__ = (
+        'sql',
+        'conn',
+        'logger',
+        'ok',
+    )
 
     def __init__(self, sql, conn, logger):
         self.sql = sql

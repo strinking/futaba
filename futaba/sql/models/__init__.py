@@ -10,10 +10,10 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-"""
+'''
 Module that contains models for interacting with SQL tables in a clean
 and abstracted way.
-"""
+'''
 
 from .alias import AliasHistoryModel
 from .filter import FilterModel

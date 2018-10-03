@@ -16,8 +16,9 @@ from pathlib import PurePath
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["Listener"]
-
+__all__ = [
+    'Listener',
+]
 
 class Listener:
     def __init__(self, router, path, recursive=True):
@@ -40,17 +41,17 @@ class Listener:
     # This method is meant to provide a default implementation that can be overriden
     # pylint: disable=no-self-use
     def filter(self, path, guild, content, attributes):
-        """
+        '''
         Overridable method for further filtering listener events that are passed through.
-        """
+        '''
 
         return True
 
     @abstractmethod
     async def handle(self, path, guild, content, attributes):
-        """
+        '''
         Abstract method for handling the event, in whatever way
         the implementation decides.
-        """
+        '''
 
         pass

@@ -13,13 +13,12 @@
 from discord.ext.commands import CommandError
 
 __all__ = [
-    "CommandFailed",
-    "ManualCheckFailure",
-    "SendHelp",
-    "InvalidCommandContext",
-    "InvalidConfigError",
+    'CommandFailed',
+    'ManualCheckFailure',
+    'SendHelp',
+    'InvalidCommandContext',
+    'InvalidConfigError',
 ]
-
 
 class SendOnError(CommandError):
     def __init__(self, content=None, embed=None, file=None):
@@ -27,29 +26,24 @@ class SendOnError(CommandError):
         self.kwargs = {}
 
         if content is not None:
-            self.kwargs["content"] = content
+            self.kwargs['content'] = content
         if embed is not None:
-            self.kwargs["embed"] = embed
+            self.kwargs['embed'] = embed
         if file is not None:
-            self.kwargs["file"] = file
-
+            self.kwargs['file'] = file
 
 class CommandFailed(SendOnError):
     pass
 
-
 class ManualCheckFailure(SendOnError):
     pass
-
 
 class SendHelp(CommandError):
     def __init__(self):
         super().__init__()
 
-
 class InvalidCommandContext(CommandError):
     pass
-
 
 class InvalidConfigError(RuntimeError):
     def __init__(self, message, config):

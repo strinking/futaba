@@ -10,9 +10,9 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-"""
+'''
 <description>
-"""
+'''
 
 import asyncio
 import logging
@@ -22,11 +22,10 @@ from discord.ext import commands
 
 logger = logging.getLogger(__package__)
 
-
 class NameOfCog:
-    """
+    '''
     <description>
-    """
+    '''
 
     def __init__(self, bot):
         self.bot = bot

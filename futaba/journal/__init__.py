@@ -10,11 +10,11 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-"""
+'''
 Module for defining components of the journaling system.
 This file instantiates a single, global router, and provides
 Broadcaster and Listener classes that rely on it.
-"""
+'''
 
 from .broadcaster import Broadcaster
 from .impl import ChannelOutputListener, LoggingOutputListener, ModerationListener

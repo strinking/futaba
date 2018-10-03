@@ -12,4 +12,7 @@
 
 from .converters.user import similar_text, similar_users
 
-__all__ = ["similar_text", "similar_users"]
+__all__ = [
+    'similar_text',
+    'similar_users',
+]

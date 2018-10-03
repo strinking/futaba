@@ -15,11 +15,15 @@ from pathlib import PurePath
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["Broadcaster"]
-
+__all__ = [
+    'Broadcaster',
+]
 
 class Broadcaster:
-    __slots__ = ("router", "path")
+    __slots__ = (
+        'router',
+        'path',
+    )
 
     def __init__(self, router, path):
         self.router = router
@@ -33,10 +37,6 @@ class Broadcaster:
         path = self.path.joinpath(subpath)
 
         # Queue up event
-        logger.debug(
-            "Sending journal entry to %s: '%s'. Attributes: %s.",
-            path,
-            content,
-            ", ".join(attributes.keys()) or "(none)",
-        )
+        logger.debug("Sending journal entry to %s: '%s'. Attributes: %s.",
+                path, content, ', '.join(attributes.keys()) or '(none)')
         self.router.queue.put_nowait((path, guild, content, attributes))

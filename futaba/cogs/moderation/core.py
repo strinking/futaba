@@ -10,9 +10,9 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-"""
+'''
 Collection of moderation commands such as Ban/Kick
-"""
+'''
 
 import asyncio
 import logging
@@ -27,76 +27,71 @@ from futaba.utils import escape_backticks, plural, user_discrim
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["Moderation"]
-
+__all__ = [
+    'Moderation',
+]
 
 class Moderation:
-    """
+    '''
     Staff moderation commands
-    """
+    '''
 
-    __slots__ = ("bot", "journal", "mute_jobs")
+    __slots__ = (
+        'bot',
+        'journal',
+        'mute_jobs',
+    )
 
     def __init__(self, bot):
         self.bot = bot
-        self.journal = bot.get_broadcaster("/moderation")
+        self.journal = bot.get_broadcaster('/moderation')
         self.mute_jobs = {}
 
-    @commands.command(name="nick", aliases=["nickname", "renick"])
+    @commands.command(name='nick', aliases=['nickname', 'renick'])
     @commands.guild_only()
     @permissions.check_mod()
     async def nick(self, ctx, member: MemberConv, nick: str = None):
-        """ Changes or reset a member's nickname. """
+        ''' Changes or reset a member's nickname. '''
 
-        logger.info(
-            "Setting the nickname of user '%s' (%d) to %r", member.name, member.id, nick
-        )
+        logger.info("Setting the nickname of user '%s' (%d) to %r", member.name, member.id, nick)
 
         if member.top_role >= ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to nick this user")
 
         mod = user_discrim(ctx.author)
-        await member.edit(
-            nick=nick, reason=f'{mod} {"un" if nick is None else ""}set nickname'
-        )
+        await member.edit(nick=nick, reason=f'{mod} {"un" if nick is None else ""}set nickname')
 
-    @commands.command(name="mute", aliases=["shitpost"])
+    @commands.command(name='mute', aliases=['shitpost'])
     @commands.guild_only()
     @permissions.check_mod()
     async def mute(self, ctx, member: MemberConv, minutes: int, *, reason: str):
-        """
+        '''
         Mutes the user for the given number of minutes.
         Requires a mute role to be configured.
-        """
+        '''
 
-        logger.info(
-            "Muting user '%s' (%d) for %d minutes", member.name, member.id, minutes
-        )
+        logger.info("Muting user '%s' (%d) for %d minutes", member.name, member.id, minutes)
 
         if minutes == 0:
             raise CommandFailed()
 
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)
         if roles.mute is None:
-            raise CommandFailed(content="No configured mute role")
+            raise CommandFailed(content='No configured mute role')
 
         if member.top_role > ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to mute this user")
 
         # TODO store punishment in table
         mod = user_discrim(ctx.author)
-        full_reason = f"Muted by {mod} for {minutes} minute{plural(minutes)} with reason: {reason}"
+        full_reason = f'Muted by {mod} for {minutes} minute{plural(minutes)} with reason: {reason}'
         await member.add_roles(roles.mute, reason=full_reason)
 
         # TODO replace with navi
         async def remove_mute():
             await asyncio.sleep(minutes * 60)
-            logger.info(
-                "Timed mute expired, removing role from '%s' (%d)",
-                member.name,
-                member.id,
-            )
-            await member.remove_roles(roles.mute, reason="Mute expired")
+            logger.info("Timed mute expired, removing role from '%s' (%d)", member.name, member.id)
+            await member.remove_roles(roles.mute, reason='Mute expired')
 
         # Cancel old task, if any
         old_task = self.mute_jobs.get(member, None)
@@ -107,41 +102,33 @@ class Moderation:
         task = self.bot.loop.create_task(remove_mute())
         self.mute_jobs[member] = task
 
-    @commands.command(name="unmute", aliases=["unshitpost"])
+    @commands.command(name='unmute', aliases=['unshitpost'])
     @commands.guild_only()
     @permissions.check_mod()
-    async def unmute(
-        self, ctx, member: MemberConv, minutes: int = 0, *, reason: str = None
-    ):
-        """
+    async def unmute(self, ctx, member: MemberConv, minutes: int = 0, *, reason: str = None):
+        '''
         Unmutes the user, with an optional delay in minutes.
         Requires a mute role to be configured.
-        """
+        '''
 
-        logger.info(
-            "Unmuting user '%s' (%d) in %d minutes", member.name, member.id, minutes
-        )
+        logger.info("Unmuting user '%s' (%d) in %d minutes", member.name, member.id, minutes)
 
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)
         if roles.mute is None:
-            raise CommandFailed(content="No configured mute role")
+            raise CommandFailed(content='No configured mute role')
 
         if member.top_role > ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to unmute this user")
 
         # TODO store punishment in table
         mod = user_discrim(ctx.author)
-        fmt_reason = f"with reason: {reason}" if reason else ""
-        full_reason = f"Unmuted by {mod} {fmt_reason}"
+        fmt_reason = f'with reason: {reason}' if reason else ''
+        full_reason = f'Unmuted by {mod} {fmt_reason}'
 
         # TODO replace with navi
         async def remove_mute():
             await asyncio.sleep(minutes * 60)
-            logger.info(
-                "Timed unmute expired, removing role from '%s' (%d)",
-                member.name,
-                member.id,
-            )
+            logger.info("Timed unmute expired, removing role from '%s' (%d)", member.name, member.id)
             await member.remove_roles(roles.mute, reason=full_reason)
 
         # Cancel old task, if any
@@ -153,170 +140,147 @@ class Moderation:
         task = self.bot.loop.create_task(remove_mute())
         self.mute_jobs[member] = task
 
-    @commands.command(name="jail", aliases=["dunce"])
+    @commands.command(name='jail', aliases=['dunce'])
     @commands.guild_only()
     @permissions.check_mod()
     async def jail(self, ctx, member: MemberConv, *, reason: str):
-        """
+        '''
         Jails the user.
         Requires a jail role to be configured.
-        """
+        '''
 
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)
         if roles.jail is None:
-            raise CommandFailed(content="No configured jail role")
+            raise CommandFailed(content='No configured jail role')
 
         if member.top_role > ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to jail this user")
 
         # TODO store punishment in table
         mod = user_discrim(ctx.author)
-        await member.add_roles(
-            roles.jail, reason=f"Jailed by {mod} with reason: {reason}"
-        )
+        await member.add_roles(roles.jail, reason=f'Jailed by {mod} with reason: {reason}')
 
-    @commands.command(name="unjail", aliases=["undunce"])
+    @commands.command(name='unjail', aliases=['undunce'])
     @commands.guild_only()
     @permissions.check_mod()
     async def unjail(self, ctx, member: MemberConv, *, reason: str = None):
-        """
+        '''
         Removes a user from the jail.
         Requires a jail role to be configured.
-        """
+        '''
 
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)
         if roles.jail is None:
-            raise CommandFailed(content="No configured jail role")
+            raise CommandFailed(content='No configured jail role')
 
         if member.top_role > ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to unjail this user")
 
         # TODO store punishment in table
         mod = user_discrim(ctx.author)
-        fmt_reason = f"with reason: {reason}" if reason else ""
-        await member.remove_roles(
-            roles.jail, reason=f"Jail removed by {mod} {fmt_reason}"
-        )
+        fmt_reason = f'with reason: {reason}' if reason else ''
+        await member.remove_roles(roles.jail, reason=f'Jail removed by {mod} {fmt_reason}')
 
-    @commands.command(name="kick")
+    @commands.command(name='kick')
     @commands.guild_only()
     @permissions.check_mod()
     async def kick(self, ctx, member: MemberConv, *, reason: str):
-        """
+        '''
         Kicks the user from the guild with a reason
         If guild has moderation logging enabled, it is logged
-        """
+        '''
 
         try:
-            embed = discord.Embed(description="Done! User Kicked")
-            embed.add_field(name="Reason", value=reason)
+            embed = discord.Embed(description='Done! User Kicked')
+            embed.add_field(name='Reason', value=reason)
 
-            await ctx.guild.kick(
-                member, reason=f"{reason} - {user_discrim(ctx.author)}"
-            )
+            await ctx.guild.kick(member, reason=f'{reason} - {user_discrim(ctx.author)}')
             await ctx.send(embed=embed)
 
         except discord.errors.Forbidden:
-            raise ManualCheckFailure(
-                content="I don't have permission to kick this user"
-            )
+            raise ManualCheckFailure(content="I don't have permission to kick this user")
 
-    @commands.command(name="ban")
+    @commands.command(name='ban')
     @commands.guild_only()
     @permissions.check_admin()
     async def ban(self, ctx, member: MemberConv, *, reason: str):
-        """
+        '''
         Bans the user from the guild with a reason
         If guild has moderation logging enabled, it is logged
-        """
+        '''
 
         try:
-            embed = discord.Embed(description="Done! User Banned")
-            embed.add_field(name="Reason", value=reason)
+            embed = discord.Embed(description='Done! User Banned')
+            embed.add_field(name='Reason', value=reason)
 
             mod = user_discrim(ctx.author)
             banned = user_discrim(member)
             clean_reason = escape_backticks(reason)
-            content = f"{mod} banned {member.mention} ({banned}) with reason: `{clean_reason}`"
+            content = f'{mod} banned {member.mention} ({banned}) with reason: `{clean_reason}`'
 
-            await ctx.guild.ban(member, reason=f"{reason} - {mod}")
+            await ctx.guild.ban(member, reason=f'{reason} - {mod}')
             await ctx.send(embed=embed)
 
-            self.journal.send("member/ban", ctx.guild, content, icon="ban")
+            self.journal.send('member/ban', ctx.guild, content, icon='ban')
 
         except discord.errors.Forbidden:
             raise ManualCheckFailure(content="I don't have permission to ban this user")
 
-    @commands.command(name="softban", aliases=["soft", "sban"])
+    @commands.command(name='softban', aliases=['soft', 'sban'])
     @commands.guild_only()
     @permissions.check_admin()
     async def softban(self, ctx, member: MemberConv, *, reason: str):
-        """
+        '''
         Soft-bans the user from the guild with a reason.
         If guild has moderation logging enabled, it is logged
 
         Soft-ban is a kick that cleans up the chat
-        """
+        '''
 
         try:
-            embed = discord.Embed(description="Done! User Soft-banned")
-            embed.add_field(name="Reason", value=reason)
+            embed = discord.Embed(description='Done! User Soft-banned')
+            embed.add_field(name='Reason', value=reason)
 
             mod = user_discrim(ctx.author)
             banned = user_discrim(member)
             clean_reason = escape_backticks(reason)
-            content = f"{mod} soft-banned {member.mention} ({banned}) with reason: `{clean_reason}`"
+            content = f'{mod} soft-banned {member.mention} ({banned}) with reason: `{clean_reason}`'
 
             # TODO add to tracker and add handler to journal event to prevent ban/softban event
-            await ctx.guild.ban(
-                member, reason=f"{reason} - {mod}", delete_message_days=1
-            )
+            await ctx.guild.ban(member, reason=f'{reason} - {mod}', delete_message_days=1)
             await asyncio.sleep(0.1)
-            await ctx.guild.unban(member, reason=f"{reason} - {mod}")
+            await ctx.guild.unban(member, reason=f'{reason} - {mod}')
             await ctx.send(embed=embed)
 
-            self.journal.send(
-                "member/softban",
-                ctx.guild,
-                content,
-                icon="soft",
-                member=member,
-                reason=reason,
-                cause=ctx.author,
-            )
+            self.journal.send('member/softban', ctx.guild, content, icon='soft',
+                    member=member, reason=reason, cause=ctx.author)
 
         except discord.errors.Forbidden:
-            raise ManualCheckFailure(
-                content="I don't have permission to soft-ban this user"
-            )
+            raise ManualCheckFailure(content="I don't have permission to soft-ban this user")
 
-    @commands.command(name="unban", aliases=["pardon"])
+    @commands.command(name='unban', aliases=['pardon'])
     @commands.guild_only()
     @permissions.check_admin()
     async def unban(self, ctx, member: UserConv, *, reason: str):
-        """
+        '''
         Unbans the id from the guild with a reason.
         If guild has moderation logging enabled, it is logged
-        """
+        '''
 
         try:
-            embed = discord.Embed(description="Done! User Unbanned")
-            embed.add_field(name="Reason", value=reason)
+            embed = discord.Embed(description='Done! User Unbanned')
+            embed.add_field(name='Reason', value=reason)
 
             # TODO add tracker unban event and move this to journal/impl/moderation.py
             mod = user_discrim(ctx.author)
             unbanned = user_discrim(member)
             clean_reason = escape_backticks(reason)
-            content = f"{mod} unbanned {member.mention} ({unbanned}) with reason: `{clean_reason}`"
+            content = f'{mod} unbanned {member.mention} ({unbanned}) with reason: `{clean_reason}`'
 
-            await ctx.guild.unban(member, reason=f"{reason} - {mod}")
+            await ctx.guild.unban(member, reason=f'{reason} - {mod}')
             await ctx.send(embed=embed)
 
-            self.journal.send(
-                "member/unban", ctx.guild, content, icon="unban", member=member
-            )
+            self.journal.send('member/unban', ctx.guild, content, icon='unban', member=member)
 
         except discord.errors.Forbidden:
-            raise ManualCheckFailure(
-                content="I don't have permission to unban this user"
-            )
+            raise ManualCheckFailure(content="I don't have permission to unban this user")

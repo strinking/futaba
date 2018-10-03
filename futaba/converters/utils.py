@@ -12,6 +12,8 @@
 
 import re
 
-__all__ = ["ID_REGEX"]
+__all__ = [
+    'ID_REGEX',
+]
 
-ID_REGEX = re.compile(r"([0-9]{15,21})$")
+ID_REGEX = re.compile(r'([0-9]{15,21})$')

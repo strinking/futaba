@@ -24,10 +24,11 @@ from .utils import ID_REGEX
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["EmojiConv"]
+__all__ = [
+    'EmojiConv',
+]
 
-EMOJI_REGEX = re.compile(r"<:([A-Za-z0-9_\-]+(?:~[0-9]+)?):([0-9]+)>")
-
+EMOJI_REGEX = re.compile(r'<:([A-Za-z0-9_\-]+(?:~[0-9]+)?):([0-9]+)>')
 
 class EmojiConv(Converter):
     async def convert(self, ctx, argument) -> Union[discord.Emoji, str]:
@@ -60,9 +61,7 @@ class EmojiConv(Converter):
                 return emoji
 
         logger.debug("Checking if it's the name of a discord emoji")
-        emoji = discord.utils.find(
-            lambda e: argument == normalize_caseless(e.name), ctx.bot.emojis
-        )
+        emoji = discord.utils.find(lambda e: argument == normalize_caseless(e.name), ctx.bot.emojis)
         if emoji is not None:
             return emoji
 

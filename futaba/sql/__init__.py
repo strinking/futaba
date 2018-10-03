@@ -10,12 +10,16 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-"""
+'''
 General module for all interfacing with the database.
-"""
+'''
 
 from . import hooks
 from .handle import SqlHandler
 from .transaction import Transaction
 
-__all__ = ["hooks", "SqlHandler", "Transaction"]
+__all__ = [
+    'hooks',
+    'SqlHandler',
+    'Transaction',
+]

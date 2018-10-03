@@ -25,26 +25,29 @@ from .utils import ID_REGEX
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["similar_text", "similar_users", "MemberConv", "UserConv"]
+__all__ = [
+    'similar_text',
+    'similar_users',
+    'MemberConv',
+    'UserConv',
+]
 
-MENTION_REGEX = re.compile(r"<@!?([0-9]{15,21})>$")
-USERNAME_DISCRIM_REGEX = re.compile(r"(.+)#([0-9]{4})")
-
+MENTION_REGEX = re.compile(r'<@!?([0-9]{15,21})>$')
+USERNAME_DISCRIM_REGEX = re.compile(r'(.+)#([0-9]{4})')
 
 def similar_text(word1, word2) -> float:
-    """
+    '''
     Determines if the two strings are similar enough given the passed threshold.
     An alias for textdistance.overlap.similarity().
-    """
+    '''
 
     return textdistance.overlap.similarity(word1, word2)
 
-
 async def similar_users(bot, argument, max_entries=10) -> Iterable[discord.User]:
-    """
+    '''
     Gets a list of user IDs that are similar to the argument.
     They are ranked in order of similarity.
-    """
+    '''
 
     # Get exact matches, if any
     try:
@@ -60,10 +63,8 @@ async def similar_users(bot, argument, max_entries=10) -> Iterable[discord.User]
     users = []
     for user in bot.users:
         similar = similar_text(argument, normalize_caseless(user.name))
-        if getattr(user, "nick", None) is not None:
-            similar = max(
-                similar, similar_text(argument, normalize_caseless(user.nick))
-            )
+        if getattr(user, 'nick', None) is not None:
+            similar = max(similar, similar_text(argument, normalize_caseless(user.nick)))
         if user not in matching:
             users.append((user, similar))
 
@@ -73,7 +74,6 @@ async def similar_users(bot, argument, max_entries=10) -> Iterable[discord.User]
 
     # Done
     return islice(matching, 0, max_entries)
-
 
 async def get_user(bot, argument, user_list):
     argument = normalize_caseless(argument)
@@ -95,24 +95,21 @@ async def get_user(bot, argument, user_list):
     match = USERNAME_DISCRIM_REGEX.match(argument)
     if match is not None:
         name, discrim = normalize_caseless(match[1]), int(match[2])
-
         def user_discrim_check(user):
             uname = normalize_caseless(user.name)
             udiscrim = user.discriminator
             return name == uname and discrim == udiscrim
-
         user = discord.utils.find(user_discrim_check, user_list)
         if user is not None:
             return user
         del name, discrim
 
     logger.debug("Checking if it's a username or nickname")
-
     def name_check(user):
         if argument == normalize_caseless(user.name):
             return True
 
-        nick = getattr(user, "nick", None)
+        nick = getattr(user, 'nick', None)
         if nick is not None:
             if argument == normalize_caseless(nick):
                 return True
@@ -126,7 +123,6 @@ async def get_user(bot, argument, user_list):
     logger.debug("No results found")
     raise BadArgument(f'Unable to find user with description "{argument}"')
 
-
 def get_member_if_exists(guild, user):
     if guild is not None:
         if not isinstance(user, discord.Member):
@@ -135,7 +131,6 @@ def get_member_if_exists(guild, user):
                 return member
     return user
 
-
 class UserConv(Converter):
     async def convert(self, ctx, argument) -> discord.User:
         user_list = tuple(chain(ctx.guild.members, ctx.bot.users))
@@ -143,13 +138,10 @@ class UserConv(Converter):
         user = get_member_if_exists(ctx.guild, user)
         return user
 
-
 class MemberConv(Converter):
     async def convert(self, ctx, argument) -> discord.Member:
         user = await get_user(ctx.bot, argument, ctx.guild.members)
         user = get_member_if_exists(ctx.guild, user)
         if not isinstance(user, discord.Member):
-            raise BadArgument(
-                f'Found user that matched "{argument}", but they were not a member'
-            )
+            raise BadArgument(f'Found user that matched "{argument}", but they were not a member')
         return user

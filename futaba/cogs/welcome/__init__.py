@@ -12,13 +12,12 @@
 
 from .core import Welcome
 
-
 def setup(bot):
-    """
+    '''
     Setup for bot to add cog
-    """
+    '''
 
     cog = Welcome(bot)
-    bot.add_listener(cog.member_join, "on_member_join")
-    bot.add_listener(cog.member_leave, "on_member_remove")
+    bot.add_listener(cog.member_join, 'on_member_join')
+    bot.add_listener(cog.member_leave, 'on_member_remove')
     bot.add_cog(cog)
