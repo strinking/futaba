@@ -3,23 +3,23 @@
 
 A Discord bot for the [Programming server](https://discord.gg/010z0Kw1A9ql5c1Qe).
 
-Requires Python 3.5 or later. There is a sample configuration file at `misc/config.toml`.
+Requires Python 3.6 or later. There is a sample configuration file at `misc/config.toml`.
 
 ## Running locally
 Setup:
 ```
-$ pip3 install --user -r requirements.txt
+$ pip3.6 install --user -r requirements.txt
 ```
 
 To run:
 ```
-$ python3 -m futaba <config.toml>
+$ python3.6 -m futaba <config.toml>
 ```
 
 ## Development
 More setup:
 ```
-$ pip3 install --user -r requirements-dev.txt
+$ pip3.6 install --user -r requirements-dev.txt
 ```
 
 Formatting and linting code:
