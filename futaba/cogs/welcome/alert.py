@@ -23,7 +23,7 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.enums import JoinAlertKey, ValueRelationship
-from futaba.exceptions import BadArgument, SendHelp
+from futaba.exceptions import ManualCheckFailure, SendHelp
 from futaba.str_builder import StringBuilder
 from futaba.unicode import normalize_caseless
 
@@ -53,7 +53,7 @@ class JoinAlert:
         return self.key.value
 
     def __str__(self):
-        return f"`{self.key}`: {self.op.symbol} {self.value}"
+        return f"{self.key.display_name} {self.op.symbol} {self.value}"
 
 
 class Alert:
@@ -101,7 +101,7 @@ class Alert:
         descr = StringBuilder()
 
         for alert in self.alerts[ctx.guild].values():
-            descr.writeln(alert)
+            descr.writeln(f"- `{alert}`")
 
         if descr:
             embed.colour = discord.Colour.dark_teal()
@@ -132,17 +132,17 @@ class Alert:
         try:
             key = JoinAlertKey.parse(attribute)
         except ValueError:
-            raise BadArgument(f"Invalid attribute: {key}")
+            raise ManualCheckFailure(content=f"Invalid attribute: {attribute}")
 
         try:
             op = ValueRelationship(relationship)
         except ValueError:
-            raise BadArgument(f"Invalid relationship: {relationship}")
+            raise ManualCheckFailure(content=f"Invalid relationship: {relationship}")
 
         try:
             value = key.parse_value(amount)
         except ValueError as error:
-            raise BadArgument(str(error))
+            raise ManualCheckFailure(content=str(error))
 
         alert = JoinAlert(key, op, value)
         logging.info("Adding join alert: %s", alert)
@@ -155,10 +155,12 @@ class Alert:
         # Notify the user
         embed = discord.Embed(colour=discord.Colour.dark_teal())
         embed.set_author(name="Successfully added join alert")
-        embed.description = (
-            f"`{alert.key}`: {alert.op.symbol} {alert.value}\n"
+        descr = StringBuilder()
+        descr.writeln(f"- `{alert}`")
+        descr.writeln(
             "To get these notifications in a channel, add a logger for path `/welcome/alert`"
         )
+        embed.description = str(descr)
 
         await ctx.send(embed=embed)
 
@@ -181,7 +183,7 @@ class Alert:
         try:
             key = JoinAlertKey.parse(attribute)
         except ValueError:
-            raise BadArgument(f"Invalid attribute: {attribute}")
+            raise ManualCheckFailure(content=f"Invalid attribute: {attribute}")
 
         logging.info("Removing join alert: %s", key)
         with self.bot.sql.transaction():

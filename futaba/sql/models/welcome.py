@@ -95,6 +95,7 @@ class WelcomeModel:
             Column("delete_on_agree", Boolean),
             Column("welcome_channel_id", BigInteger, nullable=True),
         )
+        # TODO allow multiple flags with the same key
         self.tb_join_alerts = Table(
             "join_alerts",
             meta,
@@ -289,6 +290,7 @@ class WelcomeModel:
                 value=str(alert.value),
             )
             self.sql.execute(ins)
+        # TODO add to cache
 
     def remove_alert(self, guild, key):
         logger.info("Remove join alert for guild '%s' (%d)", guild.name, guild.id)
@@ -300,6 +302,7 @@ class WelcomeModel:
             )
         )
         result = self.sql.execute(delet)
+        # TODO remove from cache
         assert result.rowcount() in (0, 1), "Multiple rows deleted"
 
     def get_all_alerts(self, guild):

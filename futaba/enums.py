@@ -93,6 +93,23 @@ class JoinAlertKey(Enum):
         else:
             raise ValueError(f"Not an enum instance of JoinAlertKey")
 
+    @property
+    def display_name(self):
+        if self == JoinAlertKey.CREATION:
+            return "account creation date"
+        elif self == JoinAlertKey.ID:
+            return "user id"
+        elif self == JoinAlertKey.NAME:
+            return "username"
+        elif self == JoinAlertKey.DISCRIM:
+            return "discriminator"
+        elif self == JoinAlertKey.AVATAR:
+            return "avatar hash"
+        elif self == JoinAlertKey.STATUS:
+            return "status"
+        else:
+            raise ValueError(f"Not an enum instance of JoinAlertKey")
+
 
 @unique
 class ValueRelationship(Enum):
