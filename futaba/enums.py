@@ -12,9 +12,8 @@
 
 from enum import Enum, unique
 
+import dateparser
 import discord
-
-__all__ = ["Reactions", "MemberLeaveType", "FilterType", "LocationType"]
 
 
 @unique
@@ -27,6 +26,98 @@ class Reactions(Enum):
 
     async def add(self, message: discord.Message):
         await message.add_reaction(self.value)
+
+
+@unique
+class JoinAlertKey(Enum):
+    CREATION = "created_at"  # datetime
+    ID = "user_id"  # int
+    NAME = "name"  # str
+    DISCRIM = "discriminator"  # str
+    AVATAR = "avatar"  # Optional[str]
+    STATUS = "status"  # discord.Status
+
+    @classmethod
+    def parse(cls, arg):
+        if arg in ("created", "creation", "created at", "created_at"):
+            return cls.CREATION
+        elif arg in ("id", "user id", "member id", "user_id"):
+            return cls.ID
+        elif arg in ("name", "username"):
+            return cls.NAME
+        elif arg in ("discrim", "discriminator"):
+            return cls.DISCRIM
+        elif arg in ("avatar", "avatar hash"):
+            return cls.AVATAR
+        elif arg in ("status", "user status"):
+            return cls.STATUS
+        else:
+            raise ValueError(f"No JoinAlertKey for value: {arg}")
+
+    def parse_value(self, arg):
+        if self == JoinAlertKey.CREATION:
+            date = dateparser.parse(arg)
+            if date is None:
+                raise ValueError(f"Unknown date/time: {arg}")
+            return date
+        elif self == JoinAlertKey.ID:
+            try:
+                id = int(arg)
+                if id < 0 or id > 2 ** 63 - 1:
+                    raise ValueError()
+            except ValueError:
+                # Raise with different message
+                raise ValueError(f"Invalid discord ID: {arg}")
+            else:
+                return id
+        elif self == JoinAlertKey.NAME:
+            return arg
+        elif self == JoinAlertKey.DISCRIM:
+            try:
+                discrim = int(arg)
+                if discrim <= 1 or discrim > 9999:
+                    raise ValueError()
+            except ValueError:
+                # Raise with different message
+                raise ValueError(f"Invalid discriminator: {arg}")
+            else:
+                return f"{discrim:04}"
+        elif self == JoinAlertKey.AVATAR:
+            return arg or None
+        elif self == JoinAlertKey.STATUS:
+            try:
+                return discord.Status(arg.lower())
+            except ValueError:
+                # Raise with different message
+                raise ValueError(f"Invalid discord status: {arg}")
+        else:
+            raise ValueError(f"Not an enum instance of JoinAlertKey")
+
+
+@unique
+class ValueRelationship(Enum):
+    LESS_THAN = "<"
+    GREATER_THAN = ">"
+    LESS_OR_EQUAL = "<="
+    GREATER_OR_EQUAL = ">="
+    EQUAL_TO = "="
+    NOT_EQUAL = "!="
+    CONTAINS = "~"
+
+    @property
+    def comparator(self):
+        return VALUE_RELATIONSHIP_COMPARATORS[self]
+
+
+VALUE_RELATIONSHIP_COMPARATORS = {
+    ValueRelationship.LESS_THAN: lambda x, y: x < y,
+    ValueRelationship.LESS_OR_EQUAL: lambda x, y: x <= y,
+    ValueRelationship.GREATER_THAN: lambda x, y: x > y,
+    ValueRelationship.GREATER_OR_EQUAL: lambda x, y: x >= y,
+    ValueRelationship.EQUAL_TO: lambda x, y: x == y,
+    ValueRelationship.NOT_EQUAL: lambda x, y: x != y,
+    ValueRelationship.CONTAINS: lambda x, y: x in y,
+}
 
 
 @unique
