@@ -15,7 +15,6 @@ Cog for checking new members and seeing if they match a join alert
 configured by staff. If so, a notification is sent to /welcome/alert.
 """
 
-import asyncio
 import logging
 from collections import defaultdict
 
@@ -24,7 +23,7 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.enums import JoinAlertKey, ValueRelationship
-from futaba.exceptions import BadArgument, CommandFailed, SendHelp
+from futaba.exceptions import BadArgument, SendHelp
 from futaba.str_builder import StringBuilder
 from futaba.unicode import normalize_caseless
 
@@ -41,12 +40,20 @@ class JoinAlert:
         self.op = op
         self.value = value
 
-    def matches(self, member, value):
-        member_value = getattr(member, self.key.value)
-        if isinstance(value, str) and isinstance(member_value, str):
+    def matches(self, member):
+        value = self.value
+        member_value = getattr(member, self.attr)
+        if isinstance(self.value, str) and isinstance(member_value, str):
             value = normalize_caseless(value)
             member_value = normalize_caseless(member_value)
         return self.op.comparator(member_value, value)
+
+    @property
+    def attr(self):
+        return self.key.value
+
+    def __str__(self):
+        return f"`{self.key}`: {self.op.symbol} {self.value}"
 
 
 class Alert:
@@ -64,7 +71,12 @@ class Alert:
                 self.alerts[guild][key] = alert
 
     async def member_join(self, member):
-        pass
+        logger.info("Member '%s' (%d) joined, checking alerts.", member.name, member.id)
+        for alert in self.alerts[member.guild].values():
+            if alert.matches(member):
+                logger.info("Matches alert: %s!", alert)
+                content = f"Member {member.mention} violates alert: {alert}"
+                self.journal.send("", member.guild, content, icon="found")
 
     @commands.group(name="joinalert", aliases=["jalert"])
     @commands.guild_only()
@@ -89,7 +101,7 @@ class Alert:
         descr = StringBuilder()
 
         for alert in self.alerts[ctx.guild].values():
-            descr.writeln(f"`{alert.key}`: {alert.op.symbol} {alert.value}")
+            descr.writeln(alert)
 
         if descr:
             embed.colour = discord.Colour.dark_teal()
@@ -132,8 +144,8 @@ class Alert:
         except ValueError as error:
             raise BadArgument(str(error))
 
-        logging.info("Adding join alert: %s %s %s", key, op, value)
         alert = JoinAlert(key, op, value)
+        logging.info("Adding join alert: %s", alert)
 
         with self.bot.sql.transaction():
             self.bot.sql.welcome.add_alert(ctx.guild, alert)
