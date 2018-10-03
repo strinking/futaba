@@ -19,6 +19,8 @@ install:
   - pip install -r requirements.txt
 
 script:
+  # Run a check for black formatting
+  - black --check futaba
   # Display all lints and a report
   - pylint --reports=yes futaba || true
 
