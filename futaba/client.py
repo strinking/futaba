@@ -10,9 +10,9 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-'''
+"""
 Holds the custom discord client
-'''
+"""
 
 import asyncio
 import logging
@@ -29,20 +29,21 @@ from .cogs.reloader import Reloader
 from .config import Configuration
 from .converters.annotations import ANNOTATIONS
 from .enums import Reactions
-from .exceptions import CommandFailed, InvalidCommandContext, ManualCheckFailure, SendHelp
+from .exceptions import (
+    CommandFailed,
+    InvalidCommandContext,
+    ManualCheckFailure,
+    SendHelp,
+)
 from .journal import Broadcaster, LoggingOutputListener
 from .sql import SqlHandler
 from .utils import plural
 
 logger = logging.getLogger(__name__)
 
+
 class Bot(commands.AutoShardedBot):
-    __slots__ = (
-        'config',
-        'start_time',
-        'journal_cog',
-        'sql',
-    )
+    __slots__ = ("config", "start_time", "journal_cog", "sql")
 
     def __init__(self, config: Configuration):
         self.config = config
@@ -50,11 +51,13 @@ class Bot(commands.AutoShardedBot):
         self.journal_cog = None
         self.sql = SqlHandler(config.database_url)
 
-        super().__init__(command_prefix=self.my_command_prefix,
-                         description='futaba - A discord mod bot',
-                         max_messages=100000,
-                         fetch_offline_members=True,
-                         pm_help=True)
+        super().__init__(
+            command_prefix=self.my_command_prefix,
+            description="futaba - A discord mod bot",
+            max_messages=100_000,
+            fetch_offline_members=True,
+            pm_help=True,
+        )
 
     @staticmethod
     def my_command_prefix(bot, message):
@@ -63,35 +66,37 @@ class Bot(commands.AutoShardedBot):
 
     def prefix(self, guild):
         if guild is None:
-            return ''
+            return ""
 
         prefix = self.sql.settings.get_prefix(guild)
         return prefix or self.config.default_prefix
 
     @property
     def uptime(self):
-        ''' Gets the bot's uptime '''
+        """ Gets the bot's uptime """
 
         return datetime.datetime.utcnow() - self.start_time
 
     def run_with_token(self):
-        '''
+        """
         Replace discord clients run command to include token from config
         If the token is empty or incorrect raises LoginError
-        '''
+        """
 
         if not self.config.token:
-            logger.critical("Token is empty. Please open the config file and add the bot's token!")
+            logger.critical(
+                "Token is empty. Please open the config file and add the bot's token!"
+            )
             exit(1)
         else:
             self.run(self.config.token)
 
     async def on_ready(self):
-        '''
+        """
         When bot has fully logged on
         Log bots username and ID
         Then load cogs
-        '''
+        """
 
         # Setup mandatory cogs
         self.add_cog(Journal(self))
@@ -102,7 +107,7 @@ class Bot(commands.AutoShardedBot):
 
         def _cog_ok(cog):
             # Special files
-            if cog.startswith('_'):
+            if cog.startswith("_"):
                 return False
 
             # Check for mandatory cogs
@@ -110,15 +115,15 @@ class Bot(commands.AutoShardedBot):
                 return False
 
             # Cog is a directory
-            return os.path.isdir(f'futaba/cogs/{cog}')
+            return os.path.isdir(f"futaba/cogs/{cog}")
 
-        files = [cog for cog in os.listdir('futaba/cogs') if _cog_ok(cog)]
-        logger.info("Cogs found: %s", ', '.join(files))
+        files = [cog for cog in os.listdir("futaba/cogs") if _cog_ok(cog)]
+        logger.info("Cogs found: %s", ", ".join(files))
 
         # Load cogs
         for file in files:
             try:
-                self.load_extension(f'futaba.cogs.{file}')
+                self.load_extension(f"futaba.cogs.{file}")
             except Exception as error:
                 # Something made the loading fail
                 # So log it with reason and tell user to check it
@@ -128,7 +133,7 @@ class Bot(commands.AutoShardedBot):
                 logger.info("Loaded cog: %s", file)
 
         # Register logger to catch journal events
-        listener = LoggingOutputListener(self.journal_cog.router, '/')
+        listener = LoggingOutputListener(self.journal_cog.router, "/")
         self.journal_cog.router.register(listener)
 
         # Performing migrations
@@ -147,43 +152,43 @@ class Bot(commands.AutoShardedBot):
         logger.info("Ready!")
 
     def get_broadcaster(self, root):
-        '''
+        """
         A utility method for instantiating a bound Broadcaster on the given path.
-        '''
+        """
 
         return Broadcaster(self.journal_cog.router, root)
 
     async def on_guild_join(self, guild):
-        '''
+        """
         Event for handling joining a new guild.
         Adds it to the database for triggering guild migration in the database.
-        '''
+        """
 
         logger.info("Guild join event for '%s' (%d)", guild.name, guild.id)
         with self.sql.transaction():
             self.sql.guilds.add_guild(guild)
 
     async def on_guild_remove(self, guild):
-        '''
+        """
         Event for handling leaving a guild.
         Removes it to the database for triggering guild migration in the database.
-        '''
+        """
 
         logger.info("Guild leave event for '%s' (%d)", guild.name, guild.id)
         with self.sql.transaction():
             self.sql.guilds.add_guild(guild)
 
     async def on_command_completion(self, ctx):
-        '''
+        """
         Add success reaction when any command completes successfully
-        '''
+        """
 
         await Reactions.SUCCESS.add(ctx.message)
 
     async def on_command_error(self, ctx, error):
-        '''
+        """
         Handles errors when a command is invoked but raises an exception.
-        '''
+        """
 
         # Complains about "context" vs "ctx".
         # pylint: disable=arguments-differ
@@ -198,16 +203,15 @@ class Bot(commands.AutoShardedBot):
 
             # Create the embed to tell user what argument is missing
             embed = discord.Embed(colour=discord.Colour.red())
-            embed.title = 'Required argument missing'
-            embed.add_field(name='Argument', value=error.param.name)
+            embed.title = "Required argument missing"
+            embed.add_field(name="Argument", value=error.param.name)
 
             # Convert the annotation to be more readable
             annotation = ANNOTATIONS[error.param.annotation.__name__]
-            embed.add_field(name='Annotation', value=annotation)
+            embed.add_field(name="Annotation", value=annotation)
 
             await asyncio.gather(
-                ctx.send(embed=embed),
-                Reactions.MISSING.add(ctx.message),
+                ctx.send(embed=embed), Reactions.MISSING.add(ctx.message)
             )
 
         elif isinstance(error, commands.errors.BadArgument):
@@ -216,12 +220,11 @@ class Bot(commands.AutoShardedBot):
 
             # Create the embed to tell user what argument was invalid
             embed = discord.Embed(colour=discord.Colour.red())
-            embed.title = 'Unable to retrieve argument'
+            embed.title = "Unable to retrieve argument"
             embed.description = str(error)
 
             await asyncio.gather(
-                ctx.send(embed=embed),
-                Reactions.MISSING.add(ctx.message),
+                ctx.send(embed=embed), Reactions.MISSING.add(ctx.message)
             )
 
         elif isinstance(error, commands.errors.CheckFailure):
@@ -263,14 +266,15 @@ class Bot(commands.AutoShardedBot):
         else:
             # Other exception, probably not meant to happen. Send it as an embed.
             logger.error("Unexpected error during command!", exc_info=error)
-            anger_emoji = self.get_emoji(self.config.anger_emoji_id) or '\N{ANGER SYMBOL}'
-            traceback_lines = traceback.format_exception(type(error), error, error.__traceback__, limit=1)
-            traceback_lines.insert(0, '```py')
-            traceback_lines.append('```')
-            embed = discord.Embed(colour=discord.Colour.red())
-            embed.title = f'{anger_emoji} Unexpected error occurred!'
-            embed.description = '\n'.join(traceback_lines)
-            await asyncio.gather(
-                ctx.send(embed=embed),
-                Reactions.FAIL.add(ctx.message),
+            anger_emoji = (
+                self.get_emoji(self.config.anger_emoji_id) or "\N{ANGER SYMBOL}"
             )
+            traceback_lines = traceback.format_exception(
+                type(error), error, error.__traceback__, limit=1
+            )
+            traceback_lines.insert(0, "```py")
+            traceback_lines.append("```")
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.title = f"{anger_emoji} Unexpected error occurred!"
+            embed.description = "\n".join(traceback_lines)
+            await asyncio.gather(ctx.send(embed=embed), Reactions.FAIL.add(ctx.message))

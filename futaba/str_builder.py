@@ -12,17 +12,13 @@
 
 from io import StringIO
 
-__all__ = [
-    'StringBuilder',
-]
+__all__ = ["StringBuilder"]
+
 
 class StringBuilder:
-    __slots__ = (
-        'buffer',
-        'sep',
-    )
+    __slots__ = ("buffer", "sep")
 
-    def __init__(self, initial='', sep=''):
+    def __init__(self, initial="", sep=""):
         self.buffer = StringIO(initial)
         self.buffer.seek(len(initial))
         self.sep = sep
@@ -33,7 +29,7 @@ class StringBuilder:
 
         self.buffer.write(str(text))
 
-    def writeln(self, text='', endl='\n'):
+    def writeln(self, text="", endl="\n"):
         if self and self.sep:
             self.buffer.write(self.sep)
 

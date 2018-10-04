@@ -10,9 +10,9 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-'''
+"""
 <description>
-'''
+"""
 
 import asyncio
 import logging
@@ -25,12 +25,10 @@ from futaba.exceptions import CommandFailed
 
 logger = logging.getLogger(__package__)
 
+
 class NameOfCog:
-    __slots__ = (
-        'bot',
-        'journal',
-    )
+    __slots__ = ("bot", "journal")
 
     def __init__(self, bot):
         self.bot = bot
-        self.journal = bot.get_broadcaster('/A PATH THAT MAKES SENSE FOR THIS COG')
+        self.journal = bot.get_broadcaster("/A PATH THAT MAKES SENSE FOR THIS COG")

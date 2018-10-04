@@ -4,25 +4,27 @@ sudo: false
 cache: pip
 
 python:
-  - '3.5'
   - '3.6'
   - '3.7-dev'
   - 'nightly'
 
 matrix:
   allow_failures:
-    - python: nightly
+    - python: '3.7-dev'
+    - python: 'nightly'
   fast_finish: true
 
 install:
-  - pip install pylint
   - pip install -r requirements.txt
+  - pip install -r requirements-dev.txt
 
 script:
-  # Display all lints and a report
-  - pylint --reports=yes futaba || true
+  # Run a check for black formatting
+  - black --check futaba
 
+  # Display all lints and a report
   # Only fail on errors
+  - pylint --reports=yes futaba || true
   - pylint --errors-only futaba
 
 notifications:

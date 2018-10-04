@@ -12,10 +12,11 @@
 
 from .core import Tracker, LISTENERS
 
+
 def setup(bot):
-    '''
+    """
     Setup for bot to add cog
-    '''
+    """
 
     cog = Tracker(bot)
     for listener in LISTENERS:

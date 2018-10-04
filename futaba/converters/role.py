@@ -22,16 +22,15 @@ from .utils import ID_REGEX
 
 logger = logging.getLogger(__name__)
 
-__all__ = [
-    'RoleConv',
-]
+__all__ = ["RoleConv"]
 
-ROLE_MENTION_REGEX = re.compile(r'<@&([0-9]+)>')
+ROLE_MENTION_REGEX = re.compile(r"<@&([0-9]+)>")
+
 
 class RoleConv(Converter):
     async def convert(self, ctx, argument) -> discord.Role:
         if ctx.guild is None:
-            raise BadArgument(f'Unable to find role because we are not in a guild')
+            raise BadArgument(f"Unable to find role because we are not in a guild")
 
         logger.debug("Checking if it's a role ID")
         match = ID_REGEX.match(argument)
@@ -54,12 +53,14 @@ class RoleConv(Converter):
 
         logger.debug("Checking if it's a role's name (case-insensitive)")
         argument = normalize_caseless(argument)
-        role = discord.utils.find(lambda r: argument == normalize_caseless(r.name), ctx.guild.roles)
+        role = discord.utils.find(
+            lambda r: argument == normalize_caseless(r.name), ctx.guild.roles
+        )
         if role is not None:
             return role
 
         logger.debug("Checking if it's the default role")
-        if argument in ('@everyone', 'everyone', '@here', 'here', 'default'):
+        if argument in ("@everyone", "everyone", "@here", "here", "default"):
             return ctx.guild.default_role
 
         logger.debug("No results found")

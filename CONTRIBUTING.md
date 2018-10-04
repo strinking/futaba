@@ -1,6 +1,8 @@
 ## Contributing to Futaba
 Futaba is a Discord bot for the [Programming server](https://discord.gg/010z0Kw1A9ql5c1Qe). Inspired by previous bot efforts in the server, will aim to be more usable for members and maintainable for coders.
 
+Before you start coding, make sure you've read the [README](README)'s instructions so you have all the software you need installed on your machine.
+
 ### Design Philosophy
 **Guild agnostic and portable**  
 The bot should never assume it is in a certain guild or set of guilds, or that those guilds have particular features, (e.g. a role called XYZ, or certain emojis). If guild-specific items are necessary, they should be configurable.

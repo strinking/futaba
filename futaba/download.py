@@ -19,11 +19,7 @@ import aiohttp
 
 logger = logging.getLogger(__name__)
 
-__all__ = [
-    'MAXIMUM_FILE_SIZE',
-    'download_links',
-    'download_link',
-]
+__all__ = ["MAXIMUM_FILE_SIZE", "download_links", "download_link"]
 
 # Maximum size to download from foreign sites
 MAXIMUM_FILE_SIZE = 24 * 1024 * 1024
@@ -34,14 +30,17 @@ CHUNK_SIZE = 4 * 1024
 # Prevent connections from hanging for too long
 TIMEOUT = aiohttp.ClientTimeout(total=45, sock_read=5)
 
+
 async def download_links(urls):
     async with aiohttp.ClientSession(timeout=TIMEOUT, trust_env=True) as session:
         buffers = await asyncio.gather(*[download(session, url) for url in urls])
     return buffers
 
+
 async def download_link(url):
     async with aiohttp.ClientSession(timeout=TIMEOUT, trust_env=True) as session:
         return await download(session, url)
+
 
 async def download(session, url):
     binio = BytesIO()
@@ -49,8 +48,11 @@ async def download(session, url):
         async with session.get(url) as response:
             if response.content_length is not None:
                 if response.content_length > MAXIMUM_FILE_SIZE:
-                    logger.info("File is reportedly too large (%d bytes > %d bytes)",
-                            response.content_length, MAXIMUM_FILE_SIZE)
+                    logger.info(
+                        "File is reportedly too large (%d bytes > %d bytes)",
+                        response.content_length,
+                        MAXIMUM_FILE_SIZE,
+                    )
                     return None
 
             while len(binio.getbuffer()) < MAXIMUM_FILE_SIZE:
@@ -59,7 +61,10 @@ async def download(session, url):
                     binio.write(chunk)
                 else:
                     return binio
-            logger.info("File was too large, bailing out (max file size: %d bytes)", MAXIMUM_FILE_SIZE)
+            logger.info(
+                "File was too large, bailing out (max file size: %d bytes)",
+                MAXIMUM_FILE_SIZE,
+            )
             return None
     except SSLError:
         # Ignore SSL errors
