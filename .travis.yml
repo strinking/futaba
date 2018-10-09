@@ -16,7 +16,14 @@ jobs:
   include:
     - stage: check
       python: '3.6'
-      script: black --check futaba
+      script:
+        - black --check futaba
+    - stage: build
+      script:
+        # Display all lints and a report
+        # Only fail on errors
+        - pylint --reports=yes futaba || true
+        - pylint --errors-only futaba
 
 matrix:
   allow_failures:
@@ -26,12 +33,6 @@ matrix:
 install:
   - pip install -r requirements.txt
   - pip install -r requirements-dev.txt
-
-script:
-  # Display all lints and a report
-  # Only fail on errors
-  - pylint --reports=yes futaba || true
-  - pylint --errors-only futaba
 
 notifications:
   email:
