@@ -4,7 +4,7 @@ sudo: false
 cache: pip
 
 stages:
-  - check
+  - black
   - test
 
 python:
@@ -14,7 +14,7 @@ python:
 
 jobs:
   include:
-    - stage: check
+    - stage: black
       python: '3.6'
       script:
         - black --check futaba
