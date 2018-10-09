@@ -19,12 +19,20 @@ Has the model for managing the welcome cog and its functionality.
 
 import functools
 import logging
-from collections import defaultdict
 
 import discord
 from sqlalchemy import and_
-from sqlalchemy import BigInteger, Boolean, Column, Enum, String, Table, Unicode
-from sqlalchemy import ForeignKey
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    Column,
+    Enum,
+    Integer,
+    String,
+    Table,
+    Unicode,
+)
+from sqlalchemy import ForeignKey, Sequence
 from sqlalchemy.sql import select
 
 from futaba.enums import JoinAlertKey, ValueRelationship
@@ -79,7 +87,7 @@ class WelcomeStorage:
 
 
 class WelcomeModel:
-    __slots__ = ("sql", "tb_welcome", "tb_join_alerts", "welcome_cache", "alerts_cache")
+    __slots__ = ("sql", "tb_welcome", "tb_join_alerts", "welcome_cache")
 
     def __init__(self, sql, meta):
         self.sql = sql
@@ -100,14 +108,17 @@ class WelcomeModel:
             "join_alerts",
             meta,
             Column(
-                "guild_id", BigInteger, ForeignKey("guilds.guild_id"), primary_key=True
+                "alert_id",
+                Integer,
+                Sequence("join_alert_seq", metadata=meta),
+                primary_key=True,
             ),
-            Column("alert_key", Enum(JoinAlertKey), primary_key=True),
+            Column("guild_id", BigInteger, ForeignKey("guilds.guild_id")),
+            Column("alert_key", Enum(JoinAlertKey)),
             Column("op", Enum(ValueRelationship)),
             Column("value", String),
         )
         self.welcome_cache = {}
-        self.alerts_cache = defaultdict(dict)
 
         register_hook("on_guild_join", self.add_welcome)
         register_hook("on_guild_leave", self.remove_welcome)
@@ -270,57 +281,46 @@ class WelcomeModel:
     def add_alert(self, guild, alert):
         logger.info("Add join alert for guild '%s' (%d)", guild.name, guild.id)
 
-        if alert.key in self.alerts_cache[guild]:
-            upd = (
-                self.tb_join_alerts.update()
-                .where(
-                    and_(
-                        self.tb_join_alerts.c.guild_id == guild.id,
-                        self.tb_join_alerts.c.alert_key == alert.key,
-                    )
-                )
-                .values(op=alert.op, value=str(alert.value))
-            )
-            self.sql.execute(upd)
-        else:
-            ins = self.tb_join_alerts.insert().values(
-                guild_id=guild.id,
-                alert_key=alert.key,
-                op=alert.op,
-                value=str(alert.value),
-            )
-            self.sql.execute(ins)
-        # TODO add to cache
+        ins = self.tb_join_alerts.insert().values(
+            guild_id=guild.id, alert_key=alert.key, op=alert.op, value=str(alert.value)
+        )
+        result = self.sql.execute(ins)
+        alert.id, = result.inserted_primary_key
 
-    def remove_alert(self, guild, key):
+    def remove_alert(self, guild, id):
         logger.info("Remove join alert for guild '%s' (%d)", guild.name, guild.id)
 
         delet = self.tb_join_alerts.delete().where(
             and_(
                 self.tb_join_alerts.c.guild_id == guild.id,
-                self.tb_join_alerts.c.alert_key == key,
+                self.tb_join_alerts.c.alert_id == id,
             )
         )
         result = self.sql.execute(delet)
-        # TODO remove from cache
-        assert result.rowcount() in (0, 1), "Multiple rows deleted"
+        if result.rowcount != 1:
+            raise ValueError("No join alert with that id found")
 
     def get_all_alerts(self, guild):
         logger.info("Getting all join alerts for guild '%s' (%d)", guild.name, guild.id)
 
-        sel = select(
-            [
-                self.tb_join_alerts.c.alert_key,
-                self.tb_join_alerts.c.op,
-                self.tb_join_alerts.c.value,
-            ]
-        ).where(self.tb_join_alerts.c.guild_id == guild.id)
+        sel = (
+            select(
+                [
+                    self.tb_join_alerts.c.alert_id,
+                    self.tb_join_alerts.c.alert_key,
+                    self.tb_join_alerts.c.op,
+                    self.tb_join_alerts.c.value,
+                ]
+            )
+            .where(self.tb_join_alerts.c.guild_id == guild.id)
+            .order_by(self.tb_join_alerts.c.alert_id)
+        )
         result = self.sql.execute(sel)
 
         alerts = []
-        for key, op, raw_value in result.fetchall():
+        for id, key, op, raw_value in result.fetchall():
             value = key.parse_value(raw_value)
-            alerts.append((key, op, value))
+            alerts.append((id, key, op, value))
         return alerts
 
     def remove_all_alerts(self, guild):
