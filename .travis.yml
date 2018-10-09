@@ -19,7 +19,7 @@ install:
 
 script:
   # Run a check for black formatting
-  - '[[ $(python --version) == "Python 3.6"* ]] && black --check futaba'
+  - '[[ $(python --version) == "Python 3.6"* ]] && black --check futaba || echo "Not checking formatting"'
 
   # Display all lints and a report
   # Only fail on errors
