@@ -103,7 +103,6 @@ class WelcomeModel:
             Column("delete_on_agree", Boolean),
             Column("welcome_channel_id", BigInteger, nullable=True),
         )
-        # TODO allow multiple flags with the same key
         self.tb_join_alerts = Table(
             "join_alerts",
             meta,
