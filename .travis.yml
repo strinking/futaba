@@ -19,7 +19,7 @@ install:
 
 script:
   # Run a check for black formatting
-  - ./.travis/format_check.sh
+  - '[[ $(python --version) == "Python 3.6"* ]] && black --check futaba'
 
   # Display all lints and a report
   # Only fail on errors
