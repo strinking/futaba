@@ -175,11 +175,15 @@ def filter_immune(bot, guild, member, channel=None):
     if member.id in bot.config.owner_ids:
         return True
 
+    # Fetch most specific permissions
+    if channel is None:
+        perms = member.guild_permissions
+    else:
+        perms = channel.permissions_for(member)
+
     # Check admins
-    perms = channel.permissions_for(member)
-    if channel is not None:
-        if perms.manage_guild:
-            return True
+    if perms.manage_guild:
+        return True
 
     # Check moderators (if enabled)
     if filter_settings.manage_messages_immune:
