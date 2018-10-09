@@ -3,10 +3,20 @@ dist: trusty
 sudo: false
 cache: pip
 
+stages:
+  - check
+  - build
+
 python:
   - '3.6'
   - '3.7-dev'
   - 'nightly'
+
+jobs:
+  include:
+    - stage: check
+      python: '3.6'
+      script: black --check futaba
 
 matrix:
   allow_failures:
@@ -18,9 +28,6 @@ install:
   - pip install -r requirements-dev.txt
 
 script:
-  # Run a check for black formatting
-  - '[[ $(python --version) == "Python 3.6"* ]] && black --check futaba || echo "Not checking formatting"'
-
   # Display all lints and a report
   # Only fail on errors
   - pylint --reports=yes futaba || true
