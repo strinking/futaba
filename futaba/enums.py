@@ -31,7 +31,7 @@ class Reactions(Enum):
 @unique
 class JoinAlertKey(Enum):
     CREATION = "created_at"  # datetime
-    ID = "user_id"  # int
+    ID = "id"  # int
     NAME = "name"  # str
     DISCRIM = "discriminator"  # str
     AVATAR = "avatar"  # Optional[str]

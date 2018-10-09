@@ -16,6 +16,7 @@ configured by staff. If so, a notification is sent to /welcome/alert.
 """
 
 import logging
+from itertools import islice
 
 import discord
 from discord.ext import commands
@@ -100,8 +101,8 @@ class Alert:
         embed = discord.Embed()
         embed.set_author(name="Join alerts")
         descr = StringBuilder()
-
         descr.writeln("__Alert ID__ | __Condition__")
+
         for alert in self.alerts.values():
             assert alert.id is not None, "Alert was not given an ID"
             descr.writeln(f"#**`{alert.id:05}`** | `{alert}`")
@@ -113,6 +114,46 @@ class Alert:
             embed.colour = discord.Colour.dark_purple()
             embed.description = "No alerts for this guild"
 
+        await ctx.send(embed=embed)
+
+
+    @alert.command(name='match', aliases=['matches', 'matching', 'users', 'members'])
+    @commands.guild_only()
+    async def alert_match(self, ctx, id: int):
+        '''
+        Lists all members currently joined who matches the conditions given by the join alert ID.
+        '''
+
+        logging.info("Showing all members matching join alert %d in guild '%s' (%d)",
+                id, ctx.guild.name, ctx.guild.id)
+
+        try:
+            alert = self.alerts[id]
+        except KeyError:
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.set_author(name='Alert check failed')
+            embed.description = f"No such join alert id: `{id}`"
+            raise CommandFailed(embed=embed)
+
+        embed = discord.Embed()
+        embed.set_author(name='Matching members')
+        descr = StringBuilder()
+        descr.writeln(f'Join alert: `{alert}`')
+
+        matching_members = list(filter(alert.matches, ctx.guild.members))
+        if matching_members:
+            embed.colour = discord.Colour.dark_teal()
+            descr.writeln(f'Found {len(matching_members)} matching members:')
+            descr.writeln()
+            for member in islice(matching_members, 0, 8):
+                descr.writeln(f'- {member.mention}')
+            if len(matching_members) > 8:
+                descr.writeln(f'... and {len(matching_members) - 8} more')
+        else:
+            embed.colour = discord.Colour.dark_purple()
+            descr.writeln('**No members matching this condition**')
+
+        embed.description = str(descr)
         await ctx.send(embed=embed)
 
     @alert.command(name="add", aliases=["append", "extend"])
