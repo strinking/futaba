@@ -33,9 +33,10 @@ __all__ = ["JoinAlert", "Alert"]
 
 
 class JoinAlert:
-    __slots__ = ("id", "key", "op", "value")
+    __slots__ = ("guild", "id", "key", "op", "value")
 
-    def __init__(self, id, key, op, value):
+    def __init__(self, guild, id, key, op, value):
+        self.guild = guild
         self.id = id
         self.key = key
         self.op = op
@@ -68,7 +69,7 @@ class Alert:
         for guild in bot.guilds:
             alert_parts = bot.sql.welcome.get_all_alerts(guild)
             for id, key, op, value in alert_parts:
-                alert = JoinAlert(id, key, op, value)
+                alert = JoinAlert(guild, id, key, op, value)
                 self.alerts[id] = alert
 
     async def member_join(self, member):
@@ -77,7 +78,9 @@ class Alert:
             if alert.guild == member.guild:
                 if alert.matches(member):
                     logger.info("Matches alert: %s!", alert)
-                    content = f"Member {member.mention} violates alert: {alert}"
+                    content = (
+                        f"Member {member.mention} triggerred join alert: `{alert}`"
+                    )
                     self.journal.send("", member.guild, content, icon="found")
 
     @commands.group(name="joinalert", aliases=["jalert"])
@@ -116,42 +119,47 @@ class Alert:
 
         await ctx.send(embed=embed)
 
-
-    @alert.command(name='match', aliases=['matches', 'matching', 'users', 'members'])
+    @alert.command(name="match", aliases=["matches", "matching", "users", "members"])
     @commands.guild_only()
     async def alert_match(self, ctx, id: int):
-        '''
+        """
         Lists all members currently joined who matches the conditions given by the join alert ID.
-        '''
+        """
 
-        logging.info("Showing all members matching join alert %d in guild '%s' (%d)",
-                id, ctx.guild.name, ctx.guild.id)
+        logging.info(
+            "Showing all members matching join alert %d in guild '%s' (%d)",
+            id,
+            ctx.guild.name,
+            ctx.guild.id,
+        )
 
         try:
             alert = self.alerts[id]
         except KeyError:
             embed = discord.Embed(colour=discord.Colour.red())
-            embed.set_author(name='Alert check failed')
+            embed.set_author(name="Alert check failed")
             embed.description = f"No such join alert id: `{id}`"
             raise CommandFailed(embed=embed)
 
         embed = discord.Embed()
-        embed.set_author(name='Matching members')
+        embed.set_author(name="Matching members")
         descr = StringBuilder()
-        descr.writeln(f'Join alert: `{alert}`')
+        descr.writeln(f"Join alert: `{alert}`")
 
         matching_members = list(filter(alert.matches, ctx.guild.members))
         if matching_members:
             embed.colour = discord.Colour.dark_teal()
-            descr.writeln(f'Found {len(matching_members)} matching members:')
+            descr.writeln(f"Found {len(matching_members)} matching members:")
             descr.writeln()
-            for member in islice(matching_members, 0, 8):
-                descr.writeln(f'- {member.mention}')
-            if len(matching_members) > 8:
-                descr.writeln(f'... and {len(matching_members) - 8} more')
+
+            max_members = 8
+            for member in islice(matching_members, 0, max_members):
+                descr.writeln(f"- {member.mention}")
+            if len(matching_members) > max_members:
+                descr.writeln(f"... and {len(matching_members) - max_members} more")
         else:
             embed.colour = discord.Colour.dark_purple()
-            descr.writeln('**No members matching this condition**')
+            descr.writeln("**No members matching this condition**")
 
         embed.description = str(descr)
         await ctx.send(embed=embed)
@@ -188,7 +196,7 @@ class Alert:
         except ValueError as error:
             raise ManualCheckFailure(content=str(error))
 
-        alert = JoinAlert(None, key, op, value)
+        alert = JoinAlert(ctx.guild, None, key, op, value)
         logging.info("Adding join alert: %s", alert)
 
         with self.bot.sql.transaction():
