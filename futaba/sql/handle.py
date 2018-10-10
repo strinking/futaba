@@ -23,6 +23,7 @@ from .models import (
     FilterModel,
     GuildsModel,
     JournalModel,
+    SelfAssignableRolesModel,
     SettingsModel,
     WelcomeModel,
 )
@@ -43,6 +44,7 @@ class SqlHandler:
         "filter",
         "guilds",
         "journal",
+        "roles",
         "settings",
         "welcome",
     )
@@ -59,6 +61,7 @@ class SqlHandler:
         self.filter = FilterModel(self, meta)
         self.guilds = GuildsModel(self, meta)
         self.journal = JournalModel(self, meta)
+        self.roles = SelfAssignableRolesModel(self, meta)
         self.settings = SettingsModel(self, meta)
         self.welcome = WelcomeModel(self, meta)
 

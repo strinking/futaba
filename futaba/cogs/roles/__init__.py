@@ -1,5 +1,5 @@
 #
-# sql/models/__init__.py
+# cogs/roles/__init__.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
@@ -10,15 +10,13 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-"""
-Module that contains models for interacting with SQL tables in a clean
-and abstracted way.
-"""
+from .core import SelfAssignableRoles
 
-from .alias import AliasHistoryModel
-from .filter import FilterModel
-from .guilds import GuildsModel
-from .journal import JournalModel
-from .roles import SelfAssignableRolesModel
-from .settings import SettingsModel
-from .welcome import WelcomeModel
+
+def setup(bot):
+    """
+    Setup for bot to add cog
+    """
+
+    cog = SelfAssignableRoles(bot)
+    bot.add_cog(cog)
