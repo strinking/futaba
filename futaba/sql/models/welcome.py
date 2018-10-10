@@ -21,10 +21,21 @@ import functools
 import logging
 
 import discord
-from sqlalchemy import BigInteger, Boolean, Column, Table, Unicode
-from sqlalchemy import ForeignKey
+from sqlalchemy import and_
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    Column,
+    Enum,
+    Integer,
+    String,
+    Table,
+    Unicode,
+)
+from sqlalchemy import ForeignKey, Sequence
 from sqlalchemy.sql import select
 
+from futaba.enums import JoinAlertKey, ValueRelationship
 from futaba.utils import lowerbool
 from ..hooks import register_hook
 
@@ -76,7 +87,7 @@ class WelcomeStorage:
 
 
 class WelcomeModel:
-    __slots__ = ("sql", "tb_welcome", "cache")
+    __slots__ = ("sql", "tb_welcome", "tb_join_alerts", "welcome_cache")
 
     def __init__(self, sql, meta):
         self.sql = sql
@@ -92,10 +103,25 @@ class WelcomeModel:
             Column("delete_on_agree", Boolean),
             Column("welcome_channel_id", BigInteger, nullable=True),
         )
-        self.cache = {}
+        self.tb_join_alerts = Table(
+            "join_alerts",
+            meta,
+            Column(
+                "alert_id",
+                Integer,
+                Sequence("join_alert_seq", metadata=meta),
+                primary_key=True,
+            ),
+            Column("guild_id", BigInteger, ForeignKey("guilds.guild_id")),
+            Column("alert_key", Enum(JoinAlertKey)),
+            Column("op", Enum(ValueRelationship)),
+            Column("value", String),
+        )
+        self.welcome_cache = {}
 
         register_hook("on_guild_join", self.add_welcome)
-        register_hook("on_guild_leave", self.del_welcome)
+        register_hook("on_guild_leave", self.remove_welcome)
+        register_hook("on_guild_leave", self.remove_all_alerts)
 
     def add_welcome(self, guild):
         logger.info(
@@ -110,23 +136,23 @@ class WelcomeModel:
             welcome_channel_id=storage.welcome_channel_id,
         )
         self.sql.execute(ins)
-        self.cache[guild] = storage
+        self.welcome_cache[guild] = storage
 
-    def del_welcome(self, guild):
+    def remove_welcome(self, guild):
         logger.info(
             "Removing welcome message row for guild '%s' (%d)", guild.name, guild.id
         )
         delet = self.tb_welcome.delete().where(self.tb_welcome.c.guild_id == guild.id)
         self.sql.execute(delet)
-        self.cache.pop(guild, None)
+        self.welcome_cache.pop(guild, None)
 
     def get_welcome(self, guild):
         logger.info(
             "Getting welcome message data for guild '%s' (%d)", guild.name, guild.id
         )
-        if guild in self.cache:
+        if guild in self.welcome_cache:
             logger.debug("Welcome message data found in cache, returning")
-            return self.cache[guild]
+            return self.welcome_cache[guild]
 
         sel = select(
             [
@@ -141,7 +167,7 @@ class WelcomeModel:
 
         if not result.rowcount:
             self.add_welcome(guild)
-            return self.cache[guild]
+            return self.welcome_cache[guild]
 
         (
             welcome_message,
@@ -159,7 +185,7 @@ class WelcomeModel:
             delete_on_agree,
             welcome_channel_id,
         )
-        self.cache[guild] = welcome
+        self.welcome_cache[guild] = welcome
         return welcome
 
     def set_welcome_message(self, guild, welcome_message):
@@ -176,7 +202,7 @@ class WelcomeModel:
             .values(welcome_message=welcome_message)
         )
         self.sql.execute(upd)
-        self.cache[guild].welcome_message = welcome_message
+        self.welcome_cache[guild].welcome_message = welcome_message
 
     def set_goodbye_message(self, guild, goodbye_message):
         logger.info(
@@ -192,7 +218,7 @@ class WelcomeModel:
             .values(goodbye_message=goodbye_message)
         )
         self.sql.execute(upd)
-        self.cache[guild].goodbye_message = goodbye_message
+        self.welcome_cache[guild].goodbye_message = goodbye_message
 
     def set_agreed_message(self, guild, agreed_message):
         logger.info(
@@ -208,7 +234,7 @@ class WelcomeModel:
             .values(agreed_message=agreed_message)
         )
         self.sql.execute(upd)
-        self.cache[guild].agreed_message = agreed_message
+        self.welcome_cache[guild].agreed_message = agreed_message
 
     def set_delete_on_agree(self, guild, value):
         logger.info(
@@ -224,7 +250,7 @@ class WelcomeModel:
             .values(delete_on_agree=value)
         )
         self.sql.execute(upd)
-        self.cache[guild].delete_on_agree = value
+        self.welcome_cache[guild].delete_on_agree = value
 
     def set_welcome_channel(self, guild, channel):
         if channel is not None:
@@ -249,4 +275,59 @@ class WelcomeModel:
             .values(welcome_channel_id=getattr(channel, "id", None))
         )
         self.sql.execute(upd)
-        self.cache[guild].welcome_channel = channel
+        self.welcome_cache[guild].welcome_channel = channel
+
+    def add_alert(self, guild, alert):
+        logger.info("Add join alert for guild '%s' (%d)", guild.name, guild.id)
+
+        ins = self.tb_join_alerts.insert().values(
+            guild_id=guild.id, alert_key=alert.key, op=alert.op, value=str(alert.value)
+        )
+        result = self.sql.execute(ins)
+        alert.id, = result.inserted_primary_key
+
+    def remove_alert(self, guild, id):
+        logger.info("Remove join alert for guild '%s' (%d)", guild.name, guild.id)
+
+        delet = self.tb_join_alerts.delete().where(
+            and_(
+                self.tb_join_alerts.c.guild_id == guild.id,
+                self.tb_join_alerts.c.alert_id == id,
+            )
+        )
+        result = self.sql.execute(delet)
+        if result.rowcount != 1:
+            raise ValueError("No join alert with that id found")
+
+    def get_all_alerts(self, guild):
+        logger.info("Getting all join alerts for guild '%s' (%d)", guild.name, guild.id)
+
+        sel = (
+            select(
+                [
+                    self.tb_join_alerts.c.alert_id,
+                    self.tb_join_alerts.c.alert_key,
+                    self.tb_join_alerts.c.op,
+                    self.tb_join_alerts.c.value,
+                ]
+            )
+            .where(self.tb_join_alerts.c.guild_id == guild.id)
+            .order_by(self.tb_join_alerts.c.alert_id)
+        )
+        result = self.sql.execute(sel)
+
+        alerts = []
+        for id, key, op, raw_value in result.fetchall():
+            value = key.parse_value(raw_value)
+            alerts.append((id, key, op, value))
+        return alerts
+
+    def remove_all_alerts(self, guild):
+        logger.info(
+            "Deleting all join alerts for guild '%s' (%d)", guild.name, guild.id
+        )
+
+        delet = self.tb_join_alerts.delete().where(
+            self.tb_join_alerts.c.guild_id == guild.id
+        )
+        self.sql.execute(delet)
