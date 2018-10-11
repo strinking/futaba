@@ -158,10 +158,10 @@ class SettingsModel:
         self.roles_cache = {}
 
         register_hook("on_guild_join", self.add_guild_settings)
-        register_hook("on_guild_leave", self.del_guild_settings)
+        register_hook("on_guild_leave", self.remove_guild_settings)
 
         register_hook("on_guild_join", self.add_special_roles)
-        register_hook("on_guild_leave", self.del_special_roles)
+        register_hook("on_guild_leave", self.remove_special_roles)
 
     def add_guild_settings(self, guild):
         logger.info(
@@ -177,7 +177,7 @@ class SettingsModel:
             None, self.sql.max_delete_messages
         )
 
-    def del_guild_settings(self, guild):
+    def remove_guild_settings(self, guild):
         logger.info(
             "Removing guild settings row for departing guild '%s' (%d)",
             guild.name,
@@ -265,7 +265,7 @@ class SettingsModel:
         self.sql.execute(ins)
         self.roles_cache[guild] = SpecialRoleStorage(guild, None, None, None, None)
 
-    def del_special_roles(self, guild):
+    def remove_special_roles(self, guild):
         logger.info(
             "Removing special roles row for new guild '%s' (%d)", guild.name, guild.id
         )
