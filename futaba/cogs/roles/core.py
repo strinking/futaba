@@ -54,7 +54,7 @@ class SelfAssignableRoles:
     async def role_show(self, ctx):
         """ Shows all self-assignable roles. """
 
-        assignable_roles = self.bot.sql.roles.get_assignable_roles(ctx.guild)
+        assignable_roles = sorted(self.bot.sql.roles.get_assignable_roles(ctx.guild), key=lambda r: r.name)
         if not assignable_roles:
             prefix = self.bot.prefix(ctx.guild)
             embed = discord.Embed(colour=discord.Colour.dark_purple())
