@@ -96,7 +96,7 @@ class SelfAssignableRoles:
         """ Joins the given self-assignable roles. """
 
         self.check_roles(ctx, roles)
-        await ctx.author.add_roles(roles, reason='Adding self-assignable roles', atomic=True)
+        await ctx.author.add_roles(*roles, reason='Adding self-assignable roles', atomic=True)
 
     @role.command(
         name="remove", aliases=["rm", "delete", "del", "leave", "take", "unset"]
@@ -106,7 +106,7 @@ class SelfAssignableRoles:
         """ Leaves the given self-assignable roles. """
 
         self.check_roles(ctx, roles)
-        await ctx.author.remove_roles(roles, reason='Removing self-assignable roles', atomic=True)
+        await ctx.author.remove_roles(*roles, reason='Removing self-assignable roles', atomic=True)
 
     @role.command(name="joinable", aliases=["assignable", "canjoin"])
     @commands.guild_only()
