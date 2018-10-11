@@ -22,8 +22,8 @@ import logging
 from collections import defaultdict
 
 import discord
-from sqlalchemy import and_, or_
-from sqlalchemy import BigInteger, Column, Table, Unicode
+from sqlalchemy import and_
+from sqlalchemy import BigInteger, Column, Table
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.sql import select
 

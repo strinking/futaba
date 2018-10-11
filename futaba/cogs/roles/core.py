@@ -50,17 +50,41 @@ class SelfAssignableRoles:
     async def role_show(self, ctx):
         """ Shows all self-assignable roles. """
 
-        ...
+        assignable_roles = self.bot.sql.roles.get_assignable_roles(ctx.guild)
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
+        embed.set_author(name='Self-assignable roles in this guild')
+
+        descr = StringBuilder()
+        for role in assignable_roles:
+            descr.writeln(role.mention)
+        embed.description = str(descr)
+
+        await ctx.send(embed=embed)
+
+    def check_roles(self, ctx, roles):
+        if not roles:
+            raise CommandFailed()
+
+        assignable_roles = self.bot.sql.roles.get_assignable_roles(ctx.guild)
+        for role in roles:
+            if role not in assignable_roles:
+                embed = discord.Embed(colour=discord.Colour.red())
+                embed.set_author(name='Role not assignable')
+                embed.description = f'The role {role.mention} cannot be self-assigned'
+                raise ManualCheckFailure(embed=embed)
+            elif role >= ctx.me.top_role:
+                embed = discord.Embed(colour=discord.Colour.red())
+                embed.set_author(name='Error assigning roles')
+                embed.description = f'Cannot assign {role.mention}, which is above me in the hierarchy'
+                raise ManualCheckFailure(embed=embed)
 
     @role.command(name="add", aliases=["join", "give", "set", "update"])
     @commands.guild_only()
     async def role_add(self, ctx, *roles: RoleConv):
         """ Joins the given self-assignable roles. """
 
-        if not roles:
-            raise CommandFailed()
-
-        ...
+        self.check_roles(ctx, roles)
+        await ctx.author.add_roles(roles, reason='Adding self-assignable roles', atomic=True)
 
     @role.command(
         name="remove", aliases=["rm", "delete", "del", "leave", "take", "unset"]
@@ -69,10 +93,8 @@ class SelfAssignableRoles:
     async def role_remove(self, ctx, *roles: RoleConv):
         """ Leaves the given self-assignable roles. """
 
-        if not roles:
-            raise CommandFailed()
-
-        ...
+        self.check_roles(ctx, roles)
+        await ctx.author.remove_roles(roles, reason='Removing self-assignable roles', atomic=True)
 
     @role.command(name="joinable", aliases=["assignable", "canjoin"])
     @commands.guild_only()
