@@ -132,11 +132,24 @@ class SelfAssignableRoles:
         if not roles:
             raise CommandFailed()
 
+        # Get special roles
+        special_roles = self.bot.sql.settings.get_special_roles(ctx.guild)
+
         # Ensure none of the roles grant any permissions
         for role in roles:
             embed = permissions.elevated_role_embed(ctx.guild, role, "error")
             if embed is not None:
                 raise ManualCheckFailure(embed=embed)
+
+            for attr in ("member", "guest", "mute", "jail"):
+                if role == getattr(special_roles, attr):
+                    embed = discord.Embed(colour=discord.Colour.red())
+                    embed.set_author(name="Cannot add role as assignable")
+                    embed.description = (
+                        f"{role.mention} cannot be self-assignable, "
+                        f"it is already used as the **{attr}** role!"
+                    )
+                    raise ManualCheckFailure(embed=embed)
 
         # Get roles that are already assignable
         assignable_roles = self.bot.sql.roles.get_assignable_roles(ctx.guild)
