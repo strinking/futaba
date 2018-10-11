@@ -232,7 +232,7 @@ class Info:
 
         await ctx.send(embed=embed)
 
-    @commands.command(name="rinfo", aliases=["roleinfo", "role"])
+    @commands.command(name="rinfo", aliases=["roleinfo"])
     @commands.guild_only()
     async def rinfo(self, ctx, *, name: str = None):
         """

@@ -37,7 +37,11 @@ class SelfAssignableRoles:
         self.bot = bot
         self.journal = bot.get_broadcaster("/roles")
 
-    @commands.group(name="role", aliases=["roles", "sar"])
+        # Load self-assignable roles from database
+        for guild in bot.guilds:
+            bot.sql.roles.get_assignable_roles(guild)
+
+    @commands.group(name="role", aliases=["sar"])
     @commands.guild_only()
     async def role(self, ctx):
         """ Manages self-assignable roles for this guild. """
@@ -51,12 +55,20 @@ class SelfAssignableRoles:
         """ Shows all self-assignable roles. """
 
         assignable_roles = self.bot.sql.roles.get_assignable_roles(ctx.guild)
-        embed = discord.Embed(colour=discord.Colour.dark_teal())
-        embed.set_author(name='Self-assignable roles in this guild')
+        if not assignable_roles:
+            prefix = self.bot.prefix(ctx.guild)
+            embed = discord.Embed(colour=discord.Colour.dark_purple())
+            embed.set_author(name='No self-assignable roles')
+            embed.description = f'Use the `{prefix}role joinable/unjoinable` commands to change this list!'
+            await ctx.send(embed=embed)
+            return
 
-        descr = StringBuilder()
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
+        embed.set_author(name='Self-assignable roles')
+
+        descr = StringBuilder(sep=', ')
         for role in assignable_roles:
-            descr.writeln(role.mention)
+            descr.write(role.mention)
         embed.description = str(descr)
 
         await ctx.send(embed=embed)
@@ -71,7 +83,7 @@ class SelfAssignableRoles:
                 embed = discord.Embed(colour=discord.Colour.red())
                 embed.set_author(name='Role not assignable')
                 embed.description = f'The role {role.mention} cannot be self-assigned'
-                raise ManualCheckFailure(embed=embed)
+                raise CommandFailed(embed=embed)
             elif role >= ctx.me.top_role:
                 embed = discord.Embed(colour=discord.Colour.red())
                 embed.set_author(name='Error assigning roles')
@@ -118,12 +130,25 @@ class SelfAssignableRoles:
             if embed is not None:
                 raise ManualCheckFailure(embed=embed)
 
+        # Get roles that are already assignable
+        assignable_roles = self.bot.sql.roles.get_assignable_roles(ctx.guild)
+
         # Add roles to database
         with self.bot.sql.transaction():
             for role in roles:
-                self.bot.sql.roles.add_assignable_role(ctx.guild, role)
+                if role not in assignable_roles:
+                    self.bot.sql.roles.add_assignable_role(ctx.guild, role)
 
-    @role.command(name="unjoinable", aliases=["unassignable", "cannotjoin", "nojoin"])
+        # Send response
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
+        embed.set_author(name='Made roles joinable')
+        descr = StringBuilder(sep=', ')
+        for role in roles:
+            descr.write(role.mention)
+        embed.description = str(descr)
+        await ctx.send(embed=embed)
+
+    @role.command(name="unjoinable", aliases=["unassignable", "cantjoin", "cannotjoin", "nojoin"])
     @commands.guild_only()
     @permissions.check_mod()
     async def role_unjoinable(self, ctx, *roles: RoleConv):
@@ -139,22 +164,16 @@ class SelfAssignableRoles:
         if not roles:
             raise CommandFailed()
 
-        # Make a copy of joinable roles before the delete
-        assignable_roles = frozenset(self.bot.sql.roles.get_assignable_roles(ctx.guild))
-
         # Remove roles from database
         with self.bot.sql.transaction():
             for role in roles:
                 self.bot.sql.roles.remove_assignable_role(ctx.guild, role)
 
-        # Send response if not all roles were removed
-        not_removed = frozenset(roles) - assignable_roles
-        if not_removed:
-            embed = discord.Embed(colour=discord.Colour.dark_purple())
-            embed.set_author(name="Not all roles removed")
-            descr = StringBuilder()
-            descr.writeln("The following roles were not assignable to begin with:")
-            for role in not_removed:
-                descr.writeln(f"- {role.mention}")
-            embed.description = str(descr)
-            await ctx.send(embed=embed)
+        # Send response
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
+        embed.set_author(name='Made roles not joinable')
+        descr = StringBuilder(sep=', ')
+        for role in roles:
+            descr.write(role.mention)
+        embed.description = str(descr)
+        await ctx.send(embed=embed)

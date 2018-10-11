@@ -233,7 +233,7 @@ class Bot(commands.AutoShardedBot):
             await Reactions.DENY.add(ctx.message)
 
         elif isinstance(error, ManualCheckFailure):
-            # Tell the user they don't have permission and reprt the error message if any
+            # Tell the user they don't have permission and report the error message if any
             logger.info("Manual permission check for command failed")
 
             if error.kwargs:

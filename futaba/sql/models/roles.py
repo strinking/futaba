@@ -19,7 +19,6 @@ Model for storing the configured self-assignable roles within a guild.
 
 import functools
 import logging
-from collections import defaultdict
 
 import discord
 from sqlalchemy import and_
@@ -47,7 +46,7 @@ class SelfAssignableRolesModel:
             Column("role_id", BigInteger),
             UniqueConstraint("role_id", name="assignable_roles_uq"),
         )
-        self.roles_cache = defaultdict(set)
+        self.roles_cache = {}
 
         register_hook("on_guild_leave", self.remove_all_assignable_roles)
 
@@ -75,12 +74,14 @@ class SelfAssignableRolesModel:
         )
         result = self.sql.execute(sel)
 
-        for role_id in result.fetchall():
+        roles = set()
+        for role_id, in result.fetchall():
             role = discord.utils.get(guild.roles, id=role_id)
             if role is not None:
-                self.roles_cache[guild].add(role)
+                roles.add(role)
 
-        return self.roles_cache[guild]
+        self.roles_cache[guild] = roles
+        return roles
 
     def add_assignable_role(self, guild, role):
         logger.info("Adding assignable role for guild '%s' (%d)", guild.name, guild.id)
@@ -88,6 +89,7 @@ class SelfAssignableRolesModel:
             guild_id=guild.id, role_id=role.id
         )
         self.sql.execute(ins)
+        self.roles_cache[guild].add(role)
 
     def remove_assignable_role(self, guild, role):
         logger.info(
@@ -101,3 +103,6 @@ class SelfAssignableRolesModel:
         )
         result = self.sql.execute(delet)
         assert result.rowcount in (0, 1), "Multiple rows deleted"
+
+        if result.rowcount:
+            self.roles_cache[guild].remove(role)
