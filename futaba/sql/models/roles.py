@@ -75,7 +75,7 @@ class SelfAssignableRolesModel:
         result = self.sql.execute(sel)
 
         roles = set()
-        for role_id, in result.fetchall():
+        for (role_id,) in result.fetchall():
             role = discord.utils.get(guild.roles, id=role_id)
             if role is not None:
                 roles.add(role)
