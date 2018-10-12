@@ -218,3 +218,8 @@ class LocationType(Enum):
             return LocationType.CHANNEL
         else:
             return TypeError(f"No location type for {location!r}")
+
+
+@unique
+class TaskType(Enum):
+    CHANGE_ROLES = "change_roles"

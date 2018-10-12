@@ -25,6 +25,7 @@ import discord
 from discord.ext import commands
 
 from .cogs.journal import Journal
+from .cogs.navi import Navi
 from .cogs.reloader import Reloader
 from .config import Configuration
 from .converters.annotations import ANNOTATIONS
@@ -93,14 +94,16 @@ class Bot(commands.AutoShardedBot):
 
     async def on_ready(self):
         """
-        When bot has fully logged on
-        Log bots username and ID
-        Then load cogs
+        After the bot has logged in and filled up its cache.
+        Sets up the bot's state, loads cogs then prints a 'ready' message.
         """
 
         # Setup mandatory cogs
         self.add_cog(Journal(self))
         logger.info("Loaded mandatory cog: Journal")
+
+        self.add_cog(Navi(self))
+        logger.info("Loaded mandatory cog: Navi")
 
         self.add_cog(Reloader(self))
         logger.info("Loaded mandatory cog: Reloader")
