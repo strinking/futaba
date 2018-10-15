@@ -19,7 +19,7 @@ Some pieces of information are available via the API, but are either difficult o
 **Uniform command style**  
 Commands should be usable in the same style, both in terms of invocation and responses. For Futaba specifically, commands should have a sensible command, aliased shortcuts, or be grouped into a command group that has the same properties. They should all react to any command in a standard way based on how the command was carried out (or not). When multiple pieces of information need to be outputted, an embed should be used that makes it easy to pick out pieces of information a user wants.
 
-**Command output**
+**Command output**  
 As mentioned above, all commands will react to the command message to indicate status. The reactions in place are:
 * `WHITE HEAVY CHECK MARK` - Command success
 * `WARNING SIGN` - (currently unused)
