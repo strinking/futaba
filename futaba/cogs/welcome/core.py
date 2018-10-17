@@ -28,7 +28,7 @@ from futaba.journal import ModerationListener
 from futaba.utils import user_discrim
 
 FakeContext = namedtuple("FakeContext", ("author", "channel", "guild"))
-logger = logging.getLogger(__package__)
+logger = logging.getLogger(__name__)
 
 __all__ = ["format_message", "Welcome"]
 

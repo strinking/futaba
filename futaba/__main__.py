@@ -66,7 +66,7 @@ if __name__ == "__main__":
     log_hndl.setFormatter(log_fmtr)
 
     log_level = logging.DEBUG if args.debug else logging.INFO
-    logger = logging.getLogger(__package__)
+    logger = logging.getLogger(__name__)
     logger.setLevel(level=log_level)
     logger.addHandler(log_hndl)
 

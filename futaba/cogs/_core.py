@@ -23,7 +23,7 @@ from discord.ext import commands
 from futaba import permissions
 from futaba.exceptions import CommandFailed
 
-logger = logging.getLogger(__package__)
+logger = logging.getLogger(__name__)
 
 
 class NameOfCog:

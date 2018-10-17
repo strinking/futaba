@@ -27,7 +27,7 @@ from futaba.converters import RoleConv
 from futaba.exceptions import CommandFailed, ManualCheckFailure, SendHelp
 from futaba.str_builder import StringBuilder
 
-logger = logging.getLogger(__package__)
+logger = logging.getLogger(__name__)
 
 
 class SelfAssignableRoles:
