@@ -23,8 +23,9 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.exceptions import CommandFailed
+from .task import AbstractNaviTask
 
-logger = logging.getLogger(__package__)
+logger = logging.getLogger(__name__)
 
 
 class Navi:

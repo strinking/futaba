@@ -11,6 +11,8 @@
 #
 
 from .core import Navi
+from .task import AbstractNaviTask
+from .scheduler import NaviScheduler
 
 
 def setup(bot):

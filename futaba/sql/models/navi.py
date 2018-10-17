@@ -46,10 +46,21 @@ __all__ = ["NaviModel", "NaviTaskStorage"]
 
 
 class NaviTaskStorage:
-    __slots__ = ("id", "user_id", "timestamp", "recurrence", "task_type", "parameters")
+    __slots__ = (
+        "id",
+        "guild_id",
+        "user_id",
+        "timestamp",
+        "recurrence",
+        "task_type",
+        "parameters",
+    )
 
-    def __init__(self, id, user_id, timestamp, recurrence, task_type, parameters):
+    def __init__(
+        self, id, guild_id, user_id, timestamp, recurrence, task_type, parameters
+    ):
         self.id = id
+        self.guild_id = guild_id
         self.user_id = user_id
         self.timestamp = timestamp
         self.recurrence = recurrence
@@ -119,7 +130,7 @@ class NaviModel:
                 parameters,
             )
             tasks[task_id] = NaviTaskStorage(
-                task_id, user_id, timestamp, recurrence, task_type, parameters
+                task_id, guild.id, user_id, timestamp, recurrence, task_type, parameters
             )
         self.task_cache[guild] = tasks
         return tasks
