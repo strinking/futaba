@@ -47,5 +47,6 @@ class NaviScheduler:
 
             delay = (datetime.utcnow() - due_next).total_seconds()
             logger.debug("Got task: %r. Will wait %.4f seconds for it", task, delay)
-            await asyncio.sleep(delay)
+            if delay > 0.0:
+                await asyncio.sleep(delay)
             await task.execute()
