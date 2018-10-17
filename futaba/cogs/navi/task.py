@@ -10,6 +10,11 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+"""
+Module that has singular or recurring Navi task objects which will
+be executed by Futaba in the future.
+"""
+
 import asyncio
 import logging
 from abc import abstractmethod
@@ -19,11 +24,6 @@ from math import ceil
 
 import discord
 from futaba.enums import TaskType
-
-"""
-Module that has singular or recurring Navi task objects which will
-be executed by Futaba in the future.
-"""
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,6 @@ class AbstractNaviTask:
         self.timestamp = timestamp
         self.recurrence = recurrence
 
-    @property
     def due_next(self):
         now = datetime.utcnow()
         if self.timestamp > now:
@@ -65,7 +64,7 @@ class AbstractNaviTask:
                 f"Cannot compare instance of {type(self)!r} and {type(other)!r}"
             )
 
-        return self.due_next < other.due_next
+        return self.due_next() < other.due_next()
 
 
 class ChangeRolesNaviTask(AbstractNaviTask):

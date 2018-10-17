@@ -10,16 +10,16 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-import asyncio
-import logging
-from queue import PriorityQueue
-
-from .task import TASK_COMPLETE, AbstractNaviTask
-
 """
 Module that contains the Navi scheduler, which manages all Navi tasks
 and asynchronously executes them when their time is due.
 """
+
+import asyncio
+import logging
+from datetime import datetime
+
+from .task import TASK_COMPLETE
 
 __all__ = ["NaviScheduler"]
 
@@ -30,10 +30,22 @@ class NaviScheduler:
     __slots__ = ("tasks",)
 
     def __init__(self):
-        self.tasks = PriorityQueue()
+        self.tasks = asyncio.PriorityQueue()
 
     def add(self, task):
-        self.tasks.put(task)
+        self.tasks.put_nowait(task)
 
     async def main_loop(self):
-        ...
+        logger.info("Starting Navi scheduler's main loop...")
+        while True:
+            logger.debug("Waiting for new task to queue...")
+            task = await self.tasks.get()
+            due_next = task.due_next()
+            if due_next is TASK_COMPLETE:
+                logger.debug("Task is complete, skip it")
+                continue
+
+            delay = (datetime.utcnow() - due_next).total_seconds()
+            logger.debug("Got task: %r. Will wait %.4f seconds for it", task, delay)
+            await asyncio.sleep(delay)
+            await task.execute()
