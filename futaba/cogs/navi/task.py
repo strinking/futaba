@@ -20,7 +20,6 @@ import logging
 from abc import abstractmethod
 from collections import namedtuple
 from datetime import datetime
-from math import ceil
 
 import discord
 from futaba.enums import TaskType
@@ -51,8 +50,10 @@ class AbstractNaviTask:
         if self.recurrence is None:
             return TASK_COMPLETE
         else:
-            iterations = ceil((now - self.timestamp) / self.recurrence)
-            return self.timestamp + self.recurrence * iterations
+            remainder = (now - self.timestamp) % self.recurrence
+            if remainder:
+                remainder = self.recurrence - remainder
+            return now + remainder
 
     @abstractmethod
     async def execute(self):
