@@ -100,6 +100,7 @@ class SelfAssignableRolesModel:
 
     def add_assignable_role(self, guild, role):
         logger.info("Adding assignable role for guild '%s' (%d)", guild.name, guild.id)
+        assert guild == role.guild
         ins = self.tb_assignable_roles.insert().values(
             guild_id=guild.id, role_id=role.id
         )
@@ -110,6 +111,7 @@ class SelfAssignableRolesModel:
         logger.info(
             "Removing assignable role for guild '%s' (%d)", guild.name, guild.id
         )
+        assert guild == role.guild
         delet = self.tb_assignable_roles.delete().where(
             and_(
                 self.tb_assignable_roles.c.guild_id == guild.id,
