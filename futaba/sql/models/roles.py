@@ -157,3 +157,31 @@ class SelfAssignableRolesModel:
 
         self.channels_cache[guild] = channels
         return channels
+
+    def add_role_command_channel(self, guild, channel):
+        logger.info(
+            "Adding role command channel for guild '%s' (%d)", guild.name, guild.id
+        )
+        assert guild == channel.guild
+        ins = self.tb_role_command_channels.insert().values(
+            guild_id=guild.id, channel_id=channel.id
+        )
+        self.sql.execute(ins)
+        self.channels_cache[guild].add(channel)
+
+    def remove_role_command_channel(self, guild, channel):
+        logger.info(
+            "Removing role command channel for guild '%s' (%d)", guild.name, guild.id
+        )
+        assert guild == channel.guild
+        delet = self.tb_role_command_channels.delete().where(
+            and_(
+                self.tb_role_command_channels.c.guild_id == guild.id,
+                self.tb_role_command_channels.c.channel_id == channel.id,
+            )
+        )
+        result = self.sql.execute(delet)
+        assert result.rowcount in (0, 1), "Multiple rows deleted"
+
+        if result.rowcount:
+            self.channels_cache[guild].remove(channel)
