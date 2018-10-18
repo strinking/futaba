@@ -35,7 +35,13 @@ __all__ = ["SelfAssignableRolesModel"]
 
 
 class SelfAssignableRolesModel:
-    __slots__ = ("sql", "tb_assignable_roles", "roles_cache")
+    __slots__ = (
+        "sql",
+        "tb_assignable_roles",
+        "tb_role_command_channels",
+        "roles_cache",
+        "channels_cache",
+    )
 
     def __init__(self, sql, meta):
         self.sql = sql
@@ -46,9 +52,18 @@ class SelfAssignableRolesModel:
             Column("role_id", BigInteger),
             UniqueConstraint("role_id", name="assignable_roles_uq"),
         )
+        self.tb_role_command_channels = Table(
+            "role_command_channels",
+            meta,
+            Column("guild_id", BigInteger, ForeignKey("guilds.guild_id")),
+            Column("channel_id", BigInteger),
+            UniqueConstraint("guild_id", "channel_id", name="role_command_channels_uq"),
+        )
         self.roles_cache = {}
+        self.channels_cache = {}
 
         register_hook("on_guild_leave", self.remove_all_assignable_roles)
+        register_hook("on_guild_leave", self.remove_all_role_command_channels)
 
     def remove_all_assignable_roles(self, guild):
         logger.info(
@@ -106,3 +121,37 @@ class SelfAssignableRolesModel:
 
         if result.rowcount:
             self.roles_cache[guild].remove(role)
+
+    def remove_all_role_command_channels(self, guild):
+        logger.info(
+            "Remove all role command channels for guild '%s' (%d)", guild.name, guild.id
+        )
+        delet = self.tb_role_command_channels.delete().where(
+            self.tb_role_command_channels.c.guild_id == guild.id
+        )
+        self.sql.execute(delet)
+
+    def get_role_command_channels(self, guild):
+        logger.info(
+            "Getting all role command channels for guild '%s' (%d)",
+            guild.name,
+            guild.id,
+        )
+
+        if guild in self.channels_cache[guild]:
+            logger.debug("Found channels in cache, returning")
+            return self.channels_cache[guild]
+
+        sel = select([self.tb_role_command_channels.c.channel_id]).where(
+            self.tb_role_command_channels.c.guild_id == guild.id
+        )
+        result = self.sql.execute(sel)
+
+        channels = set()
+        for (channel_id,) in result.fetchall():
+            chan = discord.utils.get(guild.text_channels, id=channel_id)
+            if chan is not None:
+                channels.add(chan)
+
+        self.channels_cache[guild] = channels
+        return channels
