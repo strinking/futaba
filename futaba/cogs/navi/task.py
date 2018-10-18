@@ -27,7 +27,7 @@ from futaba.enums import TaskType
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["TASK_COMPLETE", "AbstractNaviTask", "navi_task_factory"]
+__all__ = ["TASK_COMPLETE", "AbstractNaviTask", "ChangeRolesNaviTask", "navi_task_factory"]
 
 TASK_COMPLETE = datetime(1, 1, 1)
 
