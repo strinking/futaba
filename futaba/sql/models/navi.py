@@ -69,7 +69,7 @@ class NaviTaskStorage:
 
 
 class NaviModel:
-    __slots__ = ("sql", "tb_tasks", "task_cache")
+    __slots__ = ("sql", "tb_tasks")
 
     def __init__(self, sql, meta):
         self.sql = sql
@@ -89,16 +89,16 @@ class NaviModel:
             Column("type", Enum(TaskType)),
             Column("parameters", JSON),
         )
-        self.task_cache = {}
 
         register_hook("on_guild_leave", self.remove_all_tasks)
 
+    def remove_all_tasks(self, guild):
+        logger.info("Removing all tasks in guild '%s' (%d)", guild.name, guild.id)
+        delet = self.tb_tasks.delete().where(self.tb_tasks.c.guild_id == guild.id)
+        self.sql.execute(delet)
+
     def get_tasks(self, guild):
         logger.info("Getting all tasks for guild '%s' (%d)", guild.name, guild.id)
-        if guild in self.task_cache:
-            logger.debug("Timer list found in cache, returning")
-            return self.task_cache[guild]
-
         sel = select(
             [
                 self.tb_tasks.c.task_id,
@@ -132,10 +132,29 @@ class NaviModel:
             tasks[task_id] = NaviTaskStorage(
                 task_id, guild.id, user_id, timestamp, recurrence, task_type, parameters
             )
-        self.task_cache[guild] = tasks
         return tasks
 
-    def remove_all_tasks(self, guild):
-        logger.info("Removing all tasks in guild '%s' (%d)", guild.name, guild.id)
-        delet = self.tb_tasks.delete().where(self.tb_tasks.c.guild_id == guild.id)
+    def add_task(self, guild, task):
+        logger.info(
+            "Adding new task id %d for guild '%s' (%d)", task.id, guild.name, guild.id
+        )
+        ins = self.tb_tasks.insert().values(
+            guild_id=guild.id,
+            user_id=task.causer.id,
+            timestamp=task.timestamp,
+            recurrence=task.recurrence,
+            task_type=task.type,
+            parameters=task.build_parameters(),
+        )
+        self.sql.execute(ins)
+
+    def remove_task(self, guild, task):
+        logger.info(
+            "Deleting task id %d from guild '%s' (%d)", task.id, guild.name, guild.id
+        )
+        delet = self.tb_tasks.delete().where(
+            and_(
+                self.tb_tasks.c.guild_id == guild.id, self.tb_tasks.c.task_id == task.id
+            )
+        )
         self.sql.execute(delet)

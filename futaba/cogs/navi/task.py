@@ -23,6 +23,7 @@ from datetime import datetime
 
 import discord
 from futaba.enums import TaskType
+from futaba.utils import class_property
 
 logger = logging.getLogger(__name__)
 
@@ -39,11 +40,11 @@ FakeUser = namedtuple("FakeUser", ("id", "name", "discriminator"))
 
 
 class AbstractNaviTask:
-    __slots__ = ("id", "cause", "timestamp", "recurrence")
+    __slots__ = ("id", "causer", "timestamp", "recurrence")
 
-    def __init__(self, id, cause, timestamp, recurrence):
+    def __init__(self, id, causer, timestamp, recurrence):
         self.id = id
-        self.cause = cause
+        self.causer = causer
         self.timestamp = timestamp
         self.recurrence = recurrence
 
@@ -60,8 +61,18 @@ class AbstractNaviTask:
                 remainder = self.recurrence - remainder
             return now + remainder
 
+    @class_property
+    @classmethod
+    @abstractmethod
+    def type(cls):
+        pass
+
     @abstractmethod
     async def execute(self):
+        pass
+
+    @abstractmethod
+    def build_parameters(self):
         pass
 
     def __lt__(self, other):
@@ -77,9 +88,9 @@ class ChangeRolesNaviTask(AbstractNaviTask):
     __slots__ = ("member", "to_add", "to_remove", "reason")
 
     def __init__(
-        self, id, cause, timestamp, recurrence, member, to_add, to_remove, reason
+        self, id, causer, timestamp, recurrence, member, to_add, to_remove, reason
     ):
-        super().__init__(id, cause, timestamp, recurrence)
+        super().__init__(id, causer, timestamp, recurrence)
         self.member = member
         self.to_add = to_add
         self.to_remove = to_remove
@@ -91,8 +102,21 @@ class ChangeRolesNaviTask(AbstractNaviTask):
             self.member.remove_roles(*self.to_remove, reason=self.reason, atomic=True),
         )
 
+    @class_property
+    @classmethod
+    def type(cls):
+        return TaskType.CHANGE_ROLES
 
-def build_role_task(bot, cause, guild, storage):
+    def build_parameters(self):
+        return {
+            "member_id": self.member.id,
+            "add_role_ints": [role.id for role in self.to_add],
+            "remove_role_ints": [role.id for role in self.to_remove],
+            "reason": self.reason,
+        }
+
+
+def build_role_task(bot, causer, guild, storage):
     # Parameters:
     # - member_id: int
     # - add_role_ids: [int]
@@ -123,7 +147,7 @@ def build_role_task(bot, cause, guild, storage):
 
     return ChangeRolesNaviTask(
         storage.id,
-        cause,
+        causer,
         storage.timestamp,
         storage.recurrence,
         member,
@@ -138,12 +162,12 @@ TASK_BUILDERS = {TaskType.CHANGE_ROLES: build_role_task}
 
 def navi_task_factory(bot, storage):
     logger.debug("Creating NaviTask for %r", storage)
-    cause = discord.utils.get(bot.users, id=storage.user_id)
-    if cause is None:
+    causer = discord.utils.get(bot.users, id=storage.user_id)
+    if causer is None:
         logger.debug(
             "Couldn't find causing user %d, returning dummy user", storage.user_id
         )
-        cause = FakeUser(
+        causer = FakeUser(
             id=storage.user_id, name=int(storage.user_id), discriminator="0000"
         )
 
@@ -151,4 +175,4 @@ def navi_task_factory(bot, storage):
     if guild is None:
         raise ValueError(f"Unable to find guild with ID {storage.guild_id}")
 
-    return TASK_BUILDERS[storage.task_type](bot, cause, guild, storage)
+    return TASK_BUILDERS[storage.task_type](bot, causer, guild, storage)

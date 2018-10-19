@@ -26,6 +26,7 @@ __all__ = [
     "GIT_HASH",
     "URL_REGEX",
     "Dummy",
+    "class_property",
     "fancy_timedelta",
     "async_partial",
     "map_or",
@@ -65,6 +66,12 @@ class Dummy:
     """
 
     pass
+
+
+class class_property(property):
+    def __get__(self, cls, owner):
+        # pylint: disable=no-member
+        return self.fget.__get__(None, owner)()
 
 
 def fancy_timedelta(delta):
