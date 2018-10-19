@@ -132,6 +132,7 @@ class SelfAssignableRolesModel:
             self.tb_role_command_channels.c.guild_id == guild.id
         )
         self.sql.execute(delet)
+        self.channels_cache[guild].clear()
 
     def get_role_command_channels(self, guild):
         logger.info(
@@ -140,7 +141,7 @@ class SelfAssignableRolesModel:
             guild.id,
         )
 
-        if guild in self.channels_cache[guild]:
+        if guild in self.channels_cache:
             logger.debug("Found channels in cache, returning")
             return self.channels_cache[guild]
 

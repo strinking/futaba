@@ -40,16 +40,10 @@ class SelfAssignableRoles:
         # Load self-assignable roles from database
         for guild in bot.guilds:
             bot.sql.roles.get_assignable_roles(guild)
-
-    @staticmethod
-    async def author_send(ctx, **kwargs):
-        try:
-            await ctx.author.send(**kwargs)
-        except discord.Forbidden:
-            await ctx.send(content="Please enable direct messages.")
+            bot.sql.roles.get_role_command_channels(guild)
 
     async def check_channel(self, ctx):
-        ok_channels = self.bot.sql.get_role_command_channels(ctx.guild)
+        ok_channels = self.bot.sql.roles.get_role_command_channels(ctx.guild)
 
         # Any channel is allowed
         if not ok_channels:
@@ -62,13 +56,16 @@ class SelfAssignableRoles:
         embed = discord.Embed(colour=discord.Colour.red())
         embed.set_author(name="Cannot use role commands there!")
         embed.description = (
-            f"You attempted to use the command `{escape_backticks(ctx.content)}` in "
-            "{ctx.channel.mention}. The moderators have set it so that role assignment "
+            f"You attempted to use the command `{escape_backticks(ctx.message.content)}` "
+            f"in {ctx.channel.mention}. The moderators have set it so that role assignment "
             "commands can only be used in the following channels:\n"
-            f"{', '.join(channel.name for channel in ok_channels)}\n"
+            f"{', '.join(channel.mention for channel in ok_channels)}\n"
         )
 
-        await self.author_send(ctx, embed=embed)
+        try:
+            await ctx.author.send(embed=embed)
+        except discord.Forbidden:
+            await ctx.send(content="Please enable direct messages.")
         raise CommandFailed()
 
     @commands.group(name="role", aliases=["sar"])
@@ -97,7 +94,7 @@ class SelfAssignableRoles:
                 f"Moderators can use the `{prefix}role joinable/unjoinable` "
                 "commands to change this list!"
             )
-            await self.author_send(ctx, embed=embed)
+            await ctx.send(embed=embed)
             return
 
         embed = discord.Embed(colour=discord.Colour.dark_teal())
@@ -108,7 +105,7 @@ class SelfAssignableRoles:
             descr.write(role.mention)
         embed.description = str(descr)
 
-        await self.author_send(ctx, embed=embed)
+        await ctx.send(embed=embed)
 
     def check_roles(self, ctx, roles):
         if not roles:
@@ -319,7 +316,7 @@ class SelfAssignableRoles:
             "Removing channels to be used for role commands in guild '%s' (%d): [%s]",
             ctx.guild.name,
             ctx.guild.id,
-            ", ".join(channel for channel in channels),
+            ", ".join(channel.mention for channel in channels),
         )
 
         if not channels:
@@ -394,4 +391,4 @@ class SelfAssignableRoles:
                 "can be used anywhere."
             )
 
-        await self.author_send(ctx, embed=embed)
+        await ctx.send(embed=embed)
