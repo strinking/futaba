@@ -97,6 +97,7 @@ class ChangeRolesNaviTask(AbstractNaviTask):
         self.reason = reason
 
     async def execute(self):
+        logger.info("Adding/removing roles in navi task %d", self.id)
         await asyncio.gather(
             self.member.add_roles(*self.to_add, reason=self.reason, atomic=True),
             self.member.remove_roles(*self.to_remove, reason=self.reason, atomic=True),
