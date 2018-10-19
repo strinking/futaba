@@ -84,6 +84,8 @@ class SelfAssignableRoles:
     async def role_show(self, ctx):
         """ Shows all self-assignable roles. """
 
+        await self.check_channel(ctx)
+
         assignable_roles = sorted(
             self.bot.sql.roles.get_assignable_roles(ctx.guild), key=lambda r: r.name
         )
@@ -129,6 +131,7 @@ class SelfAssignableRoles:
     async def role_add(self, ctx, *roles: RoleConv):
         """ Joins the given self-assignable roles. """
 
+        await self.check_channel(ctx)
         self.check_roles(ctx, roles)
         await ctx.author.add_roles(
             *roles, reason="Adding self-assignable roles", atomic=True
@@ -141,6 +144,7 @@ class SelfAssignableRoles:
     async def role_remove(self, ctx, *roles: RoleConv):
         """ Leaves the given self-assignable roles. """
 
+        await self.check_channel(ctx)
         self.check_roles(ctx, roles)
         await ctx.author.remove_roles(
             *roles, reason="Removing self-assignable roles", atomic=True
