@@ -91,8 +91,8 @@ class SelfAssignableRoles:
             prefix = self.bot.prefix(ctx.guild)
             embed = discord.Embed(colour=discord.Colour.dark_purple())
             embed.set_author(name="No self-assignable roles")
-            embed.description = f"Use the `{prefix}role joinable/unjoinable` commands to change this list!"
-            await ctx.send(embed=embed)
+            embed.description = f"Moderators can use the `{prefix}role joinable/unjoinable` commands to change this list!"
+            await self.author_send(ctx, embed=embed)
             return
 
         embed = discord.Embed(colour=discord.Colour.dark_teal())
@@ -103,7 +103,7 @@ class SelfAssignableRoles:
             descr.write(role.mention)
         embed.description = str(descr)
 
-        await ctx.send(embed=embed)
+        await self.author_send(ctx, embed=embed)
 
     def check_roles(self, ctx, roles):
         if not roles:
@@ -387,4 +387,4 @@ class SelfAssignableRoles:
                 "can be used anywhere."
             )
 
-        await ctx.send(embed=embed)
+        await self.author_send(ctx, embed=embed)
