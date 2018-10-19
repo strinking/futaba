@@ -93,7 +93,10 @@ class SelfAssignableRoles:
             prefix = self.bot.prefix(ctx.guild)
             embed = discord.Embed(colour=discord.Colour.dark_purple())
             embed.set_author(name="No self-assignable roles")
-            embed.description = f"Moderators can use the `{prefix}role joinable/unjoinable` commands to change this list!"
+            embed.description = (
+                f"Moderators can use the `{prefix}role joinable/unjoinable` "
+                "commands to change this list!"
+            )
             await self.author_send(ctx, embed=embed)
             return
 
