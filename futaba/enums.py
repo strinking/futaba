@@ -209,6 +209,7 @@ class FilterType(Enum):
 class LocationType(Enum):
     CHANNEL = "channel"
     GUILD = "guild"
+    USER = "user"
 
     @staticmethod
     def of(location):
@@ -216,10 +217,13 @@ class LocationType(Enum):
             return LocationType.GUILD
         elif isinstance(location, discord.TextChannel):
             return LocationType.CHANNEL
+        elif isinstance(location, discord.User):
+            return LocationType.USER
         else:
             return TypeError(f"No location type for {location!r}")
 
 
 @unique
 class TaskType(Enum):
+    SEND_MESSAGE = "send_message"
     CHANGE_ROLES = "change_roles"

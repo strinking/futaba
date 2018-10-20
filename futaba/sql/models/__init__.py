@@ -19,6 +19,7 @@ from .alias import AliasHistoryModel
 from .filter import FilterModel
 from .guilds import GuildsModel
 from .journal import JournalModel
+from .navi import NaviModel
 from .roles import SelfAssignableRolesModel
 from .settings import SettingsModel
 from .welcome import WelcomeModel

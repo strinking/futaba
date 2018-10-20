@@ -26,6 +26,7 @@ __all__ = [
     "GIT_HASH",
     "URL_REGEX",
     "Dummy",
+    "DictEmbed",
     "class_property",
     "fancy_timedelta",
     "async_partial",
@@ -67,6 +68,20 @@ class Dummy:
 
     pass
 
+
+class DictEmbed:
+    """
+    A discord.Embed-like wrapper which just holds the JSON-compatible dictionary
+    and returns that on 'conversion'.
+    """
+
+    __slots__ = ("dict",)
+
+    def __init__(self, dict):
+        self.dict = dict
+
+    def to_dict(self):
+        return self.dict
 
 class class_property(property):
     def __get__(self, cls, owner):

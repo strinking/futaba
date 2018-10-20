@@ -49,4 +49,8 @@ class NaviScheduler:
             logger.debug("Got task: %r. Will wait %.4f seconds for it", task, delay)
             if delay > 0.0:
                 await asyncio.sleep(delay)
-            await task.execute()
+
+            try:
+                await task.execute()
+            except Exception as error:
+                logger.error("Error running task %d", id, exc_info=error)

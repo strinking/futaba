@@ -22,8 +22,8 @@ from collections import namedtuple
 from datetime import datetime
 
 import discord
-from futaba.enums import TaskType
-from futaba.utils import class_property
+from futaba.enums import LocationType, TaskType
+from futaba.utils import class_property, DictEmbed
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +97,7 @@ class ChangeRolesNaviTask(AbstractNaviTask):
         self.reason = reason
 
     async def execute(self):
-        logger.info("Adding/removing roles in navi task %d", self.id)
+        logger.info("Adding/removing roles to fulfill navi task %d", self.id)
         await asyncio.gather(
             self.member.add_roles(*self.to_add, reason=self.reason, atomic=True),
             self.member.remove_roles(*self.to_remove, reason=self.reason, atomic=True),
@@ -120,8 +120,8 @@ class ChangeRolesNaviTask(AbstractNaviTask):
 def build_role_task(bot, causer, guild, storage):
     # Parameters:
     # - member_id: int
-    # - add_role_ids: [int]
-    # - remove_role_ids: [int]
+    # - add_role_ids: List[int]
+    # - remove_role_ids: List[int]
     # - reason: str
 
     logger.debug("Creating ChangeRolesNaviTask with %s", storage.parameters)
@@ -158,7 +158,54 @@ def build_role_task(bot, causer, guild, storage):
     )
 
 
-TASK_BUILDERS = {TaskType.CHANGE_ROLES: build_role_task}
+class SendNaviTask(AbstractNaviTask):
+    __slots__ = ("output", "content", "embed")
+
+    def __init__(self, id, causer, timestamp, recurrence, output, content, embed):
+        super().__init__(id, causer, timestamp, recurrence)
+        self.output = output
+        self.content = content
+        self.embed = embed if isinstance(embed, discord.Embed) else DictEmbed(embed)
+
+    async def execute(self):
+        logger.info("Sending message to fulfill navi task %d", self.id)
+        await self.output.send(content=self.content, embed=self.embed)
+
+
+def build_send_task(bot, causer, guild, storage):
+    # Parameters:
+    # - location_id: int
+    # - location_type: str
+    # - content: Optional[str]
+    # - embed: Optional[dict]
+
+    logger.debug("Creating SendNaviTask with %s", storage.parameters)
+    location_id = storage.parameters["location_id"]
+    location_type = storage.parameters["location_type"]
+    if location_type == LocationType.CHANNEL:
+        output = discord.utils.get(guild.text_channels, id=location_id)
+        if output is None:
+            raise ValueError("Could not find channel with ID %d", location_id)
+    elif location_type == LocationType.USER:
+        output = causer
+    else:
+        raise ValueError("Invalid location type for send message task: %s", location_type)
+
+    return SendNaviTask(
+        storage.id,
+        causer,
+        storage.timestamp,
+        storage.recurrence,
+        output,
+        storage.parameters["content"],
+        storage.parameters["embed"],
+    )
+
+
+TASK_BUILDERS = {
+    TaskType.CHANGE_ROLES: build_role_task,
+    TaskType.SEND_MESSAGE: build_send_task,
+}
 
 
 def navi_task_factory(bot, storage):

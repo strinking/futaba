@@ -38,4 +38,4 @@ class Navi:
         self.scheduler = NaviScheduler()
 
         for guild in bot.guilds:
-            raw_tasks = bot.sql.navi.get_tasks()
+            raw_tasks = bot.sql.navi.get_tasks(guild)
