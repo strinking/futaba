@@ -20,7 +20,7 @@ Model for storing tasks scheduled in navi, futaba's temporal assistant.
 import functools
 import logging
 
-from sqlalchemy import and_, or_
+from sqlalchemy import and_
 from sqlalchemy import (
     BigInteger,
     Column,
@@ -95,23 +95,25 @@ class NaviModel:
         delet = self.tb_tasks.delete().where(self.tb_tasks.c.guild_id == guild.id)
         self.sql.execute(delet)
 
-    def get_tasks(self, guild):
-        logger.info("Getting all tasks for guild '%s' (%d)", guild.name, guild.id)
+    def get_tasks(self):
+        logger.info("Getting all tasks in the database")
         sel = select(
             [
                 self.tb_tasks.c.task_id,
+                self.tb_tasks.c.guild_id,
                 self.tb_tasks.c.user_id,
                 self.tb_tasks.c.start_timestamp,
                 self.tb_tasks.c.recurrence,
                 self.tb_tasks.c.type,
                 self.tb_tasks.c.parameters,
             ]
-        ).where(self.tb_tasks.c.guild_id == guild.id)
+        )
         result = self.sql.execute(sel)
 
         tasks = {}
         for (
             task_id,
+            guild_id,
             user_id,
             timestamp,
             recurrence,
@@ -128,7 +130,7 @@ class NaviModel:
                 parameters,
             )
             tasks[task_id] = NaviTaskStorage(
-                task_id, guild.id, user_id, timestamp, recurrence, task_type, parameters
+                task_id, guild_id, user_id, timestamp, recurrence, task_type, parameters
             )
         return tasks
 
@@ -144,7 +146,8 @@ class NaviModel:
             task_type=task.type,
             parameters=task.build_parameters(),
         )
-        self.sql.execute(ins)
+        result = self.sql.execute(ins)
+        task.id, = result.inserted_primary_key
 
     def remove_task(self, guild, task):
         logger.info(

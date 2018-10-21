@@ -1,5 +1,5 @@
 #
-# cogs/navi/__init__.py
+# cogs/navi/task/__init__.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
@@ -10,15 +10,12 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-from .core import Navi
-from .task import TASK_COMPLETE, AbstractNaviTask, ChangeRolesTask, SendMessageTask, build_navi_task
-from .scheduler import NaviScheduler
 
+"""
+Module that has singular or recurring Navi task objects which will
+be executed by Futaba in the future.
+"""
 
-def setup(bot):
-    """
-    Setup for bot to add cog
-    """
-
-    cog = Navi(bot)
-    bot.add_cog(cog)
+from .abc import TASK_COMPLETE, AbstractNaviTask, build_navi_task
+from .change_roles import ChangeRolesTask, build_change_role_task
+from .send_message import SendMessageTask, build_send_message_task

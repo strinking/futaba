@@ -62,9 +62,7 @@ URL_REGEX = re.compile(
 
 
 class Dummy:
-    """
-    Dummy class that can freely be assigned any fields or members.
-    """
+    """ Dummy class that can freely be assigned any fields or members. """
 
     pass
 

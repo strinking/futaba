@@ -43,8 +43,7 @@ class ManualCheckFailure(SendOnError):
 
 
 class SendHelp(CommandError):
-    def __init__(self):
-        super().__init__()
+    pass
 
 
 class InvalidCommandContext(CommandError):
