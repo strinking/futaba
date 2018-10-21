@@ -28,6 +28,8 @@ If your cog is necessary for the proper function of the bot (this is very unlike
 
 When you need to store information persistently, a database model should be created in `futaba/sql/`. (NOTE: This will definitely change when [#13](https://github.com/strinking/futaba/issues/13) is merged). A model example can be copied from the template, but the general principle is that the `__init__` declares all the tables, and sets up in-memory caches for tables as needed. Then methods should be created that allow interacting with the table from in a SQL-agnostic, logical way. SQLAlchemy, and especially raw SQL should **never** be present outside of `futaba/sql/models/`.
 
+If you want to set up a delayed task, use Navi, Futaba's internal job scheduler. If your function cannot fit into one of the existing `Task` objects, create a new one and provide a way to serialize/deserialize it into JSON for persistent storage in the database. In rare cases where the delay is very short, an `asyncio.sleep()` may be acceptable. Never use `time.sleep()`, that chokes up the event loop.
+
 ### Development and Testing
 It is important to ensure no issues come up with pylint. When in the root, simply:
 ```
