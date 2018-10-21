@@ -138,7 +138,6 @@ class NaviModel:
 
     def add_task(self, task):
         logger.info("Adding new task: %r", task)
-        print(f"$$ params: {task.build_parameters()}")
         ins = self.tb_tasks.insert().values(
             guild_id=task.guild_id,
             user_id=task.causer.id,
