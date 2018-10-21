@@ -19,7 +19,9 @@ import logging
 import datetime
 import os
 import sys
+import time
 import traceback
+from io import BytesIO
 
 import discord
 from discord.ext import commands
@@ -272,12 +274,23 @@ class Bot(commands.AutoShardedBot):
             anger_emoji = (
                 self.get_emoji(self.config.anger_emoji_id) or "\N{ANGER SYMBOL}"
             )
-            traceback_lines = traceback.format_exception(
-                type(error), error, error.__traceback__, limit=1
-            )
-            traceback_lines.insert(0, "```py")
-            traceback_lines.append("```")
+            full_traceback = "\n".join(traceback.format_exception(
+                type(error), error, error.__traceback__,
+            ))
+
+            # Output exception information
             embed = discord.Embed(colour=discord.Colour.red())
             embed.title = f"{anger_emoji} Unexpected error occurred!"
-            embed.description = "\n".join(traceback_lines)
-            await asyncio.gather(ctx.send(embed=embed), Reactions.FAIL.add(ctx.message))
+
+            if len(full_traceback) > 1700:
+                embed.description = (
+                    'Error output too long, see attached file. '
+                    '\N{WHITE UP POINTING BACKHAND INDEX}'
+                )
+                data = BytesIO(full_traceback.encode('utf-8'))
+                file = discord.File(fp=data, filename=f'futaba-traceback-{int(time.time())}.log')
+            else:
+                embed.description = f"```py\n{full_traceback}\n```"
+                file = None
+
+            await asyncio.gather(ctx.send(embed=embed, file=file), Reactions.FAIL.add(ctx.message))
