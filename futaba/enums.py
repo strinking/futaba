@@ -217,7 +217,7 @@ class LocationType(Enum):
             return LocationType.GUILD
         elif isinstance(location, discord.TextChannel):
             return LocationType.CHANNEL
-        elif isinstance(location, discord.User):
+        elif isinstance(location, discord.abc.User):
             return LocationType.USER
         else:
             raise TypeError(f"No location type for {location!r}")
