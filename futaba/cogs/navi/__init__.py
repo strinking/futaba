@@ -11,7 +11,13 @@
 #
 
 from .core import Navi
-from .task import TASK_COMPLETE, AbstractNaviTask, ChangeRolesTask, SendMessageTask, build_navi_task
+from .task import (
+    TASK_COMPLETE,
+    AbstractNaviTask,
+    ChangeRolesTask,
+    SendMessageTask,
+    build_navi_task,
+)
 from .scheduler import NaviScheduler
 
 

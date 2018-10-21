@@ -51,7 +51,10 @@ class Navi:
         asyncio.create_task(self.scheduler.main_loop())
 
     def add_tasks(self, *tasks):
-        logger.info("Adding tasks to database and Navi scheduler, ids: %s", ", ".join(str(task.id) for task in tasks))
+        logger.info(
+            "Adding tasks to database and Navi scheduler, ids: %s",
+            ", ".join(str(task.id) for task in tasks),
+        )
 
         with self.bot.sql.transaction():
             for task in tasks:
@@ -68,11 +71,13 @@ class Navi:
         now = datetime.now()
         if timestamp is None:
             embed = discord.Embed(colour=discord.Colour.red())
-            embed.description = f"Unknown date specification: `{escape_backticks(when)}`"
+            embed.description = (
+                f"Unknown date specification: `{escape_backticks(when)}`"
+            )
             raise CommandFailed(embed=embed)
         elif now > timestamp:
             # First, try to see if a naive time specification put it in the past
-            new_timestamp = dateparser.parse(f'in {when}')
+            new_timestamp = dateparser.parse(f"in {when}")
             if new_timestamp is None or now > new_timestamp:
                 time_since = fancy_timedelta(timestamp - now)
                 embed = discord.Embed(colour=discord.Colour.red())
@@ -82,13 +87,21 @@ class Navi:
             # Was successful, replace it
             timestamp = new_timestamp
 
-        logger.info("Creating self-reminder SendMessageTask for '%s' (%d): %r",
-                ctx.author.name, ctx.author.id, message)
+        logger.info(
+            "Creating self-reminder SendMessageTask for '%s' (%d): %r",
+            ctx.author.name,
+            ctx.author.id,
+            message,
+        )
 
         # Create navi task
         time_since = fancy_timedelta(timestamp - now)
         embed = discord.Embed(colour=discord.Colour.dark_teal())
         embed.set_author(name="Reminder!")
-        embed.description = f"{time_since} ago, you were asked to be reminded of:\n{message}"
+        embed.description = (
+            f"{time_since} ago, you were asked to be reminded of:\n{message}"
+        )
         embed.timestamp = now
-        self.add_tasks(SendMessageTask(None, ctx.author, timestamp, None, ctx.author, embed=embed))
+        self.add_tasks(
+            SendMessageTask(None, ctx.author, timestamp, None, ctx.author, embed=embed)
+        )

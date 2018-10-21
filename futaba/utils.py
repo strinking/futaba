@@ -81,6 +81,7 @@ class DictEmbed:
     def to_dict(self):
         return self.dict
 
+
 class class_property(property):
     def __get__(self, cls, owner):
         # pylint: disable=no-member

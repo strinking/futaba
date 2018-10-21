@@ -274,9 +274,9 @@ class Bot(commands.AutoShardedBot):
             anger_emoji = (
                 self.get_emoji(self.config.anger_emoji_id) or "\N{ANGER SYMBOL}"
             )
-            full_traceback = "\n".join(traceback.format_exception(
-                type(error), error, error.__traceback__,
-            ))
+            full_traceback = "\n".join(
+                traceback.format_exception(type(error), error, error.__traceback__)
+            )
 
             # Output exception information
             embed = discord.Embed(colour=discord.Colour.red())
@@ -284,13 +284,17 @@ class Bot(commands.AutoShardedBot):
 
             if len(full_traceback) > 1700:
                 embed.description = (
-                    'Error output too long, see attached file. '
-                    '\N{WHITE UP POINTING BACKHAND INDEX}'
+                    "Error output too long, see attached file. "
+                    "\N{WHITE UP POINTING BACKHAND INDEX}"
                 )
-                data = BytesIO(full_traceback.encode('utf-8'))
-                file = discord.File(fp=data, filename=f'futaba-traceback-{int(time.time())}.log')
+                data = BytesIO(full_traceback.encode("utf-8"))
+                file = discord.File(
+                    fp=data, filename=f"futaba-traceback-{int(time.time())}.log"
+                )
             else:
                 embed.description = f"```py\n{full_traceback}\n```"
                 file = None
 
-            await asyncio.gather(ctx.send(embed=embed, file=file), Reactions.FAIL.add(ctx.message))
+            await asyncio.gather(
+                ctx.send(embed=embed, file=file), Reactions.FAIL.add(ctx.message)
+            )

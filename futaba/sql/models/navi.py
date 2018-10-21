@@ -80,7 +80,9 @@ class NaviModel:
                 Sequence("task_seq", metadata=meta),
                 primary_key=True,
             ),
-            Column("guild_id", BigInteger, ForeignKey("guilds.guild_id"), nullable=True),
+            Column(
+                "guild_id", BigInteger, ForeignKey("guilds.guild_id"), nullable=True
+            ),
             Column("user_id", BigInteger),
             Column("start_timestamp", DateTime),
             Column("recurrence", Interval, nullable=True),
@@ -136,7 +138,7 @@ class NaviModel:
 
     def add_task(self, task):
         logger.info("Adding new task: %r", task)
-        print(f'$$ params: {task.build_parameters()}')
+        print(f"$$ params: {task.build_parameters()}")
         ins = self.tb_tasks.insert().values(
             guild_id=task.guild_id,
             user_id=task.causer.id,

@@ -21,10 +21,7 @@ from .abc import AbstractNaviTask
 
 logger = logging.getLogger(__name__)
 
-__all__ = [
-    "ChangeRolesTask",
-    "build_change_role_task",
-]
+__all__ = ["ChangeRolesTask", "build_change_role_task"]
 
 
 class ChangeRolesTask(AbstractNaviTask):

@@ -22,10 +22,7 @@ from futaba.utils import class_property
 
 logger = logging.getLogger(__name__)
 
-__all__ = [
-    "TASK_COMPLETE",
-    "AbstractNaviTask",
-]
+__all__ = ["TASK_COMPLETE", "AbstractNaviTask"]
 
 TASK_COMPLETE = datetime(1, 1, 1)
 

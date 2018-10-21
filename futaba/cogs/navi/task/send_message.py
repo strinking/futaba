@@ -20,16 +20,15 @@ from .abc import AbstractNaviTask
 
 logger = logging.getLogger(__name__)
 
-__all__ = [
-    "SendMessageTask",
-    "build_send_message_task",
-]
+__all__ = ["SendMessageTask", "build_send_message_task"]
 
 
 class SendMessageTask(AbstractNaviTask):
     __slots__ = ("output", "content", "embed")
 
-    def __init__(self, id, causer, timestamp, recurrence, output, *, content=None, embed=None):
+    def __init__(
+        self, id, causer, timestamp, recurrence, output, *, content=None, embed=None
+    ):
         super().__init__(id, causer, timestamp, recurrence)
         self.output = output
         self.content = content
@@ -46,10 +45,10 @@ class SendMessageTask(AbstractNaviTask):
 
     def build_parameters(self):
         return {
-            'location_id': self.output.id,
-            'location_type': LocationType.of(self.output).value,
-            'content': self.content,
-            'embed': self.embed.to_dict(),
+            "location_id": self.output.id,
+            "location_type": LocationType.of(self.output).value,
+            "content": self.content,
+            "embed": self.embed.to_dict(),
         }
 
 
@@ -70,7 +69,9 @@ def build_send_message_task(bot, causer, guild, storage):
     elif location_type == LocationType.USER:
         output = causer
     else:
-        raise ValueError(f"Invalid location type for send message task: {location_type}")
+        raise ValueError(
+            f"Invalid location type for send message task: {location_type}"
+        )
 
     return SendMessageTask(
         storage.id,

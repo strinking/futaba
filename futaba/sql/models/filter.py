@@ -81,7 +81,9 @@ class FilterModel:
             Column("location_type", Enum(LocationType)),
             Column("filter_type", Enum(FilterType)),
             Column("text", Unicode),
-            CheckConstraint("location_type != 'user'", name="filter_location_in_guild_check"),
+            CheckConstraint(
+                "location_type != 'user'", name="filter_location_in_guild_check"
+            ),
             UniqueConstraint("location_id", "location_type", "text", name="filter_uq"),
         )
         self.tb_content_filters = Table(

@@ -26,9 +26,7 @@ from .send_message import build_send_message_task
 
 logger = logging.getLogger(__name__)
 
-__all__ = [
-    "build_navi_task",
-]
+__all__ = ["build_navi_task"]
 
 FakeUser = namedtuple("FakeUser", ("id", "name", "discriminator"))
 
