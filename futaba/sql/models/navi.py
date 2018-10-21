@@ -80,7 +80,7 @@ class NaviModel:
                 Sequence("task_seq", metadata=meta),
                 primary_key=True,
             ),
-            Column("guild_id", BigInteger, ForeignKey("guilds.guild_id")),
+            Column("guild_id", BigInteger, ForeignKey("guilds.guild_id"), nullable=True),
             Column("user_id", BigInteger),
             Column("start_timestamp", DateTime),
             Column("recurrence", Interval, nullable=True),
@@ -134,28 +134,21 @@ class NaviModel:
             )
         return tasks
 
-    def add_task(self, guild, task):
-        logger.info(
-            "Adding new task id %d for guild '%s' (%d)", task.id, guild.name, guild.id
-        )
+    def add_task(self, task):
+        logger.info("Adding new task: %r", task)
+        print(f'$$ params: {task.build_parameters()}')
         ins = self.tb_tasks.insert().values(
-            guild_id=guild.id,
+            guild_id=task.guild_id,
             user_id=task.causer.id,
-            timestamp=task.timestamp,
+            start_timestamp=task.timestamp,
             recurrence=task.recurrence,
-            task_type=task.type,
+            type=task.type,
             parameters=task.build_parameters(),
         )
         result = self.sql.execute(ins)
         task.id, = result.inserted_primary_key
 
-    def remove_task(self, guild, task):
-        logger.info(
-            "Deleting task id %d from guild '%s' (%d)", task.id, guild.name, guild.id
-        )
-        delet = self.tb_tasks.delete().where(
-            and_(
-                self.tb_tasks.c.guild_id == guild.id, self.tb_tasks.c.task_id == task.id
-            )
-        )
+    def remove_task(self, task):
+        logger.info("Deleting task id %d", task.id)
+        delet = self.tb_tasks.delete().where(self.tb_tasks.c.task_id == task.id)
         self.sql.execute(delet)

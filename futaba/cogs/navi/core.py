@@ -70,10 +70,17 @@ class Navi:
             embed = discord.Embed(colour=discord.Colour.red())
             embed.description = f"Unknown date specification: `{escape_backticks(when)}`"
             raise CommandFailed(embed=embed)
-        elif timestamp < now:
-            embed = discord.Embed(colour=discord.Colour.red())
-            embed.description = f"Specified date was in the past"
-            raise CommandFailed(embed=embed)
+        elif now > timestamp:
+            # First, try to see if a naive time specification put it in the past
+            new_timestamp = dateparser.parse(f'in {when}')
+            if new_timestamp is None or now > new_timestamp:
+                time_since = fancy_timedelta(timestamp - now)
+                embed = discord.Embed(colour=discord.Colour.red())
+                embed.description = f"Specified date was in the past: {time_since} ago"
+                raise CommandFailed(embed=embed)
+
+            # Was successful, replace it
+            timestamp = new_timestamp
 
         logger.info("Creating self-reminder SendMessageTask for '%s' (%d): %r",
                 ctx.author.name, ctx.author.id, message)

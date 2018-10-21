@@ -16,6 +16,8 @@ import logging
 from abc import abstractmethod
 from datetime import datetime
 
+import discord
+
 from futaba.utils import class_property
 
 logger = logging.getLogger(__name__)
@@ -49,6 +51,13 @@ class AbstractNaviTask:
             if remainder:
                 remainder = self.recurrence - remainder
             return now + remainder
+
+    @property
+    def guild_id(self):
+        if isinstance(self.causer, discord.Member):
+            return self.causer.guild.id
+
+        return None
 
     @class_property
     @classmethod
