@@ -220,7 +220,7 @@ class LocationType(Enum):
         elif isinstance(location, discord.User):
             return LocationType.USER
         else:
-            return TypeError(f"No location type for {location!r}")
+            raise TypeError(f"No location type for {location!r}")
 
 
 @unique
