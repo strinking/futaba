@@ -73,5 +73,9 @@ class Router:
                         )
 
             # Run all the event handlers
-            await asyncio.gather(*events)
+            try:
+                await asyncio.gather(*events)
+            except Exception as error:
+                logger.error("Error while running journal handlers", exc_info=error)
+
             events.clear()
