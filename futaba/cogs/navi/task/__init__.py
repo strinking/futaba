@@ -10,12 +10,12 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-
 """
 Module that has singular or recurring Navi task objects which will
 be executed by Futaba in the future.
 """
 
-from .abc import TASK_COMPLETE, AbstractNaviTask, build_navi_task
+from .abc import TASK_COMPLETE, AbstractNaviTask
 from .change_roles import ChangeRolesTask, build_change_role_task
+from .factory import build_navi_task
 from .send_message import SendMessageTask, build_send_message_task

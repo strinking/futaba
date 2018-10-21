@@ -14,31 +14,18 @@
 
 import logging
 from abc import abstractmethod
-from collections import namedtuple
 from datetime import datetime
 
-import discord
-
-from futaba.enums import TaskType
 from futaba.utils import class_property
-from .change_roles import build_change_role_task
-from .send_message import build_send_message_task
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
     "TASK_COMPLETE",
     "AbstractNaviTask",
-    "build_navi_task",
 ]
 
 TASK_COMPLETE = datetime(1, 1, 1)
-TASK_BUILDERS = {
-    TaskType.CHANGE_ROLES: build_change_role_task,
-    TaskType.SEND_MESSAGE: build_send_message_task,
-}
-
-FakeUser = namedtuple("FakeUser", ("id", "name", "discriminator"))
 
 
 class AbstractNaviTask:
@@ -84,21 +71,3 @@ class AbstractNaviTask:
             )
 
         return self.due_next() < other.due_next()
-
-
-def build_navi_task(bot, storage):
-    logger.debug("Creating NaviTask for %r", storage)
-    causer = discord.utils.get(bot.users, id=storage.user_id)
-    if causer is None:
-        logger.debug(
-            "Couldn't find causing user %d, returning dummy user", storage.user_id
-        )
-        causer = FakeUser(
-            id=storage.user_id, name=int(storage.user_id), discriminator="0000"
-        )
-
-    guild = discord.utils.get(bot.guilds, id=storage.guild_id)
-    if guild is None:
-        raise ValueError(f"Unable to find guild with ID {storage.guild_id}")
-
-    return TASK_BUILDERS[storage.task_type](bot, causer, guild, storage)
