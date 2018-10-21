@@ -41,7 +41,7 @@ class Navi:
         self.scheduler = NaviScheduler()
 
         raw_tasks = bot.sql.navi.get_tasks()
-        for raw_task in raw_tasks:
+        for raw_task in raw_tasks.values():
             try:
                 task = build_navi_task(bot, raw_task)
                 self.scheduler.add(task)

@@ -82,7 +82,7 @@ class FilterModel:
             Column("filter_type", Enum(FilterType)),
             Column("text", Unicode),
             CheckConstraint(
-                "location_type != 'user'", name="filter_location_in_guild_check"
+                "location_type != 'USER'", name="filter_location_in_guild_check"
             ),
             UniqueConstraint("location_id", "location_type", "text", name="filter_uq"),
         )

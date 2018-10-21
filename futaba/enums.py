@@ -207,8 +207,8 @@ class FilterType(Enum):
 
 @unique
 class LocationType(Enum):
-    CHANNEL = "channel"
     GUILD = "guild"
+    CHANNEL = "channel"
     USER = "user"
 
     @staticmethod
