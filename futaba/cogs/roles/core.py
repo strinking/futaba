@@ -16,7 +16,6 @@ do not provide any special permissions, but are markers that members can
 add to themselves if they wish.
 """
 
-import asyncio
 import logging
 
 import discord

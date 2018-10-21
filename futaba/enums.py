@@ -225,5 +225,5 @@ class LocationType(Enum):
 
 @unique
 class TaskType(Enum):
-    SEND_MESSAGE = "send_message"
     CHANGE_ROLES = "change_roles"
+    SEND_MESSAGE = "send_message"

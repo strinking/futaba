@@ -23,7 +23,6 @@ import logging
 from sqlalchemy import and_, or_
 from sqlalchemy import (
     BigInteger,
-    Boolean,
     Column,
     DateTime,
     Enum,
@@ -31,7 +30,6 @@ from sqlalchemy import (
     Interval,
     JSON,
     Table,
-    Unicode,
 )
 from sqlalchemy import ForeignKey, Sequence
 from sqlalchemy.sql import select

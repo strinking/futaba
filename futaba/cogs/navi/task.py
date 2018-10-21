@@ -30,7 +30,8 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "TASK_COMPLETE",
     "AbstractNaviTask",
-    "ChangeRolesNaviTask",
+    "ChangeRolesTask",
+    "SendMessageTask",
     "navi_task_factory",
 ]
 
@@ -84,7 +85,7 @@ class AbstractNaviTask:
         return self.due_next() < other.due_next()
 
 
-class ChangeRolesNaviTask(AbstractNaviTask):
+class ChangeRolesTask(AbstractNaviTask):
     __slots__ = ("member", "to_add", "to_remove", "reason")
 
     def __init__(
@@ -124,7 +125,7 @@ def build_role_task(bot, causer, guild, storage):
     # - remove_role_ids: List[int]
     # - reason: str
 
-    logger.debug("Creating ChangeRolesNaviTask with %s", storage.parameters)
+    logger.debug("Creating ChangeRolesTask with %s", storage.parameters)
     member_id = storage.parameters["member_id"]
     member = discord.utils.get(guild.member, id=member_id)
     if member is None:
@@ -146,7 +147,7 @@ def build_role_task(bot, causer, guild, storage):
         else:
             to_remove.append(role)
 
-    return ChangeRolesNaviTask(
+    return ChangeRolesTask(
         storage.id,
         causer,
         storage.timestamp,
@@ -158,7 +159,7 @@ def build_role_task(bot, causer, guild, storage):
     )
 
 
-class SendNaviTask(AbstractNaviTask):
+class SendMessageTask(AbstractNaviTask):
     __slots__ = ("output", "content", "embed")
 
     def __init__(self, id, causer, timestamp, recurrence, output, content, embed):
@@ -171,6 +172,19 @@ class SendNaviTask(AbstractNaviTask):
         logger.info("Sending message to fulfill navi task %d", self.id)
         await self.output.send(content=self.content, embed=self.embed)
 
+    @class_property
+    @classmethod
+    def type(cls):
+        return TaskType.SEND_MESSAGE
+
+    def build_parameters(self):
+        return {
+            'location_id': self.output.id,
+            'location_type': LocationType.of(self.output),
+            'content': self.content,
+            'embed': self.embed,
+        }
+
 
 def build_send_task(bot, causer, guild, storage):
     # Parameters:
@@ -179,19 +193,19 @@ def build_send_task(bot, causer, guild, storage):
     # - content: Optional[str]
     # - embed: Optional[dict]
 
-    logger.debug("Creating SendNaviTask with %s", storage.parameters)
+    logger.debug("Creating SendMessageTask with %s", storage.parameters)
     location_id = storage.parameters["location_id"]
     location_type = storage.parameters["location_type"]
     if location_type == LocationType.CHANNEL:
         output = discord.utils.get(guild.text_channels, id=location_id)
         if output is None:
-            raise ValueError("Could not find channel with ID %d", location_id)
+            raise ValueError(f"Could not find channel with ID {location_id}")
     elif location_type == LocationType.USER:
         output = causer
     else:
-        raise ValueError("Invalid location type for send message task: %s", location_type)
+        raise ValueError(f"Invalid location type for send message task: {location_type}")
 
-    return SendNaviTask(
+    return SendMessageTask(
         storage.id,
         causer,
         storage.timestamp,
