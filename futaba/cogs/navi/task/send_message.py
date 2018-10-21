@@ -47,9 +47,9 @@ class SendMessageTask(AbstractNaviTask):
     def build_parameters(self):
         return {
             'location_id': self.output.id,
-            'location_type': LocationType.of(self.output),
+            'location_type': LocationType.of(self.output).value,
             'content': self.content,
-            'embed': self.embed,
+            'embed': self.embed.to_dict(),
         }
 
 
