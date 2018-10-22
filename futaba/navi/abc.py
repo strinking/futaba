@@ -29,10 +29,10 @@ TASK_COMPLETE = datetime(1, 1, 1)
 
 
 class AbstractNaviTask:
-    __slots__ = ("sql", "id", "causer", "timestamp", "recurrence", "async_task")
+    __slots__ = ("bot", "id", "causer", "timestamp", "recurrence", "async_task")
 
-    def __init__(self, sql, id, causer, timestamp, recurrence):
-        self.sql = sql
+    def __init__(self, bot, id, causer, timestamp, recurrence):
+        self.bot = bot
         self.id = id
         self.causer = causer
         self.timestamp = timestamp
@@ -61,7 +61,7 @@ class AbstractNaviTask:
         if self.async_task is not None:
             raise ValueError(f"This task is already running: id {self.id}, {self!r}")
 
-        self.async_task = asyncio.create_task(self.execute_future())
+        self.async_task = self.bot.loop.create_task(self.execute_future())
 
     async def execute_future(self):
         """
@@ -98,8 +98,8 @@ class AbstractNaviTask:
 
         logger.info("Removing self (id %d) from navi task database table", self.id)
 
-        with self.sql.transaction():
-            self.sql.navi.remove_task(self)
+        with self.bot.sql.transaction():
+            self.bot.sql.navi.remove_task(self)
 
     @property
     def guild_id(self):

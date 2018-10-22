@@ -88,7 +88,7 @@ class Navi:
         embed.timestamp = now
         self.bot.add_tasks(
             SendMessageTask(
-                self.bot.sql,
+                self.bot,
                 None,
                 ctx.author,
                 timestamp,

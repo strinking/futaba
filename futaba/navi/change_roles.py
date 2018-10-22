@@ -29,21 +29,21 @@ class ChangeRolesTask(AbstractNaviTask):
 
     def __init__(
         self,
-        sql,
+        bot,
         id,
         causer,
         timestamp,
         recurrence,
         *,
         member,
-        to_add,
-        to_remove,
         reason,
+        to_add=None,
+        to_remove=None,
     ):
-        super().__init__(sql, id, causer, timestamp, recurrence)
+        super().__init__(bot, id, causer, timestamp, recurrence)
         self.member = member
-        self.to_add = to_add
-        self.to_remove = to_remove
+        self.to_add = to_add if to_add is not None else []
+        self.to_remove = to_remove if to_remove is not None else []
         self.reason = reason
 
     async def execute(self):
@@ -97,7 +97,7 @@ def build_change_role_task(bot, causer, guild, storage):
             to_remove.append(role)
 
     return ChangeRolesTask(
-        bot.sql,
+        bot,
         storage.id,
         causer,
         storage.timestamp,
