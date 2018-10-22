@@ -48,7 +48,9 @@ class Moderation:
     def build_reason(ctx, action, minutes, reason, past=False):
         full_reason = StringBuilder(f"{action} by {user_discrim(ctx.author)}")
         if minutes:
-            full_reason.write(f" {'for' if past else 'in'} {minutes} minute{plural(minutes)}")
+            full_reason.write(
+                f" {'for' if past else 'in'} {minutes} minute{plural(minutes)}"
+            )
         if reason:
             full_reason.write(f" with reason: {reason}")
         return str(full_reason)
