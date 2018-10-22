@@ -24,15 +24,25 @@ __all__ = ["SendMessageTask", "build_send_message_task"]
 
 
 class SendMessageTask(AbstractNaviTask):
-    __slots__ = ("output", "content", "embed")
+    __slots__ = ("output", "content", "embed", "metadata")
 
     def __init__(
-        self, id, causer, timestamp, recurrence, output, *, content=None, embed=None
+        self,
+        id,
+        causer,
+        timestamp,
+        recurrence,
+        output,
+        *,
+        content=None,
+        embed=None,
+        metadata=None,
     ):
         super().__init__(id, causer, timestamp, recurrence)
         self.output = output
         self.content = content
         self.embed = embed if isinstance(embed, discord.Embed) else DictEmbed(embed)
+        self.metadata = metadata
 
     async def execute(self):
         logger.info("Sending message to fulfill navi task %d", self.id)
@@ -49,6 +59,7 @@ class SendMessageTask(AbstractNaviTask):
             "location_type": LocationType.of(self.output).value,
             "content": self.content,
             "embed": self.embed.to_dict(),
+            "metadata": self.metadata,
         }
 
 

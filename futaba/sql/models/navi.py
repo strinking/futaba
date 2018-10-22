@@ -19,8 +19,9 @@ Model for storing tasks scheduled in navi, futaba's temporal assistant.
 
 import functools
 import logging
+from collections import namedtuple
 
-from sqlalchemy import and_
+from sqlalchemy import and_, cast, type_coerce
 from sqlalchemy import (
     BigInteger,
     Column,
@@ -29,6 +30,7 @@ from sqlalchemy import (
     Integer,
     Interval,
     JSON,
+    String,
     Table,
 )
 from sqlalchemy import ForeignKey, Sequence
@@ -41,6 +43,8 @@ Column = functools.partial(Column, nullable=False)
 logger = logging.getLogger(__name__)
 
 __all__ = ["NaviModel", "NaviTaskStorage"]
+
+ReminderInfo = namedtuple("ReminderInfo", ("id", "timestamp", "message"))
 
 
 class NaviTaskStorage:
@@ -153,3 +157,30 @@ class NaviModel:
         logger.info("Deleting task id %d", task.id)
         delet = self.tb_tasks.delete().where(self.tb_tasks.c.task_id == task.id)
         self.sql.execute(delet)
+
+    def get_reminders(self, user):
+        logger.info("Getting all reminders for user '%s' (%d)", user.name, user.id)
+        sel = select(
+            [
+                self.tb_tasks.c.task_id,
+                self.tb_tasks.c.start_timestamp,
+                self.tb_tasks.c.parameters,
+            ]
+        ).where(
+            and_(
+                self.tb_tasks.c.user_id == user.id,
+                cast(self.tb_tasks.c.parameters["metadata"]["type"], String)
+                == type_coerce("reminder", JSON),
+            )
+        )
+        result = self.sql.execute(sel)
+        reminders = []
+        for (task_id, timestamp, parameters) in result.fetchall():
+            message = parameters["metadata"]["message"]
+            logger.debug(
+                "Got navi reminder %d: %s (message: %r)", task_id, timestamp, message
+            )
+            reminders.append(
+                ReminderInfo(id=task_id, timestamp=timestamp, message=message)
+            )
+        return reminders

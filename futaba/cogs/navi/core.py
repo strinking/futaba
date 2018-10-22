@@ -25,43 +25,42 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.exceptions import CommandFailed
+from futaba.str_builder import StringBuilder
 from futaba.utils import escape_backticks, fancy_timedelta
-from .scheduler import NaviScheduler
 from .task import SendMessageTask, build_navi_task
 
 logger = logging.getLogger(__name__)
 
 
 class Navi:
-    __slots__ = ("bot", "journal", "scheduler")
+    __slots__ = ("bot", "journal")
 
     def __init__(self, bot):
         self.bot = bot
         self.journal = bot.get_broadcaster("/navi")
-        self.scheduler = NaviScheduler()
 
         raw_tasks = bot.sql.navi.get_tasks()
         for raw_task in raw_tasks.values():
             try:
                 task = build_navi_task(bot, raw_task)
-                self.scheduler.add(task)
+                task.execute_later()
             except ValueError as error:
-                logger.warning("Error while loading task from database", exc_info=error)
-
-        asyncio.create_task(self.scheduler.main_loop())
+                logger.warning(
+                    "Error while loading or running task from database", exc_info=error
+                )
 
     def add_tasks(self, *tasks):
-        logger.info(
-            "Adding tasks to database and Navi scheduler, ids: %s",
-            ", ".join(str(task.id) for task in tasks),
-        )
+        assert tasks
+
+        logger.info("Adding tasks to database and Navi scheduler")
 
         with self.bot.sql.transaction():
             for task in tasks:
                 self.bot.sql.navi.add_task(task)
 
+        # Put on event loop only after the database has successfully committed
         for task in tasks:
-            self.scheduler.add(task)
+            task.execute_later()
 
     @commands.command(name="remind", aliases=["remindme", "alarm"])
     async def remind_me(self, ctx, when: str, message: str):
@@ -79,7 +78,7 @@ class Navi:
             # First, try to see if a naive time specification put it in the past
             new_timestamp = dateparser.parse(f"in {when}")
             if new_timestamp is None or now > new_timestamp:
-                time_since = fancy_timedelta(timestamp - now)
+                time_since = fancy_timedelta(now - timestamp)
                 embed = discord.Embed(colour=discord.Colour.red())
                 embed.description = f"Specified date was in the past: {time_since} ago"
                 raise CommandFailed(embed=embed)
@@ -95,6 +94,7 @@ class Navi:
         )
 
         # Create navi task
+        assert timestamp > now
         time_since = fancy_timedelta(timestamp - now)
         embed = discord.Embed(colour=discord.Colour.dark_teal())
         embed.set_author(name="Reminder!")
@@ -103,5 +103,39 @@ class Navi:
         )
         embed.timestamp = now
         self.add_tasks(
-            SendMessageTask(None, ctx.author, timestamp, None, ctx.author, embed=embed)
+            SendMessageTask(
+                None,
+                ctx.author,
+                timestamp,
+                None,
+                ctx.author,
+                embed=embed,
+                metadata={"type": "reminder", "message": message},
+            )
         )
+
+    @commands.command(name="reminders", aliases=["myreminds"])
+    async def remind_list(self, ctx):
+        """ Lists all reminders for the current user. """
+
+        reminders = self.bot.sql.navi.get_reminders(ctx.author)
+        if reminders:
+            descr = StringBuilder()
+            for reminder in reminders:
+                until = fancy_timedelta(reminder.timestamp)
+                message = escape_backticks(reminder.message)
+                descr.writeln(
+                    f"`{reminder.id:04}`: in {until} will remind: `{message}`"
+                )
+
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
+            embed.set_author(name=f"Reminders for {ctx.author.display_name}")
+            embed.description = str(descr)
+        else:
+            embed = discord.Embed(colour=discord.Colour.dark_purple())
+            embed.description = f"No reminders for {ctx.author.mention}"
+
+        await ctx.send(embed=embed)
+
+    # TODO: reminders command
+    # TODO: limit total reminders

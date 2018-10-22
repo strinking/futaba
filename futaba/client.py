@@ -16,11 +16,10 @@ Holds the custom discord client
 
 import asyncio
 import logging
-import datetime
 import os
 import sys
-import time
 import traceback
+from datetime import datetime
 from io import BytesIO
 
 import discord
@@ -50,7 +49,7 @@ class Bot(commands.AutoShardedBot):
 
     def __init__(self, config: Configuration):
         self.config = config
-        self.start_time = datetime.datetime.utcnow()
+        self.start_time = datetime.utcnow()
         self.journal_cog = None
         self.sql = SqlHandler(config.database_url)
 
@@ -78,7 +77,7 @@ class Bot(commands.AutoShardedBot):
     def uptime(self):
         """ Gets the bot's uptime """
 
-        return datetime.datetime.utcnow() - self.start_time
+        return datetime.utcnow() - self.start_time
 
     def run_with_token(self):
         """
@@ -287,9 +286,10 @@ class Bot(commands.AutoShardedBot):
                     "Error output too long, see attached file. "
                     "\N{WHITE UP POINTING BACKHAND INDEX}"
                 )
+                unix_time = int(datetime.now().timestamp())
                 data = BytesIO(full_traceback.encode("utf-8"))
                 file = discord.File(
-                    fp=data, filename=f"futaba-traceback-{int(time.time())}.log"
+                    fp=data, filename=f"futaba-traceback-{unix_time}.log"
                 )
             else:
                 embed.description = f"```py\n{full_traceback}\n```"

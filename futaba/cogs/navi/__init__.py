@@ -18,7 +18,6 @@ from .task import (
     SendMessageTask,
     build_navi_task,
 )
-from .scheduler import NaviScheduler
 
 
 def setup(bot):
