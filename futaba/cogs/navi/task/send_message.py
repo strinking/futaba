@@ -28,6 +28,7 @@ class SendMessageTask(AbstractNaviTask):
 
     def __init__(
         self,
+        sql,
         id,
         causer,
         timestamp,
@@ -38,7 +39,7 @@ class SendMessageTask(AbstractNaviTask):
         embed=None,
         metadata=None,
     ):
-        super().__init__(id, causer, timestamp, recurrence)
+        super().__init__(sql, id, causer, timestamp, recurrence)
         self.output = output
         self.content = content
         self.embed = embed if isinstance(embed, discord.Embed) else DictEmbed(embed)
@@ -85,6 +86,7 @@ def build_send_message_task(bot, causer, guild, storage):
         )
 
     return SendMessageTask(
+        bot.sql,
         storage.id,
         causer,
         storage.timestamp,

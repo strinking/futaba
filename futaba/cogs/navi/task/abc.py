@@ -29,9 +29,10 @@ TASK_COMPLETE = datetime(1, 1, 1)
 
 
 class AbstractNaviTask:
-    __slots__ = ("id", "causer", "timestamp", "recurrence", "async_task")
+    __slots__ = ("sql", "id", "causer", "timestamp", "recurrence", "async_task")
 
-    def __init__(self, id, causer, timestamp, recurrence):
+    def __init__(self, sql, id, causer, timestamp, recurrence):
+        self.sql = sql
         self.id = id
         self.causer = causer
         self.timestamp = timestamp
@@ -68,23 +69,37 @@ class AbstractNaviTask:
         task, it will run it in perpetuity.
         """
 
+        assert self.id is not None, "Task was not assigned a unique ID"
+
         logger.info("Starting full future execution of task %d", self.id)
         due_next = self.due_next()
         if due_next is TASK_COMPLETE:
+            self.remove_self()
             return
 
-        duration = (datetime.now() - due_next).total_seconds()
+        duration = (due_next - datetime.now()).total_seconds()
         await asyncio.sleep(duration)
         await self.execute()
 
-        if self.recurrence is not None:
-            logger.debug(
-                "Ran for the first time, task %d now looping continually...", self.id
-            )
-            duration = self.recurrence.total_seconds()
-            while True:
-                await asyncio.sleep(duration)
-                await self.execute()
+        if self.recurrence is None:
+            self.remove_self()
+            return
+
+        logger.debug(
+            "Ran for the first time, task %d now looping continually...", self.id
+        )
+        duration = self.recurrence.total_seconds()
+        while True:
+            await asyncio.sleep(duration)
+            await self.execute()
+
+    def remove_self(self):
+        """ This task has been fulfilled, removed it from the database to reduce clutter. """
+
+        logger.info("Removing self (id %d) from navi task database table", self.id)
+
+        with self.sql.transaction():
+            self.sql.navi.remove_task(self)
 
     @property
     def guild_id(self):

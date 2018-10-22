@@ -97,13 +97,12 @@ class Navi:
         assert timestamp > now
         time_since = fancy_timedelta(timestamp - now)
         embed = discord.Embed(colour=discord.Colour.dark_teal())
-        embed.set_author(name="Reminder!")
-        embed.description = (
-            f"{time_since} ago, you were asked to be reminded of:\n{message}"
-        )
+        embed.set_author(name=f"Reminder made {time_since} ago")
+        embed.description = f"You asked to be reminded of:\n\n{message}"
         embed.timestamp = now
         self.add_tasks(
             SendMessageTask(
+                self.bot.sql,
                 None,
                 ctx.author,
                 timestamp,

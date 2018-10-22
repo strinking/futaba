@@ -28,9 +28,19 @@ class ChangeRolesTask(AbstractNaviTask):
     __slots__ = ("member", "to_add", "to_remove", "reason")
 
     def __init__(
-        self, id, causer, timestamp, recurrence, member, to_add, to_remove, reason
+        self,
+        sql,
+        id,
+        causer,
+        timestamp,
+        recurrence,
+        *,
+        member,
+        to_add,
+        to_remove,
+        reason,
     ):
-        super().__init__(id, causer, timestamp, recurrence)
+        super().__init__(sql, id, causer, timestamp, recurrence)
         self.member = member
         self.to_add = to_add
         self.to_remove = to_remove
@@ -87,12 +97,13 @@ def build_change_role_task(bot, causer, guild, storage):
             to_remove.append(role)
 
     return ChangeRolesTask(
+        bot.sql,
         storage.id,
         causer,
         storage.timestamp,
         storage.recurrence,
-        member,
-        to_add,
-        to_remove,
-        storage.parameters["reason"],
+        member=member,
+        to_add=to_add,
+        to_remove=to_remove,
+        reason=storage.parameters["reason"],
     )
