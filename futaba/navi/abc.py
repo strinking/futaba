@@ -96,7 +96,7 @@ class AbstractNaviTask:
     def remove_self(self):
         """ This task has been fulfilled, removed it from the database to reduce clutter. """
 
-        logger.info("Removing self (id %d) from navi task database table", self.id)
+        logger.info("Removing self from navi task database table")
 
         with self.bot.sql.transaction():
             self.bot.sql.navi.remove_task(self)
