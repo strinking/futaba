@@ -88,7 +88,7 @@ class NaviModel:
                 "guild_id", BigInteger, ForeignKey("guilds.guild_id"), nullable=True
             ),
             Column("user_id", BigInteger),
-            Column("start_timestamp", DateTime),
+            Column("timestamp", DateTime),
             Column("recurrence", Interval, nullable=True),
             Column("type", Enum(TaskType)),
             Column("parameters", JSON),
@@ -108,7 +108,7 @@ class NaviModel:
                 self.tb_tasks.c.task_id,
                 self.tb_tasks.c.guild_id,
                 self.tb_tasks.c.user_id,
-                self.tb_tasks.c.start_timestamp,
+                self.tb_tasks.c.timestamp,
                 self.tb_tasks.c.recurrence,
                 self.tb_tasks.c.type,
                 self.tb_tasks.c.parameters,
@@ -145,7 +145,7 @@ class NaviModel:
         ins = self.tb_tasks.insert().values(
             guild_id=task.guild_id,
             user_id=task.causer.id,
-            start_timestamp=task.timestamp,
+            timestamp=task.timestamp,
             recurrence=task.recurrence,
             type=task.type,
             parameters=task.build_parameters(),
@@ -163,7 +163,7 @@ class NaviModel:
         sel = select(
             [
                 self.tb_tasks.c.task_id,
-                self.tb_tasks.c.start_timestamp,
+                self.tb_tasks.c.timestamp,
                 self.tb_tasks.c.parameters,
             ]
         ).where(
