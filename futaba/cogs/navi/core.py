@@ -15,7 +15,6 @@ Mandatory cog that adds navi, futaba's helpful assistant. It is useful for
 persistently storing and managing scheduled tasks.
 """
 
-import asyncio
 import logging
 from datetime import datetime
 
@@ -25,9 +24,9 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.exceptions import CommandFailed
+from futaba.navi import SendMessageTask, build_navi_task
 from futaba.str_builder import StringBuilder
 from futaba.utils import escape_backticks, fancy_timedelta
-from .task import SendMessageTask, build_navi_task
 
 logger = logging.getLogger(__name__)
 
