@@ -61,8 +61,8 @@ class ChangeRolesTask(AbstractNaviTask):
     def build_parameters(self):
         return {
             "member_id": self.member.id,
-            "add_role_ints": [role.id for role in self.to_add],
-            "remove_role_ints": [role.id for role in self.to_remove],
+            "add_role_ids": [role.id for role in self.to_add],
+            "remove_role_ids": [role.id for role in self.to_remove],
             "reason": self.reason,
         }
 
@@ -76,7 +76,7 @@ def build_change_role_task(bot, causer, guild, storage):
 
     logger.debug("Creating ChangeRolesTask with %s", storage.parameters)
     member_id = storage.parameters["member_id"]
-    member = discord.utils.get(guild.member, id=member_id)
+    member = discord.utils.get(guild.members, id=member_id)
     if member is None:
         raise ValueError(f"Unable to find member with ID {member_id}")
 

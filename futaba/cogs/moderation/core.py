@@ -45,10 +45,10 @@ class Moderation:
         self.journal = bot.get_broadcaster("/moderation")
 
     @staticmethod
-    def build_reason(ctx, action, minutes, reason):
+    def build_reason(ctx, action, minutes, reason, past=False):
         full_reason = StringBuilder(f"{action} by {user_discrim(ctx.author)}")
         if minutes:
-            full_reason.write(f" for {minutes} minute{plural(minutes)}")
+            full_reason.write(f" {'for' if past else 'in'} {minutes} minute{plural(minutes)}")
         if reason:
             full_reason.write(f" with reason: {reason}")
         return str(full_reason)
@@ -110,13 +110,14 @@ class Moderation:
         """
         Mutes the user for the given number of minutes.
         Requires a mute role to be configured.
+        The minutes parameter must be set to a positive number.
         """
 
         logger.info(
             "Muting user '%s' (%d) for %d minutes", member.name, member.id, minutes
         )
 
-        if minutes == 0:
+        if minutes <= 0:
             # Since muting prevents members from responding or petitioning staff,
             # a timed release is mandatory. Otherwise they might be forgotten
             # and muted forever.
@@ -129,11 +130,13 @@ class Moderation:
         if member.top_role > ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to mute this user")
 
-        # TODO store punishment in table
+        # TODO store punishment in table with task ID
+
         full_reason = self.build_reason(ctx, "Muted", minutes, reason)
         await member.add_roles(roles.mute, reason=full_reason)
 
         # If a delayed event, schedule a Navi task
+        minutes = max(minutes, 0)
         if minutes:
             await self.remove_roles(ctx, member, minutes, [roles.mute], full_reason)
 
@@ -146,6 +149,7 @@ class Moderation:
         """
         Unmutes the user, with an optional delay in minutes.
         Requires a mute role to be configured.
+        Set 'minutes' to 0 to unmute immediately.
         """
 
         logger.info(
@@ -159,8 +163,10 @@ class Moderation:
         if member.top_role > ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to unmute this user")
 
-        # TODO store punishment in table
-        full_reason = self.build_reason(ctx, "Unmuted", minutes, reason)
+        # TODO store punishment in table with task ID
+
+        minutes = max(minutes, 0)
+        full_reason = self.build_reason(ctx, "Unmuted", minutes, reason, past=True)
         await self.remove_roles(ctx, member, minutes, [roles.mute], full_reason)
 
     @commands.command(name="jail", aliases=["dunce"])
@@ -172,6 +178,7 @@ class Moderation:
         """
         Jails the user.
         Requires a jail role to be configured.
+        Set 'minutes' to 0 to jail without a timer.
         """
 
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)
@@ -181,11 +188,13 @@ class Moderation:
         if member.top_role > ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to jail this user")
 
-        # TODO store punishment in table
+        # TODO store punishment in table with task ID
+
         full_reason = self.build_reason(ctx, "Jailed", minutes, reason)
         await member.add_roles(roles.jail, reason=full_reason)
 
         # If a delayed event, schedule a Navi task
+        minutes = max(minutes, 0)
         if minutes:
             await self.remove_roles(ctx, member, minutes, [roles.jail], full_reason)
 
@@ -198,6 +207,7 @@ class Moderation:
         """
         Removes a user from the jail.
         Requires a jail role to be configured.
+        Set 'minutes' to 0 to release immediately.
         """
 
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)
@@ -207,8 +217,10 @@ class Moderation:
         if member.top_role > ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to unjail this user")
 
-        # TODO store punishment in table
-        full_reason = self.build_reason(ctx, "Released", minutes, reason)
+        # TODO store punishment in table with task ID
+
+        minutes = max(minutes, 0)
+        full_reason = self.build_reason(ctx, "Released", minutes, reason, past=True)
         await self.remove_roles(ctx, member, minutes, [roles.jail], full_reason)
 
     @commands.command(name="kick")
