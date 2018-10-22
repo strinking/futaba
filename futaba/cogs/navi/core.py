@@ -48,19 +48,6 @@ class Navi:
                     "Error while loading or running task from database", exc_info=error
                 )
 
-    def add_tasks(self, *tasks):
-        assert tasks
-
-        logger.info("Adding tasks to database and Navi scheduler")
-
-        with self.bot.sql.transaction():
-            for task in tasks:
-                self.bot.sql.navi.add_task(task)
-
-        # Put on event loop only after the database has successfully committed
-        for task in tasks:
-            task.execute_later()
-
     @commands.command(name="remind", aliases=["reminder", "remindme", "alarm"])
     async def remind_me(self, ctx, when: str, message: str):
         """ Request the bot remind you in the given time. """
@@ -99,7 +86,7 @@ class Navi:
         embed.set_author(name=f"Reminder made {time_since} ago")
         embed.description = f"You asked to be reminded of:\n\n{message}"
         embed.timestamp = now
-        self.add_tasks(
+        self.bot.add_tasks(
             SendMessageTask(
                 self.bot.sql,
                 None,

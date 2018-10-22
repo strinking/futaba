@@ -162,6 +162,19 @@ class Bot(commands.AutoShardedBot):
 
         return Broadcaster(self.journal_cog.router, root)
 
+    def add_tasks(self, *tasks):
+        assert tasks
+
+        logger.info("Adding tasks to database and to asyncio event loop")
+
+        with self.bot.sql.transaction():
+            for task in tasks:
+                self.bot.sql.navi.add_task(task)
+
+        # Put on event loop only after the database has successfully committed
+        for task in tasks:
+            task.execute_later()
+
     async def on_guild_join(self, guild):
         """
         Event for handling joining a new guild.
