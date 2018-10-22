@@ -62,7 +62,7 @@ class Navi:
         for task in tasks:
             task.execute_later()
 
-    @commands.command(name="remind", aliases=["remindme", "alarm"])
+    @commands.command(name="remind", aliases=["reminder", "remindme", "alarm"])
     async def remind_me(self, ctx, when: str, message: str):
         """ Request the bot remind you in the given time. """
 
@@ -113,7 +113,7 @@ class Navi:
             )
         )
 
-    @commands.command(name="reminders", aliases=["myreminds"])
+    @commands.command(name="reminders", aliases=["reminds", "lreminder", "lremind", "alarms"])
     async def remind_list(self, ctx):
         """ Lists all reminders for the current user. """
 
