@@ -124,7 +124,7 @@ class Navi:
                 until = fancy_timedelta(reminder.timestamp)
                 message = escape_backticks(reminder.message)
                 descr.writeln(
-                    f"`{reminder.id:04}`: in {until} will remind: `{message}`"
+                    f"ID: #`{reminder.id:05}`: in `{until}` with message: `{message}`"
                 )
 
             embed = discord.Embed(colour=discord.Colour.dark_teal())
