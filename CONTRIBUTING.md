@@ -19,6 +19,24 @@ Some pieces of information are available via the API, but are either difficult o
 **Uniform command style**  
 Commands should be usable in the same style, both in terms of invocation and responses. For Futaba specifically, commands should have a sensible command, aliased shortcuts, or be grouped into a command group that has the same properties. They should all react to any command in a standard way based on how the command was carried out (or not). When multiple pieces of information need to be outputted, an embed should be used that makes it easy to pick out pieces of information a user wants.
 
+**Command output**  
+As mentioned above, all commands will react to the command message to indicate status. The reactions in place are:
+* `WHITE HEAVY CHECK MARK` - Command success
+* `WARNING SIGN` - (currently unused)
+* `CROSS MARK` - Command failed. Either the database didnt' commit, an error occurred, etc.
+* `NO ENTRY SIGN` - Command could not be invoked. Generally the user lacks the permissions to invoke it.
+* `BLACK QUESTION MARK ORNAMENT` - Invalid argument(s) or argument parse error. A `*Conv` conversion error or some other issue with the argument's value.
+
+Commands which express success or failure with additional information should generally use an embed. Text responses are acceptable if they do not have any special formatting and are a single sentence. Embeds are mandatory if user or role mentions are used. The argument is always used as `colour` because that's the original name used by the library, and we've had issues in the past with pylint and `color`.
+
+We have some standard colors for discord embeds:
+* `discord.Colour.dark_teal()` - General success or information.
+* `discord.Colour.red()` - Failure or error.
+* `discord.Colour.dark_purple()` - Success, but an exceptional condition. For instance, a list command would use `dark_teal` if there are entries, but a `dark_purple` with a "nothing found"-type message if not.
+* (other) - If there is a particular color that is more appropriate, it is used instead. This is mostly for things such as the member and role info commands, where the color of the embed matches the color of the item being described.
+
+Commands should never mention users or roles. Commands should not mention the invoking user (e.g. "@user, here are the configured channels:")
+
 ### Code Structure
 "Standard" or templated files, like an example configuration file should be in `misc/`.
 

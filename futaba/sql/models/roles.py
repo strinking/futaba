@@ -35,7 +35,13 @@ __all__ = ["SelfAssignableRolesModel"]
 
 
 class SelfAssignableRolesModel:
-    __slots__ = ("sql", "tb_assignable_roles", "roles_cache")
+    __slots__ = (
+        "sql",
+        "tb_assignable_roles",
+        "tb_role_command_channels",
+        "roles_cache",
+        "channels_cache",
+    )
 
     def __init__(self, sql, meta):
         self.sql = sql
@@ -46,9 +52,18 @@ class SelfAssignableRolesModel:
             Column("role_id", BigInteger),
             UniqueConstraint("role_id", name="assignable_roles_uq"),
         )
+        self.tb_role_command_channels = Table(
+            "role_command_channels",
+            meta,
+            Column("guild_id", BigInteger, ForeignKey("guilds.guild_id")),
+            Column("channel_id", BigInteger),
+            UniqueConstraint("guild_id", "channel_id", name="role_command_channels_uq"),
+        )
         self.roles_cache = {}
+        self.channels_cache = {}
 
         register_hook("on_guild_leave", self.remove_all_assignable_roles)
+        register_hook("on_guild_leave", self.remove_all_role_command_channels)
 
     def remove_all_assignable_roles(self, guild):
         logger.info(
@@ -85,6 +100,7 @@ class SelfAssignableRolesModel:
 
     def add_assignable_role(self, guild, role):
         logger.info("Adding assignable role for guild '%s' (%d)", guild.name, guild.id)
+        assert guild == role.guild
         ins = self.tb_assignable_roles.insert().values(
             guild_id=guild.id, role_id=role.id
         )
@@ -95,6 +111,7 @@ class SelfAssignableRolesModel:
         logger.info(
             "Removing assignable role for guild '%s' (%d)", guild.name, guild.id
         )
+        assert guild == role.guild
         delet = self.tb_assignable_roles.delete().where(
             and_(
                 self.tb_assignable_roles.c.guild_id == guild.id,
@@ -106,3 +123,66 @@ class SelfAssignableRolesModel:
 
         if result.rowcount:
             self.roles_cache[guild].remove(role)
+
+    def remove_all_role_command_channels(self, guild):
+        logger.info(
+            "Remove all role command channels for guild '%s' (%d)", guild.name, guild.id
+        )
+        delet = self.tb_role_command_channels.delete().where(
+            self.tb_role_command_channels.c.guild_id == guild.id
+        )
+        self.sql.execute(delet)
+        self.channels_cache[guild].clear()
+
+    def get_role_command_channels(self, guild):
+        logger.info(
+            "Getting all role command channels for guild '%s' (%d)",
+            guild.name,
+            guild.id,
+        )
+
+        if guild in self.channels_cache:
+            logger.debug("Found channels in cache, returning")
+            return self.channels_cache[guild]
+
+        sel = select([self.tb_role_command_channels.c.channel_id]).where(
+            self.tb_role_command_channels.c.guild_id == guild.id
+        )
+        result = self.sql.execute(sel)
+
+        channels = set()
+        for (channel_id,) in result.fetchall():
+            chan = discord.utils.get(guild.text_channels, id=channel_id)
+            if chan is not None:
+                channels.add(chan)
+
+        self.channels_cache[guild] = channels
+        return channels
+
+    def add_role_command_channel(self, guild, channel):
+        logger.info(
+            "Adding role command channel for guild '%s' (%d)", guild.name, guild.id
+        )
+        assert guild == channel.guild
+        ins = self.tb_role_command_channels.insert().values(
+            guild_id=guild.id, channel_id=channel.id
+        )
+        self.sql.execute(ins)
+        self.channels_cache[guild].add(channel)
+
+    def remove_role_command_channel(self, guild, channel):
+        logger.info(
+            "Removing role command channel for guild '%s' (%d)", guild.name, guild.id
+        )
+        assert guild == channel.guild
+        delet = self.tb_role_command_channels.delete().where(
+            and_(
+                self.tb_role_command_channels.c.guild_id == guild.id,
+                self.tb_role_command_channels.c.channel_id == channel.id,
+            )
+        )
+        result = self.sql.execute(delet)
+        assert result.rowcount in (0, 1), "Multiple rows deleted"
+
+        if result.rowcount:
+            self.channels_cache[guild].remove(channel)
