@@ -27,7 +27,7 @@ from futaba.exceptions import CommandFailed, ManualCheckFailure, SendHelp
 from futaba.str_builder import StringBuilder
 from futaba.unicode import normalize_caseless
 
-logger = logging.getLogger(__package__)
+logger = logging.getLogger(__name__)
 
 __all__ = ["JoinAlert", "Alert"]
 

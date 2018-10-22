@@ -26,6 +26,8 @@ __all__ = [
     "GIT_HASH",
     "URL_REGEX",
     "Dummy",
+    "DictEmbed",
+    "class_property",
     "fancy_timedelta",
     "async_partial",
     "map_or",
@@ -60,11 +62,30 @@ URL_REGEX = re.compile(
 
 
 class Dummy:
-    """
-    Dummy class that can freely be assigned any fields or members.
-    """
+    """ Dummy class that can freely be assigned any fields or members. """
 
     pass
+
+
+class DictEmbed:
+    """
+    A discord.Embed-like wrapper which just holds the JSON-compatible dictionary
+    and returns that on 'conversion'.
+    """
+
+    __slots__ = ("dict",)
+
+    def __init__(self, dict):
+        self.dict = dict
+
+    def to_dict(self):
+        return self.dict
+
+
+class class_property(property):
+    def __get__(self, cls, owner):
+        # pylint: disable=no-member
+        return self.fget.__get__(None, owner)()
 
 
 def fancy_timedelta(delta):

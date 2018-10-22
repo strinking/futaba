@@ -78,9 +78,9 @@ class GuildsModel:
         current_guild_ids = frozenset(guild.id for guild in bot.guilds)
 
         logger.info(
-            "Migrating guilds: %r -> %r",
-            list(migrated_guild_ids),
-            list(current_guild_ids),
+            "Migrating guilds: [%s] -> [%s]",
+            ", ".join(map(str, migrated_guild_ids)),
+            ", ".join(map(str, current_guild_ids)),
         )
         logger.debug("Running insertions...")
         with self.sql.transaction():

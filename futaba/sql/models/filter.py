@@ -23,7 +23,7 @@ from collections import defaultdict
 
 from sqlalchemy import and_
 from sqlalchemy import BigInteger, Boolean, Column, Enum, LargeBinary, Table, Unicode
-from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy import CheckConstraint, ForeignKey, UniqueConstraint
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import select
 
@@ -81,6 +81,9 @@ class FilterModel:
             Column("location_type", Enum(LocationType)),
             Column("filter_type", Enum(FilterType)),
             Column("text", Unicode),
+            CheckConstraint(
+                "location_type != 'USER'", name="filter_location_in_guild_check"
+            ),
             UniqueConstraint("location_id", "location_type", "text", name="filter_uq"),
         )
         self.tb_content_filters = Table(

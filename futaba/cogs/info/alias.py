@@ -29,7 +29,7 @@ from futaba.exceptions import CommandFailed, SendHelp
 from futaba.str_builder import StringBuilder
 from futaba.utils import fancy_timedelta, user_discrim
 
-logger = logging.getLogger(__package__)
+logger = logging.getLogger(__name__)
 
 __all__ = ["Alias"]
 

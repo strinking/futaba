@@ -23,6 +23,8 @@ from toml import TomlDecodeError
 from . import client
 from .config import InvalidConfigError, load_config
 
+# TODO replace sql "storage" classes with a different name and form
+
 LOG_FILE = "futaba.log"
 LOG_FILE_MODE = "w"
 LOG_FORMAT = "[%(levelname)s] %(asctime)s %(name)s: %(message)s"
@@ -66,7 +68,7 @@ if __name__ == "__main__":
     log_hndl.setFormatter(log_fmtr)
 
     log_level = logging.DEBUG if args.debug else logging.INFO
-    logger = logging.getLogger(__package__)
+    logger = logging.getLogger(__name__)
     logger.setLevel(level=log_level)
     logger.addHandler(log_hndl)
 

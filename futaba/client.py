@@ -16,15 +16,17 @@ Holds the custom discord client
 
 import asyncio
 import logging
-import datetime
 import os
 import sys
 import traceback
+from datetime import datetime
+from io import BytesIO
 
 import discord
 from discord.ext import commands
 
 from .cogs.journal import Journal
+from .cogs.navi import Navi
 from .cogs.reloader import Reloader
 from .config import Configuration
 from .converters.annotations import ANNOTATIONS
@@ -47,7 +49,7 @@ class Bot(commands.AutoShardedBot):
 
     def __init__(self, config: Configuration):
         self.config = config
-        self.start_time = datetime.datetime.utcnow()
+        self.start_time = datetime.utcnow()
         self.journal_cog = None
         self.sql = SqlHandler(config.database_url)
 
@@ -75,7 +77,7 @@ class Bot(commands.AutoShardedBot):
     def uptime(self):
         """ Gets the bot's uptime """
 
-        return datetime.datetime.utcnow() - self.start_time
+        return datetime.utcnow() - self.start_time
 
     def run_with_token(self):
         """
@@ -93,14 +95,16 @@ class Bot(commands.AutoShardedBot):
 
     async def on_ready(self):
         """
-        When bot has fully logged on
-        Log bots username and ID
-        Then load cogs
+        After the bot has logged in and filled up its cache.
+        Sets up the bot's state, loads cogs then prints a 'ready' message.
         """
 
         # Setup mandatory cogs
         self.add_cog(Journal(self))
         logger.info("Loaded mandatory cog: Journal")
+
+        self.add_cog(Navi(self))
+        logger.info("Loaded mandatory cog: Navi")
 
         self.add_cog(Reloader(self))
         logger.info("Loaded mandatory cog: Reloader")
@@ -157,6 +161,18 @@ class Bot(commands.AutoShardedBot):
         """
 
         return Broadcaster(self.journal_cog.router, root)
+
+    def add_tasks(self, *tasks):
+        logger.info("Adding tasks to database and to asyncio event loop")
+        assert tasks
+
+        with self.sql.transaction():
+            for task in tasks:
+                self.sql.navi.add_task(task)
+
+        # Put on event loop only after the database has successfully committed
+        for task in tasks:
+            task.execute_later()
 
     async def on_guild_join(self, guild):
         """
@@ -269,12 +285,28 @@ class Bot(commands.AutoShardedBot):
             anger_emoji = (
                 self.get_emoji(self.config.anger_emoji_id) or "\N{ANGER SYMBOL}"
             )
-            traceback_lines = traceback.format_exception(
-                type(error), error, error.__traceback__, limit=1
+            full_traceback = "\n".join(
+                traceback.format_exception(type(error), error, error.__traceback__)
             )
-            traceback_lines.insert(0, "```py")
-            traceback_lines.append("```")
+
+            # Output exception information
             embed = discord.Embed(colour=discord.Colour.red())
             embed.title = f"{anger_emoji} Unexpected error occurred!"
-            embed.description = "\n".join(traceback_lines)
-            await asyncio.gather(ctx.send(embed=embed), Reactions.FAIL.add(ctx.message))
+
+            if len(full_traceback) > 1700:
+                embed.description = (
+                    "Error output too long, see attached file. "
+                    "\N{WHITE UP POINTING BACKHAND INDEX}"
+                )
+                unix_time = int(datetime.now().timestamp())
+                data = BytesIO(full_traceback.encode("utf-8"))
+                file = discord.File(
+                    fp=data, filename=f"futaba-traceback-{unix_time}.log"
+                )
+            else:
+                embed.description = f"```py\n{full_traceback}\n```"
+                file = None
+
+            await asyncio.gather(
+                ctx.send(embed=embed, file=file), Reactions.FAIL.add(ctx.message)
+            )

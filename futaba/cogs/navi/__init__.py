@@ -1,5 +1,5 @@
 #
-# __init__.py
+# cogs/navi/__init__.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
@@ -10,26 +10,13 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-"""
-futaba - A Discord Mod bot for the Programming server
-"""
+from .core import Navi
 
-from . import (
-    client,
-    config,
-    converters,
-    download,
-    emojis,
-    enums,
-    exceptions,
-    journal,
-    navi,
-    permissions,
-    similar,
-    sql,
-    str_builder,
-    unicode,
-    utils,
-)
 
-__version__ = "0.2.0"
+def setup(bot):
+    """
+    Setup for bot to add cog
+    """
+
+    cog = Navi(bot)
+    bot.add_cog(cog)

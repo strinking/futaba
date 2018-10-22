@@ -38,7 +38,7 @@ from futaba.utils import (
 )
 from futaba.unicode import UNICODE_CATEGORY_NAME
 
-logger = logging.getLogger(__package__)
+logger = logging.getLogger(__name__)
 
 __all__ = ["Info"]
 

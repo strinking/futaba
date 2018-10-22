@@ -33,7 +33,7 @@ __all__ = ["Reloader"]
 class Reloader:
     __slots__ = ("bot", "journal")
 
-    MANDATORY_COGS = ("journal", "reloader")
+    MANDATORY_COGS = ("journal", "navi", "reloader")
 
     def __init__(self, bot):
         self.bot = bot

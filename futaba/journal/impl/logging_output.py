@@ -32,4 +32,8 @@ class LoggingOutputListener(Listener):
         level = attributes.get("level", "info")
         assert level in ("error", "warning", "info", "debug")
         log = getattr(logger, level)
-        log("'%s' (%d) %s: %s", guild.name, guild.id, path, content)
+
+        if guild is None:
+            log("[no guild] %s: %s", path, content)
+        else:
+            log("'%s' (%d) %s: %s", guild.name, guild.id, path, content)
