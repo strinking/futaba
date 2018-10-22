@@ -113,7 +113,9 @@ class Navi:
             )
         )
 
-    @commands.command(name="reminders", aliases=["reminds", "lreminder", "lremind", "alarms"])
+    @commands.command(
+        name="reminders", aliases=["reminds", "lreminder", "lremind", "alarms"]
+    )
     async def remind_list(self, ctx):
         """ Lists all reminders for the current user. """
 
@@ -135,6 +137,3 @@ class Navi:
             embed.description = f"No reminders for {ctx.author.mention}"
 
         await ctx.send(embed=embed)
-
-    # TODO: reminders command
-    # TODO: limit total reminders
