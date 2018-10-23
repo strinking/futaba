@@ -568,14 +568,14 @@ class Info:
         embed.set_thumbnail(url=ctx.guild.icon_url)
 
         descr = StringBuilder()
-        descr.writeln(f"\N{MAN} **Members:** {len(ctx.guild.members)}")
-        descr.writeln(f"\N{MILITARY MEDAL} **Roles:** {len(ctx.guild.roles)}")
+        descr.writeln(f"\N{MAN} **Members:** {len(ctx.guild.members):,}")
+        descr.writeln(f"\N{MILITARY MEDAL} **Roles:** {len(ctx.guild.roles):,}")
         descr.writeln(
-            f"\N{BAR CHART} **Channel categories:** {len(ctx.guild.categories)}"
+            f"\N{BAR CHART} **Channel categories:** {len(ctx.guild.categories):,}"
         )
-        descr.writeln(f"\N{MEMO} **Text Channels:** {len(ctx.guild.text_channels)}")
+        descr.writeln(f"\N{MEMO} **Text Channels:** {len(ctx.guild.text_channels):,}")
         descr.writeln(
-            f"\N{STUDIO MICROPHONE} **Voice Channels:** {len(ctx.guild.voice_channels)}"
+            f"\N{STUDIO MICROPHONE} **Voice Channels:** {len(ctx.guild.voice_channels):,}"
         )
         descr.writeln(
             f"\N{CLOCK FACE TWO OCLOCK} **Age:** {fancy_timedelta(ctx.guild.created_at)}"
@@ -598,11 +598,11 @@ class Info:
                 moderators += 1
 
         if bots:
-            descr.writeln(f"\N{ROBOT FACE} **Bots:** {bots}")
+            descr.writeln(f"\N{ROBOT FACE} **Bots:** {bots:,}")
         if moderators:
-            descr.writeln(f"\N{CONSTRUCTION WORKER} **Moderators:** {moderators}")
+            descr.writeln(f"\N{CONSTRUCTION WORKER} **Moderators:** {moderators:,}")
         if admins:
-            descr.writeln(f"\N{POLICE OFFICER} **Administrators:** {admins}")
+            descr.writeln(f"\N{POLICE OFFICER} **Administrators:** {admins:,}")
         descr.writeln(f"\N{CROWN} **Owner:** {ctx.guild.owner.mention}")
         embed.description = str(descr)
 
