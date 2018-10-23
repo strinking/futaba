@@ -44,7 +44,10 @@ class Reloader:
             cogname = f"{COGS_DIR}{cogname}"
         self.bot.load_extension(cogname)
 
-    def unload_cog(self, cogname):
+    def unload_cog(self, cogname, check_missing=True):
+        if check_missing:
+            if cogname not in self.bot.cogs:
+                raise KeyError(f"No such cog: {cogname}")
         if not cogname.startswith(COGS_DIR):
             cogname = f"{COGS_DIR}{cogname}"
         self.bot.unload_extension(cogname)
@@ -184,7 +187,7 @@ class Reloader:
             raise CommandFailed(embed=embed)
 
         try:
-            self.unload_cog(cogname)
+            self.unload_cog(cogname, check_missing=False)
             self.load_cog(cogname)
         except Exception as error:
             logger.error("Reloading cog %s failed", cogname, exc_info=error)
