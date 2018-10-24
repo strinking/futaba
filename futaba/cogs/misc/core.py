@@ -95,7 +95,12 @@ class Miscellaneous:
 
         emoji = random.choice(self.bot.emojis)
         await ctx.send(content=str(emoji))
-        content = f"Sent random emoji {emoji} to {ctx.channel.mention}."
+        if isinstance(ctx.channel, discord.DMChannel):
+            chan_name = ctx.channel.recipient.name
+        else:
+            chan_name = ctx.channel.mention
+
+        content = f"Sent random emoji {emoji} to {chan_name}."
         self.journal.send(
             "emoji/random",
             ctx.guild,
