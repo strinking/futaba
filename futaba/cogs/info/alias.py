@@ -198,7 +198,7 @@ class Alias:
         for i, file in enumerate(files, 1):
             await ctx.send(content=f"#{i}", file=file)
 
-    @commands.group(name="alts")
+    @commands.group(name="alts", aliases=["alt", "alias"])
     @commands.guild_only()
     async def alts(self, ctx):
         """ Manages the list of suspected alternate accounts. """
@@ -206,32 +206,23 @@ class Alias:
         if ctx.invoked_subcommand is None:
             raise SendHelp()
 
-    @alts.command(name="add")
+    @alts.command(name="add", aliases=["append", "extend", "new", "register"])
     @commands.guild_only()
     @permissions.check_mod()
-    async def add_alt(self, ctx, first_name: str, second_name: str):
+    async def add_alt(self, ctx, first_user: UserConv, second_user: UserConv):
         """ Add a suspected alternate account for a user. """
 
         logger.info(
-            "Adding suspected alternate account pair for '%s' and '%s'",
-            first_name,
-            second_name,
+            "Adding suspected alternate account pair for '%s' (%d) and '%s' (%d)",
+            first_user.name,
+            first_user.id,
+            second_user.name,
+            second_user.id,
         )
 
-        first_user, second_user = await asyncio.gather(
-            self.bot.find_user(first_name, ctx.guild),
-            self.bot.find_user(second_name, ctx.guild),
-        )
-
-        embed = discord.Embed(colour=discord.Colour.red())
-        content = StringBuilder()
-
-        if first_user is None:
-            content.writeln(f"No user information found for `{first_name}`")
-        if second_user is None:
-            content.writeln(f"No user information found for `{second_name}`")
-        if content:
-            embed.description = str(content)
+        if first_user == second_user:
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.description = "Both users are the same person!"
             raise CommandFailed(embed=embed)
 
         with self.bot.sql.transaction():
