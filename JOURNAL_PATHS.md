@@ -28,6 +28,17 @@ Additionally, channel filters have the `channel: discord.TextChannel` attribute.
 * `/filter/channel/new/jail`
 * `/filter/channel/remove`
 
+Filter violations:
+Signifies a violation of a text filter. Has attributes `filter_type: FilterType`, `escaped_content: str`.
+* `/filter/text/flag`
+* `/filter/text/block`
+* `/filter/text/jail`
+
+Signifies any violation of a file filter. Has attributes `filter_type: FilterType`, `url: str`.
+* `/filter/file/flag`
+* `/filter/file/block`
+* `/filter/file/jail`
+
 Managing user filter immunity. Has attributes: `member: discord.Member`, `cause: discord.Member`.
 * `/filter/immunity/new` - Adds a user to the immune list.
 * `/filter/immunity/remove` - Removes a user from the immune list.
