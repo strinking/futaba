@@ -139,7 +139,7 @@ class Filtering:
         """
 
         await check_hashsums(hashsum)
-        content = f"Added content flag filter for `{hashsum}`"
+        content = f"Added content flag filter for `{hashsum}`: {description}"
         self.journal.send(
             "content/new/flag",
             ctx.guild,
@@ -170,7 +170,7 @@ class Filtering:
         """
 
         await check_hashsums(hashsum)
-        content = f"Added content block filter for `{hashsum}`"
+        content = f"Added content block filter for `{hashsum}`: {description}"
         self.journal.send("content/new/block", ctx.guild, content, icon="filter")
         await add_content_filter(
             self.bot,
@@ -193,7 +193,7 @@ class Filtering:
         """
 
         await check_hashsums(hashsum)
-        content = f"Added content jail filter for `{hashsum}`"
+        content = f"Added content jail filter for `{hashsum}`: {description}"
         self.journal.send("content/new/jail", ctx.guild, content, icon="filter")
         await add_content_filter(
             self.bot,
