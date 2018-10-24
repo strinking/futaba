@@ -39,19 +39,22 @@ from .exceptions import (
 )
 from .journal import Broadcaster, LoggingOutputListener
 from .sql import SqlHandler
-from .utils import plural
+from .str_builder import StringBuilder
+from .unicode import unicode_repr
+from .utils import plural, user_discrim
 
 logger = logging.getLogger(__name__)
 
 
 class Bot(commands.AutoShardedBot):
-    __slots__ = ("config", "start_time", "journal_cog", "sql")
+    __slots__ = ("config", "start_time", "journal_cog", "sql", "error_channel")
 
     def __init__(self, config: Configuration):
         self.config = config
         self.start_time = datetime.utcnow()
         self.journal_cog = None
         self.sql = SqlHandler(config.database_url)
+        self.error_channel = None
 
         super().__init__(
             command_prefix=self.my_command_prefix,
@@ -98,6 +101,12 @@ class Bot(commands.AutoShardedBot):
         After the bot has logged in and filled up its cache.
         Sets up the bot's state, loads cogs then prints a 'ready' message.
         """
+
+        # Get error channel
+        if self.config.error_channel_id:
+            channel = self.get_channel(self.config.error_channel_id)
+            if isinstance(channel, discord.TextChannel):
+                self.error_channel = channel
 
         # Setup mandatory cogs
         self.add_cog(Journal(self))
@@ -285,28 +294,100 @@ class Bot(commands.AutoShardedBot):
             anger_emoji = (
                 self.get_emoji(self.config.anger_emoji_id) or "\N{ANGER SYMBOL}"
             )
-            full_traceback = "\n".join(
+            traceback_str = "\n".join(
                 traceback.format_exception(type(error), error, error.__traceback__)
             )
+            unix_time = int(datetime.now().timestamp())
+            traceback_filename = f"futaba-traceback-{unix_time}.log"
+
+            # Send traceback to error channel, if it exists
+            if self.error_channel is not None:
+                await self.upload_traceback(ctx, traceback_str, traceback_filename)
 
             # Output exception information
             embed = discord.Embed(colour=discord.Colour.red())
             embed.title = f"{anger_emoji} Unexpected error occurred!"
 
-            if len(full_traceback) > 1700:
+            if len(traceback_str) > 1700:
                 embed.description = (
                     "Error output too long, see attached file. "
                     "\N{WHITE UP POINTING BACKHAND INDEX}"
                 )
-                unix_time = int(datetime.now().timestamp())
-                data = BytesIO(full_traceback.encode("utf-8"))
-                file = discord.File(
-                    fp=data, filename=f"futaba-traceback-{unix_time}.log"
-                )
+                data = BytesIO(traceback_str.encode("utf-8"))
+                file = discord.File(fp=data, filename=traceback_filename)
             else:
-                embed.description = f"```py\n{full_traceback}\n```"
+                embed.description = f"```py\n{traceback_str}\n```"
                 file = None
 
             await asyncio.gather(
                 ctx.send(embed=embed, file=file), Reactions.FAIL.add(ctx.message)
             )
+
+    async def upload_traceback(self, ctx, traceback_str, traceback_filename):
+        logger.info(
+            "Uploading '%s' to #%s (%d)",
+            traceback_filename,
+            self.error_channel.name,
+            self.error_channel.id,
+        )
+
+        # Write context information to traceback
+        full_tb = StringBuilder()
+        full_tb.writeln(f"Timestamp: {datetime.now()}")
+        full_tb.writeln(f"User: {user_discrim(ctx.author)} ({ctx.author.id})")
+        full_tb.writeln(f"Command: {ctx.command}")
+        full_tb.writeln(f"  Signature: {ctx.command.signature}")
+        full_tb.writeln(f"  Prefix: {ctx.prefix}")
+        full_tb.writeln(f"  Cog name: {ctx.command.cog_name}")
+        full_tb.writeln(f"Message: ({ctx.message.id})")
+        full_tb.writeln(f"  Content: {unicode_repr(ctx.message.content)}")
+        full_tb.writeln("  Arguments:")
+        for arg in ctx.args:
+            full_tb.writeln(f"    {arg!r}")
+        if not ctx.args:
+            full_tb.writeln("    (none)")
+
+        full_tb.writeln("  Keyword arguments:")
+        for key, arg in ctx.kwargs.items():
+            full_tb.writeln(f"    {key} = {arg!r}")
+        if not ctx.kwargs:
+            full_tb.writeln("    (none)")
+
+        if isinstance(ctx.channel, discord.DMChannel):
+            full_tb.writeln(f"Channel: DM ({ctx.channel.id})")
+        elif isinstance(ctx.author, discord.Member):
+            full_tb.writeln(f"Guild: {ctx.guild.name} ({ctx.guild.id})")
+            full_tb.writeln(f"Channel: #{ctx.channel.name} ({ctx.channel.id})")
+            full_tb.writeln("Permissions:")
+            perms = self.error_channel.permissions_for(ctx.author)
+            for perm, value in perms:
+                full_tb.writeln(f"  {'HAS  ' if value else 'LACKS'} {perm}")
+
+            full_tb.writeln("Permission overwrites:")
+            perms = self.error_channel.overwrites_for(ctx.author)
+            for perm, value in perms:
+                if value is None:
+                    setting = "N/A  "
+                elif value is True:
+                    setting = "ALLOW"
+                elif value is False:
+                    setting = "DENY "
+                else:
+                    raise ValueError(f"Invalid permission value: {value!r}")
+                full_tb.writeln(f"  {setting} {perm}")
+
+            full_tb.writeln(f"Roles:")
+            for role in ctx.author.roles:
+                perms = role.permissions.value
+                full_tb.writeln(f"  {role.name} ({role.id}): ")
+                full_tb.writeln(f"    created at: {role.created_at}")
+                full_tb.writeln(f"    members: {len(role.members)}")
+                full_tb.writeln(f"    permissions: 0x{perms:016x}")
+
+        # Write actual traceback
+        full_tb.writeln()
+        full_tb.writeln(traceback_str)
+
+        # Upload traceback to error channel
+        file = discord.File(fp=full_tb.bytes_io(), filename=traceback_filename)
+        await self.error_channel.send(file=file)
