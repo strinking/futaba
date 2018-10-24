@@ -9,6 +9,10 @@ owners = ["98633956773093376", "130012001236811776"]
 # Default bot command prefix
 prefix = "!"
 
+# The tracebacks of any unexpected errors are uploaded to this file.
+# Set to "0" to disable
+error-channel-id = "488543452305555456"
+
 [moderation]
 # Maximum number of messages that may be specified
 # when doing a bulk message cleanup

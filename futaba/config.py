@@ -28,6 +28,7 @@ Configuration = namedtuple(
         "token",
         "owner_ids",
         "default_prefix",
+        "error_channel_id",
         "max_cleanup_messages",
         "anger_emoji_id",
         "python_emoji_id",
@@ -58,6 +59,11 @@ def load_config(path):
     config_bot = _get(config, "bot")
     token = _get(config_bot, "token", "bot")
     prefix = _get(config_bot, "prefix", "bot")
+
+    try:
+        error_channel_id = int(_get(config_bot, "error-channel-id", "bot"))
+    except ValueError:
+        raise InvalidConfigError("Channel IDs must be integers", config)
 
     try:
         owner_ids = [int(id) for id in _get(config_bot, "owners", "bot")]
@@ -93,6 +99,7 @@ def load_config(path):
         token=token,
         owner_ids=owner_ids,
         default_prefix=prefix,
+        error_channel_id=error_channel_id,
         max_cleanup_messages=max_cleanup_messages,
         anger_emoji_id=anger_emoji_id,
         python_emoji_id=python_emoji_id,
