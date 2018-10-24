@@ -14,6 +14,7 @@
 Cog for loading, unloading, or reloading other cogs.
 """
 
+import importlib
 import logging
 
 import discord
@@ -45,11 +46,11 @@ class Reloader:
         self.bot.load_extension(cogname)
 
     def unload_cog(self, cogname, check_missing=True):
-        if check_missing:
-            if cogname not in self.bot.cogs:
-                raise KeyError(f"No such cog: {cogname}")
         if not cogname.startswith(COGS_DIR):
             cogname = f"{COGS_DIR}{cogname}"
+        if check_missing:
+            if importlib.util.find_spec(cogname) is None:
+                raise KeyError(f"No such cog: {cogname}")
         self.bot.unload_extension(cogname)
 
     @commands.command(name="load", aliases=["l"])
@@ -135,6 +136,9 @@ class Reloader:
             self.unload_cog(cogname)
         except Exception as error:
             logger.error("Unloading cog %s failed", cogname, exc_info=error)
+            if isinstance(error, KeyError):
+                # For no such cog errors
+                (error,) = error.args
             embed = discord.Embed(
                 colour=discord.Colour.red(), description=f"```\n{error}\n```"
             )
