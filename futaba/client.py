@@ -45,13 +45,14 @@ logger = logging.getLogger(__name__)
 
 
 class Bot(commands.AutoShardedBot):
-    __slots__ = ("config", "start_time", "journal_cog", "sql")
+    __slots__ = ("config", "start_time", "journal_cog", "sql", "error_channel")
 
     def __init__(self, config: Configuration):
         self.config = config
         self.start_time = datetime.utcnow()
         self.journal_cog = None
         self.sql = SqlHandler(config.database_url)
+        self.error_channel = None
 
         super().__init__(
             command_prefix=self.my_command_prefix,
@@ -98,6 +99,14 @@ class Bot(commands.AutoShardedBot):
         After the bot has logged in and filled up its cache.
         Sets up the bot's state, loads cogs then prints a 'ready' message.
         """
+
+        # Get error channel
+        if self.config.error_channel_id:
+            for channel in self.get_all_channels():
+                if isinstance(channel, discord.TextChannel):
+                    if channel.id == self.config.error_channel_id:
+                        self.error_channel = channel
+                        break
 
         # Setup mandatory cogs
         self.add_cog(Journal(self))
