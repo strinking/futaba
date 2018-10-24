@@ -130,7 +130,7 @@ class Filtering:
     @ffilter.command(name="flag", aliases=["warn", "alert", "notice"])
     @commands.guild_only()
     @permissions.check_mod()
-    async def ffilter_flag(self, ctx, hashsum: str, description: str):
+    async def ffilter_flag(self, ctx, hashsum: str, *, description: str):
         """
         Adds the given SHA1 hashes to the guild's flagging filter, which notifies staff when posted.
         It does not notify the user or delete the message.
@@ -139,7 +139,7 @@ class Filtering:
         """
 
         await check_hashsums(hashsum)
-        content = f"Added content flag filter for `{hashsum}`"
+        content = f"Added content flag filter for `{hashsum}`: {description}"
         self.journal.send(
             "content/new/flag",
             ctx.guild,
@@ -161,7 +161,7 @@ class Filtering:
     @ffilter.command(name="block", aliases=["deny", "autoremove"])
     @commands.guild_only()
     @permissions.check_mod()
-    async def ffilter_block(self, ctx, hashsum: str, description: str):
+    async def ffilter_block(self, ctx, hashsum: str, *, description: str):
         """
         Adds the given SHA1 hashes to the guild's blocking filter, automatically deleting any messages.
         It does not notify the user or delete the message.
@@ -170,7 +170,7 @@ class Filtering:
         """
 
         await check_hashsums(hashsum)
-        content = f"Added content block filter for `{hashsum}`"
+        content = f"Added content block filter for `{hashsum}`: {description}"
         self.journal.send("content/new/block", ctx.guild, content, icon="filter")
         await add_content_filter(
             self.bot,
@@ -184,7 +184,7 @@ class Filtering:
     @ffilter.command(name="jail", aliases=["dunce", "punish", "mute"])
     @commands.guild_only()
     @permissions.check_mod()
-    async def ffilter_jail(self, ctx, hashsum: str, description: str):
+    async def ffilter_jail(self, ctx, hashsum: str, *, description: str):
         """
         Adds the given SHA1 hashes to the guild's jailing filter, which will automatically jail users.
         Like the blocking filter, it will also delete the message and send the user a warning.
@@ -193,7 +193,7 @@ class Filtering:
         """
 
         await check_hashsums(hashsum)
-        content = f"Added content jail filter for `{hashsum}`"
+        content = f"Added content jail filter for `{hashsum}`: {description}"
         self.journal.send("content/new/jail", ctx.guild, content, icon="filter")
         await add_content_filter(
             self.bot,
