@@ -10,7 +10,7 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-from io import StringIO
+from io import BytesIO, StringIO
 
 __all__ = ["StringBuilder"]
 
@@ -39,8 +39,17 @@ class StringBuilder:
         self.buffer.seek(0)
         self.buffer.truncate(0)
 
+    def bytes(self):
+        return str(self).encode("utf-8")
+
+    def bytes_io(self):
+        return BytesIO(self.bytes())
+
     def __str__(self):
         return self.buffer.getvalue()
+
+    def __repr__(self):
+        return f"<StringBuilder ({len(self)} chars) at 0x{id(self):08x}>"
 
     def __bool__(self):
         return bool(len(self))
