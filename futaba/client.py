@@ -104,11 +104,9 @@ class Bot(commands.AutoShardedBot):
 
         # Get error channel
         if self.config.error_channel_id:
-            for channel in self.get_all_channels():
-                if isinstance(channel, discord.TextChannel):
-                    if channel.id == self.config.error_channel_id:
-                        self.error_channel = channel
-                        break
+            channel = self.get_channel(self.config.error_channel_id)
+            if isinstance(channel, discord.TextChannel):
+                self.error_channel = channel
 
         # Setup mandatory cogs
         self.add_cog(Journal(self))
