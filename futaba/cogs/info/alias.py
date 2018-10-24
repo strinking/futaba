@@ -14,7 +14,6 @@
 Tracking for aliases of members, storing previous usernames, nicknames, and avatars.
 """
 
-import asyncio
 import logging
 import re
 from datetime import datetime
