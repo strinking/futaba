@@ -310,12 +310,7 @@ class Info:
 
         for i, content in enumerate(contents):
             embed = discord.Embed(description=content)
-            page = f"Page {i + 1}/{len(contents)}"
-            if i == 0:
-                embed.set_footer(text=page)
-            else:
-                embed.set_footer(text=f"{page} Roles in {ctx.guild.name}")
-
+            embed.set_footer(text=f"Page {i + 1}/{len(contents)}")
             await ctx.send(embed=embed)
 
     @staticmethod
