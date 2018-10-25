@@ -49,7 +49,7 @@ class Navi:
                 )
 
     @commands.command(name="remind", aliases=["reminder", "remindme", "alarm"])
-    async def remind_me(self, ctx, when: str, message: str):
+    async def remind_me(self, ctx, when: str, *, message: str):
         """ Request the bot remind you in the given time. """
 
         timestamp = dateparser.parse(when)
