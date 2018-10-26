@@ -59,6 +59,8 @@ class Tracker:
         "journal",
         "new_messages",
         "edited_messages",
+        "members_joined",
+        "members_left",
         "reactions",
         "typing",
     )
@@ -68,6 +70,8 @@ class Tracker:
         self.journal = bot.get_broadcaster("/tracking")
         self.new_messages = deque(maxlen=20)
         self.edited_messages = deque(maxlen=20)
+        self.members_joined = deque(maxlen=20)
+        self.members_left = deque(maxlen=20)
         self.reactions = deque(maxlen=20)
         self.typing = deque(maxlen=5)
 
@@ -337,6 +341,11 @@ class Tracker:
         )
 
     async def on_member_join(self, member):
+        if member in self.members_joined:
+            return
+        else:
+            self.members_joined.append(member)
+
         logger.debug(
             "Member %s (%d) joined '%s' (%d)",
             member.name,
@@ -402,6 +411,11 @@ class Tracker:
         )
 
     async def on_member_remove(self, member):
+        if member in self.members_left:
+            return
+        else:
+            self.members_left.append(member)
+
         logger.debug(
             "Member %s (%d) left '%s' (%d)",
             member.name,
