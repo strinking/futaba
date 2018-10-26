@@ -19,6 +19,7 @@ import logging
 from collections import deque, namedtuple
 from datetime import datetime, timedelta
 
+import discord
 from discord import AuditLogAction
 
 from futaba.enums import MemberLeaveType
@@ -59,6 +60,7 @@ class Tracker:
         "journal",
         "new_messages",
         "edited_messages",
+        "deleted_messages",
         "members_joined",
         "members_left",
         "reactions",
@@ -70,6 +72,7 @@ class Tracker:
         self.journal = bot.get_broadcaster("/tracking")
         self.new_messages = deque(maxlen=20)
         self.edited_messages = deque(maxlen=20)
+        self.deleted_messages = deque(maxlen=20)
         self.members_joined = deque(maxlen=20)
         self.members_left = deque(maxlen=20)
         self.reactions = deque(maxlen=20)
@@ -111,6 +114,24 @@ class Tracker:
             when=when,
         )
 
+    @staticmethod
+    def build_embed(message):
+        embed = discord.Embed(description=message.content)
+        embed.set_author(
+            name=message.author.display_name, icon_url=message.author.avatar_url
+        )
+        embed.timestamp = message.edited_at or message.created_at
+
+        if message.attachments:
+            embed.add_field(
+                name="Attachments",
+                value="\n".join(attach.url for attach in message.attachments),
+            )
+        if message.embeds:
+            embed.add_field(name="Embeds", value=str(len(message.embeds)))
+
+        return embed
+
     async def on_message(self, message):
         if message in self.new_messages:
             return
@@ -138,6 +159,14 @@ class Tracker:
             message.jump_url,
             icon="previous",
             message=message,
+        )
+        self.journal.send(
+            "full/message/new",
+            message.guild,
+            message.jump_url,
+            icon="message",
+            message=message,
+            embed=self.build_embed(message),
         )
 
     async def on_message_edit(self, before, after):
@@ -175,6 +204,15 @@ class Tracker:
             before=before,
             after=after,
         )
+        self.journal.send(
+            "full/message/edit",
+            after.guild,
+            after.jump_url,
+            icon="edit",
+            before=before,
+            after=after,
+            embed=self.build_embed(after),
+        )
 
     async def get_deletion_reason(self, message, timestamp):
         async for entry in message.guild.audit_logs(
@@ -202,6 +240,11 @@ class Tracker:
         )
 
     async def on_message_delete(self, message):
+        if message in self.deleted_messages:
+            return
+        else:
+            self.deleted_messages.append(message)
+
         if message.guild is None:
             return
 
@@ -233,6 +276,14 @@ class Tracker:
             icon="previous",
             message=message,
             cause=cause,
+        )
+        self.journal.send(
+            "full/message/delete",
+            message.guild,
+            message.jump_url,
+            icon="delete",
+            message=message,
+            embed=self.build_embed(message),
         )
 
     async def on_reaction_add(self, reaction, user):
