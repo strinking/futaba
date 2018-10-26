@@ -19,6 +19,7 @@ import logging
 from collections import deque, namedtuple
 from datetime import datetime, timedelta
 
+import discord
 from discord import AuditLogAction
 
 from futaba.enums import MemberLeaveType
@@ -111,6 +112,22 @@ class Tracker:
             when=when,
         )
 
+    @staticmethod
+    def build_embed(message):
+        embed = discord.Embed(description=message.content)
+        embed.set_author(name=message.author.display_name, icon_url=message.author.avatar_url)
+        embed.timestamp = message.edited_at or message.created_at
+
+        if message.attachments:
+            embed.add_field(
+                name='Attachments',
+                value='\n'.join(attach.url for attach in message.attachments)
+            )
+        if message.embeds:
+            embed.add_field(name='Embeds', value=str(len(message.embeds)))
+
+        return embed
+
     async def on_message(self, message):
         if message in self.new_messages:
             return
@@ -138,6 +155,14 @@ class Tracker:
             message.jump_url,
             icon="previous",
             message=message,
+        )
+        self.journal.send(
+            "full/message/new",
+            message.guild,
+            message.jump_url,
+            icon="message",
+            message=message,
+            embed=self.build_embed(message),
         )
 
     async def on_message_edit(self, before, after):
@@ -174,6 +199,15 @@ class Tracker:
             icon="previous",
             before=before,
             after=after,
+        )
+        self.journal.send(
+            "full/message/edit",
+            after.guild,
+            after.jump_url,
+            icon="edit",
+            before=before,
+            after=after,
+            embed=self.build_embed(after),
         )
 
     async def get_deletion_reason(self, message, timestamp):
@@ -233,6 +267,14 @@ class Tracker:
             icon="previous",
             message=message,
             cause=cause,
+        )
+        self.journal.send(
+            "full/message/delete",
+            message.guild,
+            message.jump_url,
+            icon="delete",
+            message=message,
+            embed=self.build_embed(message),
         )
 
     async def on_reaction_add(self, reaction, user):

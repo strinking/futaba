@@ -83,10 +83,13 @@ All attributes (will) have `member: discord.Member`, `reason: Optional[str]`, `c
 * `/tracking/typing` - Typing event. Attributes: `channel: discord.Messageable`, `user: discord.User`, `when: datetime`
 * `/tracking/message/new` - A new message was sent. Attributes: `message: discord.Message`
 * `/tracking/jump/message/new` - Jump link for new message. Same attributes.
+* `/tracking/full/message/new` - Full message content for new message, with jump link. Same attributes.
 * `/tracking/message/edit` - A message was edited. Attributes: `before: discord.Message`, `after: discord.Message`
 * `/tracking/jump/message/edit` - Jump link for edited message. Same attributes.
+* `/tracking/full/message/edit` - Full message content for edited message, with jump link. Same attributes.
 * `/tracking/message/delete` - A message was deleted. Attributes: `message: discord.Message`, `cause: MessageDeletionReason`
 * `/tracking/jump/message/delete` - Jump link for deleted message. Same attributes.
+* `/tracking/full/message/delete` - Full message content for deleted message, with jump link. Same attributes.
 * `/tracking/reaction/add` - A reaction was added to a message. Attributes: `reaction: discord.Reaction`, `user: discord.User`
 * `/tracking/jump/reaction/add` - Jump link for reacted message. Attributes: `message: discord.Message`
 * `/tracking/reaction/remove` - A reaction was removed to a message. Attributes: `reaction: discord.Reaction`, `user: discord.User`
