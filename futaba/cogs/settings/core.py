@@ -160,9 +160,10 @@ class Settings:
             ctx.guild.id,
         )
 
-        roles = self.bot.sql.settings.get_special_roles(ctx.guild)
-        mention = lambda role: getattr(role, "mention", "(none)")
+        def mention(role):
+            return getattr(role, "mention", "(none)")
 
+        roles = self.bot.sql.settings.get_special_roles(ctx.guild)
         embed = discord.Embed(colour=discord.Colour.dark_teal())
         embed.description = "\n".join(
             (
