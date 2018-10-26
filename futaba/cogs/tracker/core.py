@@ -117,16 +117,18 @@ class Tracker:
     @staticmethod
     def build_embed(message):
         embed = discord.Embed(description=message.content)
-        embed.set_author(name=message.author.display_name, icon_url=message.author.avatar_url)
+        embed.set_author(
+            name=message.author.display_name, icon_url=message.author.avatar_url
+        )
         embed.timestamp = message.edited_at or message.created_at
 
         if message.attachments:
             embed.add_field(
-                name='Attachments',
-                value='\n'.join(attach.url for attach in message.attachments)
+                name="Attachments",
+                value="\n".join(attach.url for attach in message.attachments),
             )
         if message.embeds:
-            embed.add_field(name='Embeds', value=str(len(message.embeds)))
+            embed.add_field(name="Embeds", value=str(len(message.embeds)))
 
         return embed
 
