@@ -60,6 +60,7 @@ class Tracker:
         "journal",
         "new_messages",
         "edited_messages",
+        "deleted_messages",
         "members_joined",
         "members_left",
         "reactions",
@@ -71,6 +72,7 @@ class Tracker:
         self.journal = bot.get_broadcaster("/tracking")
         self.new_messages = deque(maxlen=20)
         self.edited_messages = deque(maxlen=20)
+        self.deleted_messages = deque(maxlen=20)
         self.members_joined = deque(maxlen=20)
         self.members_left = deque(maxlen=20)
         self.reactions = deque(maxlen=20)
@@ -236,6 +238,11 @@ class Tracker:
         )
 
     async def on_message_delete(self, message):
+        if message in self.deleted_messages:
+            return
+        else:
+            self.deleted_messages.append(message)
+
         if message.guild is None:
             return
 
