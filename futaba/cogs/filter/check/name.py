@@ -88,7 +88,12 @@ async def check_name_filter(cog, name, name_type, member):
     if severity >= FilterType.FLAG.level:
         logger.info("Notifying staff of filter violation")
         journal_name_violation(
-            cog.journal, member, name_type, filter_type, escaped_name
+            cog.journal,
+            member,
+            name_type,
+            filter_type,
+            escaped_filter_text,
+            escaped_name,
         )
 
     if severity >= FilterType.BLOCK.level:

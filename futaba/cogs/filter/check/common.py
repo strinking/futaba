@@ -33,15 +33,20 @@ JOURNAL_PROPERTIES = {
 }
 
 
-def journal_violation(journal, head, message, filter_type, flagged):
+def journal_violation(journal, head, message, filter_type, filter_text, flagged):
     props = JOURNAL_PROPERTIES[filter_type]
     user = message.author
     channel = message.channel
-    content = f"{props.verb} message content: `{flagged}` by {user.mention} in {channel.mention}"
+    content = (
+        f"{props.verb} message content, tripped by `{filter_text}`: "
+        f"`{flagged}` by {user.mention} in {channel.mention}"
+    )
     journal.send(f"{head}/{props.path}", message.guild, content, icon=props.icon)
 
 
-def journal_name_violation(journal, member, name_type, filter_type, flagged):
+def journal_name_violation(
+    journal, member, name_type, filter_type, filter_text, flagged
+):
     props = JOURNAL_PROPERTIES[filter_type]
     content = f"{props.verb} {name_type.value}: `{flagged}` by {member.mention}"
     journal.send(
