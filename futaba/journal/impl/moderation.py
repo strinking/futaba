@@ -26,8 +26,6 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["ModerationListener"]
 
-# TODO fix doubling up of moderation journal events being sent
-
 
 class ModerationListener(Listener):
     def __init__(self, router, bot):
