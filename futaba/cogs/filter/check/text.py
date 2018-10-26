@@ -144,7 +144,9 @@ async def found_text_violation(triggered, roles):
 
     if severity >= FilterType.FLAG.level:
         logger.info("Notifying staff of filter violation")
-        journal_violation(journal, "text", message, filter_type, escaped_content)
+        journal_violation(
+            journal, "text", message, filter_type, escaped_filter_text, escaped_content
+        )
 
     if severity >= FilterType.BLOCK.level:
         logger.info(

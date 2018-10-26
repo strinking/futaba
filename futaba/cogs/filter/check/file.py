@@ -53,7 +53,7 @@ async def check_file_filter(cog, message):
             digest = sha1(binio.getbuffer()).digest()
             hashsums[digest] = (binio, url)
 
-    for hashsum, filter_type in cog.content_filters[message.guild].items():
+    for hashsum, (filter_type, _) in cog.content_filters[message.guild].items():
         try:
             binio, url = hashsums[hashsum]
         except KeyError:
@@ -78,7 +78,7 @@ async def check_file_filter(cog, message):
         await found_file_violation(triggered, roles, settings.reupload)
 
 
-async def found_file_violation(roles, triggered, reupload):
+async def found_file_violation(triggered, roles, reupload):
     """
     Processes a violation of the file content filter. This coroutine is responsible
     for actual enforcement, based on the filter_type.
@@ -90,10 +90,11 @@ async def found_file_violation(roles, triggered, reupload):
     url = triggered.url
     binio = triggered.binio
     hashsum = triggered.hashsum
+    hexsum = triggered.hashsum.hex()
 
     logger.info(
         "Punishing file content filter violation (%s, level %s) by '%s' (%d)",
-        hashsum.hex(),
+        hexsum,
         filter_type.value,
         message.author.name,
         message.author.id,
@@ -135,7 +136,7 @@ async def found_file_violation(roles, triggered, reupload):
 
     if severity >= FilterType.FLAG.level:
         logger.info("Notifying staff of filter violation")
-        journal_violation(journal, "file", message, filter_type, url)
+        journal_violation(journal, "file", message, filter_type, hexsum, url)
 
     if severity >= FilterType.BLOCK.level:
         logger.info(
