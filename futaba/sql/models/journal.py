@@ -167,13 +167,17 @@ class JournalModel:
 
             # Perform SELECT
             logger.debug("Guild not loaded from disk, doing select")
-            sel = select(
-                [
-                    self.tb_journal_outputs.c.channel_id,
-                    self.tb_journal_outputs.c.path,
-                    self.tb_journal_outputs.c.recursive,
-                ]
-            ).where(self.tb_journal_outputs.c.guild_id == guild.id)
+            sel = (
+                select(
+                    [
+                        self.tb_journal_outputs.c.channel_id,
+                        self.tb_journal_outputs.c.path,
+                        self.tb_journal_outputs.c.recursive,
+                    ]
+                )
+                .where(self.tb_journal_outputs.c.guild_id == guild.id)
+                .order_by(self.tb_journal_outputs.c.path)
+            )
             result = self.sql.execute(sel)
 
             # Update cache
