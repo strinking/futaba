@@ -14,9 +14,5 @@ from .core import Journal
 
 
 def setup(bot):
-    """
-    Setup for bot to add cog
-    """
-
     cog = Journal(bot)
     bot.add_cog(cog)
