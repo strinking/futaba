@@ -132,13 +132,14 @@ class Info:
         logger.info("Running uinfo on '%s' (%d)", user.name, user.id)
 
         # Status
+        descr = StringBuilder()
         if getattr(user, "status", None):
             status = (
                 "do not disturb" if user.status == discord.Status.dnd else user.status
             )
-            descr = f"{user.mention}, {status}"
+            descr.writeln(f"{user.mention}, {status}")
         else:
-            descr = user.mention
+            descr.writeln(user.mention)
 
         embed = discord.Embed(description=descr)
         embed.timestamp = user.created_at
@@ -175,13 +176,15 @@ class Info:
                     else:
                         time_msg = f"from {act.start} to {act.end}"
 
-                embed.description += f"\nPlaying `{act.name}` {time_msg}"
+                descr.writeln(f"Playing `{act.name}` {time_msg}")
             elif isinstance(act, discord.Streaming):
-                embed.description += f"\nStreaming [{act.name}]({act.url})"
+                descr.writeln(f"Streaming [{act.name}]({act.url})")
                 if act.details is not None:
-                    embed.description += f"\n{act.details}"
+                    descr.writeln(f"\n{act.details}")
             elif isinstance(act, discord.Activity):
-                embed.description += "\n{act.state} [{act.name}]({act.url})"
+                descr.writeln(f"{act.state} [{act.name}]({act.url})")
+
+        embed.description = str(descr)
 
         # Voice activity
         if getattr(user, "voice", None):
