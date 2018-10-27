@@ -59,19 +59,24 @@ class Cleanup:
         self.dump = bot.get_broadcaster("/dump/moderation/cleanup")
 
     async def check_count(self, ctx, count):
+        embed = discord.Embed(colour=discord.Colour.red())
         max_count = self.bot.sql.settings.get_max_delete_messages(ctx.guild)
         if count < 1:
-            raise CommandFailed(content=f"Invalid message count: {count}")
+            embed.description = f"Invalid message count: {count}"
+            raise CommandFailed(embed=embed)
         elif is_discord_id(count):
             prefix = self.bot.prefix(ctx.guild)
-            raise CommandFailed(content=(
+            embed.description = (
                 "This looks like a Discord ID. If you want to delete all "
                 f"messages up to a message ID, use `{prefix}cleanupid`."
-            ))
-        elif count > max_count:
-            raise CommandFailed(
-                content=f"Count too high. Maximum configured for this guild is {max_count}."
             )
+            raise CommandFailed(embed=embed)
+        elif count > max_count:
+            embed.description = (
+                "Count too high. Maximum configured for this guild is "
+                f"`{max_count}`."
+            )
+            raise CommandFailed(embed=embed)
 
     @staticmethod
     def dump_messages(messages):
