@@ -41,14 +41,43 @@ def journal_violation(journal, head, message, filter_type, filter_text, flagged)
         f"{props.verb} message content, tripped by `{filter_text}`: "
         f"`{flagged}` by {user.mention} in {channel.mention}"
     )
-    journal.send(f"{head}/{props.path}", message.guild, content, icon=props.icon)
+    journal.send(
+        f"{head}/{props.path}",
+        message.guild,
+        content,
+        icon=props.icon,
+        filter_type=filter_type,
+        filter_text=filter_text,
+        flagged=flagged,
+    )
+    journal.send(
+        f"jump/{head}/{props.path}",
+        message.guild,
+        message.jump_url,
+        icons="previous",
+        filter_type=filter_type,
+        filter_text=filter_text,
+        flagged=flagged,
+    )
 
 
 def journal_name_violation(
     journal, member, name_type, filter_type, filter_text, flagged
 ):
     props = JOURNAL_PROPERTIES[filter_type]
-    content = f"{props.verb} {name_type.value}: `{flagged}` by {member.mention}"
+    content = (
+        f"{props.verb} {name_type.value}, tripped by `{filter_text}`: "
+        f"`{flagged}` by {member.mention}"
+    )
     journal.send(
         f"{name_type.value}/{props.path}", member.guild, content, icon=props.icon
+    )
+    journal.send(
+        f"jump/{name_type.value}/{props.path}",
+        member.guild,
+        member.mention,
+        icons="previous",
+        filter_type=filter_type,
+        filter_text=filter_text,
+        flagged=flagged,
     )

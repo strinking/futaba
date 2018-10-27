@@ -29,12 +29,34 @@ Additionally, channel filters have the `channel: discord.TextChannel` attribute.
 * `/filter/channel/remove`
 
 Filter violations:
-Signifies a violation of a text filter. Has attributes `filter_type: FilterType`, `escaped_content: str`.
+Signifies a violation of a text or name filter. Has attributes `filter_type: FilterType`, `filter_text: str`, `flagged: str`:
 * `/filter/text/flag`
 * `/filter/text/block`
 * `/filter/text/jail`
+* `/filter/username/flag`
+* `/filter/username/block`
+* `/filter/username/jail`
+* `/filter/nickname/flag`
+* `/filter/nickname/block`
+* `/filter/nickname/jail`
+
+Jump links for filter violations. Same attributes as above.
+* `/filter/jump/text/flag`
+* `/filter/jump/text/block`
+* `/filter/jump/text/jail`
+* `/filter/jump/username/flag`
+* `/filter/jump/username/block`
+* `/filter/jump/username/jail`
+* `/filter/jump/nickname/flag`
+* `/filter/jump/nickname/block`
+* `/filter/jump/nickname/jail`
 
 Signifies any violation of a file filter. Has attributes `filter_type: FilterType`, `url: str`.
+* `/filter/file/flag`
+* `/filter/file/block`
+* `/filter/file/jail`
+
+Jump links for file violations. Same attributes as above.
 * `/filter/file/flag`
 * `/filter/file/block`
 * `/filter/file/jail`
