@@ -21,6 +21,7 @@ import discord
 from discord.ext import commands
 
 from futaba import permissions
+from futaba.converters import TextChannelConv
 from futaba.exceptions import CommandFailed, SendHelp
 from futaba.journal import ChannelOutputListener, Router
 from futaba.str_builder import StringBuilder
@@ -64,11 +65,18 @@ class Journal:
     @log.command(name="show", aliases=["display", "list"])
     @commands.guild_only()
     @permissions.check_mod()
-    async def log_show(self, ctx):
-        """ Displays current settings for this guild """
+    async def log_show(self, ctx, *channels: TextChannelConv):
+        """
+        Displays current settings for this guild.
+        If channels are provided, then only outputs for those channels are fetched.
+        """
 
-        outputs = self.bot.sql.journal.get_journal_channels(ctx.guild)
-        outputs.sort(key=lambda x: x.channel.name)
+        if channels:
+            outputs = self.bot.sql.journal.get_journals_on_channels(channels)
+        else:
+            outputs = self.bot.sql.journal.get_journal_channels(ctx.guild)
+
+        outputs = sorted(outputs, key=lambda out: out.path)
         attributes = []
         descr = StringBuilder()
         for output in outputs:
