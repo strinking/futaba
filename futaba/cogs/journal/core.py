@@ -188,15 +188,28 @@ class Journal:
     @log.command(name="rename", aliases=["rn", "move", "mv"])
     @commands.guild_only()
     @permissions.check_mod()
-    async def log_rename(self, ctx, old_channel: TextChannelConv, new_channel: TextChannelConv, path: str, *flags: str):
+    async def log_rename(
+        self,
+        ctx,
+        old_channel: TextChannelConv,
+        new_channel: TextChannelConv,
+        path: str,
+        *flags: str,
+    ):
         """
         Moves a journal logger from one channel to another.
         Accepts the optional flags:
             -exact, Don't recursively accept journal events from children.
         """
 
-        logger.info("Moving journal logger from channel #%s (%d) to #%s (%d) for path '%s'",
-                old_channel.name, old_channel.id, new_channel.name, new_channel.id, path)
+        logger.info(
+            "Moving journal logger from channel #%s (%d) to #%s (%d) for path '%s'",
+            old_channel.name,
+            old_channel.id,
+            new_channel.name,
+            new_channel.id,
+            path,
+        )
 
         recursive = True
         for flag in flags:
