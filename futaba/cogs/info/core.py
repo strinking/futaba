@@ -89,7 +89,10 @@ class Info:
             embed.add_field(name="Managed", value=lowerbool(emoji.managed))
             embed.timestamp = emoji.created_at
         elif isinstance(emoji, str):
-            category = lambda ch: UNICODE_CATEGORY_NAME[unicodedata.category(ch)]
+
+            def category(ch):
+                return UNICODE_CATEGORY_NAME[unicodedata.category(ch)]
+
             embed = discord.Embed(colour=discord.Colour.dark_gold())
             embed.description = emoji
             embed.set_author(name=name)

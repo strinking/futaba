@@ -34,6 +34,7 @@ __all__ = [
 
 READABLE_CHAR_SET = frozenset(string.printable) - frozenset("\t\n\r\x0b\x0c")
 
+
 # Adapted from https://gist.github.com/acdha/49a610089c2798db6fe2
 def _load_unicode_blocks():
     if not os.path.exists(UNICODE_BLOCKS_FILENAME):
