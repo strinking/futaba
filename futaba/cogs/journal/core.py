@@ -21,6 +21,7 @@ import discord
 from discord.ext import commands
 
 from futaba import permissions
+from futaba.converts import TextChannelConv
 from futaba.exceptions import CommandFailed, SendHelp
 from futaba.journal import ChannelOutputListener, Router
 from futaba.str_builder import StringBuilder
@@ -101,7 +102,7 @@ class Journal:
     @log.command(name="add", aliases=["append", "extend", "new", "set", "update"])
     @commands.guild_only()
     @permissions.check_mod()
-    async def log_add(self, ctx, channel: discord.TextChannel, path: str, *flags: str):
+    async def log_add(self, ctx, channel: TextChannelConv, path: str, *flags: str):
         """
         Add a journal logger to the channel for the given path.
         Accepts the optional flags:
@@ -148,7 +149,7 @@ class Journal:
     @log.command(name="remove", aliases=["rm", "delete", "del"])
     @commands.guild_only()
     @permissions.check_mod()
-    async def log_remove(self, ctx, channel: discord.TextChannel, path: str):
+    async def log_remove(self, ctx, channel: TextChannelConv, path: str):
         """
         Removes a journal logger for the given path from the channel.
         """
