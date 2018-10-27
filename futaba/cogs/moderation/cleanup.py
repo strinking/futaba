@@ -35,6 +35,7 @@ __all__ = ["Cleanup"]
 def is_discord_id(number):
     return 10 ** 15 <= number < 10 ** 21
 
+
 class _Counter:
     """ Counter that escapes issues with local scoping by being modifiable in-place. """
 
@@ -115,12 +116,16 @@ class Cleanup:
 
         obj, file = self.dump_messages(messages)
         content = f"Cleanup by {causer} in {channel.mention} deleted these messages:"
-        self.dump.send("count", ctx.guild, content, icon="delete", messages=obj, file=file)
+        self.dump.send(
+            "count", ctx.guild, content, icon="delete", messages=obj, file=file
+        )
 
     @commands.command(name="cleanupid", aliases=["cleanid"])
     @commands.guild_only()
     @permissions.check_mod()
-    async def cleanup_id(self, ctx, message_id: int, channel: discord.TextChannel = None):
+    async def cleanup_id(
+        self, ctx, message_id: int, channel: discord.TextChannel = None
+    ):
         """ Deletes all messages from the passed message ID to the present. """
 
         if channel is None:
@@ -129,7 +134,9 @@ class Cleanup:
         if not is_discord_id(message_id):
             embed = discord.Embed(colour=discord.Colour.red())
             embed.set_author(name="Won't delete to message ID")
-            embed.description = f"The given number `{message_id}` doesn't look like a Discord ID."
+            embed.description = (
+                f"The given number `{message_id}` doesn't look like a Discord ID."
+            )
             raise CommandFailed(embed=embed)
 
         # Delete the messages before the message ID
@@ -216,7 +223,9 @@ class Cleanup:
 
         obj, file = self.dump_messages(messages)
         content = f"Cleanup by {causer} of {user.mention} in {channel.mention} deleted these messages:"
-        self.dump.send("user", ctx.guild, content, icon="delete", messages=obj, file=file)
+        self.dump.send(
+            "user", ctx.guild, content, icon="delete", messages=obj, file=file
+        )
 
     @commands.command(name="cleanuptext", aliases=["cleantext"])
     @commands.guild_only()
@@ -264,4 +273,6 @@ class Cleanup:
 
         obj, file = self.dump_messages(messages)
         content = f"Cleanup by {causer} in {channel.mention} of `{text}` deleted these messages:"
-        self.dump.send("text", ctx.guild, content, icon="delete", messages=obj, file=file)
+        self.dump.send(
+            "text", ctx.guild, content, icon="delete", messages=obj, file=file
+        )
