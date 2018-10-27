@@ -13,6 +13,8 @@
 import logging
 from pathlib import PurePath
 
+from .event import JournalEvent
+
 logger = logging.getLogger(__name__)
 
 __all__ = ["Broadcaster"]
@@ -39,4 +41,5 @@ class Broadcaster:
             content,
             ", ".join(attributes.keys()) or "(none)",
         )
-        self.router.queue.put_nowait((path, guild, content, attributes))
+        event = JournalEvent(path=path, guild=guild, content=content, attributes=attributes)
+        self.router.queue.put_nowait(event)
