@@ -59,11 +59,23 @@ Managing user filter immunity. Has attributes: `member: discord.Member`, `cause:
 
 ### Moderation
 Actually handled in the tracking cog. This behavior is in the middle of changing.
-All attributes (will) have `member: discord.Member`, `reason: Optional[str]`, `cause: discord.Member`.
+All attributes have `member: discord.Member`, `reason: Optional[str]`, `cause: discord.Member`.
 * `/moderation/member/kick` - A member was kicked. TODO
 * `/moderation/member/ban` - A member was banned. TODO
 * `/moderation/member/softban` - A member was soft-banned. TODO
 * `/moderation/member/unban` - A member was unbanned. TODO
+
+### Cleanup
+Commands for deleting messages in bulk based on certain criteria.
+All attributes have `channel: discord.TextChannel`, `messages: List[discord.Message]`, `cause: discord.Member`.
+* `/moderation/cleanup/count` - Deletes the given number of messages. Attributes: `count: int`.
+* `/dump/moderation/cleanup/count` - Contains the deleted messages in JSON form. Attributes: `messages: dict`.
+* `/moderation/cleanup/id` - Deletes messages until you hit the limit or pass the given ID. Attributes: `message_id: int`.
+* `/dump/moderation/cleanup/id` - Contains the deleted messages in JSON form. Attributes: `messages: dict`.
+* `/moderation/cleanup/user` - Deletes the last &lt;count&gt; messages from the given user. Attributes: `count: int`, `user: discord.Member`.
+* `/dump/moderation/cleanup/user` - Contains the deleted messages in JSON form. Attributes: `messages: dict`.
+* `/moderation/cleanup/text` - Deletes the last given &lt;count&gt; messages that contain the given text. Attributes: `count: int`, `text: str`.
+* `/dump/moderation/cleanup/text` - Contains the deleted messages in JSON form. Attributes: `messages: dict`.
 
 ### Welcome cog
 * `/welcome/member/agree` - Member agrees to the rules. Attributes: `user: discord.Member`

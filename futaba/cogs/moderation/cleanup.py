@@ -23,12 +23,17 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.exceptions import CommandFailed
+from futaba.str_builder import StringBuilder
 from futaba.unicode import normalize_caseless
 from futaba.utils import escape_backticks, message_to_dict, user_discrim
 
 logger = logging.getLogger(__name__)
 
 __all__ = ["Cleanup"]
+
+
+def is_discord_id(number):
+    return 10 ** 15 <= number < 10 ** 21
 
 
 class _Counter:
@@ -46,22 +51,6 @@ class _Counter:
         self.value += 1
 
 
-class _StringWriteWrap:
-    """ Wrapper for BytesIO to auto-encode strings written. """
-
-    __slots__ = ("buffer",)
-
-    def __init__(self, buffer):
-        self.buffer = buffer
-
-    def write(self, content):
-        self.buffer.write(content.encode("utf-8"))
-        return len(content)
-
-    def close(self):
-        pass
-
-
 class Cleanup:
     __slots__ = ("bot", "journal", "dump")
 
@@ -71,22 +60,31 @@ class Cleanup:
         self.dump = bot.get_broadcaster("/dump/moderation/cleanup")
 
     async def check_count(self, ctx, count):
+        embed = discord.Embed(colour=discord.Colour.red())
         max_count = self.bot.sql.settings.get_max_delete_messages(ctx.guild)
         if count < 1:
-            raise CommandFailed(content=f"Invalid message count: {count}")
-        elif count > max_count:
-            raise CommandFailed(
-                content=f"Count too high. Maximum configured for this guild is {max_count}."
+            embed.description = f"Invalid message count: {count}"
+            raise CommandFailed(embed=embed)
+        elif is_discord_id(count):
+            prefix = self.bot.prefix(ctx.guild)
+            embed.description = (
+                "This looks like a Discord ID. If you want to delete all "
+                f"messages up to a message ID, use `{prefix}cleanupid`."
             )
+            raise CommandFailed(embed=embed)
+        elif count > max_count:
+            embed.description = (
+                "Count too high. Maximum configured for this guild is "
+                f"`{max_count}`."
+            )
+            raise CommandFailed(embed=embed)
 
     @staticmethod
     def dump_messages(messages):
-        buffer = BytesIO()
-        wrap = _StringWriteWrap(buffer)
-        json.dump(
-            list(map(message_to_dict, reversed(messages))), wrap, ensure_ascii=True
-        )
-        return discord.File(buffer, filename="deleted-messages.json")
+        buffer = StringBuilder()
+        obj = list(map(message_to_dict, reversed(messages)))
+        json.dump(obj, buffer, ensure_ascii=True)
+        return obj, discord.File(buffer.bytes_io(), filename="deleted-messages.json")
 
     @commands.command(name="cleanup", aliases=["clean"])
     @commands.guild_only()
@@ -116,9 +114,70 @@ class Cleanup:
             cause=ctx.author,
         )
 
-        file = self.dump_messages(messages)
+        obj, file = self.dump_messages(messages)
         content = f"Cleanup by {causer} in {channel.mention} deleted these messages:"
-        self.dump.send("count", ctx.guild, content, icon="delete", file=file)
+        self.dump.send(
+            "count", ctx.guild, content, icon="delete", messages=obj, file=file
+        )
+
+    @commands.command(name="cleanupid", aliases=["cleanid"])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def cleanup_id(
+        self, ctx, message_id: int, channel: discord.TextChannel = None
+    ):
+        """ Deletes all messages from the passed message ID to the present. """
+
+        if channel is None:
+            channel = ctx.channel
+
+        if not is_discord_id(message_id):
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.set_author(name="Won't delete to message ID")
+            embed.description = (
+                f"The given number `{message_id}` doesn't look like a Discord ID."
+            )
+            raise CommandFailed(embed=embed)
+
+        # Delete the messages before the message ID
+        max_count = self.bot.sql.settings.get_max_delete_messages(ctx.guild)
+        messages = await channel.purge(
+            limit=max_count,
+            check=lambda message: message.id >= message_id,
+            before=ctx.message,
+            bulk=True,
+        )
+
+        if len(messages) == max_count and messages[0].id != message_id:
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
+            embed.description = (
+                f"This guild only allows `{max_count}` messages to be deleted at a time. "
+                f"Because of this limitation, message ID `{message_id}` was not actually deleted."
+            )
+            await ctx.send(embed=embed)
+
+        # Send journal events
+        causer = user_discrim(ctx.author)
+        content = (
+            f"{causer} deleted {len(messages)} messages in "
+            f"{channel.mention} until message ID {message_id}"
+        )
+        self.journal.send(
+            "id",
+            ctx.guild,
+            content,
+            icon="delete",
+            message_id=message_id,
+            messages=messages,
+            cause=ctx.author,
+        )
+
+        obj, file = self.dump_messages(messages)
+        content = (
+            f"Cleanup by {causer} until message ID {message_id} in "
+            f"{channel.mention} deleted these messages"
+        )
+        self.dump.send("id", ctx.guild, content, icon="delete", messages=obj, file=file)
 
     @commands.command(name="cleanupuser", aliases=["cleanuser"])
     @commands.guild_only()
@@ -162,9 +221,11 @@ class Cleanup:
             cause=ctx.author,
         )
 
-        file = self.dump_messages(messages)
+        obj, file = self.dump_messages(messages)
         content = f"Cleanup by {causer} of {user.mention} in {channel.mention} deleted these messages:"
-        self.dump.send("user", ctx.guild, content, icon="delete", file=file)
+        self.dump.send(
+            "user", ctx.guild, content, icon="delete", messages=obj, file=file
+        )
 
     @commands.command(name="cleanuptext", aliases=["cleantext"])
     @commands.guild_only()
@@ -210,6 +271,8 @@ class Cleanup:
             cause=ctx.author,
         )
 
-        file = self.dump_messages(messages)
+        obj, file = self.dump_messages(messages)
         content = f"Cleanup by {causer} in {channel.mention} of `{text}` deleted these messages:"
-        self.dump.send("text", ctx.guild, content, icon="delete", file=file)
+        self.dump.send(
+            "text", ctx.guild, content, icon="delete", messages=obj, file=file
+        )
