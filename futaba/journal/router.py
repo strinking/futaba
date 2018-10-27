@@ -12,7 +12,7 @@
 
 import asyncio
 import logging
-from collections import defaultdict
+from collections import defaultdict, deque
 from itertools import chain
 from pathlib import PurePath
 
@@ -27,11 +27,12 @@ __all__ = ["Router"]
 
 
 class Router:
-    __slots__ = ("paths", "queue")
+    __slots__ = ("paths", "queue", 'events')
 
     def __init__(self):
         self.paths = defaultdict(list)
         self.queue = asyncio.Queue()
+        self.events = deque(maxlen=1024)
 
     def start(self, eventloop):
         logger.info("Start journal event processing task")
@@ -80,4 +81,5 @@ class Router:
                 logger.error("Error while running journal handlers", exc_info=error)
             responses.clear()
 
-            events.clear()
+            # Append to event list
+            self.events.append(event)
