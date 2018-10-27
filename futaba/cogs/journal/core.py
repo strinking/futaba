@@ -109,7 +109,7 @@ class Journal:
             -exact, Don't recursively accept journal events from children.
         """
 
-        logging.info(
+        logger.info(
             "Adding journal logger for channel #%s (%d) on path '%s'",
             channel.name,
             channel.id,
@@ -154,7 +154,7 @@ class Journal:
         Removes a journal logger for the given path from the channel.
         """
 
-        logging.info(
+        logger.info(
             "Removing journal logger for channel #%s (%d) from path '%s'",
             channel.name,
             channel.id,
@@ -208,7 +208,7 @@ class Journal:
                     content="All attributes must be in the form KEY=VALUE"
                 )
 
-        logging.info(
+        logger.info(
             "Sending manual journal event: '%s' (attrs: %s)",
             content,
             journal_attributes,
