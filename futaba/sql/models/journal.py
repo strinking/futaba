@@ -188,20 +188,19 @@ class JournalModel:
                 )
 
         # Compile guild list
-        outputs = []
-        for channel in guild.channels:
-            outputs.extend(self.get_journals_on_channel(channel))
-        return outputs
+        return self.get_journals_on_channels(guild.channels)
 
-    def get_journals_on_channel(self, channel):
+    def get_journals_on_channels(self, channels):
         logger.debug(
-            "Getting all journal paths mounted on channel #%s (%d) from cache",
-            channel.name,
-            channel.id,
+            "Getting all journal paths from cache on channels: [%s]",
+            ", ".join(f"#{channel.name} ({channel.id})" for channel in channels),
         )
 
-        for path, settings in self.journal_outputs_cache[channel].items():
-            yield ConfiguredChannelOutput(channel=channel, path=path, settings=settings)
+        for channel in channels:
+            for path, settings in self.journal_outputs_cache[channel].items():
+                yield ConfiguredChannelOutput(
+                    channel=channel, path=path, settings=settings
+                )
 
     def delete_journal_channels(self, guild):
         logger.info(
