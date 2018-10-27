@@ -23,6 +23,7 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.exceptions import CommandFailed
+from futaba.str_builder import StringBuilder
 from futaba.unicode import normalize_caseless
 from futaba.utils import escape_backticks, message_to_dict, user_discrim
 
@@ -46,22 +47,6 @@ class _Counter:
         self.value += 1
 
 
-class _StringWriteWrap:
-    """ Wrapper for BytesIO to auto-encode strings written. """
-
-    __slots__ = ("buffer",)
-
-    def __init__(self, buffer):
-        self.buffer = buffer
-
-    def write(self, content):
-        self.buffer.write(content.encode("utf-8"))
-        return len(content)
-
-    def close(self):
-        pass
-
-
 class Cleanup:
     __slots__ = ("bot", "journal", "dump")
 
@@ -81,12 +66,11 @@ class Cleanup:
 
     @staticmethod
     def dump_messages(messages):
-        buffer = BytesIO()
-        wrap = _StringWriteWrap(buffer)
+        buffer = StringBuilder()
         json.dump(
-            list(map(message_to_dict, reversed(messages))), wrap, ensure_ascii=True
+            list(map(message_to_dict, reversed(messages))), buffer, ensure_ascii=True
         )
-        return discord.File(buffer, filename="deleted-messages.json")
+        return discord.File(buffer.bytes_io(), filename="deleted-messages.json")
 
     @commands.command(name="cleanup", aliases=["clean"])
     @commands.guild_only()
