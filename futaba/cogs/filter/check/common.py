@@ -48,7 +48,10 @@ def journal_name_violation(
     journal, member, name_type, filter_type, filter_text, flagged
 ):
     props = JOURNAL_PROPERTIES[filter_type]
-    content = f"{props.verb} {name_type.value}: `{flagged}` by {member.mention}"
+    content = (
+        f"{props.verb} {name_type.value}, tripped by `{filter_text}`: "
+        f"`{flagged}` by {member.mention}"
+    )
     journal.send(
         f"{name_type.value}/{props.path}", member.guild, content, icon=props.icon
     )
