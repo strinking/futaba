@@ -27,7 +27,7 @@ __all__ = ["Router"]
 
 
 class Router:
-    __slots__ = ("paths", "queue", 'events')
+    __slots__ = ("paths", "queue", "events")
 
     def __init__(self):
         self.paths = defaultdict(list)
@@ -71,7 +71,9 @@ class Router:
                 for listener in self.paths[path]:
                     if listener.check(path, event.guild, content, event.attributes):
                         responses.append(
-                            listener.handle(event.path, event.guild, content, event.attributes)
+                            listener.handle(
+                                event.path, event.guild, content, event.attributes
+                            )
                         )
 
             # Run all the event handlers

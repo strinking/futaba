@@ -12,4 +12,4 @@
 
 from collections import namedtuple
 
-JournalEvent = namedtuple('JournalEvent', ('path', 'guild', 'content', 'attributes'))
+JournalEvent = namedtuple("JournalEvent", ("path", "guild", "content", "attributes"))
