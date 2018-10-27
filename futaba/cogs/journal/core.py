@@ -15,13 +15,14 @@ Cog for configuring Futaba journalling output, directing certain kinds
 of messages to different logging channels.
 """
 
+import asyncio
 import logging
 
 import discord
 from discord.ext import commands
 
 from futaba import permissions
-from futaba.converts import TextChannelConv
+from futaba.converters import TextChannelConv
 from futaba.exceptions import CommandFailed, SendHelp
 from futaba.journal import ChannelOutputListener, Router
 from futaba.str_builder import StringBuilder
@@ -115,8 +116,8 @@ class Journal:
             channel.id,
             path,
         )
-        recursive = True
 
+        recursive = True
         for flag in flags:
             if flag == "-exact":
                 recursive = False
@@ -182,6 +183,57 @@ class Journal:
             icon="journal",
             channel=channel,
             path=path,
+        )
+
+    @log.command(name="rename", aliases=["rn", "move", "mv"])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def log_rename(self, ctx, old_channel: TextChannelConv, new_channel: TextChannelConv, path: str, *flags: str):
+        """
+        Moves a journal logger from one channel to another.
+        Accepts the optional flags:
+            -exact, Don't recursively accept journal events from children.
+        """
+
+        logger.info("Moving journal logger from channel #%s (%d) to #%s (%d) for path '%s'",
+                old_channel.name, old_channel.id, new_channel.name, new_channel.id, path)
+
+        recursive = True
+        for flag in flags:
+            if flag == "-exact":
+                recursive = False
+            else:
+                raise CommandFailed(content=f"No such flag: `{flag}`")
+
+        listener = self.router.get(path, channel=old_channel)
+        if listener is None:
+            # No listener found at old channel
+            raise CommandFailed(
+                content=f"No output on `{path}` found for {old_channel.mention}"
+            )
+
+        listener.channel = new_channel
+
+        logger.debug("Updating database for moved channel output")
+        with self.bot.sql.transaction():
+            self.bot.sql.journal.delete_journal_channel(old_channel, path)
+            self.bot.sql.journal.add_journal_channel(new_channel, path, recursive)
+
+        await asyncio.gather(
+            old_channel.send(content=self.log_updated_message(old_channel)),
+            new_channel.send(content=self.log_updated_message(new_channel)),
+        )
+
+        content = f"Moved journal logger from {old_channel.mention} to {new_channel.mention} for `{path}`"
+        self.journal.send(
+            "channel/move",
+            ctx.guild,
+            content,
+            icon="journal",
+            old_channel=old_channel,
+            new_channel=new_channel,
+            path=path,
+            recursive=recursive,
         )
 
     @log.command(name="send", aliases=["broadcast"])
