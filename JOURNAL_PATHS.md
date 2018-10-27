@@ -51,6 +51,7 @@ Managing user filter immunity. Has attributes: `member: discord.Member`, `cause:
 ### Journal cog
 * `/journal/channel/add` - When a journal output channel is added. Attributes: `channel: discord.TextChannel, path: str, recursive: bool`
 * `/journal/channel/remove` - When a journal output channel is removed. Attributes: `channel: discord.TextChannel, path: str`
+* `/journal/channel/move` - When a journal output channel is moved. Attributes: `old_channel: discord.TextChannel, new_channel: discord.TextChannel, path: str, recursive: bool`
 
 ### Miscellaneous
 * `/misc/ping` - Time from receiving a command to sending a message to Discord. Attributs: `ms: float`
