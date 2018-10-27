@@ -32,6 +32,9 @@ logger = logging.getLogger(__name__)
 __all__ = ["Cleanup"]
 
 
+def is_discord_id(number):
+    return 10 ** 15 <= number < 10 ** 21
+
 class _Counter:
     """ Counter that escapes issues with local scoping by being modifiable in-place. """
 
@@ -59,6 +62,12 @@ class Cleanup:
         max_count = self.bot.sql.settings.get_max_delete_messages(ctx.guild)
         if count < 1:
             raise CommandFailed(content=f"Invalid message count: {count}")
+        elif is_discord_id(count):
+            prefix = self.bot.prefix(ctx.guild)
+            raise CommandFailed(content=(
+                "This looks like a Discord ID. If you want to delete all "
+                f"messages up to a message ID, use `{prefix}cleanupid`."
+            ))
         elif count > max_count:
             raise CommandFailed(
                 content=f"Count too high. Maximum configured for this guild is {max_count}."
@@ -103,6 +112,54 @@ class Cleanup:
         file = self.dump_messages(messages)
         content = f"Cleanup by {causer} in {channel.mention} deleted these messages:"
         self.dump.send("count", ctx.guild, content, icon="delete", file=file)
+
+    @commands.command(name="cleanupid", aliases=["cleanid"])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def cleanup_id(self, ctx, message_id: int, channel: discord.TextChannel = None):
+        """ Deletes all messages from the passed message ID to the present. """
+
+        if channel is None:
+            channel = ctx.channel
+
+        if not is_discord_id(message_id):
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.set_author(name="Won't delete to message ID")
+            embed.description = f"The given number `{message_id}` doesn't look like a Discord ID."
+            raise CommandFailed(embed=embed)
+
+        # Delete the messages before the message ID
+        max_count = self.bot.sql.settings.get_max_delete_messages(ctx.guild)
+        messages = await channel.purge(
+            limit=max_count,
+            check=lambda message: message.id >= message_id,
+            before=ctx.message,
+            bulk=True,
+        )
+
+        if len(messages) == max_count and messages[0].id != message_id:
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
+            embed.description = (
+                f"This guild only allows `{max_count}` messages to be deleted at a time. "
+                f"Because of this limitation, message ID `{message_id}` was not actually deleted."
+            )
+            await ctx.send(embed=embed)
+
+        # Send journal events
+        causer = user_discrim(ctx.author)
+        content = (
+            f"{causer} deleted {len(messages)} messages in "
+            f"{channel.mention} until message ID {message_id}"
+        )
+        self.journal.send(
+            "id",
+            ctx.guild,
+            content,
+            icon="delete",
+            message_id=message_id,
+            messages=messages,
+            cause=ctx.author,
+        )
 
     @commands.command(name="cleanupuser", aliases=["cleanuser"])
     @commands.guild_only()
