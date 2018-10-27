@@ -74,8 +74,8 @@ def journal_name_violation(
     )
     journal.send(
         f"jump/{name_type.value}/{props.path}",
-        message.guild,
-        message.jump_url,
+        member.guild,
+        member.mention,
         icons="previous",
         filter_type=filter_type,
         filter_text=filter_text,
