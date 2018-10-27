@@ -81,10 +81,9 @@ class Cleanup:
     @staticmethod
     def dump_messages(messages):
         buffer = StringBuilder()
-        json.dump(
-            list(map(message_to_dict, reversed(messages))), buffer, ensure_ascii=True
-        )
-        return discord.File(buffer.bytes_io(), filename="deleted-messages.json")
+        obj = list(map(message_to_dict, reversed(messages)))
+        json.dump(obj, buffer, ensure_ascii=True)
+        return obj, discord.File(buffer.bytes_io(), filename="deleted-messages.json")
 
     @commands.command(name="cleanup", aliases=["clean"])
     @commands.guild_only()
@@ -114,9 +113,9 @@ class Cleanup:
             cause=ctx.author,
         )
 
-        file = self.dump_messages(messages)
+        obj, file = self.dump_messages(messages)
         content = f"Cleanup by {causer} in {channel.mention} deleted these messages:"
-        self.dump.send("count", ctx.guild, content, icon="delete", file=file)
+        self.dump.send("count", ctx.guild, content, icon="delete", messages=obj, file=file)
 
     @commands.command(name="cleanupid", aliases=["cleanid"])
     @commands.guild_only()
@@ -166,6 +165,13 @@ class Cleanup:
             cause=ctx.author,
         )
 
+        obj, file = self.dump_messages(messages)
+        content = (
+            f"Cleanup by {causer} until message ID {message_id} in "
+            f"{channel.mention} deleted these messages"
+        )
+        self.dump.send("id", ctx.guild, content, icon="delete", messages=obj, file=file)
+
     @commands.command(name="cleanupuser", aliases=["cleanuser"])
     @commands.guild_only()
     @permissions.check_mod()
@@ -208,9 +214,9 @@ class Cleanup:
             cause=ctx.author,
         )
 
-        file = self.dump_messages(messages)
+        obj, file = self.dump_messages(messages)
         content = f"Cleanup by {causer} of {user.mention} in {channel.mention} deleted these messages:"
-        self.dump.send("user", ctx.guild, content, icon="delete", file=file)
+        self.dump.send("user", ctx.guild, content, icon="delete", messages=obj, file=file)
 
     @commands.command(name="cleanuptext", aliases=["cleantext"])
     @commands.guild_only()
@@ -256,6 +262,6 @@ class Cleanup:
             cause=ctx.author,
         )
 
-        file = self.dump_messages(messages)
+        obj, file = self.dump_messages(messages)
         content = f"Cleanup by {causer} in {channel.mention} of `{text}` deleted these messages:"
-        self.dump.send("text", ctx.guild, content, icon="delete", file=file)
+        self.dump.send("text", ctx.guild, content, icon="delete", messages=obj, file=file)
