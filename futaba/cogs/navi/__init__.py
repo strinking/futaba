@@ -14,9 +14,5 @@ from .core import Navi
 
 
 def setup(bot):
-    """
-    Setup for bot to add cog
-    """
-
     cog = Navi(bot)
     bot.add_cog(cog)

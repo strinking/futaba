@@ -15,10 +15,6 @@ from .core import Welcome
 
 
 def setup(bot):
-    """
-    Setup for bot to add cog
-    """
-
     cog = Alert(bot)
     bot.add_listener(cog.member_join, "on_member_join")
     bot.add_cog(cog)

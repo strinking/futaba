@@ -19,10 +19,6 @@ from .filter import Filter
 
 
 def setup(bot):
-    """
-    Setup for bot to add cog
-    """
-
     cog = Filtering(bot)
     bot.add_listener(cog.check_message, "on_message")
     bot.add_listener(cog.check_message_edit, "on_message_edit")

@@ -15,10 +15,6 @@ from .core import Info
 
 
 def setup(bot):
-    """
-    Setup for bot to add cog
-    """
-
     cog = Info(bot)
     bot.add_cog(cog)
 

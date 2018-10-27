@@ -14,9 +14,5 @@ from .core import SelfAssignableRoles
 
 
 def setup(bot):
-    """
-    Setup for bot to add cog
-    """
-
     cog = SelfAssignableRoles(bot)
     bot.add_cog(cog)
