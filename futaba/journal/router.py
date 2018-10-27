@@ -27,12 +27,12 @@ __all__ = ["Router"]
 
 
 class Router:
-    __slots__ = ("paths", "queue", "events")
+    __slots__ = ("paths", "queue", "history")
 
     def __init__(self):
         self.paths = defaultdict(list)
         self.queue = asyncio.Queue()
-        self.events = deque(maxlen=1024)
+        self.history = deque(maxlen=1024)
 
     def start(self, eventloop):
         logger.info("Start journal event processing task")
@@ -84,4 +84,4 @@ class Router:
             responses.clear()
 
             # Append to event list
-            self.events.append(event)
+            self.history.append(event)
