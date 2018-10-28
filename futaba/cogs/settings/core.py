@@ -163,13 +163,13 @@ class Settings:
             )
             embed = discord.Embed(colour=discord.Colour.dark_teal())
             state = "enabled" if warn_manual_mod_action else "disabled"
-            embed.description = f"Warning moderators about performing mod actions manually is {state}."
+            embed.description = (
+                f"Warning moderators about performing mod actions manually is {state}."
+            )
         elif not admin_perm(ctx):
             # Lacking authority to set warn manual mod action
             embed = discord.Embed(colour=discord.Colour.red())
-            embed.description = (
-                "You do not have permission to enable or disable manual mod action warning"
-            )
+            embed.description = "You do not have permission to enable or disable manual mod action warning"
             raise ManualCheckFailure(embed=embed)
         else:
             with self.bot.sql.transaction():

@@ -279,9 +279,7 @@ class SettingsModel:
             .values(warn_manual_mod_action=warn_manual_mod_action)
         )
         self.sql.execute(upd)
-        self.guild_settings_cache[
-            guild
-        ].warn_manual_mod_action = warn_manual_mod_action
+        self.guild_settings_cache[guild].warn_manual_mod_action = warn_manual_mod_action
 
     def add_special_roles(self, guild):
         logger.info(
