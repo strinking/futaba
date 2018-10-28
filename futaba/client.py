@@ -201,7 +201,7 @@ class Bot(commands.AutoShardedBot):
 
         logger.info("Guild leave event for '%s' (%d)", guild.name, guild.id)
         with self.sql.transaction():
-            self.sql.guilds.add_guild(guild)
+            self.sql.guilds.remove_guild(guild)
 
     async def on_command_completion(self, ctx):
         """
