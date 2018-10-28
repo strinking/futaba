@@ -289,52 +289,62 @@ class Bot(commands.AutoShardedBot):
                 await ctx.author.send(content=page)
             await Reactions.SUCCESS.add(ctx.message)
 
-        elif isinstance(error, aiohttp.ClientError):
-            logger.error("Unexpected aiohttp client error", exc_info=error)
-            trace, filename = self.get_traceback(error)
-            embed = discord.Embed(colour=discord.Colour.dark_red())
-            embed.set_author(name="Unusual network error")
-            embed.description = (
-                "Traceback has been posted to developer's error channel.\n"
-                "Basic information:\n"
-                "```py\n"
-                f"{error}\n"
-                "```"
-            )
-            await asyncio.gather(
-                ctx.send(embed=embed), Reactions.NETWORK.add(ctx.message)
-            )
+        elif isinstance(error, commands.errors.CommandInvokeError):
+            logger.debug("Handling CommandInvokeError...")
+            error = error.__cause__
+
+            if isinstance(error, aiohttp.ClientError):
+                logger.error("Unexpected aiohttp client error", exc_info=error)
+                trace, filename = self.get_traceback(error)
+                embed = discord.Embed(colour=discord.Colour.dark_red())
+                embed.set_author(name="Spurious network error")
+                descr = StringBuilder()
+                descr.writeln("Traceback has been posted to developer's error channel.")
+                error_str = str(error)
+                if error_str:
+                    descr.writeln(f"```py\n{error_str}\n```")
+                embed.description = str(descr)
+                await asyncio.gather(
+                    ctx.send(embed=embed), Reactions.NETWORK.add(ctx.message)
+                )
+
+            else:
+                # Other exception, probably not meant to happen. Send it as an embed.
+                await self.report_other_exception(ctx, error, "Unexpected error occurred!")
 
         else:
-            # Other exception, probably not meant to happen. Send it as an embed.
-            logger.error("Unexpected error during command!", exc_info=error)
-            anger_emoji = (
-                self.get_emoji(self.config.anger_emoji_id) or "\N{ANGER SYMBOL}"
+            logger.error("Unknown discord command error raised", exc_info=error)
+            await self.report_other_exception(ctx, error, "Unwrapped exception was raised from command!")
+
+    async def report_other_exception(self, ctx, error, title):
+        logger.error("Unexpected error during command!", exc_info=error)
+        anger_emoji = (
+            self.get_emoji(self.config.anger_emoji_id) or "\N{ANGER SYMBOL}"
+        )
+        trace, filename = self.get_traceback(error)
+
+        # Send traceback to error channel, if it exists
+        if self.error_channel is not None:
+            await self.upload_traceback(ctx, trace, filename)
+
+        # Output exception information
+        embed = discord.Embed(colour=discord.Colour.red())
+        embed.title = f"{anger_emoji} {title}"
+
+        if len(trace) > 1700:
+            embed.description = (
+                "Error output too long, see attached file. "
+                "\N{WHITE UP POINTING BACKHAND INDEX}"
             )
-            trace, filename = self.get_traceback(error)
+            data = BytesIO(trace.encode("utf-8"))
+            file = discord.File(fp=data, filename=filename)
+        else:
+            embed.description = f"```py\n{trace}\n```"
+            file = None
 
-            # Send traceback to error channel, if it exists
-            if self.error_channel is not None:
-                await self.upload_traceback(ctx, trace, filename)
-
-            # Output exception information
-            embed = discord.Embed(colour=discord.Colour.red())
-            embed.title = f"{anger_emoji} Unexpected error occurred!"
-
-            if len(trace) > 1700:
-                embed.description = (
-                    "Error output too long, see attached file. "
-                    "\N{WHITE UP POINTING BACKHAND INDEX}"
-                )
-                data = BytesIO(trace.encode("utf-8"))
-                file = discord.File(fp=data, filename=filename)
-            else:
-                embed.description = f"```py\n{trace}\n```"
-                file = None
-
-            await asyncio.gather(
-                ctx.send(embed=embed, file=file), Reactions.FAIL.add(ctx.message)
-            )
+        await asyncio.gather(
+            ctx.send(embed=embed, file=file), Reactions.FAIL.add(ctx.message)
+        )
 
     @staticmethod
     def get_traceback(error):
