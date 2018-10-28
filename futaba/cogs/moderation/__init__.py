@@ -12,7 +12,7 @@
 
 from .cleanup import Cleanup
 from .core import Moderation
-from .manual_modaction_warn import ManualModActionWarn
+from .manual_mod_action_warn import ManualModActionWarn
 
 
 def setup(bot):
