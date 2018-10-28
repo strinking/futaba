@@ -26,10 +26,10 @@ __all__ = "ManualModActionWarn"
 
 
 manual_mod_action_command_map = {
-    ManualModActionType.special_role_mute: "!mute",
-    ManualModActionType.special_role_jail: "!jail or !dunce",
-    ManualModActionType.kick_member: "!kick",
-    ManualModActionType.ban_member: "!ban",
+    ManualModActionType.special_role_mute: "{prefix}mute",
+    ManualModActionType.special_role_jail: "{prefix}jail or {prefix}dunce",
+    ManualModActionType.kick_member: "{prefix}kick",
+    ManualModActionType.ban_member: "{prefix}ban",
 }
 
 
@@ -43,7 +43,9 @@ class ManualModActionWarn:
     def __init__(self, bot):
         self.bot = bot
 
-    async def dispatch_manual_action_warning(self, action, moderator, target, **kwargs):
+    async def dispatch_manual_action_warning(
+        self, guild, action, moderator, target, **kwargs
+    ):
         """Dispatch a warning about invoking a moderation action manually."""
 
         logger.info(
@@ -60,6 +62,9 @@ class ManualModActionWarn:
 
 {detail_message}
  """.strip()
+
+        prefix = self.bot.prefix(guild)
+
         if action in (
             ManualModActionType.special_role_guest,
             ManualModActionType.special_role_member,
@@ -71,13 +76,13 @@ class ManualModActionWarn:
         ):
             role = kwargs["role"]
 
-            command = manual_mod_action_command_map[action]
+            command = manual_mod_action_command_map[action].format(prefix=prefix)
             detail_message = (
                 f"In the future, use the command {command} to add "
                 f"or remove the {action.value} role '{role.name}'."
             )
         else:
-            command = manual_mod_action_command_map[action]
+            command = manual_mod_action_command_map[action].format(prefix=prefix)
             detail_message = (
                 f"In the future, use the command {command} to {action.value} a member."
             )
@@ -149,7 +154,7 @@ class ManualModActionWarn:
         for (role, moderator) in manually_updated_roles:
             action = special_role_name_action_map[role]
             await self.dispatch_manual_action_warning(
-                action, moderator, member, role=role
+                member.guild, action, moderator, member, role=role
             )
 
     async def find_manually_removed_member(self, member):
@@ -188,4 +193,6 @@ class ManualModActionWarn:
         (action, member, moderator) = possible_manual_action
 
         mod_action = self._audit_log_to_manual_mod_action_map[action]
-        await self.dispatch_manual_action_warning(mod_action, moderator, member)
+        await self.dispatch_manual_action_warning(
+            member.guild, mod_action, moderator, member
+        )
