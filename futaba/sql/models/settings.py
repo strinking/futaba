@@ -21,7 +21,7 @@ import functools
 import logging
 
 import discord
-from sqlalchemy import BigInteger, Column, Table, Unicode, Boolean
+from sqlalchemy import BigInteger, Boolean, Column, Table, Unicode
 from sqlalchemy import CheckConstraint, ForeignKey, SmallInteger
 from sqlalchemy.sql import select
 
