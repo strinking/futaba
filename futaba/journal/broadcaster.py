@@ -45,3 +45,7 @@ class Broadcaster:
             path=path, guild=guild, content=content, attributes=attributes
         )
         self.router.queue.put_nowait(event)
+
+    @property
+    def history(self):
+        return self.router.history

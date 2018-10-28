@@ -17,6 +17,8 @@ of messages to different logging channels.
 
 import asyncio
 import logging
+from itertools import islice
+from pprint import pformat
 
 import discord
 from discord.ext import commands
@@ -290,3 +292,52 @@ class Journal(AbstractCog):
         self.bot.get_broadcaster(path).send(
             "", ctx.guild, content, **journal_attributes
         )
+
+    @log.command(name="find", aliases=["search"])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def log_find(self, ctx, *, condition: str = None):
+        """
+        List previous journal events that match the given conditions.
+        The condition is a Python expression with no variables but
+        the following attributes:
+
+        path: str
+        ppath: PurePath
+        guild: discord.Guild
+        content: str
+        attributes: dict
+        """
+
+        def create_scope(event):
+            return {
+                "path": str(event.path),
+                "ppath": event.path,
+                "guild": ctx.guild,
+                "content": event.content,
+                "attributes": event.attributes,
+            }
+
+        events = reversed(self.journal.history)
+        events = filter(lambda evt: evt.guild == ctx.guild, events)
+        events = islice(events, 20)
+
+        if condition is None:
+            matched = events
+        else:
+            matched = []
+            for event in events:
+                if eval(condition, create_scope(event)):
+                    matched.append(event)
+
+        if matched:
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
+            embed.set_author(name="Matched journal events")
+            descr = StringBuilder()
+            for event in matched:
+                descr.writeln(f"Path: `{event.path}`, Content: {event.content}")
+                descr.writeln(f"Attributes: ```py\n{pformat(event.attributes)}\n```\n")
+            embed.description = str(descr)
+        else:
+            embed = discord.Embed(colour=discord.Colour.dark_purple())
+            embed.set_author(name="No matching journal entries")
