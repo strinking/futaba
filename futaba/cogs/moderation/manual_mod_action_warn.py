@@ -60,15 +60,15 @@ class ManualModActionWarn:
 
 {detail_message}
  """.strip()
-        if action in {
+        if action in (
             ManualModActionType.special_role_guest,
             ManualModActionType.special_role_member,
-        }:
+        ):
             detail_message = "This role should be entirely automated by the bot."
-        elif action in {
+        elif action in (
             ManualModActionType.special_role_mute,
             ManualModActionType.special_role_jail,
-        }:
+        ):
             role = kwargs["role"]
 
             command = manual_mod_action_command_map[action]
