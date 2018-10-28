@@ -26,10 +26,10 @@ __all__ = "ManualModActionWarn"
 
 
 manual_mod_action_command_map = {
-    ManualModActionType.special_role_mute: "{prefix}mute",
-    ManualModActionType.special_role_jail: "{prefix}jail or {prefix}dunce",
-    ManualModActionType.kick_member: "{prefix}kick",
-    ManualModActionType.ban_member: "{prefix}ban",
+    ManualModActionType.SPECIAL_ROLE_MUTE: "{prefix}mute",
+    ManualModActionType.SPECIAL_ROLE_JAIL: "{prefix}jail or {prefix}dunce",
+    ManualModActionType.KICK_MEMBER: "{prefix}kick",
+    ManualModActionType.BAN_MEMBER: "{prefix}ban",
 }
 
 
@@ -66,13 +66,13 @@ class ManualModActionWarn:
         prefix = self.bot.prefix(guild)
 
         if action in (
-            ManualModActionType.special_role_guest,
-            ManualModActionType.special_role_member,
+            ManualModActionType.SPECIAL_ROLE_GUEST,
+            ManualModActionType.SPECIAL_ROLE_MEMBER,
         ):
             detail_message = "This role should be entirely automated by the bot."
         elif action in (
-            ManualModActionType.special_role_mute,
-            ManualModActionType.special_role_jail,
+            ManualModActionType.SPECIAL_ROLE_MUTE,
+            ManualModActionType.SPECIAL_ROLE_JAIL,
         ):
             role = kwargs["role"]
 
@@ -145,10 +145,10 @@ class ManualModActionWarn:
         )
 
         special_role_name_action_map = {
-            special_roles.member_role: ManualModActionType.special_role_member,
-            special_roles.guest_role: ManualModActionType.special_role_guest,
-            special_roles.mute_role: ManualModActionType.special_role_mute,
-            special_roles.jail_role: ManualModActionType.special_role_jail,
+            special_roles.member_role: ManualModActionType.SPECIAL_ROLE_MEMBER,
+            special_roles.guest_role: ManualModActionType.SPECIAL_ROLE_GUEST,
+            special_roles.mute_role: ManualModActionType.SPECIAL_ROLE_MUTE,
+            special_roles.jail_role: ManualModActionType.SPECIAL_ROLE_JAIL,
         }
 
         for (role, moderator) in manually_updated_roles:
@@ -177,8 +177,8 @@ class ManualModActionWarn:
             return (entry.action, member, entry.user)
 
     _audit_log_to_manual_mod_action_map = {
-        AuditLogAction.kick: ManualModActionType.kick_member,
-        AuditLogAction.ban: ManualModActionType.ban_member,
+        AuditLogAction.kick: ManualModActionType.KICK_MEMBER,
+        AuditLogAction.ban: ManualModActionType.BAN_MEMBER,
     }
 
     async def member_remove(self, member):

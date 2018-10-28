@@ -231,9 +231,9 @@ class TaskType(Enum):
 
 @unique
 class ManualModActionType(Enum):
-    special_role_member = "member"
-    special_role_guest = "guest"
-    special_role_mute = "mute"
-    special_role_jail = "jail"
-    kick_member = "kick"
-    ban_member = "ban"
+    SPECIAL_ROLE_MEMBER = "member"
+    SPECIAL_ROLE_GUEST = "guest"
+    SPECIAL_ROLE_MUTE = "mute"
+    SPECIAL_ROLE_JAIL = "jail"
+    KICK_MEMBER = "kick"
+    BAN_MEMBER = "ban"
