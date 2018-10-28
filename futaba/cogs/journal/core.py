@@ -100,7 +100,7 @@ class Journal:
         await ctx.send(embed=embed)
 
     def log_updated_message(self, channel):
-        outputs = list(self.bot.sql.journal.get_journals_on_channel(channel))
+        outputs = list(self.bot.sql.journal.get_journals_on_channels((channel,)))
         if outputs:
             paths = " ".join(f"`{output.path}`" for output in outputs)
         else:
