@@ -54,6 +54,55 @@ LISTENERS = (
 )
 
 
+async def get_removal_cause(member, timestamp):
+    async for entry in member.guild.audit_logs(limit=20):
+        if abs(timestamp - entry.created_at) < timedelta(seconds=3):
+            if entry.action == AuditLogAction.kick:
+                if entry.target == member:
+                    return MemberLeaveReason(
+                        type=MemberLeaveType.KICKED,
+                        member=member,
+                        cause=entry.user,
+                        reason=entry.reason,
+                        left_at=entry.created_at,
+                        audit_log_entry=entry,
+                    )
+            elif entry.action == AuditLogAction.ban:
+                if entry.target == member:
+                    return MemberLeaveReason(
+                        type=MemberLeaveType.BANNED,
+                        member=member,
+                        cause=entry.user,
+                        reason=entry.reason,
+                        left_at=entry.created_at,
+                        audit_log_entry=entry,
+                    )
+            elif entry.action == AuditLogAction.member_prune:
+                # Unfortunately the audit log entry doesn't
+                # tell us enough to determine if this member was part of
+                # the prune, so we'll just take a leap of faith and say
+                # it was so.
+
+                return MemberLeaveReason(
+                    type=MemberLeaveType.PRUNED,
+                    member=member,
+                    cause=entry.user,
+                    reason=entry.reason,
+                    left_at=entry.created_at,
+                    audit_log_entry=entry,
+                )
+
+    # Couldn't find anything, must be a voluntary departure
+    return MemberLeaveReason(
+        type=MemberLeaveType.LEFT,
+        member=member,
+        cause=member,
+        reason=None,
+        left_at=timestamp,
+        audit_log_entry=None,
+    )
+
+
 class Tracker:
     __slots__ = (
         "bot",
@@ -258,7 +307,7 @@ class Tracker:
         # Wait for a bit so we can catch the audit log entry
         timestamp = datetime.now()
         await asyncio.sleep(1)
-        cause = await self.get_removal_cause(message, timestamp)
+        cause = await get_removal_cause(message, timestamp)
 
         content = f"Message {message.id} by {user_discrim(message.author)} was deleted"
         self.journal.send(
@@ -413,54 +462,6 @@ class Tracker:
             "member/join", member.guild, content, icon="join", member=member
         )
 
-    async def get_removal_cause(self, member, timestamp):
-        async for entry in member.guild.audit_logs(limit=20):
-            if abs(timestamp - entry.created_at) < timedelta(seconds=3):
-                if entry.action == AuditLogAction.kick:
-                    if entry.target == member:
-                        return MemberLeaveReason(
-                            type=MemberLeaveType.KICKED,
-                            member=member,
-                            cause=entry.user,
-                            reason=entry.reason,
-                            left_at=entry.created_at,
-                            audit_log_entry=entry,
-                        )
-                elif entry.action == AuditLogAction.ban:
-                    if entry.target == member:
-                        return MemberLeaveReason(
-                            type=MemberLeaveType.BANNED,
-                            member=member,
-                            cause=entry.user,
-                            reason=entry.reason,
-                            left_at=entry.created_at,
-                            audit_log_entry=entry,
-                        )
-                elif entry.action == AuditLogAction.member_prune:
-                    # Unfortunately the audit log entry doesn't
-                    # tell us enough to determine if this member was part of
-                    # the prune, so we'll just take a leap of faith and say
-                    # it was so.
-
-                    return MemberLeaveReason(
-                        type=MemberLeaveType.PRUNED,
-                        member=member,
-                        cause=entry.user,
-                        reason=entry.reason,
-                        left_at=entry.created_at,
-                        audit_log_entry=entry,
-                    )
-
-        # Couldn't find anything, must be a voluntary departure
-        return MemberLeaveReason(
-            type=MemberLeaveType.LEFT,
-            member=member,
-            cause=member,
-            reason=None,
-            left_at=timestamp,
-            audit_log_entry=None,
-        )
-
     async def on_member_remove(self, member):
         if member in self.members_left:
             return
@@ -478,7 +479,7 @@ class Tracker:
         # Wait for a bit so we can catch the audit log entry
         timestamp = datetime.now()
         await asyncio.sleep(2)
-        cause = await self.get_removal_cause(member, timestamp)
+        cause = await get_removal_cause(member, timestamp)
 
         content = f"Member {member.mention} ({user_discrim(member)}) left"
         self.journal.send(

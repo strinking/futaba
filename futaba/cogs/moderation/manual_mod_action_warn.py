@@ -14,11 +14,13 @@
 Cog to warn when a mod action is done manually, instead of through the bot.
 """
 import logging
+from datetime import datetime
 from enum import Enum
 
 from discord import AuditLogAction
 
-from futaba.enums import ManualModActionType
+from futaba.cogs.tracker import get_removal_cause
+from futaba.enums import ManualModActionType, MemberLeaveType
 
 logger = logging.getLogger(__name__)
 
@@ -157,42 +159,21 @@ class ManualModActionWarn:
                 member.guild, action, moderator, member, role=role
             )
 
-    async def find_manually_removed_member(self, member):
-        """Finds a possibly manually kicked or banned member.
-
-        Returns a tuple: (remove_type, member, moderator) upon the user being manually banned,
-            otherwise returns None. (where remove_type is either AuditLogAction.kick or AuditLogAction.ban)
-        """
-
-        async for entry in member.guild.audit_logs(limit=20):
-            if entry.action not in {AuditLogAction.ban, AuditLogAction.kick}:
-                continue
-
-            if entry.target != member:
-                continue
-
-            if entry.user == self.bot.user:
-                continue
-
-            return (entry.action, member, entry.user)
-
     _audit_log_to_manual_mod_action_map = {
-        AuditLogAction.kick: ManualModActionType.KICK_MEMBER,
-        AuditLogAction.ban: ManualModActionType.BAN_MEMBER,
+        MemberLeaveType.KICKED: ManualModActionType.KICK_MEMBER,
+        MemberLeaveType.BANNED: ManualModActionType.BAN_MEMBER,
     }
 
     async def member_remove(self, member):
-        possible_manual_action = await self.find_manually_removed_member(member)
-
-        if possible_manual_action is None:
-            return
-
         if not self.bot.sql.settings.get_warn_manual_mod_action(member.guild):
             return
 
-        (action, member, moderator) = possible_manual_action
+        leave_reason = get_removal_cause(member, datetime.now())
 
-        mod_action = self._audit_log_to_manual_mod_action_map[action]
+        if leave_reason not in (MemberLeaveType.KICKED, MemberLeaveType.BANNED):
+            return
+
+        mod_action = self._audit_log_to_manual_mod_action_map[leave_reason.type]
         await self.dispatch_manual_action_warning(
-            member.guild, mod_action, moderator, member
+            member.guild, mod_action, leave_reason.cause, leave_reason.member
         )
