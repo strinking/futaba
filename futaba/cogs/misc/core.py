@@ -25,7 +25,6 @@ from discord.ext import commands
 
 from futaba import permissions, __version__
 from futaba.download import download_links
-from futaba.enums import Reactions
 from futaba.exceptions import CommandFailed
 from futaba.str_builder import StringBuilder
 from futaba.utils import GIT_HASH, URL_REGEX, fancy_timedelta
@@ -154,21 +153,3 @@ class Miscellaneous:
 
         for content in contents:
             await ctx.send(content=str(content))
-
-    @commands.command(name="testerror", hidden=True)
-    @permissions.check_owner()
-    async def test_error(self, ctx):
-        """ Deliberately raises an exception to test the bot's error handling. """
-
-        raise RuntimeError("Intentionally raised exception")
-
-    @commands.command(name="shutdown", aliases=["halt"], hidden=True)
-    @permissions.check_owner()
-    async def shutdown(self, ctx):
-        """ Shuts down the bot. Can only able be run by an owner. """
-
-        self.journal.send(
-            "admin/shutdown", ctx.guild, "Shutting down bot", icon="shutdown"
-        )
-        await Reactions.SUCCESS.add(ctx.message)
-        exit()

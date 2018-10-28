@@ -11,8 +11,12 @@
 #
 
 from .core import Miscellaneous
+from .debug import Debugging
 
 
 def setup(bot):
     cog = Miscellaneous(bot)
+    bot.add_cog(cog)
+
+    cog = Debugging(bot)
     bot.add_cog(cog)

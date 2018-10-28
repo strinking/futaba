@@ -22,6 +22,7 @@ import traceback
 from datetime import datetime
 from io import BytesIO
 
+import aiohttp
 import discord
 from discord.ext import commands
 
@@ -288,45 +289,78 @@ class Bot(commands.AutoShardedBot):
                 await ctx.author.send(content=page)
             await Reactions.SUCCESS.add(ctx.message)
 
-        else:
-            # Other exception, probably not meant to happen. Send it as an embed.
-            logger.error("Unexpected error during command!", exc_info=error)
-            anger_emoji = (
-                self.get_emoji(self.config.anger_emoji_id) or "\N{ANGER SYMBOL}"
-            )
-            traceback_str = "\n".join(
-                traceback.format_exception(type(error), error, error.__traceback__)
-            )
-            unix_time = int(datetime.now().timestamp())
-            traceback_filename = f"futaba-traceback-{unix_time}.log"
+        elif isinstance(error, commands.errors.CommandInvokeError):
+            logger.debug("Handling CommandInvokeError...")
+            error = error.__cause__
 
-            # Send traceback to error channel, if it exists
-            if self.error_channel is not None:
-                await self.upload_traceback(ctx, traceback_str, traceback_filename)
-
-            # Output exception information
-            embed = discord.Embed(colour=discord.Colour.red())
-            embed.title = f"{anger_emoji} Unexpected error occurred!"
-
-            if len(traceback_str) > 1700:
-                embed.description = (
-                    "Error output too long, see attached file. "
-                    "\N{WHITE UP POINTING BACKHAND INDEX}"
+            if isinstance(error, aiohttp.ClientError):
+                logger.error("Unexpected aiohttp client error", exc_info=error)
+                trace, filename = self.get_traceback(error)
+                embed = discord.Embed(colour=discord.Colour.dark_red())
+                embed.set_author(name="Spurious network error")
+                descr = StringBuilder()
+                descr.writeln("Traceback has been posted to developer's error channel.")
+                error_str = str(error)
+                if error_str:
+                    descr.writeln(f"```py\n{error_str}\n```")
+                embed.description = str(descr)
+                await asyncio.gather(
+                    ctx.send(embed=embed), Reactions.NETWORK.add(ctx.message)
                 )
-                data = BytesIO(traceback_str.encode("utf-8"))
-                file = discord.File(fp=data, filename=traceback_filename)
-            else:
-                embed.description = f"```py\n{traceback_str}\n```"
-                file = None
 
-            await asyncio.gather(
-                ctx.send(embed=embed, file=file), Reactions.FAIL.add(ctx.message)
+            else:
+                # Other exception, probably not meant to happen. Send it as an embed.
+                await self.report_other_exception(
+                    ctx, error, "Unexpected error occurred!"
+                )
+
+        else:
+            logger.error("Unknown discord command error raised", exc_info=error)
+            await self.report_other_exception(
+                ctx, error, "Unwrapped exception was raised from command!"
             )
 
-    async def upload_traceback(self, ctx, traceback_str, traceback_filename):
+    async def report_other_exception(self, ctx, error, title):
+        logger.error("Unexpected error during command!", exc_info=error)
+        anger_emoji = self.get_emoji(self.config.anger_emoji_id) or "\N{ANGER SYMBOL}"
+        trace, filename = self.get_traceback(error)
+
+        # Send traceback to error channel, if it exists
+        if self.error_channel is not None:
+            await self.upload_traceback(ctx, trace, filename)
+
+        # Output exception information
+        embed = discord.Embed(colour=discord.Colour.red())
+        embed.title = f"{anger_emoji} {title}"
+
+        if len(trace) > 1700:
+            embed.description = (
+                "Error output too long, see attached file. "
+                "\N{WHITE UP POINTING BACKHAND INDEX}"
+            )
+            data = BytesIO(trace.encode("utf-8"))
+            file = discord.File(fp=data, filename=filename)
+        else:
+            embed.description = f"```py\n{trace}\n```"
+            file = None
+
+        await asyncio.gather(
+            ctx.send(embed=embed, file=file), Reactions.FAIL.add(ctx.message)
+        )
+
+    @staticmethod
+    def get_traceback(error):
+        trace = "\n".join(
+            traceback.format_exception(type(error), error, error.__traceback__)
+        )
+        unix_time = int(datetime.now().timestamp())
+        filename = f"futaba-traceback-{unix_time}.log"
+        return trace, filename
+
+    async def upload_traceback(self, ctx, trace, filename):
         logger.info(
             "Uploading '%s' to #%s (%d)",
-            traceback_filename,
+            filename,
             self.error_channel.name,
             self.error_channel.id,
         )
@@ -386,8 +420,8 @@ class Bot(commands.AutoShardedBot):
 
         # Write actual traceback
         full_tb.writeln()
-        full_tb.writeln(traceback_str)
+        full_tb.writeln(trace)
 
         # Upload traceback to error channel
-        file = discord.File(fp=full_tb.bytes_io(), filename=traceback_filename)
+        file = discord.File(fp=full_tb.bytes_io(), filename=filename)
         await self.error_channel.send(file=file)
