@@ -227,3 +227,13 @@ class LocationType(Enum):
 class TaskType(Enum):
     CHANGE_ROLES = "change_roles"
     SEND_MESSAGE = "send_message"
+
+
+@unique
+class ManualModActionType(Enum):
+    special_role_member = "member"
+    special_role_guest = "guest"
+    special_role_mute = "mute"
+    special_role_jail = "jail"
+    kick_member = "kick"
+    ban_member = "ban"

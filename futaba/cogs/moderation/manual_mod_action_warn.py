@@ -1,5 +1,5 @@
 #
-# cogs/moderation/manual_modaction_warn.py
+# cogs/moderation/manual_mod_action_warn.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
@@ -18,18 +18,11 @@ from enum import Enum
 
 from discord import AuditLogAction
 
+from futaba.enums import ManualModActionType
+
 logger = logging.getLogger(__name__)
 
 __all__ = "ManualModActionWarn"
-
-
-class ManualModActionType(Enum):
-    special_role_member = "member"
-    special_role_guest = "guest"
-    special_role_mute = "mute"
-    special_role_jail = "jail"
-    kick_member = "kick"
-    ban_member = "ban"
 
 
 manual_mod_action_command_map = {
