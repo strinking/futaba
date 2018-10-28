@@ -78,7 +78,9 @@ Managing user filter immunity. Has attributes: `member: discord.Member`, `cause:
 ### Miscellaneous
 * `/misc/ping` - Time from receiving a command to sending a message to Discord. Attributs: `ms: float`
 * `/misc/emoji/random` - A random emoji was sent. Attributes: `channel: discord.Messageable`, `emoji: discord.Emoji`
-* `/misc/admin/shutdown` - Signifies the bot is about to shut down.
+* `/debug/error/runtime` - A deliberately raised `RuntimeError`.
+* `/debug/error/network` - A deliberately raised `aiohttp.ClientError`.
+* `/debug/admin/shutdown` - Signifies the bot is about to shut down.
 
 ### Moderation
 Actually handled in the tracking cog. This behavior is in the middle of changing.

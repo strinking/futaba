@@ -310,17 +310,19 @@ class Bot(commands.AutoShardedBot):
 
             else:
                 # Other exception, probably not meant to happen. Send it as an embed.
-                await self.report_other_exception(ctx, error, "Unexpected error occurred!")
+                await self.report_other_exception(
+                    ctx, error, "Unexpected error occurred!"
+                )
 
         else:
             logger.error("Unknown discord command error raised", exc_info=error)
-            await self.report_other_exception(ctx, error, "Unwrapped exception was raised from command!")
+            await self.report_other_exception(
+                ctx, error, "Unwrapped exception was raised from command!"
+            )
 
     async def report_other_exception(self, ctx, error, title):
         logger.error("Unexpected error during command!", exc_info=error)
-        anger_emoji = (
-            self.get_emoji(self.config.anger_emoji_id) or "\N{ANGER SYMBOL}"
-        )
+        anger_emoji = self.get_emoji(self.config.anger_emoji_id) or "\N{ANGER SYMBOL}"
         trace, filename = self.get_traceback(error)
 
         # Send traceback to error channel, if it exists
