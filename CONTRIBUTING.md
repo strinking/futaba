@@ -26,12 +26,14 @@ As mentioned above, all commands will react to the command message to indicate s
 * `CROSS MARK` - Command failed. Either the database didnt' commit, an error occurred, etc.
 * `NO ENTRY SIGN` - Command could not be invoked. Generally the user lacks the permissions to invoke it.
 * `BLACK QUESTION MARK ORNAMENT` - Invalid argument(s) or argument parse error. A `*Conv` conversion error or some other issue with the argument's value.
+* `ELECTRIC PLUG` - Networking issues, such as DNS or socket timeout. The implication is that it is either spurious or a third party's servers are not working.
 
 Commands which express success or failure with additional information should generally use an embed. Text responses are acceptable if they do not have any special formatting and are a single sentence. Embeds are mandatory if user or role mentions are used. The argument is always used as `colour` because that's the original name used by the library, and we've had issues in the past with pylint and `color`.
 
 We have some standard colors for discord embeds:
 * `discord.Colour.dark_teal()` - General success or information.
 * `discord.Colour.red()` - Failure or error.
+* `discord.Colour.dark_red()` - Unusual or exceptional error conditions. Used in cases where it is not the user or bot's fault that the failure occurred.
 * `discord.Colour.dark_purple()` - Success, but an exceptional condition. For instance, a list command would use `dark_teal` if there are entries, but a `dark_purple` with a "nothing found"-type message if not.
 * (other) - If there is a particular color that is more appropriate, it is used instead. This is mostly for things such as the member and role info commands, where the color of the embed matches the color of the item being described.
 
