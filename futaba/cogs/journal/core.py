@@ -17,6 +17,7 @@ of messages to different logging channels.
 
 import asyncio
 import logging
+import traceback
 from itertools import islice
 from pprint import pformat
 
@@ -309,6 +310,13 @@ class Journal(AbstractCog):
         attributes: dict
         """
 
+        logging.info(
+            "Finding journal entries in guild '%s' (%d) matching: %s",
+            ctx.guild.name,
+            ctx.guild.id,
+            condition or "(none)",
+        )
+
         def create_scope(event):
             return {
                 "path": str(event.path),
@@ -325,21 +333,52 @@ class Journal(AbstractCog):
         if condition is None:
             matched = events
         else:
+            try:
+                compile(condition, "<futaba journal-find eval>", "eval")
+            except Exception as error:
+                logger.info("Error compiling condition", exc_info=error)
+                embed = discord.Embed(colour=discord.Colour.red())
+                embed.set_author(name="Compilation error parsing condition")
+                trace = "\n".join(
+                    traceback.format_exception(type(error), error, error.__traceback__)
+                )
+                embed.description = f"```py\n{trace}\n```"
+                raise CommandFailed(embed=embed)
+
             matched = []
-            for event in events:
-                if eval(condition, create_scope(event)):
-                    matched.append(event)
+            sent_error = False
+            for event in tuple(events):
+                try:
+                    if eval(condition, create_scope(event)):
+                        matched.append(event)
+                except Exception as error:
+                    logger.info(
+                        "Runtime error while evaluating condition", exc_info=error
+                    )
+                    if sent_error:
+                        continue
+
+                    embed = discord.Embed(colour=discord.Colour.red())
+                    embed.set_author(name="Runtime error checking condition")
+                    trace = "\n".join(
+                        traceback.format_exception(
+                            type(error), error, error.__traceback__
+                        )
+                    )
+                    embed.description = f"```py\n{trace}\n```"
+                    await ctx.send(embed=embed)
+                    sent_error = True
 
         if matched:
             embed = discord.Embed(colour=discord.Colour.dark_teal())
-            embed.set_author(name="Matched journal events")
+            embed.set_author(name="Matching journal events")
             descr = StringBuilder()
 
             embeds = []
             for event in matched:
                 descr.writeln(f"Path: `{event.path}`, Content: {event.content}")
                 descr.writeln(f"Attributes: ```py\n{pformat(event.attributes)}\n```\n")
-                if len(descr) > 1700:
+                if len(descr) > 1400:
                     embed.description = str(descr)
                     embeds.append(embed)
                     descr.clear()
@@ -352,5 +391,5 @@ class Journal(AbstractCog):
             embeds = (embed,)
 
         for i, embed in enumerate(embeds):
-            embed.set_footer(text=f'Page {i + 1}/{len(embeds)}')
+            embed.set_footer(text=f"Page {i + 1}/{len(embeds)}")
             await ctx.send(embed=embed)
