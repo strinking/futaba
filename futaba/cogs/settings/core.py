@@ -149,6 +149,37 @@ class Settings:
 
         await ctx.send(embed=embed)
 
+    @commands.command(name="warnmanual")
+    @commands.guild_only()
+    async def warn_manual_mod_action(self, ctx, value: bool = None):
+        """
+        Gets the current setting for warning about manual mod actions.
+        If you're an administrator, you can change this value.
+        """
+
+        if value is None:
+            warn_manual_mod_action = self.bot.sql.settings.get_warn_manual_mod_action(
+                ctx.guild
+            )
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
+            state = "enabled" if warn_manual_mod_action else "disabled"
+            embed.description = f"Warning moderators about performing mod actions manually is {state}."
+        elif not admin_perm(ctx):
+            # Lacking authority to set warn manual mod action
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.description = (
+                "You do not have permission to enable or disable manual mod action warning"
+            )
+            raise ManualCheckFailure(embed=embed)
+        else:
+            with self.bot.sql.transaction():
+                self.bot.sql.settings.set_warn_manual_mod_action(ctx.guild, value)
+
+            embed = discord.Embed(colour=discord.Colour.teal())
+            embed.description = f"Set warning moderators about performing mod actions manually to `{value}`"
+
+        await ctx.send(embed=embed)
+
     @commands.command(name="specroles", aliases=["sroles"])
     @commands.guild_only()
     async def special_roles(self, ctx):
