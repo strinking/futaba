@@ -293,7 +293,7 @@ class Journal(AbstractCog):
             "", ctx.guild, content, **journal_attributes
         )
 
-    @log.command(name="find", aliases=["search"])
+    @log.command(name="find", aliases=["search", "query", "recent", "history"])
     @commands.guild_only()
     @permissions.check_mod()
     async def log_find(self, ctx, *, condition: str = None):
@@ -320,7 +320,7 @@ class Journal(AbstractCog):
 
         events = reversed(self.journal.history)
         events = filter(lambda evt: evt.guild == ctx.guild, events)
-        events = islice(events, 20)
+        events = islice(events, 10)
 
         if condition is None:
             matched = events
@@ -334,10 +334,23 @@ class Journal(AbstractCog):
             embed = discord.Embed(colour=discord.Colour.dark_teal())
             embed.set_author(name="Matched journal events")
             descr = StringBuilder()
+
+            embeds = []
             for event in matched:
                 descr.writeln(f"Path: `{event.path}`, Content: {event.content}")
                 descr.writeln(f"Attributes: ```py\n{pformat(event.attributes)}\n```\n")
+                if len(descr) > 1700:
+                    embed.description = str(descr)
+                    embeds.append(embed)
+                    descr.clear()
+                    embed = discord.Embed(colour=discord.Colour.dark_teal())
+                    embed.set_author(name="Matched journal events")
             embed.description = str(descr)
         else:
             embed = discord.Embed(colour=discord.Colour.dark_purple())
             embed.set_author(name="No matching journal entries")
+            embeds = (embed,)
+
+        for i, embed in enumerate(embeds):
+            embed.set_footer(text=f'Page {i + 1}/{len(embeds)}')
+            await ctx.send(embed=embed)
