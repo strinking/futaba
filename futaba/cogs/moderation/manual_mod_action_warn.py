@@ -46,7 +46,7 @@ class ManualModActionWarn:
         self.bot = bot
 
     async def dispatch_manual_action_warning(
-        self, guild, action, moderator, target, **kwargs
+        self, guild, action, moderator, target_member, **kwargs
     ):
         """Dispatch a warning about invoking a moderation action manually."""
 
@@ -55,15 +55,9 @@ class ManualModActionWarn:
             moderator.name,
             moderator.id,
             action.name,
-            target.name,
-            target.id,
+            target_member.name,
+            target_member.id,
         )
-
-        message_template = """
- Hey, it looks like you did some moderation action manually when you could have used the bot.
-
-{detail_message}
- """.strip()
 
         prefix = self.bot.prefix(guild)
 
@@ -71,7 +65,9 @@ class ManualModActionWarn:
             ManualModActionType.SPECIAL_ROLE_GUEST,
             ManualModActionType.SPECIAL_ROLE_MEMBER,
         ):
-            detail_message = "This role should be entirely automated by the bot."
+            role = kwargs["role"]
+
+            message = f'You manually added or removed the {action.value} role: "{role.name}", which normally should be managed automatically.'
         elif action in (
             ManualModActionType.SPECIAL_ROLE_MUTE,
             ManualModActionType.SPECIAL_ROLE_JAIL,
@@ -79,19 +75,19 @@ class ManualModActionWarn:
             role = kwargs["role"]
 
             command = manual_mod_action_command_map[action].format(prefix=prefix)
-            detail_message = (
-                f"In the future, use the command {command} to add "
-                f"or remove the {action.value} role '{role.name}'."
-            )
+            message = f'You manually added or removed {action.value} role: "{role.name}". In the future, use the command {command}'
         else:
             command = manual_mod_action_command_map[action].format(prefix=prefix)
-            detail_message = (
-                f"In the future, use the command {command} to {action.value} a member."
+
+            reason = kwargs["reason"] or "NO REASON"
+
+            action_name = (
+                "kicked" if action is ManualModActionType.KICK_MEMBER else "banned"
             )
 
-        final_message = message_template.format(detail_message=detail_message)
+            message = f"You manually {action_name} {target_member.display_name} ({target_member}) (reason: `{reason}`). In the future, use the command {command}"
 
-        await moderator.send(final_message)
+        await moderator.send(message)
 
     async def find_manually_updated_roles(self, member, roles):
         """Finds which roles were manually updated by a moderator.
@@ -175,5 +171,9 @@ class ManualModActionWarn:
 
         mod_action = self._audit_log_to_manual_mod_action_map[leave_reason.type]
         await self.dispatch_manual_action_warning(
-            member.guild, mod_action, leave_reason.cause, leave_reason.member
+            member.guild,
+            mod_action,
+            leave_reason.cause,
+            leave_reason.member,
+            reason=leave_reason.reason,
         )
