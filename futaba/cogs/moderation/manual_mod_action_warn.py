@@ -79,13 +79,14 @@ class ManualModActionWarn:
         else:
             command = manual_mod_action_command_map[action].format(prefix=prefix)
 
-            reason = kwargs["reason"] or "NO REASON"
+            reason = kwargs["reason"]
+            reason_message = f" (reason: `{reason}`)" if reason else ""
 
             action_name = (
                 "kicked" if action is ManualModActionType.KICK_MEMBER else "banned"
             )
 
-            message = f"You manually {action_name} {target_member.display_name} ({target_member}) (reason: `{reason}`). In the future, use the command {command}"
+            message = f"You manually {action_name} {target_member.display_name} ({target_member}){reason_message}. In the future, use the command {command}"
 
         await moderator.send(message)
 
