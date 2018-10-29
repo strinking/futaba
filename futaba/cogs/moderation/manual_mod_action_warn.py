@@ -170,7 +170,7 @@ class ManualModActionWarn:
 
         leave_reason = await get_removal_cause(member, datetime.now())
 
-        if leave_reason not in (MemberLeaveType.KICKED, MemberLeaveType.BANNED):
+        if leave_reason.type not in (MemberLeaveType.KICKED, MemberLeaveType.BANNED):
             return
 
         mod_action = self._audit_log_to_manual_mod_action_map[leave_reason.type]
