@@ -168,7 +168,7 @@ class ManualModActionWarn:
         if not self.bot.sql.settings.get_warn_manual_mod_action(member.guild):
             return
 
-        leave_reason = get_removal_cause(member, datetime.now())
+        leave_reason = await get_removal_cause(member, datetime.now())
 
         if leave_reason not in (MemberLeaveType.KICKED, MemberLeaveType.BANNED):
             return
