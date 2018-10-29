@@ -10,7 +10,7 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-from .core import Tracker, LISTENERS
+from .core import Tracker, LISTENERS, get_removal_cause
 
 
 def setup(bot):

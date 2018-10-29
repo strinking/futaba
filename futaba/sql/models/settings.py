@@ -21,7 +21,7 @@ import functools
 import logging
 
 import discord
-from sqlalchemy import BigInteger, Column, Table, Unicode
+from sqlalchemy import BigInteger, Boolean, Column, Table, Unicode
 from sqlalchemy import CheckConstraint, ForeignKey, SmallInteger
 from sqlalchemy.sql import select
 
@@ -34,11 +34,12 @@ __all__ = ["SettingsModel"]
 
 
 class GuildSettingsStorage:
-    __slots__ = ("prefix", "max_delete_messages")
+    __slots__ = ("prefix", "max_delete_messages", "warn_manual_mod_action")
 
-    def __init__(self, prefix, max_delete_messages):
+    def __init__(self, prefix, max_delete_messages, warn_manual_mod_action):
         self.prefix = prefix
         self.max_delete_messages = max_delete_messages
+        self.warn_manual_mod_action = warn_manual_mod_action
 
 
 class SpecialRoleStorage:
@@ -112,6 +113,7 @@ class SettingsModel:
             ),
             Column("prefix", Unicode, nullable=True),
             Column("max_delete_messages", SmallInteger),
+            Column("warn_manual_mod_action", Boolean, default=False),
         )
         self.tb_special_roles = Table(
             "special_roles",
@@ -171,10 +173,11 @@ class SettingsModel:
             guild_id=guild.id,
             prefix=None,
             max_delete_messages=self.sql.max_delete_messages,
+            warn_manual_mod_action=False,
         )
         self.sql.execute(ins)
         self.guild_settings_cache[guild] = GuildSettingsStorage(
-            None, self.sql.max_delete_messages
+            None, self.sql.max_delete_messages, False
         )
 
     def remove_guild_settings(self, guild):
@@ -196,6 +199,7 @@ class SettingsModel:
             [
                 self.tb_guild_settings.c.prefix,
                 self.tb_guild_settings.c.max_delete_messages,
+                self.tb_guild_settings.c.warn_manual_mod_action,
             ]
         ).where(self.tb_guild_settings.c.guild_id == guild.id)
         result = self.sql.execute(sel)
@@ -203,9 +207,9 @@ class SettingsModel:
         if not result.rowcount:
             self.add_guild_settings(guild)
 
-        prefix, max_delete_messages = result.fetchone()
+        prefix, max_delete_messages, warn_manual_mod_action = result.fetchone()
         self.guild_settings_cache[guild] = GuildSettingsStorage(
-            prefix, max_delete_messages
+            prefix, max_delete_messages, warn_manual_mod_action
         )
 
     def get_prefix(self, guild):
@@ -250,6 +254,32 @@ class SettingsModel:
         )
         self.sql.execute(upd)
         self.guild_settings_cache[guild].max_delete_messages = max_delete_messages
+
+    def get_warn_manual_mod_action(self, guild):
+        logger.info(
+            "Getting warn manual mod action flag for guild '%s' (%d)",
+            guild.name,
+            guild.id,
+        )
+        if guild not in self.guild_settings_cache:
+            self.fetch_guild_settings(guild)
+
+        return self.guild_settings_cache[guild].warn_manual_mod_action
+
+    def set_warn_manual_mod_action(self, guild, warn_manual_mod_action):
+        logger.info(
+            "Setting warn manual mod action flag to %d for guild '%s' (%d)",
+            warn_manual_mod_action,
+            guild.name,
+            guild.id,
+        )
+        upd = (
+            self.tb_guild_settings.update()
+            .where(self.tb_guild_settings.c.guild_id == guild.id)
+            .values(warn_manual_mod_action=warn_manual_mod_action)
+        )
+        self.sql.execute(upd)
+        self.guild_settings_cache[guild].warn_manual_mod_action = warn_manual_mod_action
 
     def add_special_roles(self, guild):
         logger.info(

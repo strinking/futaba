@@ -12,6 +12,7 @@
 
 from .cleanup import Cleanup
 from .core import Moderation
+from .manual_mod_action_warn import ManualModActionWarn
 
 
 def setup(bot):
@@ -19,4 +20,9 @@ def setup(bot):
     bot.add_cog(cog)
 
     cog = Moderation(bot)
+    bot.add_cog(cog)
+
+    cog = ManualModActionWarn(bot)
+    bot.add_listener(cog.member_update, "on_member_update")
+    bot.add_listener(cog.member_remove, "on_member_remove")
     bot.add_cog(cog)
