@@ -23,8 +23,18 @@ import logging
 
 import discord
 
-from sqlalchemy import (BigInteger, Boolean, CheckConstraint, Column, Enum,
-                        ForeignKey, SmallInteger, Table, Unicode)
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    CheckConstraint,
+    Column,
+    Enum,
+    ForeignKey,
+    SmallInteger,
+    Table,
+    Unicode,
+    UniqueConstraint,
+)
 from sqlalchemy.sql import select
 
 from ...enums import LocationType
@@ -201,11 +211,10 @@ class SettingsModel:
         self.tb_tracking_blacklists = Table(
             "tracking_blacklists",
             meta,
-            Column(
-                "guild_id", BigInteger, ForeignKey("guilds.guild_id"), primary_key=True
-            ),
-            Column("type", Enum(LocationType), primary_key=True),
-            Column("data_id", BigInteger, primary_key=True),
+            Column("guild_id", BigInteger, ForeignKey("guilds.guild_id"), index=True),
+            Column("type", Enum(LocationType)),
+            Column("data_id", BigInteger),
+            UniqueConstraint("guild_id", "type", "data_id"),
         )
         self.guild_settings_cache = {}
         self.roles_cache = {}
