@@ -363,7 +363,8 @@ class Settings:
         """ Add a user or channel to the tracking blacklist. """
 
         logger.info(
-            "Adding '%s' (%d) to the tracking blacklist for guild '%s' (%d)",
+            "Adding %s '%s' (%d) to the tracking blacklist for guild '%s' (%d)",
+            "user" if isinstance(user_or_channel, discord.abc.User) else "channel",
             user_or_channel.name,
             user_or_channel.id,
             ctx.guild.name,
@@ -387,7 +388,8 @@ class Settings:
         """ Remove a user or channel from the tracking blacklist. """
 
         logger.info(
-            "Removing '%s' (%d) from the tracking blacklist for guild '%s' (%d)",
+            "Removing %s '%s' (%d) from the tracking blacklist for guild '%s' (%d)",
+            "user" if isinstance(user_or_channel, discord.abc.User) else "channel",
             user_or_channel.name,
             user_or_channel.id,
             ctx.guild.name,
