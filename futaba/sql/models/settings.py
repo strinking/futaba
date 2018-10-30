@@ -23,11 +23,20 @@ import logging
 
 import discord
 
-from futaba.utils import partition_on
-from sqlalchemy import (BigInteger, Boolean, CheckConstraint, Column, Enum,
-                        ForeignKey, SmallInteger, Table, Unicode)
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    CheckConstraint,
+    Column,
+    Enum,
+    ForeignKey,
+    SmallInteger,
+    Table,
+    Unicode,
+)
 from sqlalchemy.sql import select
 
+from ...utils import partition_on
 from ..hooks import register_hook
 
 Column = functools.partial(Column, nullable=False)
