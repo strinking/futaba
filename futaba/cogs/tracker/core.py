@@ -141,7 +141,19 @@ class Tracker:
         else:
             self.typing.append((channel, user, when))
 
-        if getattr(channel, "guild", None) is None:
+        guild = getattr(channel, "guild", None)
+        if guild is None:
+            return
+
+        blacklist = self.bot.sql.settings.get_tracking_blacklist(guild)
+        if blacklist.is_blocked(channel) or blacklist.is_blocked(user):
+            logger.debug(
+                "Ignoring received typing event from %s (%d) in #%s (%d) due to the channel or user being blacklisted",
+                user.name,
+                user.id,
+                channel.name,
+                channel.id,
+            )
             return
 
         logger.debug(
@@ -190,6 +202,19 @@ class Tracker:
         if message.guild is None or message.author == self.bot.user:
             return
 
+        blacklist = self.bot.sql.settings.get_tracking_blacklist(message.guild)
+        if blacklist.is_blocked(message.channel) or blacklist.is_blocked(
+            message.author
+        ):
+            logger.debug(
+                "Ignoring received message from %s (%d) in #%s (%d) due to the channel or user being blacklisted",
+                message.author.name,
+                message.author.id,
+                message.channel.name,
+                message.channel.id,
+            )
+            return
+
         logger.debug(
             "Received message from %s (%d) in #%s (%d)",
             message.author.name,
@@ -225,6 +250,17 @@ class Tracker:
             self.edited_messages.append(after)
 
         if after.guild is None or after.author == self.bot.user:
+            return
+
+        blacklist = self.bot.sql.settings.get_tracking_blacklist(after.guild)
+        if blacklist.is_blocked(after.channel) or blacklist.is_blocked(after.author):
+            logger.debug(
+                "Ignoring message update from %s (%d) in #%s (%d) due to the channel or user being blacklisted",
+                after.author.name,
+                after.author.id,
+                after.channel.name,
+                after.channel.id,
+            )
             return
 
         logger.debug(
@@ -297,6 +333,18 @@ class Tracker:
         if message.guild is None:
             return
 
+        blacklist = self.bot.sql.settings.get_tracking_blacklist(message.guild)
+        if blacklist.is_blocked(message.channel) or blacklist.is_blocked(
+            message.author
+        ):
+            logger.debug(
+                "Ignoring message deletion of %d by %s (%d) due to the channel or user being blacklisted",
+                message.id,
+                message.author.name,
+                message.author.id,
+            )
+            return
+
         logger.debug(
             "Message %d by %s (%d) was deleted",
             message.id,
@@ -348,6 +396,17 @@ class Tracker:
         if message.guild is None or user == self.bot.user:
             return
 
+        blacklist = self.bot.sql.settings.get_tracking_blacklist(message.guild)
+        if blacklist.is_blocked(message.channel) or blacklist.is_blocked(user):
+            logger.debug(
+                "Ignoring reaction %s added to message %d by %s (%d) due to the channel or user adding the reaction being blacklisted",
+                emoji,
+                message.id,
+                user.name,
+                user.id,
+            )
+            return
+
         logger.debug(
             "Reaction %s added to message %d by %s (%d)",
             emoji,
@@ -380,6 +439,17 @@ class Tracker:
         if message.guild is None or user == self.bot.user:
             return
 
+        blacklist = self.bot.sql.settings.get_tracking_blacklist(message.guild)
+        if blacklist.is_blocked(message.channel) or blacklist.is_blocked(user):
+            logger.debug(
+                "Ignoring reaction %s removed from message %d by %s (%d) due to the channel or user adding the reaction being blacklisted",
+                emoji,
+                message.id,
+                user.name,
+                user.id,
+            )
+            return
+
         logger.debug(
             "Reaction %s removed to message %d by %s (%d)",
             emoji,
@@ -406,6 +476,14 @@ class Tracker:
 
     async def on_reaction_clear(self, message, reactions):
         if message.guild is None:
+            return
+
+        blacklist = self.bot.sql.settings.get_tracking_blacklist(message.guild)
+        if blacklist.is_blocked(message.channel):
+            logger.debug(
+                "Ignoring all reactions from message %d being removed due to the channel being blacklisted",
+                message.id,
+            )
             return
 
         logger.debug("All reactions from message %d were removed", message.id)
@@ -446,6 +524,17 @@ class Tracker:
         else:
             self.members_joined.append(member)
 
+        blacklist = self.bot.sql.settings.get_tracking_blacklist(member.guild)
+        if blacklist.is_blocked(member):
+            logger.debug(
+                "Ignoring member %s (%d) joining guild '%s' (%d) due to the user being blacklisted",
+                member.name,
+                member.id,
+                member.guild.name,
+                member.guild.id,
+            )
+            return
+
         logger.debug(
             "Member %s (%d) joined '%s' (%d)",
             member.name,
@@ -467,6 +556,17 @@ class Tracker:
             return
         else:
             self.members_left.append(member)
+
+        blacklist = self.bot.sql.settings.get_tracking_blacklist(member.guild)
+        if blacklist.is_blocked(member):
+            logger.debug(
+                "Ignoring member %s (%d) leaving guild '%s' (%d) due to the user being blacklisted",
+                member.name,
+                member.id,
+                member.guild.name,
+                member.guild.id,
+            )
+            return
 
         logger.debug(
             "Member %s (%d) left '%s' (%d)",

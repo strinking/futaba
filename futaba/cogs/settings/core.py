@@ -17,12 +17,13 @@ of configured settings in between runs of the bot.
 
 import logging
 import re
+from typing import Union
 
 import discord
 from discord.ext import commands
 
 from futaba import permissions
-from futaba.converters import RoleConv
+from futaba.converters import MemberConv, RoleConv, TextChannelConv
 from futaba.emojis import ICONS
 from futaba.exceptions import CommandFailed, ManualCheckFailure
 from futaba.permissions import admin_perm, mod_perm
@@ -342,3 +343,55 @@ class Settings:
 
         await ctx.send(embed=embed)
         self.journal.send("roles/jail", ctx.guild, content, icon="settings", role=role)
+
+    @commands.command(name="trackblacklistadd")
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def tracker_blacklist_add(
+        self, ctx, *, user_or_channel: Union[MemberConv, TextChannelConv]
+    ):
+        """ Add a user or channel to the tracking blacklist. """
+
+        logger.info(
+            "Adding '%s' (%d) to the tracking blacklist for guild '%s' (%d)",
+            user_or_channel.name,
+            user_or_channel.id,
+            ctx.guild.name,
+            ctx.guild.id,
+        )
+
+        with self.bot.sql.transaction():
+            self.bot.sql.settings.add_to_tracking_blacklist(ctx.guild, user_or_channel)
+
+        embed = discord.Embed(colour=discord.Colour.green())
+        embed.description = f"Added {user_or_channel.mention} to the tracking blacklist"
+
+        await ctx.send(embed=embed)
+
+    @commands.command(name="trackblacklistremove")
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def tracker_blacklist_remove(
+        self, ctx, *, user_or_channel: Union[MemberConv, TextChannelConv]
+    ):
+        """ Remove a user or channel from the tracking blacklist. """
+
+        logger.info(
+            "Removing '%s' (%d) from the tracking blacklist for guild '%s' (%d)",
+            user_or_channel.name,
+            user_or_channel.id,
+            ctx.guild.name,
+            ctx.guild.id,
+        )
+
+        with self.bot.sql.transaction():
+            self.bot.sql.settings.remove_from_tracking_blacklist(
+                ctx.guild, user_or_channel
+            )
+
+        embed = discord.Embed(colour=discord.Colour.green())
+        embed.description = (
+            f"Removed {user_or_channel.mention} from the tracking blacklist"
+        )
+
+        await ctx.send(embed=embed)
