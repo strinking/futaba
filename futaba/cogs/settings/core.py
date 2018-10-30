@@ -25,7 +25,7 @@ from discord.ext import commands
 from futaba import permissions
 from futaba.converters import MemberConv, RoleConv, TextChannelConv
 from futaba.emojis import ICONS
-from futaba.exceptions import CommandFailed, ManualCheckFailure
+from futaba.exceptions import CommandFailed, ManualCheckFailure, SendHelp
 from futaba.permissions import admin_perm, mod_perm
 
 logger = logging.getLogger(__name__)
@@ -344,7 +344,15 @@ class Settings:
         await ctx.send(embed=embed)
         self.journal.send("roles/jail", ctx.guild, content, icon="settings", role=role)
 
-    @commands.command(name="trackblacklistadd")
+    @commands.group(name="trackerblacklist")
+    @commands.guild_only()
+    async def tracker_blacklist(self, ctx):
+        """ Manages tracker blacklist entries for this guild. """
+
+        if ctx.invoked_subcommand is None:
+            raise SendHelp()
+
+    @tracker_blacklist.command(name="add")
     @commands.guild_only()
     @permissions.check_mod()
     async def tracker_blacklist_add(
@@ -368,7 +376,7 @@ class Settings:
 
         await ctx.send(embed=embed)
 
-    @commands.command(name="trackblacklistremove")
+    @tracker_blacklist.command(name="remove")
     @commands.guild_only()
     @permissions.check_mod()
     async def tracker_blacklist_remove(
