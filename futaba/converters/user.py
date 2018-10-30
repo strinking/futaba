@@ -94,7 +94,7 @@ async def get_user(bot, argument, user_list):
     logger.debug("Checking if it's in the form username#discriminator")
     match = USERNAME_DISCRIM_REGEX.match(argument)
     if match is not None:
-        name, discrim = normalize_caseless(match[1]), int(match[2])
+        name, discrim = normalize_caseless(match[1]), match[2]
 
         def user_discrim_check(user):
             uname = normalize_caseless(user.name)
