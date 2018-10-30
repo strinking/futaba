@@ -23,19 +23,11 @@ import logging
 
 import discord
 
-from sqlalchemy import (
-    BigInteger,
-    Boolean,
-    CheckConstraint,
-    Column,
-    Enum,
-    ForeignKey,
-    SmallInteger,
-    Table,
-    Unicode,
-)
+from sqlalchemy import (BigInteger, Boolean, CheckConstraint, Column, Enum,
+                        ForeignKey, SmallInteger, Table, Unicode)
 from sqlalchemy.sql import select
 
+from ...enums import LocationType
 from ...utils import partition_on
 from ..hooks import register_hook
 
@@ -114,7 +106,7 @@ class TrackingBlacklistStorage:
 
         self.guild = guild
         blacklisted_channels, blacklisted_users = partition_on(
-            lambda block: block[0] is TrackingBlacklistType.CHAN,
+            lambda block: block[0] is LocationType.CHANNEL,
             blacklist,
             lambda block: block[1],
         )
@@ -140,11 +132,6 @@ class TrackingBlacklistStorage:
             self.blacklisted_users.discard(user_or_channel.id)
         else:
             self.blacklisted_channels.discard(user_or_channel.id)
-
-
-class TrackingBlacklistType(enum.Enum):
-    USER = 1
-    CHAN = 2
 
 
 class SettingsModel:
@@ -217,7 +204,7 @@ class SettingsModel:
             Column(
                 "guild_id", BigInteger, ForeignKey("guilds.guild_id"), primary_key=True
             ),
-            Column("type", Enum(TrackingBlacklistType), primary_key=True),
+            Column("type", Enum(LocationType), primary_key=True),
             Column("data_id", BigInteger, primary_key=True),
         )
         self.guild_settings_cache = {}
@@ -424,9 +411,9 @@ class SettingsModel:
         )
 
         block_type = (
-            TrackingBlacklistType.USER
+            LocationType.USER
             if isinstance(user_or_channel, discord.abc.User)
-            else TrackingBlacklistType.CHAN
+            else LocationType.CHANNEL
         )
 
         ins = self.tb_tracking_blacklists.insert().values(
@@ -463,9 +450,9 @@ class SettingsModel:
         )
 
         block_type = (
-            TrackingBlacklistType.USER
+            LocationType.USER
             if isinstance(user_or_channel, discord.abc.User)
-            else TrackingBlacklistType.CHAN
+            else LocationType.CHANNEL
         )
 
         delet = self.tb_tracking_blacklists.delete().where(
