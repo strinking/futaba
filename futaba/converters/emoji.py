@@ -55,7 +55,7 @@ class EmojiConv(Converter):
         logger.debug("Checking if it's a emoji mention")
         match = EMOJI_REGEX.match(argument)
         if match is not None:
-            emoji = discord.utils.get(ctx.bot.emojis, id=int(match[1]))
+            emoji = discord.utils.get(ctx.bot.emojis, id=int(match[2]))
             if emoji is not None:
                 return emoji
 
