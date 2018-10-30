@@ -373,7 +373,7 @@ class Settings:
         with self.bot.sql.transaction():
             self.bot.sql.settings.add_to_tracking_blacklist(ctx.guild, user_or_channel)
 
-        embed = discord.Embed(colour=discord.Colour.green())
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
         embed.description = f"Added {user_or_channel.mention} to the tracking blacklist"
 
         await ctx.send(embed=embed)
@@ -399,7 +399,7 @@ class Settings:
                 ctx.guild, user_or_channel
             )
 
-        embed = discord.Embed(colour=discord.Colour.green())
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
         embed.description = (
             f"Removed {user_or_channel.mention} from the tracking blacklist"
         )
