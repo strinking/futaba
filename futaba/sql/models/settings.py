@@ -125,18 +125,18 @@ class TrackingBlacklistStorage:
         )
 
     def is_blocked(self, user_or_channel):
-        if isinstance(user_or_channel, (discord.User, discord.Member)):
+        if isinstance(user_or_channel, discord.abc.User):
             return user_or_channel.id in self.blacklisted_users
         return user_or_channel.id in self.blacklisted_channels
 
     def add_block(self, user_or_channel):
-        if isinstance(user_or_channel, (discord.User, discord.Member)):
+        if isinstance(user_or_channel, discord.abc.User):
             self.blacklisted_users.add(user_or_channel.id)
         else:
             self.blacklisted_channels.add(user_or_channel.id)
 
     def remove_block(self, user_or_channel):
-        if isinstance(user_or_channel, (discord.User, discord.Member)):
+        if isinstance(user_or_channel, discord.abc.User):
             self.blacklisted_users.discard(user_or_channel.id)
         else:
             self.blacklisted_channels.discard(user_or_channel.id)
@@ -425,7 +425,7 @@ class SettingsModel:
 
         block_type = (
             TrackingBlacklistType.USER
-            if isinstance(user_or_channel, (discord.User, discord.Member))
+            if isinstance(user_or_channel, discord.abc.User)
             else TrackingBlacklistType.CHAN
         )
 
@@ -464,7 +464,7 @@ class SettingsModel:
 
         block_type = (
             TrackingBlacklistType.USER
-            if isinstance(user_or_channel, (discord.User, discord.Member))
+            if isinstance(user_or_channel, discord.abc.User)
             else TrackingBlacklistType.CHAN
         )
 
