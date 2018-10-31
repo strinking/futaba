@@ -354,7 +354,7 @@ class Settings:
         if ctx.invoked_subcommand is None:
             raise SendHelp()
 
-    @tracker_blacklist.command(name="add")
+    @tracker_blacklist.command(name="add", aliases=["append", "extend"])
     @commands.guild_only()
     @permissions.check_mod()
     async def tracker_blacklist_add(
@@ -379,7 +379,7 @@ class Settings:
 
         await ctx.send(embed=embed)
 
-    @tracker_blacklist.command(name="remove")
+    @tracker_blacklist.command(name="remove", aliases=["rm", "delete", "del"])
     @commands.guild_only()
     @permissions.check_mod()
     async def tracker_blacklist_remove(
