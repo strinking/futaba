@@ -174,13 +174,11 @@ class Moderation:
     @commands.command(name="jail", aliases=["dunce"])
     @commands.guild_only()
     @permissions.check_mod()
-    async def jail(
-        self, ctx, member: MemberConv, minutes: int = 0, *, reason: str = None
-    ):
+    async def jail(self, ctx, member: MemberConv, minutes: int, *, reason: str = None):
         """
         Jails the user.
         Requires a jail role to be configured.
-        Set 'minutes' to 0 to jail without a timer.
+        The minutes parameter must be set to a positive number.
         """
 
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)
