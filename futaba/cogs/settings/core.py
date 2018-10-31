@@ -17,15 +17,18 @@ of configured settings in between runs of the bot.
 
 import logging
 import re
+from itertools import chain
+from typing import Union
 
 import discord
 from discord.ext import commands
 
 from futaba import permissions
-from futaba.converters import RoleConv
+from futaba.converters import MemberConv, RoleConv, TextChannelConv
 from futaba.emojis import ICONS
-from futaba.exceptions import CommandFailed, ManualCheckFailure
+from futaba.exceptions import CommandFailed, ManualCheckFailure, SendHelp
 from futaba.permissions import admin_perm, mod_perm
+from futaba.str_builder import StringBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -342,3 +345,104 @@ class Settings:
 
         await ctx.send(embed=embed)
         self.journal.send("roles/jail", ctx.guild, content, icon="settings", role=role)
+
+    @commands.group(name="trackerblacklist", aliases=["trackerbl", "trkbl"])
+    @commands.guild_only()
+    async def tracker_blacklist(self, ctx):
+        """ Manages tracker blacklist entries for this guild. """
+
+        if ctx.invoked_subcommand is None:
+            raise SendHelp()
+
+    @tracker_blacklist.command(name="add", aliases=["append", "extend"])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def tracker_blacklist_add(
+        self, ctx, *, user_or_channel: Union[MemberConv, TextChannelConv]
+    ):
+        """ Add a user or channel to the tracking blacklist. """
+
+        logger.info(
+            "Adding %s '%s' (%d) to the tracking blacklist for guild '%s' (%d)",
+            "user" if isinstance(user_or_channel, discord.abc.User) else "channel",
+            user_or_channel.name,
+            user_or_channel.id,
+            ctx.guild.name,
+            ctx.guild.id,
+        )
+
+        with self.bot.sql.transaction():
+            self.bot.sql.settings.add_to_tracking_blacklist(ctx.guild, user_or_channel)
+
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
+        embed.description = f"Added {user_or_channel.mention} to the tracking blacklist"
+
+        await ctx.send(embed=embed)
+
+    @tracker_blacklist.command(name="remove", aliases=["rm", "delete", "del"])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def tracker_blacklist_remove(
+        self, ctx, *, user_or_channel: Union[MemberConv, TextChannelConv]
+    ):
+        """ Remove a user or channel from the tracking blacklist. """
+
+        logger.info(
+            "Removing %s '%s' (%d) from the tracking blacklist for guild '%s' (%d)",
+            "user" if isinstance(user_or_channel, discord.abc.User) else "channel",
+            user_or_channel.name,
+            user_or_channel.id,
+            ctx.guild.name,
+            ctx.guild.id,
+        )
+
+        with self.bot.sql.transaction():
+            self.bot.sql.settings.remove_from_tracking_blacklist(
+                ctx.guild, user_or_channel
+            )
+
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
+        embed.description = (
+            f"Removed {user_or_channel.mention} from the tracking blacklist"
+        )
+
+        await ctx.send(embed=embed)
+
+    @tracker_blacklist.command(name="show", aliases=["display", "list"])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def tracker_blacklist_show(self, ctx):
+        """ Shows all blacklist entries for this guild.  """
+
+        blacklist = self.bot.sql.settings.get_tracking_blacklist(ctx.guild)
+
+        if not blacklist.blacklisted_users and not blacklist.blacklisted_channels:
+            prefix = self.bot.prefix(ctx.guild)
+            embed = discord.Embed(colour=discord.Colour.dark_purple())
+            embed.set_author(name="No blacklist entries")
+            embed.description = f"Moderators can use the `{prefix}trackerblacklist add/remove` commands to change this list!"
+            await ctx.send(embed=embed)
+            return
+
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
+        embed.set_author(name="Blacklist entries")
+
+        if blacklist.blacklisted_channels:
+            channel_msg = StringBuilder(sep=", ")
+            for channel_id in blacklist.blacklisted_channels:
+                channel = discord.utils.get(ctx.guild.channels, id=channel_id)
+                channel_msg.write(channel.mention)
+
+            embed.add_field(name="Blacklisted channels", value=channel_msg)
+
+        if blacklist.blacklisted_users:
+            user_msg = StringBuilder(sep=", ")
+            for user_id in blacklist.blacklisted_users:
+                user = discord.utils.get(
+                    chain(ctx.guild.members, ctx.bot.users), id=user_id
+                )
+                user_msg.write(user.mention)
+
+            embed.add_field(name="Blacklisted channels", value=user_msg)
+
+        await ctx.send(embed=embed)

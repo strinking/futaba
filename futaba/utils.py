@@ -265,3 +265,24 @@ def escape_backticks(content):
     """
 
     return content.replace("`", "\N{ARMENIAN COMMA}").replace(":", "\N{RATIO}")
+
+
+def partition_on(predicate, iterable, map_fn=None):
+    """ Partition an iterable into two lists on the return type of the predicate. """
+
+    left, right = [], []
+
+    if map_fn is None:
+        for i in iterable:
+            if predicate(i):
+                left.append(i)
+            else:
+                right.append(i)
+    else:
+        for i in iterable:
+            if predicate(i):
+                left.append(map_fn(i))
+            else:
+                right.append(map_fn(i))
+
+    return left, right

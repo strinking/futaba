@@ -17,14 +17,28 @@ Has the model for managing persistent bot settings.
 # False positive when using SQLAlchemy decorators
 # pylint: disable=no-value-for-parameter
 
+import enum
 import functools
 import logging
 
 import discord
-from sqlalchemy import BigInteger, Boolean, Column, Table, Unicode
-from sqlalchemy import CheckConstraint, ForeignKey, SmallInteger
+
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    CheckConstraint,
+    Column,
+    Enum,
+    ForeignKey,
+    SmallInteger,
+    Table,
+    Unicode,
+    UniqueConstraint,
+)
 from sqlalchemy.sql import select
 
+from futaba.enums import LocationType
+from futaba.utils import partition_on
 from ..hooks import register_hook
 
 Column = functools.partial(Column, nullable=False)
@@ -94,13 +108,51 @@ class SpecialRoleStorage:
         yield self.jail_role
 
 
+class TrackingBlacklistStorage:
+    __slots__ = ("guild", "blacklisted_channels", "blacklisted_users")
+
+    def __init__(self, guild, blacklist):
+        # blacklist is an iterable of (type, data_id)
+
+        self.guild = guild
+        blacklisted_channels, blacklisted_users = partition_on(
+            lambda block: block[0] is LocationType.CHANNEL,
+            blacklist,
+            lambda block: block[1],
+        )
+
+        self.blacklisted_channels, self.blacklisted_users = (
+            set(blacklisted_channels),
+            set(blacklisted_users),
+        )
+
+    def is_blocked(self, user_or_channel):
+        if isinstance(user_or_channel, discord.abc.User):
+            return user_or_channel.id in self.blacklisted_users
+        return user_or_channel.id in self.blacklisted_channels
+
+    def add_block(self, user_or_channel):
+        if isinstance(user_or_channel, discord.abc.User):
+            self.blacklisted_users.add(user_or_channel.id)
+        else:
+            self.blacklisted_channels.add(user_or_channel.id)
+
+    def remove_block(self, user_or_channel):
+        if isinstance(user_or_channel, discord.abc.User):
+            self.blacklisted_users.discard(user_or_channel.id)
+        else:
+            self.blacklisted_channels.discard(user_or_channel.id)
+
+
 class SettingsModel:
     __slots__ = (
         "sql",
         "tb_guild_settings",
         "tb_special_roles",
+        "tb_tracking_blacklists",
         "guild_settings_cache",
         "roles_cache",
+        "tracking_blacklist_cache",
     )
 
     def __init__(self, sql, meta):
@@ -156,8 +208,23 @@ class SettingsModel:
                 name="special_role_jail_not_member_check",
             ),
         )
+        self.tb_tracking_blacklists = Table(
+            "tracking_blacklists",
+            meta,
+            Column("guild_id", BigInteger, ForeignKey("guilds.guild_id"), index=True),
+            Column("type", Enum(LocationType)),
+            Column("data_id", BigInteger),
+            UniqueConstraint(
+                "guild_id", "type", "data_id", name="tracking_blacklist_uq"
+            ),
+            CheckConstraint(
+                "type IN ('CHANNEL'::locationtype, 'USER'::locationtype)",
+                name="type_is_channel_or_user_check",
+            ),
+        )
         self.guild_settings_cache = {}
         self.roles_cache = {}
+        self.tracking_blacklist_cache = {}
 
         register_hook("on_guild_join", self.add_guild_settings)
         register_hook("on_guild_leave", self.remove_guild_settings)
@@ -348,3 +415,66 @@ class SettingsModel:
         )
         self.sql.execute(upd)
         self.roles_cache[guild].update(attrs)
+
+    def add_to_tracking_blacklist(self, guild, user_or_channel):
+        logger.info(
+            "Adding '%s' (%d) to the tracking blacklist for guild '%s' (%d)",
+            user_or_channel.name,
+            user_or_channel.id,
+            guild.name,
+            guild.id,
+        )
+
+        block_type = (
+            LocationType.USER
+            if isinstance(user_or_channel, discord.abc.User)
+            else LocationType.CHANNEL
+        )
+
+        ins = self.tb_tracking_blacklists.insert().values(
+            guild_id=guild.id, type=block_type, data_id=user_or_channel.id
+        )
+        self.sql.execute(ins)
+        if guild in self.tracking_blacklist_cache:
+            self.tracking_blacklist_cache[guild].add_block(user_or_channel)
+
+    def get_tracking_blacklist(self, guild):
+        logger.debug(
+            "Getting tracking blacklist for guild '%s' (%d)", guild.name, guild.id
+        )
+        if guild in self.tracking_blacklist_cache:
+            logger.debug("Tracking blacklist found in cache, returning")
+            return self.tracking_blacklist_cache[guild]
+
+        sel = select(
+            [self.tb_tracking_blacklists.c.type, self.tb_tracking_blacklists.c.data_id]
+        ).where(self.tb_tracking_blacklists.c.guild_id == guild.id)
+        result = self.sql.execute(sel)
+
+        blacklist = TrackingBlacklistStorage(guild, result.fetchall())
+        self.tracking_blacklist_cache[guild] = blacklist
+        return blacklist
+
+    def remove_from_tracking_blacklist(self, guild, user_or_channel):
+        logger.info(
+            "Deleting '%s' (%d) from the tracking blacklist for guild '%s' (%d)",
+            user_or_channel.name,
+            user_or_channel.id,
+            guild.name,
+            guild.id,
+        )
+
+        block_type = (
+            LocationType.USER
+            if isinstance(user_or_channel, discord.abc.User)
+            else LocationType.CHANNEL
+        )
+
+        delet = self.tb_tracking_blacklists.delete().where(
+            self.tb_tracking_blacklists.c.guild_id == guild.id,
+            self.tb_tracking_blacklists.c.type == block_type,
+            self.tb_tracking_blacklists.c.data_id == user_or_channel.id,
+        )
+        self.sql.execute(delet)
+        if guild in self.tracking_blacklist_cache:
+            self.tracking_blacklist_cache[guild].remove_block(user_or_channel)
