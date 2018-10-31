@@ -14,10 +14,17 @@
 Functions to prune a user either manually or automatically
 """
 
-from datetime import datetime, timedelta
 import logging
+from datetime import datetime, timedelta
+
+import discord
+from discord.ext import commands
+
+from futaba import permissions
 
 logger = logging.getLogger(__name__)
+
+__all__ = ["Prune"]
 
 def prune_filter(member, prune_date, role, has_role=True):
     """
@@ -32,40 +39,58 @@ def prune_filter(member, prune_date, role, has_role=True):
         if member.joined_at < prune_date:
             return True
 
-    return False 
+    return False
 
+class Prune:
 
-async def prune_member(cog, ctx, days):
-    """
-    Checks if a member has had the guest role for longer that the days specified.
-    Once done will kick all members that meet that condition
-    """
+    def __init__(self, bot):
+        self.bot = bot
+        self.journal = bot.get_broadcaster("/welcome/prune")
 
-    # Get guild special roles
-    roles = cog.bot.sql.settings.get_special_roles(ctx.guild)
+    async def prune_member(self, ctx, days):
+        """
+        Checks if a member has had the guest role for longer that the days specified.
+        Once done will kick all members that meet that condition
+        """
 
-    # Get the date that users that join before that have to be pruned
-    prune_date = datetime.now() - timedelta(days=days)
+        # Get guild special roles
+        roles = self.bot.sql.settings.get_special_roles(ctx.guild)
 
-    if roles.guest:
-        logger.info("Pruning members with role %s (%d) who joined more than %d days ago", roles.guest.name, roles.guest.id, days)        
+        # Get the date that users that join before that have to be pruned
+        prune_date = datetime.now() - timedelta(days=days)
 
-        # Get users to be pruned
-        to_be_pruned = filter(lambda x: prune_filter(x, prune_date, roles.guest), ctx.guild.members)
+        if roles.guest:
+            logger.info("Pruning members with role %s (%d) who joined more than %d days ago", roles.guest.name, roles.guest.id, days)        
 
-    else:  
-        logger.info("Pruning members without role %s (%d) who joined more than %d days ago", roles.member.name, roles.member.id, days)
+            # Get users to be pruned
+            to_be_pruned = filter(lambda x: prune_filter(x, prune_date, roles.guest), ctx.guild.members)
 
-        # Get users to be pruned
-        to_be_pruned = filter(lambda x: prune_filter(x, prune_date, roles.member, False), ctx.guild.members)
+        else:
+            logger.info("Pruning members without role %s (%d) who joined more than %d days ago", roles.member.name, roles.member.id, days)
 
-    pruned = []
+            # Get users to be pruned
+            to_be_pruned = filter(lambda x: prune_filter(x, prune_date, roles.member, False), ctx.guild.members)
 
-    for member in to_be_pruned:
-        try:
-            await ctx.guild.kick(member, reason=f'Pruning guests older than {days} days')
-            pruned.append(member)
-        except:
-            logger.warning("Cannnot prunt member %s (%d)", member.name, member.id)
+        pruned = []
 
-    return pruned
+        for member in to_be_pruned:
+            try:
+                await ctx.guild.kick(member, reason=f'Pruning guests older than {days} days')
+                pruned.append(member)
+            except:
+                logger.warning("Cannnot prunt member %s (%d)", member.name, member.id)
+
+        return pruned
+    
+    @commands.command(name="prune", aliases=["purge"])
+    @commands.guild_only()
+    @permissions.check_admin()
+    async def purge(self, ctx, days: int = 7):
+        """
+        Prunes users that have not used the agree command over the days specified.
+        Deafults to seven days
+        """
+
+        pruned_members = await self.prune_member(ctx, days)
+        
+
