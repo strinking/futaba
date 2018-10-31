@@ -175,7 +175,7 @@ class Moderation:
     @commands.guild_only()
     @permissions.check_mod()
     async def jail(
-        self, ctx, member: MemberConv, minutes: int = 0, *, reason: str = None
+        self, ctx, member: MemberConv, minutes: int = 480, *, reason: str = None
     ):
         """
         Jails the user.
