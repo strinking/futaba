@@ -214,7 +214,7 @@ class SettingsModel:
             Column("guild_id", BigInteger, ForeignKey("guilds.guild_id"), index=True),
             Column("type", Enum(LocationType)),
             Column("data_id", BigInteger),
-            UniqueConstraint("guild_id", "type", "data_id"),
+            UniqueConstraint("guild_id", "type", "data_id", name="tracking_blacklist_uq"),
         )
         self.guild_settings_cache = {}
         self.roles_cache = {}
