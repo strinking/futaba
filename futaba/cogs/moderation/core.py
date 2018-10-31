@@ -174,9 +174,7 @@ class Moderation:
     @commands.command(name="jail", aliases=["dunce"])
     @commands.guild_only()
     @permissions.check_mod()
-    async def jail(
-        self, ctx, member: MemberConv, minutes: int, *, reason: str = None
-    ):
+    async def jail(self, ctx, member: MemberConv, minutes: int, *, reason: str = None):
         """
         Jails the user.
         Requires a jail role to be configured.
