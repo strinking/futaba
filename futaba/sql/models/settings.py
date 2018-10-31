@@ -38,7 +38,7 @@ from sqlalchemy import (
 from sqlalchemy.sql import select
 
 from ...enums import LocationType
-from ...utils import partition_on
+from futaba.utils import partition_on
 from ..hooks import register_hook
 
 Column = functools.partial(Column, nullable=False)
