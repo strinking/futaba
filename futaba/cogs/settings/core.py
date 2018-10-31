@@ -346,7 +346,7 @@ class Settings:
         await ctx.send(embed=embed)
         self.journal.send("roles/jail", ctx.guild, content, icon="settings", role=role)
 
-    @commands.group(name="trackerblacklist")
+    @commands.group(name="trackerblacklist", aliases=["trackerbl", "trkbl"])
     @commands.guild_only()
     async def tracker_blacklist(self, ctx):
         """ Manages tracker blacklist entries for this guild. """
