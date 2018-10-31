@@ -214,7 +214,13 @@ class SettingsModel:
             Column("guild_id", BigInteger, ForeignKey("guilds.guild_id"), index=True),
             Column("type", Enum(LocationType)),
             Column("data_id", BigInteger),
-            UniqueConstraint("guild_id", "type", "data_id", name="tracking_blacklist_uq"),
+            UniqueConstraint(
+                "guild_id", "type", "data_id", name="tracking_blacklist_uq"
+            ),
+            CheckConstraint(
+                "type IN ('CHANNEL'::locationtype, 'USER'::locationtype)",
+                name="type_is_channel_or_user_check",
+            ),
         )
         self.guild_settings_cache = {}
         self.roles_cache = {}
