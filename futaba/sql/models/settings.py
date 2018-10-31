@@ -37,7 +37,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.sql import select
 
-from ...enums import LocationType
+from futaba.enums import LocationType
 from futaba.utils import partition_on
 from ..hooks import register_hook
 
