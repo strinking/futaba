@@ -249,7 +249,7 @@ class Moderation:
     @commands.command(name="ban")
     @commands.guild_only()
     @permissions.check_admin()
-    async def ban(self, ctx, member: MemberConv, *, reason: str):
+    async def ban(self, ctx, user: UserConv, *, reason: str):
         """
         Bans the user from the guild with a reason
         If guild has moderation logging enabled, it is logged
@@ -260,11 +260,11 @@ class Moderation:
             embed.add_field(name="Reason", value=reason)
 
             mod = user_discrim(ctx.author)
-            banned = user_discrim(member)
+            banned = user_discrim(user)
             clean_reason = escape_backticks(reason)
-            content = f"{mod} banned {member.mention} ({banned}) with reason: `{clean_reason}`"
+            content = f"{mod} banned {user.mention} ({banned}) with reason: `{clean_reason}`"
 
-            await ctx.guild.ban(member, reason=f"{reason} - {mod}")
+            await ctx.guild.ban(user, reason=f"{reason} - {mod}")
             await ctx.send(embed=embed)
 
             self.journal.send("member/ban", ctx.guild, content, icon="ban")
