@@ -262,7 +262,9 @@ class Moderation:
             mod = user_discrim(ctx.author)
             banned = user_discrim(user)
             clean_reason = escape_backticks(reason)
-            content = f"{mod} banned {user.mention} ({banned}) with reason: `{clean_reason}`"
+            content = (
+                f"{mod} banned {user.mention} ({banned}) with reason: `{clean_reason}`"
+            )
 
             await ctx.guild.ban(user, reason=f"{reason} - {mod}")
             await ctx.send(embed=embed)
