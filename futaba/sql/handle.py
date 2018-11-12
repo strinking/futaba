@@ -24,7 +24,7 @@ from .models import (
     GuildsModel,
     JournalModel,
     NaviModel,
-    SelfAssignableRolesModel,
+    RolesModel,
     SettingsModel,
     WelcomeModel,
 )
@@ -64,7 +64,7 @@ class SqlHandler:
         self.guilds = GuildsModel(self, meta)
         self.journal = JournalModel(self, meta)
         self.navi = NaviModel(self, meta)
-        self.roles = SelfAssignableRolesModel(self, meta)
+        self.roles = RolesModel(self, meta)
         self.settings = SettingsModel(self, meta)
         self.welcome = WelcomeModel(self, meta)
 

@@ -11,8 +11,14 @@
 #
 
 from .core import SelfAssignableRoles
+from .reapplication import RoleReapplication
 
 
 def setup(bot):
+    cog = RoleReapplication(bot)
+    bot.add_listener(cog.member_join, "on_member_join")
+    bot.add_listener(cog.member_update, "on_member_update")
+    bot.add_cog(cog)
+
     cog = SelfAssignableRoles(bot)
     bot.add_cog(cog)

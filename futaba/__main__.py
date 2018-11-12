@@ -28,7 +28,7 @@ from .config import InvalidConfigError, load_config
 LOG_FILE = "futaba.log"
 LOG_FILE_MODE = "w"
 LOG_FORMAT = "[%(levelname)s] %(asctime)s %(name)s: %(message)s"
-LOG_DATE_FORMAT = "[%d/%m/%Y %H:%M:%S]"
+LOG_DATE_FORMAT = "[%Y/%m/%d %H:%M:%S]"
 
 if __name__ == "__main__":
     # Parse arguments

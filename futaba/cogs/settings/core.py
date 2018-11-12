@@ -113,7 +113,7 @@ class Settings:
     async def max_delete(self, ctx, count: int = None):
         """
         Gets the current setting for maximum messages to bulk delete.
-        If you're an administraotr, you can change this value.
+        If you're an administrator, you can change this value.
         """
 
         if count is None:
@@ -147,7 +147,7 @@ class Settings:
             with self.bot.sql.transaction():
                 self.bot.sql.settings.set_max_delete_messages(ctx.guild, count)
 
-            embed = discord.Embed(colour=discord.Colour.teal())
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
             embed.description = f"Set maximum deletable messages to `{count}`"
 
         await ctx.send(embed=embed)
@@ -180,6 +180,39 @@ class Settings:
 
             embed = discord.Embed(colour=discord.Colour.teal())
             embed.description = f"Set warning moderators about performing mod actions manually to `{value}`"
+
+        await ctx.send(embed=embed)
+
+    @commands.command(name="reapplyroles", aliases=["reapply"])
+    @commands.guild_only()
+    async def reapply_roles(self, ctx, value: bool = None):
+        """
+        Tells whether automatic role reapplication is enabled.
+        Only self-assignable and punishment roles are re-applied.
+        If you're an administrator, you can change this value.
+        """
+
+        if value is None:
+            # Get reapplication roles
+            reapply = self.bot.sql.settings.get_reapply_roles(ctx.guild)
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
+            embed.description = f"Automatic role reapplication is **{'enabled' if reapply else 'disabled'}** on this server"
+        elif not admin_perm(ctx):
+            # Lacking authority to set reapplication
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.description = (
+                "You do not have permission to set automatic role reapplication"
+            )
+            raise ManualCheckFailure(embed=embed)
+        else:
+            # Set role reapplication
+            with self.bot.sql.transaction():
+                self.bot.sql.settings.set_reapply_roles(ctx.guild, value)
+
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
+            embed.description = (
+                f"{'Enabled' if value else 'Disabled'} automatic role reapplication"
+            )
 
         await ctx.send(embed=embed)
 

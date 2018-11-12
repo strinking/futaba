@@ -17,7 +17,6 @@ Has the model for managing persistent bot settings.
 # False positive when using SQLAlchemy decorators
 # pylint: disable=no-value-for-parameter
 
-import enum
 import functools
 import logging
 
@@ -48,11 +47,19 @@ __all__ = ["SettingsModel"]
 
 
 class GuildSettingsStorage:
-    __slots__ = ("prefix", "max_delete_messages", "warn_manual_mod_action")
+    __slots__ = (
+        "prefix",
+        "max_delete_messages",
+        "reapply_roles",
+        "warn_manual_mod_action",
+    )
 
-    def __init__(self, prefix, max_delete_messages, warn_manual_mod_action):
+    def __init__(
+        self, prefix, max_delete_messages, *, reapply_roles, warn_manual_mod_action
+    ):
         self.prefix = prefix
         self.max_delete_messages = max_delete_messages
+        self.reapply_roles = reapply_roles
         self.warn_manual_mod_action = warn_manual_mod_action
 
 
@@ -165,7 +172,8 @@ class SettingsModel:
             ),
             Column("prefix", Unicode, nullable=True),
             Column("max_delete_messages", SmallInteger),
-            Column("warn_manual_mod_action", Boolean, default=False),
+            Column("warn_manual_mod_action", Boolean),
+            Column("reapply_roles", Boolean),
         )
         self.tb_special_roles = Table(
             "special_roles",
@@ -244,7 +252,10 @@ class SettingsModel:
         )
         self.sql.execute(ins)
         self.guild_settings_cache[guild] = GuildSettingsStorage(
-            None, self.sql.max_delete_messages, False
+            None,
+            self.sql.max_delete_messages,
+            reapply_roles=True,
+            warn_manual_mod_action=False,
         )
 
     def remove_guild_settings(self, guild):
@@ -267,6 +278,7 @@ class SettingsModel:
                 self.tb_guild_settings.c.prefix,
                 self.tb_guild_settings.c.max_delete_messages,
                 self.tb_guild_settings.c.warn_manual_mod_action,
+                self.tb_guild_settings.c.reapply_roles,
             ]
         ).where(self.tb_guild_settings.c.guild_id == guild.id)
         result = self.sql.execute(sel)
@@ -274,9 +286,14 @@ class SettingsModel:
         if not result.rowcount:
             self.add_guild_settings(guild)
 
-        prefix, max_delete_messages, warn_manual_mod_action = result.fetchone()
+        prefix, max_delete_messages, reapply_roles, warn_manual_mod_action = (
+            result.fetchone()
+        )
         self.guild_settings_cache[guild] = GuildSettingsStorage(
-            prefix, max_delete_messages, warn_manual_mod_action
+            prefix,
+            max_delete_messages,
+            reapply_roles=reapply_roles,
+            warn_manual_mod_action=warn_manual_mod_action,
         )
 
     def get_prefix(self, guild):
@@ -322,6 +339,33 @@ class SettingsModel:
         self.sql.execute(upd)
         self.guild_settings_cache[guild].max_delete_messages = max_delete_messages
 
+    def get_reapply_roles(self, guild):
+        logger.info(
+            "Getting automatic role reapplication for guild '%s' (%d)",
+            guild.name,
+            guild.id,
+        )
+        if guild not in self.guild_settings_cache:
+            self.fetch_guild_settings(guild)
+
+        return self.guild_settings_cache[guild].reapply_roles
+
+    def set_reapply_roles(self, guild, reapply_roles):
+        logger.info(
+            "Setting automatic role reapplication to %s for guild '%s' (%d)",
+            reapply_roles,
+            guild.name,
+            guild.id,
+        )
+
+        upd = (
+            self.tb_guild_settings.update()
+            .where(self.tb_guild_settings.c.guild_id == guild.id)
+            .values(reapply_roles=reapply_roles)
+        )
+        self.sql.execute(upd)
+        self.guild_settings_cache[guild].reapply_roles = reapply_roles
+
     def get_warn_manual_mod_action(self, guild):
         logger.debug(
             "Getting warn manual mod action flag for guild '%s' (%d)",
@@ -340,6 +384,7 @@ class SettingsModel:
             guild.name,
             guild.id,
         )
+
         upd = (
             self.tb_guild_settings.update()
             .where(self.tb_guild_settings.c.guild_id == guild.id)
