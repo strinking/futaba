@@ -33,9 +33,7 @@ logger = logging.getLogger(__name__)
 __all__ = ["format_message", "Welcome"]
 
 AGREE_REASON = "User agreed to the server's rules and policies"
-AGREE_DELAY_MESSAGE = (
-    "Thank you for agreeing to the rules. Please wait while you are being transferred..."
-)
+AGREE_DELAY_MESSAGE = "Thank you for agreeing to the rules. Please wait while you are being transferred..."
 FORMAT_HELP_LIST = """
 If you want to send a literal `{` or `}`, send `{{` / `}}`.
 Accepted parameters:
