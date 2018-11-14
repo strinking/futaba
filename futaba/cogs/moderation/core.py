@@ -277,7 +277,7 @@ class Moderation:
     @commands.command(name="softban", aliases=["soft", "sban"])
     @commands.guild_only()
     @permissions.check_admin()
-    async def softban(self, ctx, member: MemberConv, *, reason: str):
+    async def softban(self, ctx, user: UserConv, *, reason: str):
         """
         Soft-bans the user from the guild with a reason.
         If guild has moderation logging enabled, it is logged
@@ -290,16 +290,14 @@ class Moderation:
             embed.add_field(name="Reason", value=reason)
 
             mod = user_discrim(ctx.author)
-            banned = user_discrim(member)
+            banned = user_discrim(user)
             clean_reason = escape_backticks(reason)
-            content = f"{mod} soft-banned {member.mention} ({banned}) with reason: `{clean_reason}`"
+            content = f"{mod} soft-banned {user.mention} ({banned}) with reason: `{clean_reason}`"
 
             # TODO add to tracker and add handler to journal event to prevent ban/softban event
-            await ctx.guild.ban(
-                member, reason=f"{reason} - {mod}", delete_message_days=1
-            )
+            await ctx.guild.ban(user, reason=f"{reason} - {mod}", delete_message_days=1)
             await asyncio.sleep(0.1)
-            await ctx.guild.unban(member, reason=f"{reason} - {mod}")
+            await ctx.guild.unban(user, reason=f"{reason} - {mod}")
             await ctx.send(embed=embed)
 
             self.journal.send(
@@ -307,7 +305,7 @@ class Moderation:
                 ctx.guild,
                 content,
                 icon="soft",
-                member=member,
+                user=user,
                 reason=reason,
                 cause=ctx.author,
             )
