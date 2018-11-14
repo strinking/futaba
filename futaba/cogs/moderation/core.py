@@ -318,7 +318,7 @@ class Moderation:
     @commands.command(name="unban", aliases=["pardon"])
     @commands.guild_only()
     @permissions.check_admin()
-    async def unban(self, ctx, member: UserConv, *, reason: str):
+    async def unban(self, ctx, user: UserConv, *, reason: str):
         """
         Unbans the id from the guild with a reason.
         If guild has moderation logging enabled, it is logged
@@ -330,15 +330,15 @@ class Moderation:
 
             # TODO add tracker unban event and move this to journal/impl/moderation.py
             mod = user_discrim(ctx.author)
-            unbanned = user_discrim(member)
+            unbanned = user_discrim(user)
             clean_reason = escape_backticks(reason)
-            content = f"{mod} unbanned {member.mention} ({unbanned}) with reason: `{clean_reason}`"
+            content = f"{mod} unbanned {user.mention} ({unbanned}) with reason: `{clean_reason}`"
 
-            await ctx.guild.unban(member, reason=f"{reason} - {mod}")
+            await ctx.guild.unban(user, reason=f"{reason} - {mod}")
             await ctx.send(embed=embed)
 
             self.journal.send(
-                "member/unban", ctx.guild, content, icon="unban", member=member
+                "member/unban", ctx.guild, content, icon="unban", user=user
             )
 
         except discord.errors.Forbidden:
