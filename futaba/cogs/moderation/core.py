@@ -266,7 +266,7 @@ class Moderation:
                 f"{mod} banned {user.mention} ({banned}) with reason: `{clean_reason}`"
             )
 
-            await ctx.guild.ban(user, reason=f"{reason} - {mod}")
+            await ctx.guild.ban(user, reason=f"{reason} - {mod}", delete_message_days=1)
             await ctx.send(embed=embed)
 
             self.journal.send("member/ban", ctx.guild, content, icon="ban")
