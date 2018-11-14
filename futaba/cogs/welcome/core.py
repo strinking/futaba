@@ -138,6 +138,7 @@ class Welcome:
         roles = self.bot.sql.settings.get_special_roles(member.guild)
 
         # Delay to let Discord API catch up
+        # Without this, some users won't receive the guest role
         await asyncio.sleep(2)
 
         if welcome.welcome_message and welcome.channel:
@@ -211,6 +212,7 @@ class Welcome:
             await ctx.message.delete()
 
         # Delay adding roles to let Discord API catch up
+        # Without this, some role changes might not be applied properly
         await asyncio.sleep(5)
         await temp_message.delete()
 
