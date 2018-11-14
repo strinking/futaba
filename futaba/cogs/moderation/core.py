@@ -226,7 +226,7 @@ class Moderation:
     @commands.command(name="kick")
     @commands.guild_only()
     @permissions.check_mod()
-    async def kick(self, ctx, member: MemberConv, *, reason: str):
+    async def kick(self, ctx, user: UserConv, *, reason: str):
         """
         Kicks the user from the guild with a reason
         If guild has moderation logging enabled, it is logged
@@ -236,9 +236,9 @@ class Moderation:
             embed = discord.Embed(description="Done! User Kicked")
             embed.add_field(name="Reason", value=reason)
 
-            await ctx.guild.kick(
-                member, reason=f"{reason} - {user_discrim(ctx.author)}"
-            )
+            # Don't send a journal event, that is handled by the moderation journal listener
+
+            await ctx.guild.kick(user, reason=f"{reason} - {user_discrim(ctx.author)}")
             await ctx.send(embed=embed)
 
         except discord.errors.Forbidden:
