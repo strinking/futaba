@@ -226,7 +226,7 @@ class Moderation:
     @commands.command(name="kick")
     @commands.guild_only()
     @permissions.check_mod()
-    async def kick(self, ctx, member: MemberConv, *, reason: str):
+    async def kick(self, ctx, user: UserConv, *, reason: str):
         """
         Kicks the user from the guild with a reason
         If guild has moderation logging enabled, it is logged
@@ -236,9 +236,9 @@ class Moderation:
             embed = discord.Embed(description="Done! User Kicked")
             embed.add_field(name="Reason", value=reason)
 
-            await ctx.guild.kick(
-                member, reason=f"{reason} - {user_discrim(ctx.author)}"
-            )
+            # Don't send a journal event, that is handled by the moderation journal listener
+
+            await ctx.guild.kick(user, reason=f"{reason} - {user_discrim(ctx.author)}")
             await ctx.send(embed=embed)
 
         except discord.errors.Forbidden:
@@ -259,17 +259,14 @@ class Moderation:
             embed = discord.Embed(description="Done! User Banned")
             embed.add_field(name="Reason", value=reason)
 
-            mod = user_discrim(ctx.author)
-            banned = user_discrim(user)
-            clean_reason = escape_backticks(reason)
-            content = (
-                f"{mod} banned {user.mention} ({banned}) with reason: `{clean_reason}`"
+            # Don't send a journal event, that is handled by the moderation journal listener
+
+            await ctx.guild.ban(
+                user,
+                reason=f"{reason} - {user_discrim(ctx.author)}",
+                delete_message_days=1,
             )
-
-            await ctx.guild.ban(user, reason=f"{reason} - {mod}")
             await ctx.send(embed=embed)
-
-            self.journal.send("member/ban", ctx.guild, content, icon="ban")
 
         except discord.errors.Forbidden:
             raise ManualCheckFailure(content="I don't have permission to ban this user")
@@ -277,7 +274,7 @@ class Moderation:
     @commands.command(name="softban", aliases=["soft", "sban"])
     @commands.guild_only()
     @permissions.check_admin()
-    async def softban(self, ctx, member: MemberConv, *, reason: str):
+    async def softban(self, ctx, user: UserConv, *, reason: str):
         """
         Soft-bans the user from the guild with a reason.
         If guild has moderation logging enabled, it is logged
@@ -290,16 +287,14 @@ class Moderation:
             embed.add_field(name="Reason", value=reason)
 
             mod = user_discrim(ctx.author)
-            banned = user_discrim(member)
+            banned = user_discrim(user)
             clean_reason = escape_backticks(reason)
-            content = f"{mod} soft-banned {member.mention} ({banned}) with reason: `{clean_reason}`"
+            content = f"{mod} soft-banned {user.mention} ({banned}) with reason: `{clean_reason}`"
 
             # TODO add to tracker and add handler to journal event to prevent ban/softban event
-            await ctx.guild.ban(
-                member, reason=f"{reason} - {mod}", delete_message_days=1
-            )
+            await ctx.guild.ban(user, reason=f"{reason} - {mod}", delete_message_days=1)
             await asyncio.sleep(0.1)
-            await ctx.guild.unban(member, reason=f"{reason} - {mod}")
+            await ctx.guild.unban(user, reason=f"{reason} - {mod}")
             await ctx.send(embed=embed)
 
             self.journal.send(
@@ -307,7 +302,7 @@ class Moderation:
                 ctx.guild,
                 content,
                 icon="soft",
-                member=member,
+                user=user,
                 reason=reason,
                 cause=ctx.author,
             )
@@ -320,7 +315,7 @@ class Moderation:
     @commands.command(name="unban", aliases=["pardon"])
     @commands.guild_only()
     @permissions.check_admin()
-    async def unban(self, ctx, member: UserConv, *, reason: str):
+    async def unban(self, ctx, user: UserConv, *, reason: str):
         """
         Unbans the id from the guild with a reason.
         If guild has moderation logging enabled, it is logged
@@ -332,15 +327,15 @@ class Moderation:
 
             # TODO add tracker unban event and move this to journal/impl/moderation.py
             mod = user_discrim(ctx.author)
-            unbanned = user_discrim(member)
+            unbanned = user_discrim(user)
             clean_reason = escape_backticks(reason)
-            content = f"{mod} unbanned {member.mention} ({unbanned}) with reason: `{clean_reason}`"
+            content = f"{mod} unbanned {user.mention} ({unbanned}) with reason: `{clean_reason}`"
 
-            await ctx.guild.unban(member, reason=f"{reason} - {mod}")
+            await ctx.guild.unban(user, reason=f"{reason} - {mod}")
             await ctx.send(embed=embed)
 
             self.journal.send(
-                "member/unban", ctx.guild, content, icon="unban", member=member
+                "member/unban", ctx.guild, content, icon="unban", user=user
             )
 
         except discord.errors.Forbidden:
