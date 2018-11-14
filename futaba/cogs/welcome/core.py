@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 __all__ = ["format_message", "Welcome"]
 
 AGREE_REASON = "User agreed to the server's rules and policies"
+AGREE_DELAY_MESSAGE = "Thank you for agreeing to the rules. Please wait while you are being transferred..."
 FORMAT_HELP_LIST = """
 If you want to send a literal `{` or `}`, send `{{` / `}}`.
 Accepted parameters:
@@ -133,22 +134,21 @@ class Welcome:
 
         welcome = self.bot.sql.welcome.get_welcome(member.guild)
         roles = self.bot.sql.settings.get_special_roles(member.guild)
-        tasks = []
+
+        # Delay to let Discord API catch up
+        # Without this, some users won't receive the guest role
+        await asyncio.sleep(2)
 
         if welcome.welcome_message and welcome.channel:
-            tasks.append(
-                self.send_welcome_message(
-                    member, welcome.welcome_message, welcome.channel
-                )
+            await self.send_welcome_message(
+                member, welcome.welcome_message, welcome.channel
             )
 
         if roles.guest:
             logger.info(
                 "Adding role %s (%d) to new guest", roles.guest.name, roles.guest.id
             )
-            tasks.append(member.add_roles(roles.guest, reason="New user joined"))
-
-        await asyncio.gather(*tasks)
+            await member.add_roles(roles.guest, reason="New user joined")
 
     async def member_leave(self, member):
         logger.info(
@@ -204,28 +204,30 @@ class Welcome:
         )
 
         self.recently_joined.append(ctx.author)
-        tasks = []
+        temp_message = await ctx.send(content=AGREE_DELAY_MESSAGE)
 
         if welcome.delete_on_agree:
-            tasks.append(ctx.message.delete())
+            await ctx.message.delete()
+
+        # Delay adding roles to let Discord API catch up
+        # Without this, some role changes might not be applied properly
+        await asyncio.sleep(5)
+        await temp_message.delete()
+
+        if welcome.agreed_message:
+            await ctx.send(content=format_message(welcome.agreed_message, ctx))
 
         if roles.member:
             logger.info(
                 "Adding member role %s (%d)", roles.member.name, roles.member.id
             )
-            tasks.append(ctx.author.add_roles(roles.member, reason=AGREE_REASON))
+            await ctx.author.add_roles(roles.member, reason=AGREE_REASON, atomic=True)
 
         if roles.guest:
             logger.info("Removing guest role %s (%d)", roles.guest.name, roles.guest.id)
-            tasks.append(ctx.author.remove_roles(roles.guest, reason=AGREE_REASON))
-
-        if welcome.agreed_message:
-            tasks.append(ctx.send(content=format_message(welcome.agreed_message, ctx)))
+            await ctx.author.remove_roles(roles.guest, reason=AGREE_REASON, atomic=True)
 
         # TODO: restore old roles
-
-        # Run all tasks in parallel
-        await asyncio.gather(*tasks)
 
         # Send journal event
         agreer = f"{ctx.author.mention} ({user_discrim(ctx.author)})"
