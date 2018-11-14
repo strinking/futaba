@@ -259,17 +259,14 @@ class Moderation:
             embed = discord.Embed(description="Done! User Banned")
             embed.add_field(name="Reason", value=reason)
 
-            mod = user_discrim(ctx.author)
-            banned = user_discrim(user)
-            clean_reason = escape_backticks(reason)
-            content = (
-                f"{mod} banned {user.mention} ({banned}) with reason: `{clean_reason}`"
+            # Don't send a journal event, that is handled by the moderation journal listener
+
+            await ctx.guild.ban(
+                user,
+                reason=f"{reason} - {user_discrim(ctx.author)}",
+                delete_message_days=1,
             )
-
-            await ctx.guild.ban(user, reason=f"{reason} - {mod}", delete_message_days=1)
             await ctx.send(embed=embed)
-
-            self.journal.send("member/ban", ctx.guild, content, icon="ban")
 
         except discord.errors.Forbidden:
             raise ManualCheckFailure(content="I don't have permission to ban this user")
