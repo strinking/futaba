@@ -323,7 +323,7 @@ class SettingsModel:
         self.guild_settings_cache[guild].max_delete_messages = max_delete_messages
 
     def get_warn_manual_mod_action(self, guild):
-        logger.info(
+        logger.debug(
             "Getting warn manual mod action flag for guild '%s' (%d)",
             guild.name,
             guild.id,
