@@ -14,7 +14,7 @@
 Cog to warn when a mod action is done manually, instead of through the bot.
 """
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 
 from discord import AuditLogAction
@@ -106,6 +106,7 @@ class ManualModActionWarn:
 
         roles = set(roles)
         updated_roles = []
+        utc_now = datetime.utcnow()
 
         async for entry in member.guild.audit_logs(
             limit=20, action=AuditLogAction.member_role_update
@@ -114,6 +115,9 @@ class ManualModActionWarn:
                 continue
 
             if entry.user == self.bot.user:
+                continue
+
+            if (utc_now - entry.created_at) >= timedelta(seconds=5):
                 continue
 
             roles_updated_here = roles & (
