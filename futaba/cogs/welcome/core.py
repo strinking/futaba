@@ -242,7 +242,8 @@ class Welcome:
             logger.info("Removing guest role %s (%d)", roles.guest.name, roles.guest.id)
             await ctx.author.remove_roles(roles.guest, reason=AGREE_REASON, atomic=True)
 
-        # TODO: restore old roles
+        # Reapply saved, old roles
+        await self.roles.reapply_roles(ctx.author)
 
         # Send journal event
         agreer = f"{ctx.author.mention} ({user_discrim(ctx.author)})"
