@@ -76,7 +76,7 @@ class RoleReapplication:
 
     async def reapply_roles(self, member):
         # TODO journal event
-        roles = self.bot.sql.roles.get_member_roles(member)
+        roles = self.bot.sql.roles.get_saved_roles(member)
         if not roles:
             logger.debug("No roles to reapply, user is new")
             return
