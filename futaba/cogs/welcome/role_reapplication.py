@@ -1,5 +1,5 @@
 #
-# cogs/roles/reapplication.py
+# cogs/welcome/role_reapplication.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
@@ -37,13 +37,11 @@ class RoleReapplication:
         self.bot = bot
         self.journal = bot.get_broadcaster("/roles")
 
-    async def member_join(self, member):
-        await self.reapply_roles(member)
-
     async def member_update(self, before, after):
         if before.roles == after.roles:
             return
 
+        logger.debug("Member '%s' (%d) roles changed, saving for potential reapplication", after.name, after.id)
         await self.save_roles(after)
 
     def get_reapply_roles(self, guild):
@@ -59,7 +57,6 @@ class RoleReapplication:
         if special_roles.jail_role is not None:
             can_reapply.append(special_roles.jail_role)
 
-        reapply_cog = None
         for cog in self.bot.cogs:
             # FIXME better cog detection
             if cog.__name__ == "SelfAssignableRoles":

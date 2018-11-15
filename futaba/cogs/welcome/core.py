@@ -26,6 +26,7 @@ from futaba import permissions
 from futaba.exceptions import CommandFailed, InvalidCommandContext, SendHelp
 from futaba.journal import ModerationListener
 from futaba.utils import user_discrim
+from .role_reapplication import RoleReapplication
 
 FakeContext = namedtuple("FakeContext", ("author", "channel", "guild"))
 logger = logging.getLogger(__name__)
@@ -79,11 +80,12 @@ def format_message(welcome_message, ctx):
 
 
 class Welcome:
-    __slots__ = ("bot", "journal", "recently_joined")
+    __slots__ = ("bot", "journal", "roles", "recently_joined")
 
     def __init__(self, bot):
         self.bot = bot
         self.journal = bot.get_broadcaster("/welcome")
+        self.roles = RoleReapplication(bot)
         self.recently_joined = deque(maxlen=5)
 
         self.add_listener()
@@ -159,6 +161,9 @@ class Welcome:
                 "Adding role %s (%d) to new guest", roles.guest.name, roles.guest.id
             )
             await member.add_roles(roles.guest, reason="New user joined")
+
+    async def member_update(self, before, after):
+        await self.roles.member_update(before, after)
 
     async def member_leave(self, member):
         logger.info(
