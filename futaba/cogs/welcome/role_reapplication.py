@@ -81,6 +81,9 @@ class RoleReapplication:
             logger.debug("No roles to reapply, user is new")
             return
 
+        can_reapply = self.get_reapply_roles(member.guild)
+        roles = tuple(filter(lambda r: r in can_reapply, roles))
+
         logger.info(
             "Reapplying roles to member '%s' (%d): [%s]",
             member.name,
