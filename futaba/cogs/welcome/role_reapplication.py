@@ -45,6 +45,10 @@ class RoleReapplication:
         if before.roles == after.roles:
             return
 
+        special_roles = self.bot.sql.settings.get_special_roles(after.guild)
+        if special_roles.guest_role in after.roles:
+            return
+
         logger.debug(
             "Member '%s' (%d) roles changed, saving for potential reapplication",
             after.name,
