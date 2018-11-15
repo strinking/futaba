@@ -66,16 +66,20 @@ class ManualModActionWarn:
             ManualModActionType.SPECIAL_ROLE_MEMBER,
         ):
             role = kwargs["role"]
-
-            message = f'You manually added or removed the {action.value} role: "{role.name}", which normally should be managed automatically.'
+            response = (
+                f"You manually added or removed the {action.value} role '{role.mention}'"
+                ", which normally should be managed automatically."
+            )
         elif action in (
             ManualModActionType.SPECIAL_ROLE_MUTE,
             ManualModActionType.SPECIAL_ROLE_JAIL,
         ):
             role = kwargs["role"]
-
             command = manual_mod_action_command_map[action].format(prefix=prefix)
-            message = f'You manually added or removed {action.value} role: "{role.name}". In the future, use the command {command}'
+            response = (
+                f"You manually added or removed the {action.value} role '{role.mention}'"
+                f". In the future, you should use the command `{command}` instead."
+            )
         else:
             command = manual_mod_action_command_map[action].format(prefix=prefix)
 
@@ -86,9 +90,12 @@ class ManualModActionWarn:
                 "kicked" if action is ManualModActionType.KICK_MEMBER else "banned"
             )
 
-            message = f"You manually {action_name} {target_member.display_name} ({target_member}){reason_message}. In the future, use the command {command}"
+            response = (
+                f"You manually {action_name} {target_member.mention}{reason_message}. "
+                f"In the future, you should use the command `{command}` instead."
+            )
 
-        await moderator.send(message)
+        await moderator.send(content=response)
 
     async def find_manually_updated_roles(self, member, roles):
         """Finds which roles were manually updated by a moderator.
