@@ -196,7 +196,10 @@ class Settings:
             # Get reapplication roles
             reapply = self.bot.sql.settings.get_reapply_roles(ctx.guild)
             embed = discord.Embed(colour=discord.Colour.dark_teal())
-            embed.description = f"Automatic role reapplication is **{'enabled' if reapply else 'disabled'}** on this server"
+            enabled = "enabled" if reapply else "disabled"
+            embed.description = (
+                f"Automatic role reapplication is **{enabled}** on this server"
+            )
         elif not admin_perm(ctx):
             # Lacking authority to set reapplication
             embed = discord.Embed(colour=discord.Colour.red())
