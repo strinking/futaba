@@ -22,7 +22,7 @@ __all__ = [
 ]
 
 # The nickname to apply to cover up an offensive username
-MASK_NICK = "XXX"
+MASK_NICK = "<name hidden>"
 
 JournalProperties = namedtuple("JournalProperties", ("verb", "path", "icon"))
 
