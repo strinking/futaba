@@ -67,7 +67,7 @@ class ManualModActionWarn:
         ):
             role = kwargs["role"]
             response = (
-                f"You manually added or removed the {action.value} role '{role.mention}'"
+                f"You manually added or removed the {action.value} role '{role}'"
                 ", which normally should be managed automatically."
             )
         elif action in (
@@ -77,7 +77,7 @@ class ManualModActionWarn:
             role = kwargs["role"]
             command = manual_mod_action_command_map[action].format(prefix=prefix)
             response = (
-                f"You manually added or removed the {action.value} role '{role.mention}'"
+                f"You manually added or removed the {action.value} role '{role}'"
                 f". In the future, you should use the command `{command}` instead."
             )
         else:
@@ -98,14 +98,13 @@ class ManualModActionWarn:
         await moderator.send(content=response)
 
     async def find_manually_updated_roles(self, member, roles):
-        """Finds which roles were manually updated by a moderator.
-
+        """
+        Finds which roles were manually updated by a moderator.
         Takes a member and an iterable of roles to check.
-
         Returns a list of tuples containing the role and moderator that updated the role on the member.
         """
-        roles = set(roles)
 
+        roles = set(roles)
         updated_roles = []
 
         async for entry in member.guild.audit_logs(
@@ -118,19 +117,18 @@ class ManualModActionWarn:
                 continue
 
             roles_updated_here = roles & (
-                set(entry.before.roles) | set(entry.after.roles)
+                frozenset(entry.before.roles) | frozenset(entry.after.roles)
             )
 
             roles -= roles_updated_here
-
             updated_roles.extend((role, entry.user) for role in roles_updated_here)
 
         return updated_roles
 
     async def member_update(self, before, after):
         member = after
-        after_roles = set(after.roles)
-        before_roles = set(before.roles)
+        after_roles = frozenset(after.roles)
+        before_roles = frozenset(before.roles)
 
         roles_updated = after_roles ^ before_roles
 
@@ -141,7 +139,7 @@ class ManualModActionWarn:
             return
 
         special_roles = self.bot.sql.settings.get_special_roles(member.guild)
-        roles_to_check = roles_updated & set(special_roles)
+        roles_to_check = roles_updated & frozenset(special_roles)
 
         if not roles_to_check:
             return
