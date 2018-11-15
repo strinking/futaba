@@ -65,11 +65,8 @@ class RoleReapplication:
         if special_roles.jail_role is not None:
             can_reapply.append(special_roles.jail_role)
 
-        for cog in self.bot.cogs:
-            # FIXME better cog detection
-            if cog.__name__ == "SelfAssignableRoles":
-                can_reapply.extend(cog.get_assignable_roles(guild))
-                break
+        if "SelfAssignableRoles" in self.bot.cogs:
+            can_reapply.extend(self.bot.sql.roles.get_assignable_roles(guild))
 
         return can_reapply
 
