@@ -420,7 +420,10 @@ class Settings:
             prefix = self.bot.prefix(ctx.guild)
             embed = discord.Embed(colour=discord.Colour.dark_purple())
             embed.set_author(name="No blacklist entries")
-            embed.description = f"Moderators can use the `{prefix}trackerblacklist add/remove` commands to change this list!"
+            embed.description = (
+                f"Moderators can use the `{prefix}trackerblacklist add/remove` "
+                "commands to change this list!"
+            )
             await ctx.send(embed=embed)
             return
 
