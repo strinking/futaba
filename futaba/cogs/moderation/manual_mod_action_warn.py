@@ -118,7 +118,8 @@ class ManualModActionWarn:
                 continue
 
             if (utc_now - entry.created_at) >= timedelta(seconds=5):
-                continue
+                # Gone back too far, no more events are relevant
+                break
 
             roles_updated_here = roles & (
                 frozenset(entry.before.roles) | frozenset(entry.after.roles)
