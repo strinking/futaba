@@ -23,7 +23,7 @@ from futaba import permissions
 from futaba.converters import RoleConv, TextChannelConv
 from futaba.exceptions import CommandFailed, ManualCheckFailure, SendHelp
 from futaba.str_builder import StringBuilder
-from futaba.utils import escape_backticks
+from futaba.utils import escape_backticks, user_discrim
 
 logger = logging.getLogger(__name__)
 
@@ -96,9 +96,7 @@ class RoleReapplication:
             *roles, reason="Automatically reapplying roles", atomic=True
         )
 
-        content = (
-            f"Reapplying roles to {member.mention}: {role.mention for role in roles}"
-        )
+        content = f"Reapplied roles to {member.mention}: {', '.join(role.mention for role in roles)}"
         self.journal.send(
             "reapply", member.guild, content, member=member, roles=roles, icon="role"
         )
@@ -115,5 +113,5 @@ class RoleReapplication:
         with self.bot.sql.transaction():
             self.bot.sql.roles.update_saved_roles(member)
 
-        content = f"Saving updated roles for {member.mention}"
+        content = f"Saved updated roles for {user_discrim(member)}"
         self.journal.send("save", member.guild, content, member=member, icon="save")

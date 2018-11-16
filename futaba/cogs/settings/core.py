@@ -485,7 +485,7 @@ class Settings:
 
         # Send final embed
         if has_roles:
-            embed.set_author(name="Roles which can be automatically reapplied")
+            embed.title = "\N{MILITARY MEDAL} Roles which are automatically reapplied"
         else:
             embed.colour = discord.Colour.dark_purple()
 
