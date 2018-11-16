@@ -305,7 +305,9 @@ class Bot(commands.AutoShardedBot):
                     descr.writeln(f"```py\n{error_str}\n```")
                 embed.description = str(descr)
                 await asyncio.gather(
-                    ctx.send(embed=embed), Reactions.NETWORK.add(ctx.message)
+                    ctx.send(embed=embed),
+                    self.upload_traceback(ctx, trace, filename),
+                    Reactions.NETWORK.add(ctx.message),
                 )
 
             else:
