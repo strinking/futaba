@@ -433,8 +433,6 @@ class Settings:
             ", ".join(role.name for role in roles),
         )
 
-        warning = StringBuilder()
-
         with self.bot.sql.transaction():
             self.bot.sql.settings.update_reapply_roles(ctx.guild, set(roles), False)
 

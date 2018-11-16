@@ -16,14 +16,8 @@ Handling to reapply roles when the member rejoins the guild.
 
 import logging
 
-import discord
-from discord.ext import commands
-
-from futaba import permissions
-from futaba.converters import RoleConv, TextChannelConv
-from futaba.exceptions import CommandFailed, ManualCheckFailure, SendHelp
 from futaba.str_builder import StringBuilder
-from futaba.utils import escape_backticks, user_discrim
+from futaba.utils import user_discrim
 
 logger = logging.getLogger(__name__)
 
