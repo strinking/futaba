@@ -121,7 +121,7 @@ class Info:
                 embed.description = f"No user found for `{name}`. Try `{prefix}ufind`."
                 raise CommandFailed(embed=embed)
 
-    @commands.command(name="uinfo", aliases=["userinfo", "memberinfo"])
+    @commands.command(name="uinfo", aliases=["user", "userinfo", "member", "memberinfo"])
     async def uinfo(self, ctx, *, name: str = None):
         """
         Fetch information about a user, whether they are in the guild or not.
