@@ -229,7 +229,9 @@ class SettingsModel:
         self.tb_reapply_roles = Table(
             "reapply_roles",
             meta,
-            Column("guild_id", BigInteger, ForeignKey("guilds.guild_id"), primary_key=True),
+            Column(
+                "guild_id", BigInteger, ForeignKey("guilds.guild_id"), primary_key=True
+            ),
             Column("auto_reapply", Boolean),
             Column("role_ids", ARRAY(BigInteger)),
         )
@@ -399,7 +401,9 @@ class SettingsModel:
             jail_role_id=None,
         )
         self.sql.execute(ins)
-        self.special_roles_cache[guild] = SpecialRoleStorage(guild, None, None, None, None)
+        self.special_roles_cache[guild] = SpecialRoleStorage(
+            guild, None, None, None, None
+        )
 
     def remove_special_roles(self, guild):
         logger.info(
@@ -456,20 +460,32 @@ class SettingsModel:
         self.special_roles_cache[guild].update(attrs)
 
     def add_reapply_roles(self, guild):
-        logger.info("Adding reappliable roles row for new guild '%s' (%d)", guild.name, guild.id)
-        ins = self.tb_reapply_roles.insert().values(guild_id=guild.id, auto_reapply=True, role_ids=[])
+        logger.info(
+            "Adding reappliable roles row for new guild '%s' (%d)", guild.name, guild.id
+        )
+        ins = self.tb_reapply_roles.insert().values(
+            guild_id=guild.id, auto_reapply=True, role_ids=[]
+        )
         self.sql.execute(ins)
         self.reapply_roles_cache[guild] = ReapplyRolesStorage(set(), True)
 
     def remove_reapply_roles(self, guild):
-        logger.info("Removing reappliable roles for guild '%s' (%d)", guild.name, guild.id)
-        delet = self.tb_reapply_roles.delete().where(self.tb_reapply_roles.c.guild_id == guild.id)
+        logger.info(
+            "Removing reappliable roles for guild '%s' (%d)", guild.name, guild.id
+        )
+        delet = self.tb_reapply_roles.delete().where(
+            self.tb_reapply_roles.c.guild_id == guild.id
+        )
         self.sql.execute(delet)
         self.reapply_roles_cache.pop(guild, None)
 
     def fetch_reapply_roles(self, guild):
-        logger.info("Fetching reappliable roles for guild '%s' (%d)", guild.name, guild.id)
-        sel = select([self.tb_reapply_roles.c.auto_reapply, self.tb_reapply_roles.c.role_ids]).where(self.tb_reapply_roles.c.guild_id == guild.id)
+        logger.info(
+            "Fetching reappliable roles for guild '%s' (%d)", guild.name, guild.id
+        )
+        sel = select(
+            [self.tb_reapply_roles.c.auto_reapply, self.tb_reapply_roles.c.role_ids]
+        ).where(self.tb_reapply_roles.c.guild_id == guild.id)
         result = self.sql.execute(sel)
 
         if not result.rowcount:
@@ -488,14 +504,22 @@ class SettingsModel:
         return storage
 
     def get_reapply_roles(self, guild):
-        logger.info("Getting reappliable roles for guild '%s' (%d)", guild.name, guild.id)
+        logger.info(
+            "Getting reappliable roles for guild '%s' (%d)", guild.name, guild.id
+        )
         if guild in self.reapply_roles_cache:
             return self.reapply_roles_cache[guild].roles
         else:
             return self.fetch_reapply_roles(guild).roles
 
     def update_reapply_roles(self, guild, roles, enable):
-        logger.info("Updating reappliable roles, %s %d roles for guild '%s' (%d)", "adding" if enable else "removing", len(roles), guild.name, guild.id)
+        logger.info(
+            "Updating reappliable roles, %s %d roles for guild '%s' (%d)",
+            "adding" if enable else "removing",
+            len(roles),
+            guild.name,
+            guild.id,
+        )
 
         old_roles = self.reapply_roles_cache[guild]
         if enable:
@@ -507,12 +531,18 @@ class SettingsModel:
             logger.debug("No effective changes in database")
             return
 
-        upd = self.tb_reapply_roles.update().values(guild_id=guild.id, roles=[role.id for role in new_roles])
+        upd = self.tb_reapply_roles.update().values(
+            guild_id=guild.id, roles=[role.id for role in new_roles]
+        )
         self.sql.execute(upd)
         self.reapply_roles_cache[guild].roles = new_roles
 
     def get_auto_reapply(self, guild):
-        logger.info("Getting auto reapplication setting for guild '%s' (%d)", guild.name, guild.id)
+        logger.info(
+            "Getting auto reapplication setting for guild '%s' (%d)",
+            guild.name,
+            guild.id,
+        )
         if guild in self.reapply_roles_cache:
             return self.reapply_roles_cache[guild].auto_reapply
         else:

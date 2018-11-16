@@ -374,15 +374,23 @@ class Settings:
             roles.remove(ctx.guild.default_role)
 
         if special_roles.guest_role in roles:
-            warning.writeln(f"You should not make {special_roles.guest_role.mention} reappliable.")
+            warning.writeln(
+                f"You should not make {special_roles.guest_role.mention} reappliable."
+            )
         if special_roles.member_role in roles:
-            warning.writeln(f"You should not make {special_roles.member_role.mention} reappliable.")
+            warning.writeln(
+                f"You should not make {special_roles.member_role.mention} reappliable."
+            )
 
         # Warn on roles that are already reappliable
         if special_roles.mute_role in roles:
-            warning.writeln(f"The {special_roles.mute_role.mention} is always reappliable.")
+            warning.writeln(
+                f"The {special_roles.mute_role.mention} is always reappliable."
+            )
         if special_roles.jail_role in roles:
-            warning.writeln(f"The {special_roles.jail_role.mention} is always reappliable.")
+            warning.writeln(
+                f"The {special_roles.jail_role.mention} is always reappliable."
+            )
 
         if "SelfAssignableRoles" in self.bot.cogs:
             assignable_roles = self.bot.sql.roles.get_assignable_roles(ctx.guild)
@@ -391,19 +399,26 @@ class Settings:
 
         for role in roles:
             if role in assignable_roles:
-                warning.writeln(f"The {role.mention} is already reappliable since it is self-assignable.")
+                warning.writeln(
+                    f"The {role.mention} is already reappliable since it is self-assignable."
+                )
 
         if warning:
             embed = discord.Embed(colour=discord.Colour.dark_purple())
             embed.description = str(warning)
             await ctx.send(embed=embed)
 
-        logger.info("Setting roles as 'reappliable': [%s]", ", ".join(role.name for role in roles))
+        logger.info(
+            "Setting roles as 'reappliable': [%s]",
+            ", ".join(role.name for role in roles),
+        )
 
         with self.bot.sql.transaction():
             self.bot.sql.settings.update_reapply_roles(roles, True)
 
-    @reapply.command(name="remove", aliases=["rm", "delete", "del", "unregister", "unset"])
+    @reapply.command(
+        name="remove", aliases=["rm", "delete", "del", "unregister", "unset"]
+    )
     @commands.guild_only()
     async def reapply_remove(self, ctx, *roles: RoleConv):
         """
@@ -412,7 +427,10 @@ class Settings:
         automatically reapplied when the member rejoins the guild.
         """
 
-        logger.info("Unsetting roles as 'reappliable': [%s]", ", ".join(role.name for role in roles))
+        logger.info(
+            "Unsetting roles as 'reappliable': [%s]",
+            ", ".join(role.name for role in roles),
+        )
 
         with self.bot.sql.transaction():
             self.bot.sql.settings.update_reapply_roles(set(roles), False)
@@ -471,7 +489,6 @@ class Settings:
             )
 
         await ctx.send(embed=embed)
-
 
     @commands.group(name="trackerblacklist", aliases=["trackerbl", "trkbl"])
     @commands.guild_only()
