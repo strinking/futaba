@@ -48,19 +48,11 @@ __all__ = ["SettingsModel"]
 
 
 class GuildSettingsStorage:
-    __slots__ = (
-        "prefix",
-        "max_delete_messages",
-        "reapply_roles",
-        "warn_manual_mod_action",
-    )
+    __slots__ = ("prefix", "max_delete_messages", "warn_manual_mod_action")
 
-    def __init__(
-        self, prefix, max_delete_messages, *, reapply_roles, warn_manual_mod_action
-    ):
+    def __init__(self, prefix, max_delete_messages, *, warn_manual_mod_action):
         self.prefix = prefix
         self.max_delete_messages = max_delete_messages
-        self.reapply_roles = reapply_roles
         self.warn_manual_mod_action = warn_manual_mod_action
 
 
@@ -275,10 +267,7 @@ class SettingsModel:
         )
         self.sql.execute(ins)
         self.guild_settings_cache[guild] = GuildSettingsStorage(
-            None,
-            self.sql.max_delete_messages,
-            reapply_roles=True,
-            warn_manual_mod_action=False,
+            None, self.sql.max_delete_messages, warn_manual_mod_action=False
         )
 
     def remove_guild_settings(self, guild):
@@ -301,7 +290,6 @@ class SettingsModel:
                 self.tb_guild_settings.c.prefix,
                 self.tb_guild_settings.c.max_delete_messages,
                 self.tb_guild_settings.c.warn_manual_mod_action,
-                self.tb_guild_settings.c.reapply_roles,
             ]
         ).where(self.tb_guild_settings.c.guild_id == guild.id)
         result = self.sql.execute(sel)
@@ -309,14 +297,9 @@ class SettingsModel:
         if not result.rowcount:
             self.add_guild_settings(guild)
 
-        prefix, max_delete_messages, reapply_roles, warn_manual_mod_action = (
-            result.fetchone()
-        )
+        prefix, max_delete_messages, warn_manual_mod_action = result.fetchone()
         self.guild_settings_cache[guild] = GuildSettingsStorage(
-            prefix,
-            max_delete_messages,
-            reapply_roles=reapply_roles,
-            warn_manual_mod_action=warn_manual_mod_action,
+            prefix, max_delete_messages, warn_manual_mod_action=warn_manual_mod_action
         )
 
     def get_prefix(self, guild):
