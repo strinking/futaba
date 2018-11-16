@@ -62,7 +62,10 @@ class RoleReapplication:
             guild.name,
             guild.id,
         )
-        can_reapply = []
+
+        reapply_roles = self.bot.sql.settings.get_reapply_roles(guild)
+        can_reapply = list(reapply_roles)
+
         special_roles = self.bot.sql.settings.get_special_roles(guild)
         if special_roles.mute_role is not None:
             can_reapply.append(special_roles.mute_role)
