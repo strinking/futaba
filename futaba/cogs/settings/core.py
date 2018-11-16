@@ -432,6 +432,8 @@ class Settings:
             ", ".join(role.name for role in roles),
         )
 
+        warning = StringBuilder()
+
         with self.bot.sql.transaction():
             self.bot.sql.settings.update_reapply_roles(set(roles), False)
 
@@ -445,13 +447,47 @@ class Settings:
         """
 
         reapply_roles = self.bot.sql.settings.get_reapply_roles(ctx.guild)
-        descr = StringBuilder(sep=", ")
-
-        for role in reapply_roles:
-            descr.write(role.mention)
+        special_roles = self.bot.sql.settings.get_special_roles(ctx.guild)
 
         embed = discord.Embed(colour=discord.Colour.dark_teal())
-        embed.description = str(descr)
+        descr = StringBuilder(sep=", ")
+        has_roles = False
+
+        # Manually set
+        for role in reapply_roles:
+            descr.write(role.mention)
+        if descr:
+            embed.add_field(name="Manually designated", value=str(descr))
+            has_roles = True
+        else:
+            embed.add_field(name="Manually designated", value="(none)")
+
+        # Punishment roles
+        descr.clear()
+        if special_roles.mute_role is not None:
+            descr.write(special_roles.mute_role.mention)
+        if special_roles.jail_role is not None:
+            descr.write(special_roles.jail_role.mention)
+        if descr:
+            embed.add_field(name="Punishment roles", value=str(descr))
+            has_roles = True
+
+        # Self-assignable roles
+        if "SelfAssignableRoles" in self.bot.cogs:
+            assignable_roles = self.bot.sql.roles.get_assignable_roles(ctx.guild)
+            if assignable_roles:
+                embed.add_field(
+                    name="Self-assignable roles",
+                    value=", ".join(role.mention for role in assignable_roles),
+                )
+                has_roles = True
+
+        # Send final embed
+        if has_roles:
+            embed.set_author(name="Roles which can be automatically reapplied")
+        else:
+            embed.colour = discord.Colour.dark_purple()
+
         await ctx.send(embed=embed)
 
     @reapply.command(name="auto", aliases=["automatic"])
