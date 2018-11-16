@@ -78,7 +78,6 @@ class RoleReapplication:
         return can_reapply
 
     async def reapply_roles(self, member):
-        # TODO journal event
         roles = self.bot.sql.roles.get_saved_roles(member)
         if not roles:
             logger.debug("No roles to reapply, user is new")
@@ -97,8 +96,14 @@ class RoleReapplication:
             *roles, reason="Automatically reapplying roles", atomic=True
         )
 
+        content = (
+            f"Reapplying roles to {member.mention}: {role.mention for role in roles}"
+        )
+        self.journal.send(
+            "reapply", member.guild, content, member=member, roles=roles, icon="role"
+        )
+
     async def save_roles(self, member):
-        # TODO journal event
         logger.info(
             "Member '%s' (%d) updated roles in '%s' (%d)",
             member.name,
@@ -109,3 +114,6 @@ class RoleReapplication:
 
         with self.bot.sql.transaction():
             self.bot.sql.roles.update_saved_roles(member)
+
+        content = f"Saving updated roles for {member.mention}"
+        self.journal.send("save", member.guild, content, member=member, icon="save")
