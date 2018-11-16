@@ -44,6 +44,7 @@ class Settings:
 
         for guild in bot.guilds:
             bot.sql.settings.get_special_roles(guild)
+            bot.sql.settings.get_reapply_roles(guild)
 
     @commands.command(name="prefix")
     async def prefix(self, ctx, *, prefix: str = None):
@@ -414,7 +415,7 @@ class Settings:
         )
 
         with self.bot.sql.transaction():
-            self.bot.sql.settings.update_reapply_roles(roles, True)
+            self.bot.sql.settings.update_reapply_roles(ctx.guild, roles, True)
 
     @reapply.command(
         name="remove", aliases=["rm", "delete", "del", "unregister", "unset"]
@@ -435,7 +436,7 @@ class Settings:
         warning = StringBuilder()
 
         with self.bot.sql.transaction():
-            self.bot.sql.settings.update_reapply_roles(set(roles), False)
+            self.bot.sql.settings.update_reapply_roles(ctx.guild, set(roles), False)
 
     @reapply.command(name="show", aliases=["display", "list", "ls"])
     @commands.guild_only()

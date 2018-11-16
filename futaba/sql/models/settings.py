@@ -504,7 +504,7 @@ class SettingsModel:
             guild.id,
         )
 
-        old_roles = self.reapply_roles_cache[guild]
+        old_roles = self.reapply_roles_cache[guild].roles
         if enable:
             new_roles = old_roles | roles
         else:
@@ -515,7 +515,7 @@ class SettingsModel:
             return
 
         upd = self.tb_reapply_roles.update().values(
-            guild_id=guild.id, roles=[role.id for role in new_roles]
+            guild_id=guild.id, role_ids=[role.id for role in new_roles]
         )
         self.sql.execute(upd)
         self.reapply_roles_cache[guild].roles = new_roles
