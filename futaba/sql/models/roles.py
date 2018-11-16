@@ -77,11 +77,6 @@ class RolesModel:
             Column("role_id", BigInteger),
             UniqueConstraint("guild_id", "role_id", name="can_reapply_roles_uq"),
         )
-        # TODO allow adding reappliable roles
-        # TODO allow removing reappliable roles
-        # TODO allow listing reappliable roles
-        # TODO warn if role already in assignable or punish
-        # TODO warn if role is member or guest
         self.roles_cache = {}
         self.channels_cache = {}
 

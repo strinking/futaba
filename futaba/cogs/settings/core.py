@@ -183,42 +183,6 @@ class Settings:
 
         await ctx.send(embed=embed)
 
-    @commands.command(name="reapplyroles", aliases=["reapply"])
-    @commands.guild_only()
-    async def reapply_roles(self, ctx, value: bool = None):
-        """
-        Tells whether automatic role reapplication is enabled.
-        Only self-assignable and punishment roles are re-applied.
-        If you're an administrator, you can change this value.
-        """
-
-        if value is None:
-            # Get reapplication roles
-            reapply = self.bot.sql.settings.get_reapply_roles(ctx.guild)
-            embed = discord.Embed(colour=discord.Colour.dark_teal())
-            enabled = "enabled" if reapply else "disabled"
-            embed.description = (
-                f"Automatic role reapplication is **{enabled}** on this server"
-            )
-        elif not admin_perm(ctx):
-            # Lacking authority to set reapplication
-            embed = discord.Embed(colour=discord.Colour.red())
-            embed.description = (
-                "You do not have permission to set automatic role reapplication"
-            )
-            raise ManualCheckFailure(embed=embed)
-        else:
-            # Set role reapplication
-            with self.bot.sql.transaction():
-                self.bot.sql.settings.set_reapply_roles(ctx.guild, value)
-
-            embed = discord.Embed(colour=discord.Colour.dark_teal())
-            embed.description = (
-                f"{'Enabled' if value else 'Disabled'} automatic role reapplication"
-            )
-
-        await ctx.send(embed=embed)
-
     @commands.command(name="specroles", aliases=["sroles"])
     @commands.guild_only()
     async def special_roles(self, ctx):
@@ -381,6 +345,133 @@ class Settings:
 
         await ctx.send(embed=embed)
         self.journal.send("roles/jail", ctx.guild, content, icon="settings", role=role)
+
+    @commands.group(name="reapply", aliases=["reapp"])
+    @commands.guild_only()
+    async def reapply(self, ctx):
+        """ Manages settings related to automatic role reapplication. """
+
+        if ctx.invoked_subcommand is None:
+            raise SendHelp()
+
+    @reapply.command(name="add", aliases=["append", "extend", "new", "register", "set"])
+    @commands.guild_only()
+    async def reapply_add(self, ctx, *roles: RoleConv):
+        """
+        Designate a collection of roles as "reappliable".
+        Reappliable roles, in addition to all punishment and self-assignable roles, are
+        automatically reapplied when the member rejoins the guild.
+        """
+
+        warning = StringBuilder()
+        roles = set(roles)
+
+        # Filter out roles that shouldn't be reassignable
+        special_roles = self.bot.sql.settings.get_special_roles(ctx.guild)
+
+        if ctx.guild.default_role in roles:
+            warning.writeln("You should not make @everyone reappliable.")
+            roles.remove(ctx.guild.default_role)
+
+        if special_roles.guest_role in roles:
+            warning.writeln(f"You should not make {special_roles.guest_role.mention} reappliable.")
+        if special_roles.member_role in roles:
+            warning.writeln(f"You should not make {special_roles.member_role.mention} reappliable.")
+
+        # Warn on roles that are already reappliable
+        if special_roles.mute_role in roles:
+            warning.writeln(f"The {special_roles.mute_role.mention} is always reappliable.")
+        if special_roles.jail_role in roles:
+            warning.writeln(f"The {special_roles.jail_role.mention} is always reappliable.")
+
+        if "SelfAssignableRoles" in self.bot.cogs:
+            assignable_roles = self.bot.sql.roles.get_assignable_roles(ctx.guild)
+        else:
+            assignable_roles = ()
+
+        for role in roles:
+            if role in assignable_roles:
+                warning.writeln(f"The {role.mention} is already reappliable since it is self-assignable.")
+
+        if warning:
+            embed = discord.Embed(colour=discord.Colour.dark_purple())
+            embed.description = str(warning)
+            await ctx.send(embed=embed)
+
+        logger.info("Setting roles as 'reappliable': [%s]", ", ".join(role.name for role in roles))
+
+        with self.bot.sql.transaction():
+            self.bot.sql.settings.update_reapply_roles(roles, True)
+
+    @reapply.command(name="remove", aliases=["rm", "delete", "del", "unregister", "unset"])
+    @commands.guild_only()
+    async def reapply_remove(self, ctx, *roles: RoleConv):
+        """
+        Remove the designation of the given roles as "reappliable".
+        Reappliable roles, in addition to all punishment and self-assignable roles, are
+        automatically reapplied when the member rejoins the guild.
+        """
+
+        logger.info("Unsetting roles as 'reappliable': [%s]", ", ".join(role.name for role in roles))
+
+        with self.bot.sql.transaction():
+            self.bot.sql.settings.update_reapply_roles(set(roles), False)
+
+    @reapply.command(name="show", aliases=["display", "list", "ls"])
+    @commands.guild_only()
+    async def reapply_show(self, ctx):
+        """
+        Lists all roles that are reappliable.
+        Reappliable roles, in addition to all punishment and self-assignable roles, are
+        automatically reapplied when the member rejoins the guild.
+        """
+
+        reapply_roles = self.bot.sql.settings.get_reapply_roles(ctx.guild)
+        descr = StringBuilder(sep=", ")
+
+        for role in reapply_roles:
+            descr.write(role.mention)
+
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
+        embed.description = str(descr)
+        await ctx.send(embed=embed)
+
+    @reapply.command(name="auto", aliases=["automatic"])
+    @commands.guild_only()
+    async def reapply_auto(self, ctx, value: bool = None):
+        """
+        Tells whether automatic role reapplication is enabled.
+        Only self-assignable and punishment roles are re-applied.
+        If you're an administrator, you can change this value.
+        """
+
+        if value is None:
+            # Get reapplication roles
+            reapply = self.bot.sql.settings.get_reapply_roles(ctx.guild)
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
+            enabled = "enabled" if reapply else "disabled"
+            embed.description = (
+                f"Automatic role reapplication is **{enabled}** on this server"
+            )
+        elif not admin_perm(ctx):
+            # Lacking authority to set reapplication
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.description = (
+                "You do not have permission to set automatic role reapplication"
+            )
+            raise ManualCheckFailure(embed=embed)
+        else:
+            # Set role reapplication
+            with self.bot.sql.transaction():
+                self.bot.sql.settings.set_reapply_roles(ctx.guild, value)
+
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
+            embed.description = (
+                f"{'Enabled' if value else 'Disabled'} automatic role reapplication"
+            )
+
+        await ctx.send(embed=embed)
+
 
     @commands.group(name="trackerblacklist", aliases=["trackerbl", "trkbl"])
     @commands.guild_only()
