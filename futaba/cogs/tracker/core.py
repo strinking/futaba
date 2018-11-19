@@ -399,7 +399,8 @@ class Tracker:
         blacklist = self.bot.sql.settings.get_tracking_blacklist(message.guild)
         if blacklist.is_blocked(message.channel) or blacklist.is_blocked(user):
             logger.debug(
-                "Ignoring reaction %s added to message %d by %s (%d) due to the channel or user adding the reaction being blacklisted",
+                "Ignoring reaction %s added to message %d by %s (%d) due to "
+                "the channel or user adding the reaction being blacklisted",
                 emoji,
                 message.id,
                 user.name,
@@ -414,7 +415,10 @@ class Tracker:
             user.name,
             user.id,
         )
-        content = f"{user_discrim(user)} added reaction {emoji} to message {message.id} in {channel.mention}"
+        content = (
+            f"{user_discrim(user)} added reaction {emoji} to message "
+            f"{message.id} in {channel.mention}"
+        )
         self.journal.send(
             "reaction/add",
             message.guild,
@@ -442,7 +446,8 @@ class Tracker:
         blacklist = self.bot.sql.settings.get_tracking_blacklist(message.guild)
         if blacklist.is_blocked(message.channel) or blacklist.is_blocked(user):
             logger.debug(
-                "Ignoring reaction %s removed from message %d by %s (%d) due to the channel or user adding the reaction being blacklisted",
+                "Ignoring reaction %s removed from message %d by %s (%d) due to "
+                "the channel or user adding the reaction being blacklisted",
                 emoji,
                 message.id,
                 user.name,

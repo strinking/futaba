@@ -26,6 +26,7 @@ from futaba import permissions
 from futaba.exceptions import CommandFailed, InvalidCommandContext, SendHelp
 from futaba.journal import ModerationListener
 from futaba.utils import user_discrim
+from .role_reapplication import RoleReapplication
 
 FakeContext = namedtuple("FakeContext", ("author", "channel", "guild"))
 logger = logging.getLogger(__name__)
@@ -79,11 +80,12 @@ def format_message(welcome_message, ctx):
 
 
 class Welcome:
-    __slots__ = ("bot", "journal", "recently_joined")
+    __slots__ = ("bot", "journal", "roles", "recently_joined")
 
     def __init__(self, bot):
         self.bot = bot
         self.journal = bot.get_broadcaster("/welcome")
+        self.roles = RoleReapplication(bot)
         self.recently_joined = deque(maxlen=5)
 
         self.add_listener()
@@ -132,6 +134,16 @@ class Welcome:
             member.guild.id,
         )
 
+        print(f"$$ {self.bot.cogs}")
+        if "RoleReapplication" in self.bot.cogs:
+            if self.bot.sql.settings.get_reapply_roles(member.guild):
+                roles = self.bot.sql.roles.get_member_roles(member)
+                if roles:
+                    logger.debug(
+                        "Not applying roles on join, role reapplication will occur instead"
+                    )
+                    return
+
         welcome = self.bot.sql.welcome.get_welcome(member.guild)
         roles = self.bot.sql.settings.get_special_roles(member.guild)
 
@@ -149,6 +161,9 @@ class Welcome:
                 "Adding role %s (%d) to new guest", roles.guest.name, roles.guest.id
             )
             await member.add_roles(roles.guest, reason="New user joined")
+
+    async def member_update(self, before, after):
+        await self.roles.member_update(before, after)
 
     async def member_leave(self, member):
         logger.info(
@@ -217,6 +232,9 @@ class Welcome:
         if welcome.agreed_message:
             await ctx.send(content=format_message(welcome.agreed_message, ctx))
 
+        # Reapply saved, old roles
+        await self.roles.reapply_roles(ctx.author)
+
         if roles.member:
             logger.info(
                 "Adding member role %s (%d)", roles.member.name, roles.member.id
@@ -226,8 +244,6 @@ class Welcome:
         if roles.guest:
             logger.info("Removing guest role %s (%d)", roles.guest.name, roles.guest.id)
             await ctx.author.remove_roles(roles.guest, reason=AGREE_REASON, atomic=True)
-
-        # TODO: restore old roles
 
         # Send journal event
         agreer = f"{ctx.author.mention} ({user_discrim(ctx.author)})"

@@ -93,6 +93,7 @@ ICONS = {
     # Miscellaneous
     "next": "\N{DOWNWARDS BLACK ARROW}",
     "previous": "\N{UPWARDS BLACK ARROW}",
+    "role": "\N{MILITARY MEDAL}",
     "hourglass": "\N{HOURGLASS WITH FLOWING SAND}",
     "person": "\N{BUST IN SILHOUETTE}",
     "bot": "\N{ROBOT FACE}",

@@ -17,7 +17,6 @@ Cog for miscellaneous owner-only debugging commands.
 import logging
 
 import aiohttp
-import discord
 from discord.ext import commands
 
 from futaba import permissions

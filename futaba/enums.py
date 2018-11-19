@@ -26,7 +26,11 @@ class Reactions(Enum):
     NETWORK = "\N{ELECTRIC PLUG}"
 
     async def add(self, message: discord.Message):
-        await message.add_reaction(self.value)
+        try:
+            await message.add_reaction(self.value)
+        except discord.NotFound:
+            # Message was deleted
+            pass
 
 
 @unique
