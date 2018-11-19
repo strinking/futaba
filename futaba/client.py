@@ -415,7 +415,7 @@ class Bot(commands.AutoShardedBot):
             full_tb.writeln(f"Roles:")
             for role in ctx.author.roles:
                 perms = role.permissions.value
-                full_tb.writeln(f"  {role.name} ({role.id}): ")
+                full_tb.writeln(f"  {role.name} ({role.id}):")
                 full_tb.writeln(f"    created at: {role.created_at}")
                 full_tb.writeln(f"    members: {len(role.members)}")
                 full_tb.writeln(f"    permissions: 0x{perms:016x}")
