@@ -425,5 +425,7 @@ class Bot(commands.AutoShardedBot):
         full_tb.writeln(trace)
 
         # Upload traceback to error channel
+        unix_time = int(datetime.now().timestamp())
+        filename = f"futaba-extended-traceback-{unix_time}.log"
         file = discord.File(fp=full_tb.bytes_io(), filename=filename)
         await self.error_channel.send(file=file)
