@@ -25,10 +25,9 @@ from futaba.str_builder import StringBuilder
 from futaba.utils import user_discrim
 
 logger = logging.getLogger(__name__)
-FakeMember = namedtuple('FakeMember', ('name', 'id', 'guild'))
+FakeMember = namedtuple("FakeMember", ("name", "id", "guild"))
 
 __all__ = ["RoleReapplication"]
-
 
 
 class RoleReapplication:
