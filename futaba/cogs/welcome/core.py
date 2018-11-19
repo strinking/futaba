@@ -135,7 +135,6 @@ class Welcome:
             member.guild.id,
         )
 
-        print(f"$$ {self.bot.cogs}")
         if "RoleReapplication" in self.bot.cogs:
             if self.bot.sql.settings.get_reapply_roles(member.guild):
                 roles = self.bot.sql.roles.get_member_roles(member)
