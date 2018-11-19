@@ -54,7 +54,9 @@ class Miscellaneous:
         await ctx.send(content=content)
         self.journal.send("ping", ctx.guild, content, icon="ok")
 
-    @commands.command(name="about", aliases=["futaba", "aboutme", "bot", "botinfo", "uptime"])
+    @commands.command(
+        name="about", aliases=["futaba", "aboutme", "bot", "botinfo", "uptime"]
+    )
     async def about(self, ctx):
         """ Prints information about the running bot. """
 
