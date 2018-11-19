@@ -89,6 +89,7 @@ class Welcome:
         self.recently_joined = deque(maxlen=5)
 
         self.add_listener()
+        bot.add_cog(self.roles)
 
         for guild in bot.guilds:
             bot.sql.welcome.get_welcome(guild)
