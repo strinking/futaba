@@ -66,7 +66,7 @@ class Miscellaneous:
 
         embed = discord.Embed()
         embed.set_thumbnail(url=self.bot.user.avatar_url)
-        embed.set_author(name=f"Futaba v{__version__} {GIT_HASH}")
+        embed.set_author(name=f"Futaba v{__version__} [{GIT_HASH}]")
         embed.add_field(name="Running for", value=fancy_timedelta(self.bot.uptime))
         embed.add_field(
             name="Created by",
