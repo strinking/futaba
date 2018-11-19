@@ -93,18 +93,23 @@ class RoleReapplication:
 
         if user is None:
             member = ctx.author
+            mention = ctx.author.mention
         else:
             member = FakeMember(id=user.id, name=user.name, guild=ctx.guild)
+            mention = user.mention
 
         roles = self.get_roles_to_reapply(member)
         if roles:
             roles.sort(key=lambda r: r.position, reverse=True)
+            role_list = " ".join(role.mention for role in roles)
+            sep = "\n\n" if len(roles) > 3 else " "
+
             embed = discord.Embed(colour=discord.Colour.dark_teal())
             embed.title = "\N{MILITARY MEDAL} Roles which would be applied on join"
-            embed.description = " ".join(role.mention for role in roles)
+            embed.description = f"{mention}:{sep}{role_list}"
         else:
             embed = discord.Embed(colour=discord.Colour.dark_purple())
-            embed.description = "No roles are saved for this user."
+            embed.description = f"No roles are saved for {mention}."
         await ctx.send(embed=embed)
 
     async def reapply_roles(self, member):
