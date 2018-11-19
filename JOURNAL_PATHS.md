@@ -103,14 +103,19 @@ All attributes have `channel: discord.TextChannel`, `messages: List[discord.Mess
 * `/dump/moderation/cleanup/text` - Contains the deleted messages in JSON form. Attributes: `messages: dict`.
 
 ### Welcome cog
-* `/welcome/member/agree` - Member agrees to the rules. Attributes: `user: discord.Member`
-* `/welcome/channel/set` - When the welcome change is changed. Attributes: `channel: Optional[discord.TextChannel]`, `cause: discord.Member`
-* `/welcome/message/welcome` - The welcome message was set or unset. Attributes: `message: Optional[str]`
-* `/welcome/message/goodbye` - The goodbye message was set or unset. Attributes: `message: Optional[str]`
-* `/welcome/message/agree` - The agreement message was set or unset. Attributes: `message: Optional[str]`
+Join management:
+* `/welcome/member/agree` - Member agrees to the rules. Attributes: `user: discord.Member`.
+* `/welcome/channel/set` - When the welcome change is changed. Attributes: `channel: Optional[discord.TextChannel]`, `cause: discord.Member`.
+* `/welcome/message/welcome` - The welcome message was set or unset. Attributes: `message: Optional[str]`.
+* `/welcome/message/goodbye` - The goodbye message was set or unset. Attributes: `message: Optional[str]`.
+* `/welcome/message/agree` - The agreement message was set or unset. Attributes: `message: Optional[str]`.
+
+Role reapplication:
+* `/roles/reapply` - Reapplying roles to a member. Attributes: `member: discord.Member`, `roles: Tuple[discord.Role]`.
+* `/roles/save` - Saving updated roles for a member. Attributes: `member: discord.Member`.
 
 ### Settings cog
-* `/settings/prefix` - The bot command prefix was set or unset. Attributes: `prefix: Optional[str]`, `default_prefix: str`
+* `/settings/prefix` - The bot command prefix was set or unset. Attributes: `prefix: Optional[str]`, `default\_prefix: str`
 * `/settings/roles/member` - The member role was set or unset. Attributes: `role: Optional[discord.Role]`
 * `/settings/roles/guest` - The guest role was set or unset. Attributes: `role: Optional[discord.Role]`
 * `/settings/roles/mute` - The mute role was set or unset. Attributes: `role: Optional[discord.Role]`

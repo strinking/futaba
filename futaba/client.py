@@ -142,7 +142,7 @@ class Bot(commands.AutoShardedBot):
                 # Something made the loading fail
                 # So log it with reason and tell user to check it
                 logger.error("Load failed: %s", file, exc_info=error)
-                continue
+                raise
             else:
                 logger.info("Loaded cog: %s", file)
 
@@ -305,7 +305,9 @@ class Bot(commands.AutoShardedBot):
                     descr.writeln(f"```py\n{error_str}\n```")
                 embed.description = str(descr)
                 await asyncio.gather(
-                    ctx.send(embed=embed), Reactions.NETWORK.add(ctx.message)
+                    ctx.send(embed=embed),
+                    self.upload_traceback(ctx, trace, filename),
+                    Reactions.NETWORK.add(ctx.message),
                 )
 
             else:

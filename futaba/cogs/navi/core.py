@@ -22,7 +22,6 @@ import dateparser
 import discord
 from discord.ext import commands
 
-from futaba import permissions
 from futaba.exceptions import CommandFailed
 from futaba.navi import SendMessageTask, build_navi_task
 from futaba.str_builder import StringBuilder

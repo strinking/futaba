@@ -23,7 +23,7 @@ from hashlib import sha1
 import discord
 from discord.ext import commands
 
-from futaba import permissions, __version__
+from futaba import __version__
 from futaba.download import download_links
 from futaba.exceptions import CommandFailed
 from futaba.str_builder import StringBuilder
@@ -54,7 +54,7 @@ class Miscellaneous:
         await ctx.send(content=content)
         self.journal.send("ping", ctx.guild, content, icon="ok")
 
-    @commands.command(name="about", aliases=["futaba", "aboutme", "botinfo"])
+    @commands.command(name="about", aliases=["futaba", "aboutme", "botinfo", "uptime"])
     async def about(self, ctx):
         """ Prints information about the running bot. """
 

@@ -21,5 +21,6 @@ def setup(bot):
 
     cog = Welcome(bot)
     bot.add_listener(cog.member_join, "on_member_join")
+    bot.add_listener(cog.member_update, "on_member_update")
     bot.add_listener(cog.member_leave, "on_member_remove")
     bot.add_cog(cog)

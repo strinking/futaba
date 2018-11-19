@@ -16,7 +16,6 @@ Commands related to cleaning up messages in bulk.
 
 import json
 import logging
-from io import BytesIO
 
 import discord
 from discord.ext import commands

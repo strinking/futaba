@@ -20,6 +20,6 @@ from .filter import FilterModel
 from .guilds import GuildsModel
 from .journal import JournalModel
 from .navi import NaviModel
-from .roles import SelfAssignableRolesModel
+from .roles import RolesModel
 from .settings import SettingsModel
 from .welcome import WelcomeModel

@@ -17,13 +17,13 @@ Has the model for managing persistent bot settings.
 # False positive when using SQLAlchemy decorators
 # pylint: disable=no-value-for-parameter
 
-import enum
 import functools
 import logging
 
 import discord
 
 from sqlalchemy import (
+    ARRAY,
     BigInteger,
     Boolean,
     CheckConstraint,
@@ -50,7 +50,7 @@ __all__ = ["SettingsModel"]
 class GuildSettingsStorage:
     __slots__ = ("prefix", "max_delete_messages", "warn_manual_mod_action")
 
-    def __init__(self, prefix, max_delete_messages, warn_manual_mod_action):
+    def __init__(self, prefix, max_delete_messages, *, warn_manual_mod_action):
         self.prefix = prefix
         self.max_delete_messages = max_delete_messages
         self.warn_manual_mod_action = warn_manual_mod_action
@@ -108,6 +108,14 @@ class SpecialRoleStorage:
         yield self.jail_role
 
 
+class ReapplyRolesStorage:
+    __slots__ = ("roles", "auto_reapply")
+
+    def __init__(self, roles, auto_reapply):
+        self.roles = roles
+        self.auto_reapply = auto_reapply
+
+
 class TrackingBlacklistStorage:
     __slots__ = ("guild", "blacklisted_channels", "blacklisted_users")
 
@@ -149,9 +157,11 @@ class SettingsModel:
         "sql",
         "tb_guild_settings",
         "tb_special_roles",
+        "tb_reapply_roles",
         "tb_tracking_blacklists",
         "guild_settings_cache",
-        "roles_cache",
+        "special_roles_cache",
+        "reapply_roles_cache",
         "tracking_blacklist_cache",
     )
 
@@ -165,7 +175,7 @@ class SettingsModel:
             ),
             Column("prefix", Unicode, nullable=True),
             Column("max_delete_messages", SmallInteger),
-            Column("warn_manual_mod_action", Boolean, default=False),
+            Column("warn_manual_mod_action", Boolean),
         )
         self.tb_special_roles = Table(
             "special_roles",
@@ -208,6 +218,15 @@ class SettingsModel:
                 name="special_role_jail_not_member_check",
             ),
         )
+        self.tb_reapply_roles = Table(
+            "reapply_roles",
+            meta,
+            Column(
+                "guild_id", BigInteger, ForeignKey("guilds.guild_id"), primary_key=True
+            ),
+            Column("auto_reapply", Boolean),
+            Column("role_ids", ARRAY(BigInteger)),
+        )
         self.tb_tracking_blacklists = Table(
             "tracking_blacklists",
             meta,
@@ -223,7 +242,8 @@ class SettingsModel:
             ),
         )
         self.guild_settings_cache = {}
-        self.roles_cache = {}
+        self.special_roles_cache = {}
+        self.reapply_roles_cache = {}
         self.tracking_blacklist_cache = {}
 
         register_hook("on_guild_join", self.add_guild_settings)
@@ -231,6 +251,9 @@ class SettingsModel:
 
         register_hook("on_guild_join", self.add_special_roles)
         register_hook("on_guild_leave", self.remove_special_roles)
+
+        register_hook("on_guild_join", self.add_reapply_roles)
+        register_hook("on_guild_leave", self.remove_reapply_roles)
 
     def add_guild_settings(self, guild):
         logger.info(
@@ -244,7 +267,7 @@ class SettingsModel:
         )
         self.sql.execute(ins)
         self.guild_settings_cache[guild] = GuildSettingsStorage(
-            None, self.sql.max_delete_messages, False
+            None, self.sql.max_delete_messages, warn_manual_mod_action=False
         )
 
     def remove_guild_settings(self, guild):
@@ -276,7 +299,7 @@ class SettingsModel:
 
         prefix, max_delete_messages, warn_manual_mod_action = result.fetchone()
         self.guild_settings_cache[guild] = GuildSettingsStorage(
-            prefix, max_delete_messages, warn_manual_mod_action
+            prefix, max_delete_messages, warn_manual_mod_action=warn_manual_mod_action
         )
 
     def get_prefix(self, guild):
@@ -340,6 +363,7 @@ class SettingsModel:
             guild.name,
             guild.id,
         )
+
         upd = (
             self.tb_guild_settings.update()
             .where(self.tb_guild_settings.c.guild_id == guild.id)
@@ -360,23 +384,25 @@ class SettingsModel:
             jail_role_id=None,
         )
         self.sql.execute(ins)
-        self.roles_cache[guild] = SpecialRoleStorage(guild, None, None, None, None)
+        self.special_roles_cache[guild] = SpecialRoleStorage(
+            guild, None, None, None, None
+        )
 
     def remove_special_roles(self, guild):
         logger.info(
-            "Removing special roles row for new guild '%s' (%d)", guild.name, guild.id
+            "Removing special roles row for guild '%s' (%d)", guild.name, guild.id
         )
         delet = self.tb_special_roles.delete().where(
             self.tb_special_roles.c.guild_id == guild.id
         )
         self.sql.execute(delet)
-        self.roles_cache.pop(guild, None)
+        self.special_roles_cache.pop(guild, None)
 
     def get_special_roles(self, guild):
         logger.debug("Getting special roles for guild '%s' (%d)", guild.name, guild.id)
-        if guild in self.roles_cache:
+        if guild in self.special_roles_cache:
             logger.debug("Special roles found in cache, returning")
-            return self.roles_cache[guild]
+            return self.special_roles_cache[guild]
 
         sel = select(
             [
@@ -390,13 +416,13 @@ class SettingsModel:
 
         if not result.rowcount:
             self.add_special_roles(guild)
-            return self.roles_cache[guild]
+            return self.special_roles_cache[guild]
 
         member_role_id, guest_role_id, mute_role_id, jail_role_id = result.fetchone()
         roles = SpecialRoleStorage(
             guild, member_role_id, guest_role_id, mute_role_id, jail_role_id
         )
-        self.roles_cache[guild] = roles
+        self.special_roles_cache[guild] = roles
         return roles
 
     def set_special_roles(self, guild, **attrs):
@@ -414,7 +440,112 @@ class SettingsModel:
             .values(values)
         )
         self.sql.execute(upd)
-        self.roles_cache[guild].update(attrs)
+        self.special_roles_cache[guild].update(attrs)
+
+    def add_reapply_roles(self, guild):
+        logger.info(
+            "Adding reappliable roles row for new guild '%s' (%d)", guild.name, guild.id
+        )
+        ins = self.tb_reapply_roles.insert().values(
+            guild_id=guild.id, auto_reapply=True, role_ids=[]
+        )
+        self.sql.execute(ins)
+        self.reapply_roles_cache[guild] = ReapplyRolesStorage(set(), True)
+
+    def remove_reapply_roles(self, guild):
+        logger.info(
+            "Removing reappliable roles for guild '%s' (%d)", guild.name, guild.id
+        )
+        delet = self.tb_reapply_roles.delete().where(
+            self.tb_reapply_roles.c.guild_id == guild.id
+        )
+        self.sql.execute(delet)
+        self.reapply_roles_cache.pop(guild, None)
+
+    def fetch_reapply_roles(self, guild):
+        logger.info(
+            "Fetching reappliable roles for guild '%s' (%d)", guild.name, guild.id
+        )
+        sel = select(
+            [self.tb_reapply_roles.c.auto_reapply, self.tb_reapply_roles.c.role_ids]
+        ).where(self.tb_reapply_roles.c.guild_id == guild.id)
+        result = self.sql.execute(sel)
+
+        if not result.rowcount:
+            self.add_reapply_roles(guild)
+            return self.reapply_roles_cache[guild]
+
+        roles = set()
+        auto_reapply, role_ids = result.fetchone()
+        for role_id in role_ids:
+            role = discord.utils.get(guild.roles, id=role_id)
+            if role is not None:
+                roles.add(role)
+
+        storage = ReapplyRolesStorage(roles, auto_reapply)
+        self.reapply_roles_cache[guild] = storage
+        return storage
+
+    def get_reapply_roles(self, guild):
+        logger.info(
+            "Getting reappliable roles for guild '%s' (%d)", guild.name, guild.id
+        )
+        if guild in self.reapply_roles_cache:
+            return self.reapply_roles_cache[guild].roles
+        else:
+            return self.fetch_reapply_roles(guild).roles
+
+    def update_reapply_roles(self, guild, roles, enable):
+        logger.info(
+            "Updating reappliable roles, %s %d roles for guild '%s' (%d)",
+            "adding" if enable else "removing",
+            len(roles),
+            guild.name,
+            guild.id,
+        )
+
+        old_roles = self.reapply_roles_cache[guild].roles
+        if enable:
+            new_roles = old_roles | roles
+        else:
+            new_roles = old_roles - roles
+
+        if old_roles == new_roles:
+            logger.debug("No effective changes in database")
+            return
+
+        upd = self.tb_reapply_roles.update().values(
+            guild_id=guild.id, role_ids=[role.id for role in new_roles]
+        )
+        self.sql.execute(upd)
+        self.reapply_roles_cache[guild].roles = new_roles
+
+    def get_auto_reapply(self, guild):
+        logger.info(
+            "Getting auto reapplication setting for guild '%s' (%d)",
+            guild.name,
+            guild.id,
+        )
+        if guild in self.reapply_roles_cache:
+            return self.reapply_roles_cache[guild].auto_reapply
+        else:
+            return self.fetch_reapply_roles(guild).auto_reapply
+
+    def set_auto_reapply(self, guild, auto_reapply):
+        logger.info(
+            "Setting automatic role reapplication to %s for guild '%s' (%d)",
+            auto_reapply,
+            guild.name,
+            guild.id,
+        )
+
+        upd = (
+            self.tb_reapply_roles.update()
+            .where(self.tb_guild_settings.c.guild_id == guild.id)
+            .values(auto_reapply=auto_reapply)
+        )
+        self.sql.execute(upd)
+        self.guild_settings_cache[guild].auto_reapply = auto_reapply
 
     def add_to_tracking_blacklist(self, guild, user_or_channel):
         logger.info(
