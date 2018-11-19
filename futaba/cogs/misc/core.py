@@ -54,7 +54,9 @@ class Miscellaneous:
         await ctx.send(content=content)
         self.journal.send("ping", ctx.guild, content, icon="ok")
 
-    @commands.command(name="about", aliases=["futaba", "aboutme", "botinfo", "uptime"])
+    @commands.command(
+        name="about", aliases=["futaba", "aboutme", "bot", "botinfo", "uptime"]
+    )
     async def about(self, ctx):
         """ Prints information about the running bot. """
 
@@ -75,6 +77,7 @@ class Miscellaneous:
             (
                 f"{python_emoji} Powered by Python {pyver.major}.{pyver.minor}.{pyver.micro}",
                 f"{discord_py_emoji} Using discord.py {discord.__version__}",
+                f"\N{TIMER CLOCK} Latency: {self.bot.latency:.3} s",
             )
         )
 
