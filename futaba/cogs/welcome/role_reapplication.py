@@ -15,11 +15,17 @@ Handling to reapply roles when the member rejoins the guild.
 """
 
 import logging
+from collections import namedtuple
 
+import discord
+from discord.ext import commands
+
+from futaba.converters import UserConv
 from futaba.str_builder import StringBuilder
 from futaba.utils import user_discrim
 
 logger = logging.getLogger(__name__)
+FakeMember = namedtuple("FakeMember", ("name", "id", "guild"))
 
 __all__ = ["RoleReapplication"]
 
@@ -71,14 +77,45 @@ class RoleReapplication:
 
         return can_reapply
 
-    async def reapply_roles(self, member):
+    def get_roles_to_reapply(self, member):
         roles = self.bot.sql.roles.get_saved_roles(member)
         if not roles:
             logger.debug("No roles to reapply, user is new")
-            return
+            return None
 
         can_reapply = self.get_reapply_roles(member.guild)
-        roles = tuple(filter(lambda r: r in can_reapply, roles))
+        return list(filter(lambda r: r in can_reapply, roles))
+
+    @commands.guild_only()
+    @commands.command(name="savedroles", aliases=["saveroles", "userroles", "uroles"])
+    async def saved_roles(self, ctx, user: UserConv = None):
+        """ Returns all roles that would be reapplied when a given user rejoins. """
+
+        if user is None:
+            member = ctx.author
+            mention = ctx.author.mention
+        else:
+            member = FakeMember(id=user.id, name=user.name, guild=ctx.guild)
+            mention = user.mention
+
+        roles = self.get_roles_to_reapply(member)
+        if roles:
+            roles.sort(key=lambda r: r.position, reverse=True)
+            role_list = " ".join(role.mention for role in roles)
+            sep = "\n\n" if len(roles) > 3 else " "
+
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
+            embed.title = "\N{MILITARY MEDAL} Roles which would be applied on join"
+            embed.description = f"{mention}:{sep}{role_list}"
+        else:
+            embed = discord.Embed(colour=discord.Colour.dark_purple())
+            embed.description = f"No roles are saved for {mention}."
+        await ctx.send(embed=embed)
+
+    async def reapply_roles(self, member):
+        roles = self.get_roles_to_reapply(member)
+        if roles is None:
+            return
 
         logger.info(
             "Reapplying roles to member '%s' (%d): [%s]",

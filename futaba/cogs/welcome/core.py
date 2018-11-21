@@ -89,6 +89,7 @@ class Welcome:
         self.recently_joined = deque(maxlen=5)
 
         self.add_listener()
+        bot.add_cog(self.roles)
 
         for guild in bot.guilds:
             bot.sql.welcome.get_welcome(guild)
@@ -134,7 +135,6 @@ class Welcome:
             member.guild.id,
         )
 
-        print(f"$$ {self.bot.cogs}")
         if "RoleReapplication" in self.bot.cogs:
             if self.bot.sql.settings.get_reapply_roles(member.guild):
                 roles = self.bot.sql.roles.get_member_roles(member)
