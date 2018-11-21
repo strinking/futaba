@@ -541,11 +541,11 @@ class SettingsModel:
 
         upd = (
             self.tb_reapply_roles.update()
-            .where(self.tb_guild_settings.c.guild_id == guild.id)
+            .where(self.tb_reapply_roles.c.guild_id == guild.id)
             .values(auto_reapply=auto_reapply)
         )
         self.sql.execute(upd)
-        self.guild_settings_cache[guild].auto_reapply = auto_reapply
+        self.reapply_roles_cache[guild].auto_reapply = auto_reapply
 
     def add_to_tracking_blacklist(self, guild, user_or_channel):
         logger.info(

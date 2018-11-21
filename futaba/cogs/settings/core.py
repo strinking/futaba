@@ -500,7 +500,7 @@ class Settings:
 
         if value is None:
             # Get reapplication roles
-            reapply = self.bot.sql.settings.get_reapply_roles(ctx.guild)
+            reapply = self.bot.sql.settings.get_auto_reapply(ctx.guild)
             embed = discord.Embed(colour=discord.Colour.dark_teal())
             enabled = "enabled" if reapply else "disabled"
             embed.description = (
@@ -516,7 +516,7 @@ class Settings:
         else:
             # Set role reapplication
             with self.bot.sql.transaction():
-                self.bot.sql.settings.set_reapply_roles(ctx.guild, value)
+                self.bot.sql.settings.set_auto_reapply(ctx.guild, value)
 
             embed = discord.Embed(colour=discord.Colour.dark_teal())
             embed.description = (
