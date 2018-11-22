@@ -37,10 +37,11 @@ class Navi:
         self.bot = bot
         self.journal = bot.get_broadcaster("/navi")
 
-        raw_tasks = bot.sql.navi.get_tasks()
+    def setup(self):
+        raw_tasks = self.bot.sql.navi.get_tasks()
         for raw_task in raw_tasks.values():
             try:
-                task = build_navi_task(bot, raw_task)
+                task = build_navi_task(self.bot, raw_task)
                 task.execute_later()
             except ValueError as error:
                 logger.warning(

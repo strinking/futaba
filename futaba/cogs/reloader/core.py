@@ -40,6 +40,9 @@ class Reloader:
         self.bot = bot
         self.journal = bot.get_broadcaster("/cog")
 
+    def setup(self):
+        pass
+
     def load_cog(self, cogname):
         if not cogname.startswith(COGS_DIR):
             cogname = f"{COGS_DIR}{cogname}"

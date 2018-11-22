@@ -34,6 +34,9 @@ class Debugging:
         self.bot = bot
         self.journal = bot.get_broadcaster("/debug")
 
+    def setup(self):
+        pass
+
     @commands.command(name="testerror", hidden=True)
     @permissions.check_owner()
     async def test_error(self, ctx):

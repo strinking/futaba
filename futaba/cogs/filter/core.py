@@ -67,6 +67,7 @@ class Filtering:
         self.check_member_join = async_partial(check_member_join, self)
         self.check_member_update = async_partial(check_member_update, self)
 
+    def setup(self):
         logger.info("Fetching previously stored filters")
         sql = self.bot.sql.filter
         for guild in self.bot.guilds:

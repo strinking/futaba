@@ -58,6 +58,9 @@ class Info:
     def __init__(self, bot):
         self.bot = bot
 
+    def setup(self):
+        pass
+
     @commands.command(name="emoji", aliases=["emojis"])
     async def emoji(self, ctx, *, name: str):
         """

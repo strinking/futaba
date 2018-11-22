@@ -42,6 +42,9 @@ class SelfAssignableRoles:
             bot.sql.roles.get_assignable_roles(guild)
             bot.sql.roles.get_role_command_channels(guild)
 
+    def setup(self):
+        pass
+
     async def check_channel(self, ctx):
         ok_channels = self.bot.sql.roles.get_role_command_channels(ctx.guild)
 

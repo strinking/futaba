@@ -91,8 +91,9 @@ class Welcome:
         self.add_listener()
         bot.add_cog(self.roles)
 
-        for guild in bot.guilds:
-            bot.sql.welcome.get_welcome(guild)
+    def setup(self):
+        for guild in self.bot.guilds:
+            self.bot.sql.welcome.get_welcome(guild)
 
     def add_listener(self):
         # Check if a moderation listener is already in place

@@ -127,6 +127,9 @@ class Tracker:
         self.reactions = deque(maxlen=20)
         self.typing = deque(maxlen=5)
 
+    def setup(self):
+        pass
+
     def __unload(self):
         """
         Remove listeners when unloading the cog.

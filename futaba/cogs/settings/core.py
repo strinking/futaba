@@ -42,9 +42,10 @@ class Settings:
         self.bot = bot
         self.journal = bot.get_broadcaster("/settings")
 
-        for guild in bot.guilds:
-            bot.sql.settings.get_special_roles(guild)
-            bot.sql.settings.get_reapply_roles(guild)
+    def setup(self):
+        for guild in self.bot.guilds:
+            self.bot.sql.settings.get_special_roles(guild)
+            self.bot.sql.settings.get_reapply_roles(guild)
 
     @commands.command(name="prefix")
     async def prefix(self, ctx, *, prefix: str = None):

@@ -42,6 +42,9 @@ class JoinAlert:
         self.op = op
         self.value = value
 
+    def setup(self):
+        pass
+
     def matches(self, member):
         value = self.value
         member_value = getattr(member, self.attr)

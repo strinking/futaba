@@ -34,15 +34,14 @@ __all__ = ["Moderation"]
 
 
 class Moderation:
-    """
-    Staff moderation commands
-    """
-
     __slots__ = ("bot", "journal")
 
     def __init__(self, bot):
         self.bot = bot
         self.journal = bot.get_broadcaster("/moderation")
+
+    def setup(self):
+        pass
 
     @staticmethod
     def build_reason(ctx, action, minutes, reason, past=False):

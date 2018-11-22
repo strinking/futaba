@@ -43,6 +43,9 @@ class Miscellaneous:
         self.bot = bot
         self.journal = bot.get_broadcaster("/misc")
 
+    def setup(self):
+        pass
+
     @commands.command(name="ping")
     async def ping(self, ctx):
         """ Determines the bot's current latency. """

@@ -61,6 +61,9 @@ class Alias:
         self.bot = bot
         self.journal = bot.get_broadcaster("/alias")
 
+    def setup(self):
+        pass
+
     async def member_update(self, before, after):
         """ Handles update of member information. """
 

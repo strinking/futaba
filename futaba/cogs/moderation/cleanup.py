@@ -58,6 +58,9 @@ class Cleanup:
         self.journal = bot.get_broadcaster("/moderation/cleanup")
         self.dump = bot.get_broadcaster("/dump/moderation/cleanup")
 
+    def setup(self):
+        pass
+
     async def check_count(self, ctx, count):
         embed = discord.Embed(colour=discord.Colour.red())
         max_count = self.bot.sql.settings.get_max_delete_messages(ctx.guild)

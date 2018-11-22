@@ -32,3 +32,7 @@ class NameOfCog:
     def __init__(self, bot):
         self.bot = bot
         self.journal = bot.get_broadcaster("/A PATH THAT MAKES SENSE FOR THIS COG")
+
+    def setup(self):
+        # Fetching information from the database for this cog
+        pass

@@ -45,6 +45,9 @@ class ManualModActionWarn:
     def __init__(self, bot):
         self.bot = bot
 
+    def setup(self):
+        pass
+
     async def dispatch_manual_action_warning(
         self, guild, action, moderator, target_member, **kwargs
     ):

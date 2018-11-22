@@ -37,9 +37,10 @@ class RoleReapplication:
         self.bot = bot
         self.journal = bot.get_broadcaster("/roles")
 
-        with bot.sql.transaction():
-            for member in bot.get_all_members():
-                bot.sql.roles.update_saved_roles(member)
+    def setup(self):
+        with self.bot.sql.transaction():
+            for member in self.bot.get_all_members():
+                self.bot.sql.roles.update_saved_roles(member)
 
     async def member_update(self, before, after):
         if before.roles == after.roles:
