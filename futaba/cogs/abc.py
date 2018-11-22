@@ -14,6 +14,7 @@
 
 from abc import abstractmethod
 
+
 class AbstractCog:
     __slots__ = ("bot",)
 
