@@ -76,6 +76,9 @@ class Alert(AbstractCog):
                 alert = JoinAlert(guild, id, key, op, value)
                 self.alerts[id] = alert
 
+    def setup(self):
+        pass
+
     async def member_join(self, member):
         logger.info("Member '%s' (%d) joined, checking alerts.", member.name, member.id)
         for alert in self.alerts.values():

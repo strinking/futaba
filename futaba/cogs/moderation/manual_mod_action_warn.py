@@ -15,7 +15,6 @@ Cog to warn when a mod action is done manually, instead of through the bot.
 """
 import logging
 from datetime import datetime, timedelta
-from enum import Enum
 
 from discord import AuditLogAction
 

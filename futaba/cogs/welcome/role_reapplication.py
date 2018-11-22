@@ -21,7 +21,6 @@ import discord
 from discord.ext import commands
 
 from futaba.converters import UserConv
-from futaba.str_builder import StringBuilder
 from futaba.utils import user_discrim
 from ..abc import AbstractCog
 
