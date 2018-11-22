@@ -26,18 +26,19 @@ from futaba.converters import TextChannelConv
 from futaba.exceptions import CommandFailed, SendHelp
 from futaba.journal import ChannelOutputListener, Router
 from futaba.str_builder import StringBuilder
+from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
 __all__ = ["Journal"]
 
 
-class Journal:
-    __slots__ = ("bot", "router", "journal")
+class Journal(AbstractCog):
+    __slots__ = ("router", "journal")
 
     def __init__(self, bot):
+        super().__init__(bot)
         bot.journal_cog = self
-        self.bot = bot
         self.router = Router()
         self.journal = bot.get_broadcaster("/journal")
 

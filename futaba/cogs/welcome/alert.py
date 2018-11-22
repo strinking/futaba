@@ -26,6 +26,7 @@ from futaba.enums import JoinAlertKey, ValueRelationship
 from futaba.exceptions import CommandFailed, ManualCheckFailure, SendHelp
 from futaba.str_builder import StringBuilder
 from futaba.unicode import normalize_caseless
+from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
@@ -61,11 +62,11 @@ class JoinAlert:
         return f"{self.key.display_name} {self.op.symbol} {self.value}"
 
 
-class Alert:
-    __slots__ = ("bot", "journal", "alerts")
+class Alert(AbstractCog):
+    __slots__ = ("journal", "alerts")
 
     def __init__(self, bot):
-        self.bot = bot
+        super().__init__(bot)
         self.journal = bot.get_broadcaster("/welcome/alert")
         self.alerts = {}
 

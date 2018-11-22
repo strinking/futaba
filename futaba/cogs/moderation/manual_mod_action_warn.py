@@ -21,6 +21,7 @@ from discord import AuditLogAction
 
 from futaba.cogs.tracker import get_removal_cause
 from futaba.enums import ManualModActionType, MemberLeaveType
+from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
@@ -35,15 +36,10 @@ manual_mod_action_command_map = {
 }
 
 
-class ManualModActionWarn:
+class ManualModActionWarn(AbstractCog):
     """
     Warn moderators when they invoke a mod action manually.
     """
-
-    __slots__ = ("bot",)
-
-    def __init__(self, bot):
-        self.bot = bot
 
     def setup(self):
         pass

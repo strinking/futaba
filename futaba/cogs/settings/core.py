@@ -29,17 +29,18 @@ from futaba.emojis import ICONS
 from futaba.exceptions import CommandFailed, ManualCheckFailure, SendHelp
 from futaba.permissions import admin_perm, mod_perm
 from futaba.str_builder import StringBuilder
+from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
 __all__ = ["Settings"]
 
 
-class Settings:
-    __slots__ = ("bot", "journal")
+class Settings(AbstractCog):
+    __slots__ = ("journal",)
 
     def __init__(self, bot):
-        self.bot = bot
+        super().__init__(bot)
         self.journal = bot.get_broadcaster("/settings")
 
     def setup(self):

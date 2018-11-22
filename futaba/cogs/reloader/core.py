@@ -23,6 +23,7 @@ from discord.ext import commands
 from futaba import permissions
 from futaba.exceptions import CommandFailed
 from futaba.str_builder import StringBuilder
+from ..abc import AbstractCog
 
 COGS_DIR = "futaba.cogs."
 
@@ -31,13 +32,13 @@ logger = logging.getLogger(__name__)
 __all__ = ["Reloader"]
 
 
-class Reloader:
-    __slots__ = ("bot", "journal")
+class Reloader(AbstractCog):
+    __slots__ = ("journal",)
 
     MANDATORY_COGS = ("journal", "navi", "reloader")
 
     def __init__(self, bot):
-        self.bot = bot
+        super().__init__(bot)
         self.journal = bot.get_broadcaster("/cog")
 
     def setup(self):

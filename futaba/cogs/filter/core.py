@@ -39,15 +39,15 @@ from .manage import (
     delete_content_filter,
     show_content_filter,
 )
+from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
 __all__ = ["Filtering"]
 
 
-class Filtering:
+class Filtering(AbstractCog):
     __slots__ = (
-        "bot",
         "journal",
         "filters",
         "content_filters",
@@ -58,7 +58,7 @@ class Filtering:
     )
 
     def __init__(self, bot):
-        self.bot = bot
+        super().__init__(bot)
         self.journal = bot.get_broadcaster("/filter")
         self.filters = defaultdict(dict)
         self.content_filters = defaultdict(dict)

@@ -37,6 +37,7 @@ from futaba.utils import (
     user_discrim,
 )
 from futaba.unicode import UNICODE_CATEGORY_NAME
+from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
@@ -50,13 +51,8 @@ def get_unicode_url(emoji):
     )
 
 
-class Info:
-    """
-    Cog for informational commands.
-    """
-
-    def __init__(self, bot):
-        self.bot = bot
+class Info(AbstractCog):
+    """ Cog for informational commands. """
 
     def setup(self):
         pass

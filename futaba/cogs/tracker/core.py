@@ -24,6 +24,7 @@ from discord import AuditLogAction
 
 from futaba.enums import MemberLeaveType
 from futaba.utils import user_discrim
+from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
@@ -103,9 +104,8 @@ async def get_removal_cause(member, timestamp):
     )
 
 
-class Tracker:
+class Tracker(AbstractCog):
     __slots__ = (
-        "bot",
         "journal",
         "new_messages",
         "edited_messages",
@@ -117,7 +117,7 @@ class Tracker:
     )
 
     def __init__(self, bot):
-        self.bot = bot
+        super().__init__(bot)
         self.journal = bot.get_broadcaster("/tracking")
         self.new_messages = deque(maxlen=20)
         self.edited_messages = deque(maxlen=20)

@@ -27,6 +27,7 @@ from futaba.exceptions import CommandFailed, InvalidCommandContext, SendHelp
 from futaba.journal import ModerationListener
 from futaba.utils import user_discrim
 from .role_reapplication import RoleReapplication
+from ..abc import AbstractCog
 
 FakeContext = namedtuple("FakeContext", ("author", "channel", "guild"))
 logger = logging.getLogger(__name__)
@@ -79,11 +80,11 @@ def format_message(welcome_message, ctx):
     )
 
 
-class Welcome:
-    __slots__ = ("bot", "journal", "roles", "recently_joined")
+class Welcome(AbstractCog):
+    __slots__ = ("journal", "roles", "recently_joined")
 
     def __init__(self, bot):
-        self.bot = bot
+        super().__init__(bot)
         self.journal = bot.get_broadcaster("/welcome")
         self.roles = RoleReapplication(bot)
         self.recently_joined = deque(maxlen=5)

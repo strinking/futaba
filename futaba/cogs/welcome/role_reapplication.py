@@ -23,6 +23,7 @@ from discord.ext import commands
 from futaba.converters import UserConv
 from futaba.str_builder import StringBuilder
 from futaba.utils import user_discrim
+from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 FakeMember = namedtuple("FakeMember", ("name", "id", "guild"))
@@ -30,11 +31,11 @@ FakeMember = namedtuple("FakeMember", ("name", "id", "guild"))
 __all__ = ["RoleReapplication"]
 
 
-class RoleReapplication:
-    __slots__ = ("bot", "journal")
+class RoleReapplication(AbstractCog):
+    __slots__ = ("journal",)
 
     def __init__(self, bot):
-        self.bot = bot
+        super().__init__(bot)
         self.journal = bot.get_broadcaster("/roles")
 
     def setup(self):
