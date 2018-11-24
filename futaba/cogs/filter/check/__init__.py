@@ -15,6 +15,7 @@ import logging
 import os
 
 import discord
+from discord import MessageType
 
 from futaba.enums import FilterType, LocationType, NameType
 from futaba.str_builder import StringBuilder
@@ -89,6 +90,11 @@ async def check_message(cog, message):
     # Don't filter PMs
     if message.guild is None:
         logger.debug("Not checking message because it's not from a guild")
+        return
+
+    # Don't check special messages
+    if message.type != MessageType.default:
+        logger.debug("Ignoring non-default message")
         return
 
     # Check that we actually have permissions to delete
