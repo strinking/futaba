@@ -50,6 +50,18 @@ def filter_immune(bot, guild, member, channel=None):
     if member.id in bot.config.owner_ids:
         return True
 
+    # Check manually-added users
+    if bot.sql.filter.user_is_filter_immune(guild, member):
+        return True
+
+    # In the case where the author isn't a Member yet
+    if not isinstance(member, discord.Member):
+        id = member.id
+        member = guild.get_member(id)
+        if member is None:
+            logger.warning("Cannot find member for user ID %d", id)
+            return False
+
     # Fetch most specific permissions
     if channel is None:
         perms = member.guild_permissions
@@ -64,10 +76,6 @@ def filter_immune(bot, guild, member, channel=None):
     if filter_settings.manage_messages_immune:
         if perms.manage_messages:
             return True
-
-    # Check manually-added users
-    if bot.sql.filter.user_is_filter_immune(guild, member):
-        return True
 
     return False
 
