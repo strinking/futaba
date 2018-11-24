@@ -516,7 +516,7 @@ class SettingsModel:
 
         upd = (
             self.tb_reapply_roles.update()
-            .where(self.tb_reapply_roles.c.guild_id=guild.id)
+            .where(self.tb_reapply_roles.c.guild_id == guild.id)
             .values(role_ids=[role.id for role in new_roles])
         )
 
