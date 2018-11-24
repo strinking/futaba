@@ -453,7 +453,7 @@ class Settings:
         has_roles = False
 
         # Manually set
-        for role in reapply_roles:
+        for role in sorted(reapply_roles, key=lambda r: r.name):
             descr.write(role.mention)
         if descr:
             embed.add_field(name="Manually designated", value=str(descr))
@@ -477,7 +477,10 @@ class Settings:
             if assignable_roles:
                 embed.add_field(
                     name="Self-assignable roles",
-                    value=", ".join(role.mention for role in assignable_roles),
+                    value=", ".join(
+                        role.mention
+                        for role in sorted(assignable_roles, key=lambda r: r.name)
+                    ),
                 )
                 has_roles = True
 
