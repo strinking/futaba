@@ -514,9 +514,12 @@ class SettingsModel:
             logger.debug("No effective changes in database")
             return
 
-        upd = self.tb_reapply_roles.update().values(
-            guild_id=guild.id, role_ids=[role.id for role in new_roles]
+        upd = (
+            self.tb_reapply_roles.update()
+            .where(guild_id=guild.id)
+            .values(role_ids=[role.id for role in new_roles])
         )
+
         self.sql.execute(upd)
         self.reapply_roles_cache[guild].roles = new_roles
 
