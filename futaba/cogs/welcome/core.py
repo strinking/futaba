@@ -163,6 +163,9 @@ class Welcome:
             await member.add_roles(roles.guest, reason="New user joined")
 
     async def member_update(self, before, after):
+        if before.roles == after.roles:
+            return
+
         await self.roles.member_update(before, after)
 
     async def member_leave(self, member):
