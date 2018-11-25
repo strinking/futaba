@@ -137,8 +137,8 @@ class Welcome:
 
         if "RoleReapplication" in self.bot.cogs:
             if self.bot.sql.settings.get_reapply_roles(member.guild):
-                roles = self.bot.sql.roles.get_member_roles(member)
-                if roles:
+                saved_roles = self.bot.sql.roles.get_saved_roles(member)
+                if saved_roles:
                     logger.debug(
                         "Not applying roles on join, role reapplication will occur instead"
                     )
