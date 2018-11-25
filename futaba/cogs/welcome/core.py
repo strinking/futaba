@@ -257,7 +257,6 @@ class Welcome:
             raise InvalidCommandContext()
 
     @commands.group(name="welcome", aliases=["wlm"])
-    @commands.guild_only()
     async def welcome(self, ctx):
         """ Manages the welcome cog for managing new users and roles. """
 
