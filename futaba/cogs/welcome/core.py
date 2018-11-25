@@ -135,15 +135,6 @@ class Welcome:
             member.guild.id,
         )
 
-        if "RoleReapplication" in self.bot.cogs:
-            if self.bot.sql.settings.get_reapply_roles(member.guild):
-                roles = self.bot.sql.roles.get_member_roles(member)
-                if roles:
-                    logger.debug(
-                        "Not applying roles on join, role reapplication will occur instead"
-                    )
-                    return
-
         welcome = self.bot.sql.welcome.get_welcome(member.guild)
         roles = self.bot.sql.settings.get_special_roles(member.guild)
 
@@ -163,6 +154,9 @@ class Welcome:
             await member.add_roles(roles.guest, reason="New user joined")
 
     async def member_update(self, before, after):
+        if before.roles == after.roles:
+            return
+
         await self.roles.member_update(before, after)
 
     async def member_leave(self, member):
@@ -257,7 +251,6 @@ class Welcome:
             raise InvalidCommandContext()
 
     @commands.group(name="welcome", aliases=["wlm"])
-    @commands.guild_only()
     async def welcome(self, ctx):
         """ Manages the welcome cog for managing new users and roles. """
 
