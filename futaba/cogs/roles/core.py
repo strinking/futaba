@@ -25,7 +25,7 @@ from futaba import permissions
 from futaba.converters import RoleConv, TextChannelConv
 from futaba.exceptions import CommandFailed, ManualCheckFailure, SendHelp
 from futaba.str_builder import StringBuilder
-from futaba.utils import escape_backticks
+from futaba.utils import escape_backticks, user_discrim
 from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
@@ -266,13 +266,13 @@ class SelfAssignableRoles(AbstractCog):
             "joinable/remove", ctx.guild, content, icon="role", roles=roles
         )
 
-    def channel_journal(self):
-        all_channels = self.bot.sql.roles.get_role_command_channels(ctx.guild)
+    def channel_journal(self, guild):
+        all_channels = self.bot.sql.roles.get_role_command_channels(guild)
         str_channels = " ".join(chan.mention for chan in all_channels)
         content = f"Allowed channels for bot commands set: {str_channels or '(any)'}"
         self.journal.send(
             "channel/set",
-            ctx.guild,
+            guild,
             content,
             icon="channel",
             channels=list(all_channels),
@@ -310,7 +310,7 @@ class SelfAssignableRoles(AbstractCog):
         await ctx.send(embed=embed)
 
         # Send journal event
-        self.channel_journal()
+        self.channel_journal(ctx.guild)
 
     @role.command(name="setchan", aliases=["setchans", "setchannel", "setchannels"])
     @commands.guild_only()
@@ -344,7 +344,7 @@ class SelfAssignableRoles(AbstractCog):
         await ctx.send(embed=embed)
 
         # Send journal event
-        self.channel_journal()
+        self.channel_journal(ctx.guild)
 
     @role.command(
         name="delchan",
@@ -393,7 +393,7 @@ class SelfAssignableRoles(AbstractCog):
         await ctx.send(embed=embed)
 
         # Send journal event
-        self.channel_journal()
+        self.channel_journal(ctx.guild)
 
     @role.command(name="anychan", aliases=["anychans", "anychannel", "anychannels"])
     @commands.guild_only()
@@ -421,7 +421,7 @@ class SelfAssignableRoles(AbstractCog):
         await ctx.send(embed=embed)
 
         # Send journal event
-        self.channel_journal()
+        self.channel_journal(ctx.guild)
 
     @role.command(name="chan", aliases=["chans", "channel", "channels"])
     @commands.guild_only()
