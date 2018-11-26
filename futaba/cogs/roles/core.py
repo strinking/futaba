@@ -26,21 +26,25 @@ from futaba.converters import RoleConv, TextChannelConv
 from futaba.exceptions import CommandFailed, ManualCheckFailure, SendHelp
 from futaba.str_builder import StringBuilder
 from futaba.utils import escape_backticks
+from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
 
-class SelfAssignableRoles:
-    __slots__ = ("bot", "journal")
+class SelfAssignableRoles(AbstractCog):
+    __slots__ = ("journal",)
 
     def __init__(self, bot):
-        self.bot = bot
+        super().__init__(bot)
         self.journal = bot.get_broadcaster("/roles")
 
         # Load self-assignable roles from database
         for guild in bot.guilds:
             bot.sql.roles.get_assignable_roles(guild)
             bot.sql.roles.get_role_command_channels(guild)
+
+    def setup(self):
+        pass
 
     async def check_channel(self, ctx):
         ok_channels = self.bot.sql.roles.get_role_command_channels(ctx.guild)

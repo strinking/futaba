@@ -15,12 +15,12 @@ Cog to warn when a mod action is done manually, instead of through the bot.
 """
 import logging
 from datetime import datetime, timedelta
-from enum import Enum
 
 from discord import AuditLogAction
 
 from futaba.cogs.tracker import get_removal_cause
 from futaba.enums import ManualModActionType, MemberLeaveType
+from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
@@ -35,15 +35,13 @@ manual_mod_action_command_map = {
 }
 
 
-class ManualModActionWarn:
+class ManualModActionWarn(AbstractCog):
     """
     Warn moderators when they invoke a mod action manually.
     """
 
-    __slots__ = ("bot",)
-
-    def __init__(self, bot):
-        self.bot = bot
+    def setup(self):
+        pass
 
     async def dispatch_manual_action_warning(
         self, guild, action, moderator, target_member, **kwargs

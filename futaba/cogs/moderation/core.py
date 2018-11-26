@@ -11,7 +11,7 @@
 #
 
 """
-Collection of moderation commands such as Ban/Kick
+Collection of moderation commands such as banning and muting.
 """
 
 import asyncio
@@ -27,22 +27,22 @@ from futaba.exceptions import CommandFailed, ManualCheckFailure
 from futaba.navi import ChangeRolesTask
 from futaba.str_builder import StringBuilder
 from futaba.utils import escape_backticks, plural, user_discrim
+from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
 __all__ = ["Moderation"]
 
 
-class Moderation:
-    """
-    Staff moderation commands
-    """
-
-    __slots__ = ("bot", "journal")
+class Moderation(AbstractCog):
+    __slots__ = ("journal",)
 
     def __init__(self, bot):
-        self.bot = bot
+        super().__init__(bot)
         self.journal = bot.get_broadcaster("/moderation")
+
+    def setup(self):
+        pass
 
     @staticmethod
     def build_reason(ctx, action, minutes, reason, past=False):

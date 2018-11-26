@@ -25,6 +25,7 @@ from futaba.exceptions import CommandFailed
 from futaba.str_builder import StringBuilder
 from futaba.unicode import normalize_caseless
 from futaba.utils import escape_backticks, message_to_dict, user_discrim
+from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
@@ -50,13 +51,16 @@ class _Counter:
         self.value += 1
 
 
-class Cleanup:
-    __slots__ = ("bot", "journal", "dump")
+class Cleanup(AbstractCog):
+    __slots__ = ("journal", "dump")
 
     def __init__(self, bot):
-        self.bot = bot
+        super().__init__(bot)
         self.journal = bot.get_broadcaster("/moderation/cleanup")
         self.dump = bot.get_broadcaster("/dump/moderation/cleanup")
+
+    def setup(self):
+        pass
 
     async def check_count(self, ctx, count):
         embed = discord.Embed(colour=discord.Colour.red())

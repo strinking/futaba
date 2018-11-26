@@ -22,13 +22,18 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.exceptions import CommandFailed
+from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
 
-class NameOfCog:
-    __slots__ = ("bot", "journal")
+class NameOfCog(AbstractCog):
+    __slots__ = ("journal",)
 
     def __init__(self, bot):
-        self.bot = bot
+        super().__init__(bot)
         self.journal = bot.get_broadcaster("/A PATH THAT MAKES SENSE FOR THIS COG")
+
+    def setup(self):
+        # Fetching information from the database for this cog
+        pass

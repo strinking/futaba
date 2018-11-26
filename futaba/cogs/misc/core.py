@@ -28,6 +28,7 @@ from futaba.download import download_links
 from futaba.exceptions import CommandFailed
 from futaba.str_builder import StringBuilder
 from futaba.utils import GIT_HASH, URL_REGEX, fancy_timedelta
+from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
@@ -36,12 +37,15 @@ __all__ = ["Miscellaneous"]
 SHA1_ERROR_MESSAGE = "Error downloading file".ljust(40)
 
 
-class Miscellaneous:
-    __slots__ = ("bot", "journal")
+class Miscellaneous(AbstractCog):
+    __slots__ = ("journal",)
 
     def __init__(self, bot):
-        self.bot = bot
+        super().__init__(bot)
         self.journal = bot.get_broadcaster("/misc")
+
+    def setup(self):
+        pass
 
     @commands.command(name="ping")
     async def ping(self, ctx):

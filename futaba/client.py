@@ -153,6 +153,10 @@ class Bot(commands.AutoShardedBot):
         # Performing migrations
         self.sql.guilds.migrate(self)
 
+        # Initialize cog databases
+        for cog in self.get_cogs():
+            cog.setup()
+
         # Finished
         pyver = sys.version_info
         logger.info("Powered by Python %d.%d.%d", pyver.major, pyver.minor, pyver.micro)
@@ -183,6 +187,9 @@ class Bot(commands.AutoShardedBot):
         # Put on event loop only after the database has successfully committed
         for task in tasks:
             task.execute_later()
+
+    def get_cogs(self):
+        return filter(None, map(self.get_cog, self.cogs))
 
     async def on_guild_join(self, guild):
         """

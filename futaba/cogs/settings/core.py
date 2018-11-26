@@ -29,22 +29,24 @@ from futaba.emojis import ICONS
 from futaba.exceptions import CommandFailed, ManualCheckFailure, SendHelp
 from futaba.permissions import admin_perm, mod_perm
 from futaba.str_builder import StringBuilder
+from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
 __all__ = ["Settings"]
 
 
-class Settings:
-    __slots__ = ("bot", "journal")
+class Settings(AbstractCog):
+    __slots__ = ("journal",)
 
     def __init__(self, bot):
-        self.bot = bot
+        super().__init__(bot)
         self.journal = bot.get_broadcaster("/settings")
 
-        for guild in bot.guilds:
-            bot.sql.settings.get_special_roles(guild)
-            bot.sql.settings.get_reapply_roles(guild)
+    def setup(self):
+        for guild in self.bot.guilds:
+            self.bot.sql.settings.get_special_roles(guild)
+            self.bot.sql.settings.get_reapply_roles(guild)
 
     @commands.command(name="prefix")
     async def prefix(self, ctx, *, prefix: str = None):

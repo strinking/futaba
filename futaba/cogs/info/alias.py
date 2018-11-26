@@ -27,6 +27,7 @@ from futaba.download import download_link
 from futaba.exceptions import CommandFailed, SendHelp
 from futaba.str_builder import StringBuilder
 from futaba.utils import fancy_timedelta, user_discrim
+from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
@@ -50,16 +51,19 @@ class MemberChanges:
         return False
 
 
-class Alias:
+class Alias(AbstractCog):
     """
     Cog for member alias information.
     """
 
-    __slots__ = ("bot", "journal")
+    __slots__ = ("journal",)
 
     def __init__(self, bot):
-        self.bot = bot
+        super().__init__(bot)
         self.journal = bot.get_broadcaster("/alias")
+
+    def setup(self):
+        pass
 
     async def member_update(self, before, after):
         """ Handles update of member information. """
