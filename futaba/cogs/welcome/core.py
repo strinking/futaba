@@ -18,6 +18,7 @@ import asyncio
 import logging
 import re
 from collections import deque, namedtuple
+from datetime import datetime, timedelta
 
 import discord
 from discord.ext import commands
@@ -81,13 +82,14 @@ def format_message(welcome_message, ctx):
 
 
 class Welcome(AbstractCog):
-    __slots__ = ("journal", "roles", "recently_joined")
+    __slots__ = ("journal", "roles", "recently_joined", "recently_saved_roles")
 
     def __init__(self, bot):
         super().__init__(bot)
         self.journal = bot.get_broadcaster("/welcome")
         self.roles = RoleReapplication(bot)
         self.recently_joined = deque(maxlen=5)
+        self.recently_saved_roles = deque(maxlen=5)
 
         self.add_listener()
         bot.add_cog(self.roles)
@@ -156,9 +158,13 @@ class Welcome(AbstractCog):
             await member.add_roles(roles.guest, reason="New user joined")
 
     async def member_update(self, before, after):
-        if before.roles == after.roles:
-            return
+        for (member, time) in self.recently_saved_roles:
+            if member == after:
+                if datetime.now() - time < timedelta(seconds=1):
+                    logger.debug("Member update already processed")
+                    return
 
+        self.recently_saved_roles.append((after, datetime.now()))
         await self.roles.member_update(before, after)
 
     async def member_leave(self, member):
