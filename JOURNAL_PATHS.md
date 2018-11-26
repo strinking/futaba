@@ -114,6 +114,13 @@ Role reapplication:
 * `/roles/reapply` - Reapplying roles to a member. Attributes: `member: discord.Member`, `roles: Tuple[discord.Role]`.
 * `/roles/save` - Saving updated roles for a member. Attributes: `member: discord.Member`.
 
+### Self-assignable roles cog
+* `/roles/self/add` - A member added some self-assignable roles to themselves. Attributes: `roles: List[discord.Role]`.
+* `/roles/self/remove` - A member removed some self-assignable roles from themselves. Attributes: `roles: List[discord.Role]`.
+* `/roles/joinable/add` - Some role(s) were set as "joinable". Attributes: `roles: List[discord.Role]`.
+* `/roles/joinable/remove` - Some role(s) were set as "unjoinable". Attributes: `roles: List[discord.Role]`.
+* `/roles/channel/set` - The channels permitted for bot commands was changed. Attributes: `channels: List[discord.TextChannel]`.
+
 ### Settings cog
 * `/settings/prefix` - The bot command prefix was set or unset. Attributes: `prefix: Optional[str]`, `default\_prefix: str`
 * `/settings/roles/member` - The member role was set or unset. Attributes: `role: Optional[discord.Role]`

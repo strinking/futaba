@@ -108,7 +108,6 @@ class SelfAssignableRoles(AbstractCog):
         for role in assignable_roles:
             descr.write(role.mention)
         embed.description = str(descr)
-
         await ctx.send(embed=embed)
 
     def check_roles(self, ctx, roles):
@@ -135,11 +134,18 @@ class SelfAssignableRoles(AbstractCog):
     async def role_add(self, ctx, *roles: RoleConv):
         """ Joins the given self-assignable roles. """
 
+        if not roles:
+            return
+
         await self.check_channel(ctx)
         self.check_roles(ctx, roles)
         await ctx.author.add_roles(
             *roles, reason="Adding self-assignable roles", atomic=True
         )
+
+        str_roles = ", ".join(role.mention for role in roles)
+        content = f"{ctx.author.mention} added self-assignable roles: {str_roles}"
+        self.journal.send("self/add", ctx.guild, content, icon="role")
 
     @role.command(
         name="remove", aliases=["rm", "delete", "del", "leave", "take", "unset"]
@@ -148,11 +154,18 @@ class SelfAssignableRoles(AbstractCog):
     async def role_remove(self, ctx, *roles: RoleConv):
         """ Leaves the given self-assignable roles. """
 
+        if not roles:
+            return
+
         await self.check_channel(ctx)
         self.check_roles(ctx, roles)
         await ctx.author.remove_roles(
             *roles, reason="Removing self-assignable roles", atomic=True
         )
+
+        str_roles = ", ".join(role.mention for role in roles)
+        content = f"{ctx.author.mention} removed self-assignable roles: {str_roles}"
+        self.journal.send("self/remove", ctx.guild, content, icon="role")
 
     @role.command(name="joinable", aliases=["assignable", "canjoin"])
     @commands.guild_only()
@@ -207,6 +220,11 @@ class SelfAssignableRoles(AbstractCog):
         embed.description = str(descr)
         await ctx.send(embed=embed)
 
+        # Send journal event
+        role_names = ", ".join(f"`role.name`" for role in roles)
+        content = f"Roles were set as joinable: {role_names}"
+        self.journal.send("joinable/add", ctx.guild, content, icon="role", roles=roles)
+
     @role.command(
         name="unjoinable", aliases=["unassignable", "cantjoin", "cannotjoin", "nojoin"]
     )
@@ -239,6 +257,25 @@ class SelfAssignableRoles(AbstractCog):
         embed.description = str(descr)
         await ctx.send(embed=embed)
 
+        # Send journal event
+        role_names = ", ".join(f"`role.name`" for role in roles)
+        content = f"Roles were set as not joinable: {role_names}"
+        self.journal.send(
+            "joinable/remove", ctx.guild, content, icon="role", roles=roles
+        )
+
+    def channel_journal(self):
+        all_channels = self.bot.sql.roles.get_role_command_channels(ctx.guild)
+        str_channels = " ".join(chan.mention for chan in all_channels)
+        content = f"Allowed channels for bot commands set: {str_channels or '(any)'}"
+        self.journal.send(
+            "channel/set",
+            ctx.guild,
+            content,
+            icon="channel",
+            channels=list(all_channels),
+        )
+
     @role.command(name="addchan", aliases=["addchans", "addchannel", "addchannels"])
     @commands.guild_only()
     @permissions.check_mod()
@@ -270,6 +307,9 @@ class SelfAssignableRoles(AbstractCog):
         embed.description = str(descr)
         await ctx.send(embed=embed)
 
+        # Send journal event
+        self.channel_journal()
+
     @role.command(name="setchan", aliases=["setchans", "setchannel", "setchannels"])
     @commands.guild_only()
     @permissions.check_mod()
@@ -300,6 +340,9 @@ class SelfAssignableRoles(AbstractCog):
             descr.write(channel.mention)
         embed.description = str(descr)
         await ctx.send(embed=embed)
+
+        # Send journal event
+        self.channel_journal()
 
     @role.command(
         name="delchan",
@@ -347,6 +390,9 @@ class SelfAssignableRoles(AbstractCog):
         embed.add_field(name="Remaining", value=str(descr) or "(none)")
         await ctx.send(embed=embed)
 
+        # Send journal event
+        self.channel_journal()
+
     @role.command(name="anychan", aliases=["anychans", "anychannel", "anychannels"])
     @commands.guild_only()
     @permissions.check_mod()
@@ -371,6 +417,9 @@ class SelfAssignableRoles(AbstractCog):
         embed.set_author(name="Allowed any channel to be used for role commands")
         embed.description = "Removed all channels in the restricted list."
         await ctx.send(embed=embed)
+
+        # Send journal event
+        self.channel_journal()
 
     @role.command(name="chan", aliases=["chans", "channel", "channels"])
     @commands.guild_only()
