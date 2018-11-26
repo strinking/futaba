@@ -10,6 +10,24 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-from collections import namedtuple
+from futaba.dict_convert import named_dict, to_dict
 
-JournalEvent = namedtuple("JournalEvent", ("path", "guild", "content", "attributes"))
+
+class JournalEvent:
+    __slots__ = ("path", "guild", "content", "attributes")
+
+    def __init__(self, *, path, guild, content, attributes):
+        self.path = path
+        self.guild = guild
+        self.content = content
+        self.attributes = attributes
+
+    def to_dict(self):
+        return {
+            "path": self.path,
+            "guild": named_dict(self.guild),
+            "content": self.content,
+            "attributes": {
+                key: to_dict(value) for key, value in self.attributes.items()
+            },
+        }

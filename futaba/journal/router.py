@@ -18,7 +18,6 @@ from pathlib import PurePath
 
 import discord
 
-from .event import JournalEvent
 from .process import process_content
 
 logger = logging.getLogger(__name__)

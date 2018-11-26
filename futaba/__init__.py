@@ -18,6 +18,7 @@ from . import (
     client,
     config,
     converters,
+    dict_convert,
     download,
     emojis,
     enums,
