@@ -160,7 +160,7 @@ class Welcome(AbstractCog):
     async def member_update(self, before, after):
         for (member, time) in self.recently_saved_roles:
             if member == after:
-                if datetime.now() - time < timedelta(seconds=1):
+                if datetime.now() - time < timedelta(microseconds=50_000):
                     logger.debug("Member update already processed")
                     return
 
