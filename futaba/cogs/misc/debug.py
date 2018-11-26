@@ -12,6 +12,7 @@
 
 """ Cog for miscellaneous owner-only debugging commands. """
 
+import asyncio
 import logging
 
 import aiohttp
@@ -35,6 +36,13 @@ class Debugging(AbstractCog):
 
     def setup(self):
         pass
+
+    @commands.command(name="testlong", aliases=["testwait"], hidden=True)
+    @permissions.check_owner()
+    async def test_long_command(self, ctx, delay: float = 4.0):
+        """ A command that is always successful, but takes a long time to finish. """
+
+        await asyncio.sleep(abs(delay))
 
     @commands.command(name="testerror", hidden=True)
     @permissions.check_owner()

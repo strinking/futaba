@@ -23,6 +23,7 @@ class Reactions(Enum):
     FAIL = "\N{CROSS MARK}"
     DENY = "\N{NO ENTRY SIGN}"
     MISSING = "\N{BLACK QUESTION MARK ORNAMENT}"
+    WAITING = "\N{HOURGLASS}"
     NETWORK = "\N{ELECTRIC PLUG}"
 
     async def add(self, message: discord.Message):
