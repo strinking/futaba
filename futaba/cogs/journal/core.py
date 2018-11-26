@@ -112,7 +112,7 @@ class Journal(AbstractCog):
     @log.command(name="add", aliases=["append", "extend", "new", "set", "update"])
     @commands.guild_only()
     @permissions.check_mod()
-    async def log_add(self, ctx, channel: TextChannelConv, path: str, *flags: str):
+    async def log_add(self, ctx, path: str, channel: TextChannelConv, *flags: str):
         """
         Add a journal logger to the channel for the given path.
         Accepts the optional flags:
@@ -159,7 +159,7 @@ class Journal(AbstractCog):
     @log.command(name="remove", aliases=["rm", "delete", "del"])
     @commands.guild_only()
     @permissions.check_mod()
-    async def log_remove(self, ctx, channel: TextChannelConv, path: str):
+    async def log_remove(self, ctx, path: str, channel: TextChannelConv):
         """
         Removes a journal logger for the given path from the channel.
         """
