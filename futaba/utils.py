@@ -14,6 +14,7 @@ import logging
 import re
 import subprocess
 from datetime import datetime
+from io import BytesIO
 from itertools import zip_longest
 
 import discord
@@ -33,8 +34,10 @@ __all__ = [
     "map_or",
     "if_not_null",
     "message_to_dict",
+    "copy_discord_file",
     "first",
     "chunks",
+    "partition_on",
     "lowerbool",
     "plural",
     "user_discrim",
@@ -218,6 +221,15 @@ def message_to_dict(message: discord.Message):
     }
 
 
+def copy_discord_file(file: discord.File):
+    if isinstance(file.fp, str):
+        # Copying is unnecessary, it's going to read from disk
+        return file
+
+    new_buffer = BytesIO(file.fp.getbuffer().tobytes())
+    return discord.File(new_buffer, file.filename)
+
+
 def first(iterable, default=None):
     """
     Returns the first item in the iterable that is truthy.
@@ -235,6 +247,27 @@ def chunks(iterable, count, fillvalue=None):
 
     args = [iter(iterable)] * count
     return zip_longest(*args, fillvalue=fillvalue)
+
+
+def partition_on(predicate, iterable, map_fn=None):
+    """ Partition an iterable into two lists on the return type of the predicate. """
+
+    left, right = [], []
+
+    if map_fn is None:
+        for i in iterable:
+            if predicate(i):
+                left.append(i)
+            else:
+                right.append(i)
+    else:
+        for i in iterable:
+            if predicate(i):
+                left.append(map_fn(i))
+            else:
+                right.append(map_fn(i))
+
+    return left, right
 
 
 def lowerbool(value):
@@ -265,24 +298,3 @@ def escape_backticks(content):
     """
 
     return content.replace("`", "\N{ARMENIAN COMMA}").replace(":", "\N{RATIO}")
-
-
-def partition_on(predicate, iterable, map_fn=None):
-    """ Partition an iterable into two lists on the return type of the predicate. """
-
-    left, right = [], []
-
-    if map_fn is None:
-        for i in iterable:
-            if predicate(i):
-                left.append(i)
-            else:
-                right.append(i)
-    else:
-        for i in iterable:
-            if predicate(i):
-                left.append(map_fn(i))
-            else:
-                right.append(map_fn(i))
-
-    return left, right
