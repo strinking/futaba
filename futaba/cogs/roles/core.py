@@ -271,11 +271,7 @@ class SelfAssignableRoles(AbstractCog):
         str_channels = " ".join(chan.mention for chan in all_channels)
         content = f"Allowed channels for bot commands set: {str_channels or '(any)'}"
         self.journal.send(
-            "channel/set",
-            guild,
-            content,
-            icon="channel",
-            channels=list(all_channels),
+            "channel/set", guild, content, icon="channel", channels=list(all_channels)
         )
 
     @role.command(name="addchan", aliases=["addchans", "addchannel", "addchannels"])
