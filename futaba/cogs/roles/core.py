@@ -164,7 +164,9 @@ class SelfAssignableRoles(AbstractCog):
         )
 
         str_roles = ", ".join(role.mention for role in roles)
-        content = f"{user_discrim(ctx.author)} removed self-assignable roles: {str_roles}"
+        content = (
+            f"{user_discrim(ctx.author)} removed self-assignable roles: {str_roles}"
+        )
         self.journal.send("self/remove", ctx.guild, content, icon="role")
 
     @role.command(name="joinable", aliases=["assignable", "canjoin"])
