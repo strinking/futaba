@@ -37,37 +37,15 @@ from sqlalchemy import ForeignKey, Sequence
 from sqlalchemy.sql import select
 
 from futaba.enums import TaskType
+from ..data import NaviTaskData
 from ..hooks import register_hook
 
 Column = functools.partial(Column, nullable=False)
 logger = logging.getLogger(__name__)
 
-__all__ = ["NaviModel", "NaviTaskStorage"]
+__all__ = ["NaviModel"]
 
 ReminderInfo = namedtuple("ReminderInfo", ("id", "timestamp", "message"))
-
-
-class NaviTaskStorage:
-    __slots__ = (
-        "id",
-        "guild_id",
-        "user_id",
-        "timestamp",
-        "recurrence",
-        "task_type",
-        "parameters",
-    )
-
-    def __init__(
-        self, id, guild_id, user_id, timestamp, recurrence, task_type, parameters
-    ):
-        self.id = id
-        self.guild_id = guild_id
-        self.user_id = user_id
-        self.timestamp = timestamp
-        self.recurrence = recurrence
-        self.task_type = task_type
-        self.parameters = parameters
 
 
 class NaviModel:
@@ -135,7 +113,7 @@ class NaviModel:
                 task_type,
                 parameters,
             )
-            tasks[task_id] = NaviTaskStorage(
+            tasks[task_id] = NaviTaskData(
                 task_id, guild_id, user_id, timestamp, recurrence, task_type, parameters
             )
         return tasks
