@@ -132,7 +132,7 @@ def message_dict(message: discord.Message):
         "activity": message.activity,
         "application": message.application,
         "guild_id": map_or(lambda g: str(g.id), message.guild),
-        "edited_at": map_or(str, message.edited_at),
+        "edited_at": map_or(lambda d: d.isoformat(), message.edited_at),
     }
 
 
@@ -149,5 +149,7 @@ def to_dict(obj):
         return emoji_dict(obj)
     elif isinstance(obj, discord.Message):
         return message_dict(obj)
+    elif isinstance(obj, discord.Embed):
+        return obj.to_dict()
     else:
         return obj

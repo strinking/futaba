@@ -24,7 +24,7 @@ class JournalEvent:
 
     def to_dict(self):
         return {
-            "path": self.path,
+            "path": str(self.path),
             "guild": named_dict(self.guild),
             "content": self.content,
             "attributes": {
