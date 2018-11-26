@@ -34,7 +34,9 @@ class DirectMessageListener(Listener):
         Send the message to the given channel, applying the icon if applicable.
         """
 
-        logger.debug("Received journal event on %s: '%s'", path, content)
+        if guild is not None:
+            content = f"[{guild.name}] {content}"
+
         kwargs = {"content": content}
 
         if "embed" in attributes:
