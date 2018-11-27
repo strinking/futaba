@@ -129,7 +129,6 @@ Role reapplication:
 * `/settings/roles/jail` - The jail role was set or unset. Attributes: `role: Optional[discord.Role]`
 
 ### Tracker cog
-* `/tracking/typing` - Typing event. Attributes: `channel: discord.Messageable`, `user: discord.User`, `when: datetime`
 * `/tracking/message/new` - A new message was sent. Attributes: `message: discord.Message`
 * `/tracking/jump/message/new` - Jump link for new message. Same attributes.
 * `/tracking/full/message/new` - Full message content for new message, with jump link. Same attributes.
