@@ -16,6 +16,7 @@ Informational commands that make finding and gathering data easier.
 
 import asyncio
 import logging
+import re
 import unicodedata
 from collections import Counter
 from itertools import islice
@@ -23,7 +24,7 @@ from itertools import islice
 import discord
 from discord.ext import commands
 
-from futaba.converters import EmojiConv, GuildChannelConv, RoleConv, UserConv
+from futaba.converters import ID_REGEX, EmojiConv, GuildChannelConv, RoleConv, UserConv
 from futaba.exceptions import CommandFailed
 from futaba.permissions import mod_perm
 from futaba.similar import similar_users
@@ -407,11 +408,31 @@ class Info(AbstractCog):
 
     @commands.command(name="rawmessage", aliases=["raw", "rawmsg"])
     @commands.guild_only()
-    async def raw_message(self, ctx, *ids: int):
+    async def raw(self, ctx, *, argument: str):
         """
         Finds and prints the raw contents of the messages with the given IDs.
         """
 
+        ids = []
+        parts = re.split(r"\s", argument)
+        if not parts:
+            raise CommandFailed(content="No message IDs or text passed!")
+
+        for part in parts:
+            if ID_REGEX.match(part) is None:
+                await self.raw_argument(ctx, argument)
+                return
+
+            ids.append(int(part))
+        await self.raw_message(ctx, ids)
+
+    async def raw_argument(self, ctx, argument):
+        logger.info("Outputting raw form of the argument: '%s'", argument)
+
+        content = "You sent:\n" f"```\n{escape_backticks(argument)}\n```"
+        await ctx.send(content=content)
+
+    async def raw_message(self, ctx, ids):
         logger.info("Finding message IDs for raws: %s", ids)
 
         if not mod_perm(ctx) and len(ids) > 5:
@@ -420,16 +441,11 @@ class Info(AbstractCog):
 
         messages = await self.get_messages(ctx.guild.text_channels, ids)
         for message in messages:
-            await ctx.send(
-                content="\n".join(
-                    (
-                        f"{message.author.name}#{message.author.discriminator} sent:",
-                        "```",
-                        escape_backticks(message.content),
-                        "```",
-                    )
-                )
+            content = (
+                f"{message.author.name}#{message.author.discriminator} sent:\n"
+                f"```\n{escape_backticks(message.content)}\n```"
             )
+            await ctx.send(content=content)
 
     @commands.command(name="embeds")
     @commands.guild_only()
