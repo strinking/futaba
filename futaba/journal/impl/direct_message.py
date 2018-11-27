@@ -16,6 +16,7 @@ A Listener that DMs messages to the configured Discord user.
 
 import logging
 
+from futaba.permissions import mod_perm
 from futaba.utils import copy_discord_file
 from ..listener import Listener
 
@@ -33,6 +34,11 @@ class DirectMessageListener(Listener):
         """
         Send the message to the given channel, applying the icon if applicable.
         """
+
+        member = guild.get_member(self.user.id)
+        if member is None or not mod_perm(member):
+            # Don't send journal events if they're not a mod
+            return
 
         if guild is not None:
             content = f"[{guild.name}] {content}"
