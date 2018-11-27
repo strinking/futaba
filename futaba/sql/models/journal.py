@@ -21,7 +21,6 @@ be logged into Discord text channels within guilds.
 import functools
 import logging
 from collections import defaultdict
-from itertools import chain
 
 from sqlalchemy import and_
 from sqlalchemy import BigInteger, Boolean, Column, Enum, Table, Text
@@ -254,13 +253,13 @@ class JournalModel:
         users = []
         for user_id, path, recursive in result.fetchall():
             user = bot.get_user(user_id)
-            users.append(user)
             self.journal_outputs_cache[user][path] = JournalOutputData(
                 recursive=recursive
             )
+            users.extend(self.get_journals_on_user(user))
 
         # Compile user list
-        return chain(self.get_journals_on_user(user) for user in users)
+        return users
 
     def get_journals_on_channels(self, *channels):
         logger.debug(

@@ -22,7 +22,7 @@ import discord
 from discord.ext import commands
 
 from futaba import permissions
-from futaba.converters import TextChannelConv
+from futaba.converters import TextChannelConv, UserConv
 from futaba.exceptions import CommandFailed, SendHelp
 from futaba.journal import ChannelOutputListener, DirectMessageListener, Router
 from futaba.str_builder import StringBuilder
@@ -318,6 +318,41 @@ class Journal(AbstractCog):
 
         if ctx.invoked_subcommand is None:
             raise SendHelp()
+
+    @log_dm.command(name="show", aliases=["display", "list"])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def log_dm_show(self, ctx, user: UserConv = None):
+        """
+        Displays current journal mounts for a user.
+        """
+
+        if user is None:
+            user = self.bot.get_user(ctx.author.id)
+        else:
+            user = self.bot.get_user(user.id)
+
+        outputs = self.bot.sql.journal.get_journals_on_user(user)
+        outputs = sorted(outputs, key=lambda out: out.path)
+        attributes = []
+        descr = StringBuilder(f"{user.mention}:\n\n")
+
+        for output in outputs:
+            if not output.settings.recursive:
+                attributes.append("exact path")
+
+            attr_str = f'({", ".join(attributes)})' if attributes else ""
+            descr.writeln(f"- `{output.path}` {attr_str}")
+            attributes.clear()
+
+        if outputs:
+            embed = discord.Embed(colour=discord.Colour.teal(), description=str(descr))
+            embed.set_author(name="Current journal outputs")
+        else:
+            embed = discord.Embed(colour=discord.Colour.dark_purple())
+            embed.set_author(name=f"No journal outputs!")
+
+        await ctx.send(embed=embed)
 
     @log_dm.command(name="add", aliases=["append", "extend", "new", "set", "update"])
     @commands.guild_only()
