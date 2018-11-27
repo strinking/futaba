@@ -61,7 +61,11 @@ class JournalModel:
                 "location_type != 'GUILD'", name="journal_outputs_sendable_check"
             ),
             UniqueConstraint(
-                "guild_id", "channel_id", "path", name="journal_outputs_uq"
+                "guild_id",
+                "location_id",
+                "location_type",
+                "path",
+                name="journal_outputs_uq",
             ),
         )
         self.journal_outputs_cache = defaultdict(dict)
@@ -225,7 +229,7 @@ class JournalModel:
             )
 
         # Compile guild list
-        return self.get_journals_on_channels(guild.channels)
+        return self.get_journals_on_channels(*guild.channels)
 
     def fetch_journal_users(self, bot, guild):
         logger.info(

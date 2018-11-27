@@ -47,25 +47,25 @@ class Journal(AbstractCog):
         logger.info("Loading journal output channels from the database")
         with self.bot.sql.transaction():
             for guild in self.bot.guilds:
-                for output in self.bot.sql.journal.fetch_journal_channels(guild):
+                for data in self.bot.sql.journal.fetch_journal_channels(guild):
                     logger.info(
                         "Registering journal channel #%s (%d) for path '%s'",
-                        output.channel.name,
-                        output.channel.id,
-                        output.path,
+                        data.output.name,
+                        data.output.id,
+                        data.path,
                     )
                     self.router.register(
-                        ChannelOutputListener(self.router, output.path, output.channel)
+                        ChannelOutputListener(self.router, data.path, data.output)
                     )
-                for output in self.bot.journal.fetch_journal_users(self.bot, guild):
+                for data in self.bot.sql.journal.fetch_journal_users(self.bot, guild):
                     logger.info(
                         "Registering journal DM on user '%s' (%d) for path '%s'",
-                        output.user.name,
-                        output.user.id,
-                        output.path,
+                        data.output.name,
+                        data.output.id,
+                        data.path,
                     )
                     self.router.register(
-                        DirectMessageListener(self.router, output.path, output.user)
+                        DirectMessageListener(self.router, data.path, data.output)
                     )
         self.router.start(self.bot.loop)
 
