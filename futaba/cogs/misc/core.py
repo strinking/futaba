@@ -27,6 +27,7 @@ from futaba import __version__
 from futaba.download import download_links
 from futaba.exceptions import CommandFailed
 from futaba.str_builder import StringBuilder
+from futaba.unicode import unicode_repr
 from futaba.utils import GIT_HASH, URL_REGEX, fancy_timedelta
 from ..abc import AbstractCog
 
@@ -115,6 +116,13 @@ class Miscellaneous(AbstractCog):
             channel=ctx.channel,
             emoji=emoji,
         )
+
+    @commands.command(name="unicoderepr", aliases=["unicrepr", "urepr"])
+    async def unicode_repr(self, ctx, *, text: str):
+        """ Outputs the Python representation of the given unicode string. """
+
+        text_repr = unicode_repr(text)
+        await ctx.send(content=f"`{text_repr}`")
 
     @commands.command(name="sha1sum", aliases=["sha1", "sha", "hashsum", "hash"])
     async def sha1sum(self, ctx, *urls: str):
