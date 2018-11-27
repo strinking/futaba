@@ -16,7 +16,11 @@ of messages to different logging channels.
 """
 
 import asyncio
+import json
 import logging
+import traceback
+from itertools import islice
+from pprint import pformat
 
 import discord
 from discord.ext import commands
@@ -290,3 +294,138 @@ class Journal(AbstractCog):
         self.bot.get_broadcaster(path).send(
             "", ctx.guild, content, **journal_attributes
         )
+
+    def log_filter(self, guild, condition, max_items):
+        logging.info(
+            "Finding journal entries in guild '%s' (%d) matching: %s",
+            guild.name,
+            guild.id,
+            condition or "(none)",
+        )
+
+        def create_scope(event):
+            return {
+                "path": str(event.path),
+                "ppath": event.path,
+                "guild": guild,
+                "content": event.content,
+                "attributes": event.attributes,
+            }
+
+        events = reversed(self.journal.history)
+        events = filter(lambda evt: evt.guild == guild, events)
+        events = islice(events, max_items)
+
+        if condition is None:
+            matched = events
+        else:
+            try:
+                compile(condition, "<futaba journal-find eval>", "eval")
+            except Exception as error:
+                logger.info("Error compiling condition", exc_info=error)
+                embed = discord.Embed(colour=discord.Colour.red())
+                embed.set_author(name="Compilation error parsing condition")
+                trace = "\n".join(
+                    traceback.format_exception(type(error), error, error.__traceback__)
+                )
+                embed.description = f"```py\n{trace}\n```"
+                raise CommandFailed(embed=embed)
+
+        matched = []
+        error_embeds = []
+        for event in tuple(events):
+            try:
+                # Limited eval for journal filter evaluation
+                # pylint: disable=eval-used
+                if eval(condition, create_scope(event)):
+                    matched.append(event)
+            except Exception as error:
+                logger.info("Runtime error while evaluating condition", exc_info=error)
+
+                embed = discord.Embed(colour=discord.Colour.red())
+                embed.set_author(name="Runtime error checking condition")
+                trace = "\n".join(
+                    traceback.format_exception(type(error), error, error.__traceback__)
+                )
+                embed.description = f"```py\n{trace}\n```"
+                error_embeds.append(embed)
+        return matched, error_embeds
+
+    @log.command(name="find", aliases=["search", "query", "recent", "history"])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def log_find(self, ctx, *, condition: str = None):
+        """
+        List previous journal events that match the given conditions.
+        The condition is a Python expression with no variables but
+        the following attributes:
+
+        path: str
+        ppath: PurePath
+        guild: discord.Guild
+        content: str
+        attributes: dict
+        """
+
+        events, error_embeds = self.log_filter(ctx.guild, condition, 10)
+
+        if error_embeds:
+            await ctx.send(embed=error_embeds[0])
+
+        if events:
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
+            embed.set_author(name="Matching journal events")
+            descr = StringBuilder()
+
+            embeds = []
+            for event in events:
+                descr.writeln(f"Path: `{event.path}`, Content: {event.content}")
+                descr.writeln(f"Attributes: ```py\n{pformat(event.attributes)}\n```\n")
+                if len(descr) > 1400:
+                    embed.description = str(descr)
+                    embeds.append(embed)
+                    descr.clear()
+                    embed = discord.Embed(colour=discord.Colour.dark_teal())
+                    embed.set_author(name="Matched journal events")
+            embed.description = str(descr)
+        else:
+            embed = discord.Embed(colour=discord.Colour.dark_purple())
+            embed.set_author(name="No matching journal entries")
+            embeds = (embed,)
+
+        for i, embed in enumerate(embeds):
+            embed.set_footer(text=f"Page {i + 1}/{len(embeds)}")
+            await ctx.send(embed=embed)
+
+    @log.command(name="dump", aliases=["jsondump", "recentdump", "historydump"])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def log_dump(self, ctx, *, condition: str = None):
+        """
+        Dump previous journal events that match the given conditions to JSON.
+        The condition is a Python expression with no variables but
+        the following attributes:
+
+        path: str
+        ppath: PurePath
+        guild: discord.Guild
+        content: str
+        attributes: dict
+        """
+
+        events, error_embeds = self.log_filter(ctx.guild, condition, 50)
+
+        if error_embeds:
+            await ctx.send(embed=error_embeds[0])
+
+        buffer = StringBuilder()
+        obj = [event.to_dict() for event in reversed(events)]
+        json.dump(obj, buffer, ensure_ascii=True)
+        file = discord.File(buffer.bytes_io(), filename="journal-events.json")
+
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
+        embed.description = (
+            "Uploaded journal events as JSON, see attached file. "
+            "\N{WHITE UP POINTING BACKHAND INDEX}"
+        )
+        await ctx.send(embed=embed, file=file)
