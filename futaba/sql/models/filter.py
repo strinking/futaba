@@ -30,30 +30,11 @@ from sqlalchemy.sql import select
 from futaba.enums import FilterType, LocationType
 from futaba.unicode import normalize_caseless
 
+from ..data import FilterSettingsData
 from ..hooks import register_hook
 
 Column = functools.partial(Column, nullable=False)
 logger = logging.getLogger(__name__)
-
-
-class FilterSettingsStorage:
-    __slots__ = ("bot_immune", "manage_messages_immune", "reupload")
-
-    def __init__(self):
-        self.bot_immune = False
-        self.manage_messages_immune = True
-        self.reupload = True
-
-    def updated(self, field, value=None):
-        """
-        Sets 'field' if 'value' is not None. Returns the current value of 'field'.
-        Useful for getting an excluded field, and updating the storage object too.
-        """
-
-        if value is None:
-            setattr(self, field, value)
-
-        return getattr(self, field)
 
 
 __all__ = ["FilterModel"]
@@ -356,7 +337,7 @@ class FilterModel:
         bot_immune, manage_messages_immune, reupload = result.fetchone()
 
         # Update cache
-        storage = FilterSettingsStorage()
+        storage = FilterSettingsData()
         storage.bot_immune = bot_immune
         storage.manage_messages_immune = manage_messages_immune
         storage.reupload = reupload
@@ -371,7 +352,7 @@ class FilterModel:
 
     def add_settings(self, guild):
         logger.info("Adding filter settings for guild '%s' (%d)", guild.name, guild.id)
-        storage = FilterSettingsStorage()
+        storage = FilterSettingsData()
         ins = self.tb_filter_settings.insert().values(
             guild_id=guild.id,
             bot_immune=storage.bot_immune,

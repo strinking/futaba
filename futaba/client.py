@@ -11,7 +11,7 @@
 #
 
 """
-Holds the custom discord client
+Contains the bot's discord client and the necessary handling functionality.
 """
 
 import asyncio
@@ -256,6 +256,9 @@ class Bot(commands.AutoShardedBot):
         Handles errors when a command raises an exception.
         Some exceptions are "normal", such as CommandFailed or MissingRequiredArgument.
         """
+
+        # Complains about "context" vs "ctx"
+        # pylint: disable=arguments-differ
 
         async with self.message_lock(ctx.message):
             await ctx.message.clear_reactions()

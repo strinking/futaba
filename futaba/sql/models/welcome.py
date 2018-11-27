@@ -20,7 +20,6 @@ Has the model for managing the welcome cog and its functionality.
 import functools
 import logging
 
-import discord
 from sqlalchemy import and_
 from sqlalchemy import (
     BigInteger,
@@ -37,53 +36,13 @@ from sqlalchemy.sql import select
 
 from futaba.enums import JoinAlertKey, ValueRelationship
 from futaba.utils import lowerbool
+from ..data import WelcomeData
 from ..hooks import register_hook
 
 Column = functools.partial(Column, nullable=False)
 logger = logging.getLogger(__name__)
 
-__all__ = ["WelcomeModel", "WelcomeStorage"]
-
-
-class WelcomeStorage:
-    __slots__ = (
-        "guild",
-        "welcome_message",
-        "goodbye_message",
-        "agreed_message",
-        "delete_on_agree",
-        "welcome_channel",
-    )
-
-    def __init__(
-        self,
-        guild,
-        welcome_message=None,
-        goodbye_message=None,
-        agreed_message=None,
-        delete_on_agree=True,
-        welcome_channel_id=None,
-    ):
-        self.guild = guild
-        self.welcome_message = welcome_message
-        self.goodbye_message = goodbye_message
-        self.agreed_message = agreed_message
-        self.delete_on_agree = delete_on_agree
-        self.welcome_channel = discord.utils.get(
-            guild.text_channels, id=welcome_channel_id
-        )
-
-    @property
-    def channel(self):
-        return self.welcome_channel
-
-    @property
-    def channel_id(self):
-        return self.welcome_channel_id
-
-    @property
-    def welcome_channel_id(self):
-        return getattr(self.welcome_channel, "id", None)
+__all__ = ["WelcomeModel"]
 
 
 class WelcomeModel:
@@ -127,7 +86,7 @@ class WelcomeModel:
         logger.info(
             "Adding welcome message row for guild '%s' (%d)", guild.name, guild.id
         )
-        storage = WelcomeStorage(guild)
+        storage = WelcomeData(guild)
         ins = self.tb_welcome.insert().values(
             guild_id=guild.id,
             welcome_message=storage.welcome_channel,
@@ -177,7 +136,7 @@ class WelcomeModel:
             welcome_channel_id,
         ) = result.fetchone()
 
-        welcome = WelcomeStorage(
+        welcome = WelcomeData(
             guild,
             welcome_message,
             goodbye_message,
