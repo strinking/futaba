@@ -26,7 +26,7 @@ from discord.ext import commands
 from futaba import permissions
 from futaba.exceptions import CommandFailed, InvalidCommandContext, SendHelp
 from futaba.journal import ModerationListener
-from futaba.utils import user_discrim
+from futaba.utils import plural, user_discrim
 from .role_reapplication import RoleReapplication
 from ..abc import AbstractCog
 
@@ -467,3 +467,38 @@ class Welcome(AbstractCog):
         self.journal.send(
             "message/agree", ctx.guild, content, icon="welcome", message=agreed_message
         )
+
+    @commands.command(name="guestify")
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def guestify(self, ctx):
+        """
+        In the event that the bot is not properly assigning guest roles to users,
+        this command can be used to manually apply it to all roleless users.
+        """
+
+        roles = self.bot.sql.settings.get_special_roles(ctx.guild)
+        if roles.guest is None:
+            prefix = self.bot.prefix(ctx.guild)
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.description = (
+                f"No guest role set.\nYou can assign one using `{prefix}guest <role>`."
+            )
+            raise CommandFailed(embed=embed)
+
+        tasks = []
+        for member in ctx.guild.members:
+            if member.top_role == ctx.guild.default_role:
+                tasks.append(
+                    member.add_roles(
+                        roles.guest, reason="Manually assigning guest role", atomic=True
+                    )
+                )
+        await asyncio.gather(*tasks)
+
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
+        if tasks:
+            embed.description = f"Added the {roles.guest.mention} role to `{len(tasks)}` member{plural(len(tasks))}."
+        else:
+            embed.description = "No roleless members found."
+        await ctx.send(embed=embed)
