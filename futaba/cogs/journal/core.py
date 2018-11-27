@@ -346,9 +346,9 @@ class Journal(AbstractCog):
         with self.bot.sql.transaction():
             journal_sql = self.bot.sql.journal
             if journal_sql.has_journal_user(user, path):
-                journal_sql.update_journal_output(user, path, recursive)
+                journal_sql.update_journal_output(ctx.guild, user, path, recursive)
             else:
-                journal_sql.add_journal_output(user, path, recursive)
+                journal_sql.add_journal_output(ctx.guild, user, path, recursive)
 
         await ctx.send(content=self.log_updated_message(user))
         content = f"Added journal logger to {user_discrim(ctx.author)} for `{path}`"
