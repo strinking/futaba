@@ -13,7 +13,7 @@
 from collections import namedtuple
 
 ConfiguredJournalOutput = namedtuple(
-    "ConfiguredJournalOutput", ("output", "path", "settings")
+    "ConfiguredJournalOutput", ("sink", "path", "settings")
 )
 
 

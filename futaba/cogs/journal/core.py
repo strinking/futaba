@@ -47,25 +47,25 @@ class Journal(AbstractCog):
         logger.info("Loading journal output channels from the database")
         with self.bot.sql.transaction():
             for guild in self.bot.guilds:
-                for data in self.bot.sql.journal.fetch_journal_channels(guild):
+                for output in self.bot.sql.journal.fetch_journal_channels(guild):
                     logger.info(
                         "Registering journal channel #%s (%d) for path '%s'",
-                        data.output.name,
-                        data.output.id,
-                        data.path,
+                        output.sink.name,
+                        output.sink.id,
+                        output.path,
                     )
                     self.router.register(
-                        ChannelOutputListener(self.router, data.path, data.output)
+                        ChannelOutputListener(self.router, output.path, output.sink)
                     )
-                for data in self.bot.sql.journal.fetch_journal_users(self.bot, guild):
+                for output in self.bot.sql.journal.fetch_journal_users(self.bot, guild):
                     logger.info(
                         "Registering journal DM on user '%s' (%d) for path '%s'",
-                        data.output.name,
-                        data.output.id,
-                        data.path,
+                        output.sink.name,
+                        output.sink.id,
+                        output.path,
                     )
                     self.router.register(
-                        DirectMessageListener(self.router, data.path, data.output)
+                        DirectMessageListener(self.router, output.path, output.sink)
                     )
         self.router.start(self.bot.loop)
 
@@ -85,21 +85,21 @@ class Journal(AbstractCog):
         If channels are provided, then only outputs for those channels are fetched.
         """
 
-        if channels:
-            outputs = self.bot.sql.journal.get_journals_on_channels(*channels)
-        else:
-            outputs = self.bot.sql.journal.get_journal_channels(ctx.guild)
+        if not channels:
+            channels = ctx.guild.channels
 
+        outputs = self.bot.sql.journal.get_journals_on_channels(*channels)
         outputs = sorted(outputs, key=lambda out: out.path)
         attributes = []
         descr = StringBuilder()
+
         for output in outputs:
             if not output.settings.recursive:
                 attributes.append("exact path")
 
             attr_str = f'({", ".join(attributes)})' if attributes else ""
             descr.writeln(
-                f"- `{output.path}` mounted at {output.channel.mention} {attr_str}"
+                f"- `{output.path}` mounted at {output.sink.mention} {attr_str}"
             )
             attributes.clear()
 

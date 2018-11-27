@@ -270,7 +270,7 @@ class JournalModel:
         for channel in channels:
             for path, settings in self.journal_outputs_cache[channel].items():
                 yield ConfiguredJournalOutput(
-                    output=channel, path=path, settings=settings
+                    sink=channel, path=path, settings=settings
                 )
 
     def get_journals_on_user(self, user):
@@ -281,7 +281,7 @@ class JournalModel:
         )
 
         for path, settings in self.journal_outputs_cache[user].items():
-            yield ConfiguredJournalOutput(output=user, path=path, settings=settings)
+            yield ConfiguredJournalOutput(sink=user, path=path, settings=settings)
 
     def delete_journal_channels(self, guild):
         logger.info(

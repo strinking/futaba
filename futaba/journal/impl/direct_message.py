@@ -35,13 +35,16 @@ class DirectMessageListener(Listener):
         Send the message to the given channel, applying the icon if applicable.
         """
 
-        member = guild.get_member(self.user.id)
-        if member is None or not mod_perm(member):
-            # Don't send journal events if they're not a mod
-            return
-
         if guild is not None:
-            content = f"[{guild.name}] {content}"
+            content = f"**[{guild.name}]** {content}"
+
+            # Don't send journal events if they're not a mod
+            member = guild.get_member(self.user.id)
+            if member is None or not member.guild_permissions.manage_channels:
+                logger.debug(
+                    "Not sending journal event: not a member or not a moderator"
+                )
+                return
 
         kwargs = {"content": content}
 
