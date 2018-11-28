@@ -16,7 +16,7 @@ A Listener that DMs messages to the configured Discord user.
 
 import logging
 
-from futaba.permissions import mod_perm
+from futaba.permissions import is_mod_perm
 from futaba.utils import copy_discord_file
 from ..listener import Listener
 
@@ -40,7 +40,7 @@ class DirectMessageListener(Listener):
 
             # Don't send journal events if they're not a mod
             member = guild.get_member(self.user.id)
-            if member is None or not member.guild_permissions.manage_channels:
+            if member is None or not is_mod_perm(member.guild_permissions):
                 logger.debug(
                     "Not sending journal event: not a member or not a moderator"
                 )

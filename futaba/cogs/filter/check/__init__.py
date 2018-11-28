@@ -18,6 +18,7 @@ import discord
 from discord import MessageType
 
 from futaba.enums import FilterType, LocationType, NameType
+from futaba.permissions import is_admin_perm
 from futaba.str_builder import StringBuilder
 from .common import MASK_NICK
 from .file import FoundFileViolation, check_file_filter
@@ -70,10 +71,10 @@ def filter_immune(bot, guild, member, channel=None):
         perms = channel.permissions_for(member)
 
     # Check admins
-    if perms.manage_guild:
+    if is_admin_perm(perms):
         return True
 
-    # Check moderators (if enabled)
+    # Check channel moderators (if enabled)
     if filter_settings.manage_messages_immune:
         if perms.manage_messages:
             return True
