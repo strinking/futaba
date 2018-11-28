@@ -18,6 +18,7 @@ from . import (
     client,
     config,
     converters,
+    dict_convert,
     download,
     emojis,
     enums,
@@ -33,4 +34,4 @@ from . import (
     utils,
 )
 
-__version__ = "0.3.2"
+__version__ = "0.4.0"

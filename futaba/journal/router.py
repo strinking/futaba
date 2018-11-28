@@ -12,7 +12,7 @@
 
 import asyncio
 import logging
-from collections import defaultdict
+from collections import defaultdict, deque
 from itertools import chain
 from pathlib import PurePath
 
@@ -31,11 +31,12 @@ def attrs_match(obj, attrs):
 
 
 class Router:
-    __slots__ = ("paths", "queue")
+    __slots__ = ("paths", "queue", "history")
 
     def __init__(self):
         self.paths = defaultdict(list)
         self.queue = asyncio.Queue()
+        self.history = deque(maxlen=1024)
 
     def start(self, eventloop):
         logger.info("Start journal event processing task")
@@ -63,27 +64,31 @@ class Router:
         self.paths[listener.path].remove(listener)
 
     async def handle_events(self):
-        events = []
+        responses = []
 
         while True:
             logger.debug("Waiting for new journal event")
-            event_path, guild, content, attributes = await self.queue.get()
-            logger.debug("Got journal event on %s: '%s'", event_path, content)
-            content = process_content(content, attributes)
-            logger.debug("Journal content after processing: '%s'", content)
+            event = await self.queue.get()
+            logger.debug("Got journal event on %s: '%s'", event.path, event.content)
+            content = process_content(event.content, event.attributes)
+            logger.debug("Journal content after processing: '%s'", event.content)
 
             # Add events for this path
-            for path in chain((event_path,), event_path.parents):
+            for path in chain((event.path,), event.path.parents):
                 for listener in self.paths[path]:
-                    if listener.check(path, guild, content, attributes):
-                        events.append(
-                            listener.handle(event_path, guild, content, attributes)
+                    if listener.check(path, event.guild, content, event.attributes):
+                        responses.append(
+                            listener.handle(
+                                event.path, event.guild, content, event.attributes
+                            )
                         )
 
             # Run all the event handlers
             try:
-                await asyncio.gather(*events)
+                await asyncio.gather(*responses)
             except Exception as error:
                 logger.error("Error while running journal handlers", exc_info=error)
+            responses.clear()
 
-            events.clear()
+            # Append to event list
+            self.history.append(event)

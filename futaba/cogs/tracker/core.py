@@ -41,7 +41,6 @@ MemberLeaveReason = namedtuple(
 )
 
 LISTENERS = (
-    "on_typing",
     "on_message",
     "on_message_edit",
     "on_message_delete",
@@ -113,7 +112,6 @@ class Tracker(AbstractCog):
         "members_joined",
         "members_left",
         "reactions",
-        "typing",
     )
 
     def __init__(self, bot):
@@ -125,7 +123,6 @@ class Tracker(AbstractCog):
         self.members_joined = deque(maxlen=20)
         self.members_left = deque(maxlen=20)
         self.reactions = deque(maxlen=20)
-        self.typing = deque(maxlen=5)
 
     def setup(self):
         pass
@@ -137,46 +134,6 @@ class Tracker(AbstractCog):
 
         for listener in LISTENERS:
             self.bot.remove_listener(getattr(self, listener), listener)
-
-    async def on_typing(self, channel, user, when):
-        if (channel, user, when) in self.typing:
-            return
-        else:
-            self.typing.append((channel, user, when))
-
-        guild = getattr(channel, "guild", None)
-        if guild is None:
-            return
-
-        blacklist = self.bot.sql.settings.get_tracking_blacklist(guild)
-        if blacklist.is_blocked(channel) or blacklist.is_blocked(user):
-            logger.debug(
-                "Ignoring received typing event from %s (%d) in #%s (%d) due to the channel or user being blacklisted",
-                user.name,
-                user.id,
-                channel.name,
-                channel.id,
-            )
-            return
-
-        logger.debug(
-            "Received typing event from %s (%d) in #%s (%d)",
-            user.name,
-            user.id,
-            channel.name,
-            channel.id,
-        )
-
-        content = f"{user.name}#{user.discriminator} ({user.id}) is typing in {channel.mention}"
-        self.journal.send(
-            "typing",
-            channel.guild,
-            content,
-            icon="typing",
-            channel=channel,
-            user=user,
-            when=when,
-        )
 
     @staticmethod
     def build_embed(message):

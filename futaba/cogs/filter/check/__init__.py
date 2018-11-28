@@ -162,10 +162,8 @@ async def check_member_update(cog, before, after):
     inappropriate.
     """
 
-    logger.debug("Checking member update")
-    guild = before.guild
-
     # Check that we actually have permissions to manage roles
+    guild = before.guild
     if not guild.me.guild_permissions.manage_roles:
         logger.debug("I don't have permission to manage roles here")
         return

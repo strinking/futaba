@@ -123,7 +123,7 @@ class Alias(AbstractCog):
                 self.bot.sql.alias.add_nickname(before, timestamp, changes.nickname)
                 attrs.write(f"nick: {changes.nickname}")
 
-        content = f"Member {user_discrim(before)} was updated: {attrs}"
+        content = f"{user_discrim(before)} updated {attrs}"
         self.journal.send(
             "member/update",
             before.guild,

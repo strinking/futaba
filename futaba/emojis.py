@@ -51,7 +51,7 @@ ICONS = {
     "has-mail": "\N{OPEN MAILBOX WITH RAISED FLAG}",
     "no-mail": "\N{CLOSED MAILBOX WITH LOWERED FLAG}",
     # Tracking
-    "typing": "\N{WRITING HAND}",
+    "write": "\N{WRITING HAND}",
     "message": "\N{PAGE FACING UP}",
     "delete": "\N{WASTEBASKET}",
     "item_add": "\N{HEAVY PLUS SIGN}",
