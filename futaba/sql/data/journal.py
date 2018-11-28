@@ -1,5 +1,5 @@
 #
-# sql/data/__init__.py
+# sql/data/journal.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
@@ -10,13 +10,15 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-from .filter import FilterSettingsData
-from .journal import ConfiguredJournalOutput, JournalOutputData
-from .navi import NaviTaskData
-from .settings import (
-    GuildSettingsData,
-    ReapplyRolesData,
-    SpecialRoleData,
-    TrackingBlacklistData,
+from collections import namedtuple
+
+ConfiguredJournalOutput = namedtuple(
+    "ConfiguredJournalOutput", ("sink", "path", "settings")
 )
-from .welcome import WelcomeData
+
+
+class JournalOutputData:
+    __slots__ = ("recursive",)
+
+    def __init__(self, recursive):
+        self.recursive = recursive

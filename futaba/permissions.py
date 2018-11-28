@@ -23,6 +23,8 @@ from futaba.str_builder import StringBuilder
 __all__ = [
     "elevated_role_perms",
     "elevated_role_embed",
+    "is_admin_perm",
+    "is_mod_perm",
     "owner_perm",
     "admin_perm",
     "mod_perm",
@@ -110,6 +112,18 @@ def elevated_role_embed(guild, role, level):
     return embed
 
 
+def is_admin_perm(perm: discord.Permissions):
+    """ Used to check is user has the manage_guild permission """
+
+    return perm.manage_guild
+
+
+def is_mod_perm(perm: discord.Permissions):
+    """ Used to check is user has the manage_channels permission """
+
+    return perm.manage_channels
+
+
 def owner_perm(ctx: commands.Context):
     """ Check if user is a owner of the bot from config """
 
@@ -117,21 +131,20 @@ def owner_perm(ctx: commands.Context):
 
 
 def admin_perm(ctx: commands.Context):
-    """ Used to check is user has the manage_guild permission """
+    """ Check if the given member is an admin. """
 
     if isinstance(ctx.channel, discord.abc.PrivateChannel):
         return False
 
-    return ctx.channel.permissions_for(ctx.author).manage_guild
+    return is_admin_perm(ctx.channel.permissions_for(ctx.author))
 
 
 def mod_perm(ctx: commands.Context):
-    """ Used to check is user has the manage_channels permission """
 
     if isinstance(ctx.channel, discord.abc.PrivateChannel):
         return False
 
-    return ctx.channel.permissions_for(ctx.author).manage_channels
+    return is_mod_perm(ctx.channel.permissions_for(ctx.author))
 
 
 def check_owner():

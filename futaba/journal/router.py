@@ -16,13 +16,18 @@ from collections import defaultdict, deque
 from itertools import chain
 from pathlib import PurePath
 
-import discord
-
 from .process import process_content
 
 logger = logging.getLogger(__name__)
 
 __all__ = ["Router"]
+
+
+def attrs_match(obj, attrs):
+    for attr, value in attrs.items():
+        if not hasattr(obj, attr) or getattr(obj, attr) != value:
+            return False
+    return True
 
 
 class Router:
@@ -45,7 +50,10 @@ class Router:
         )
 
         path = PurePath(path)
-        return discord.utils.get(self.paths[path], **attrs)
+        for listener in self.paths[path]:
+            if attrs_match(listener, attrs):
+                return listener
+        return None
 
     def register(self, listener):
         logger.info("Registering %r on '%s'", listener, listener.path)
