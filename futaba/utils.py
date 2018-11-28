@@ -17,6 +17,8 @@ from datetime import datetime
 from io import BytesIO
 from itertools import zip_longest
 
+import discord
+
 from futaba.str_builder import StringBuilder
 
 logger = logging.getLogger(__name__)
