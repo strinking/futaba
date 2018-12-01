@@ -83,7 +83,7 @@ class Info(AbstractCog):
             embed.description = str(emoji)
             embed.set_author(name=name)
             embed.set_thumbnail(url=emoji.url)
-            embed.add_field(name="Name", value=f"`emoji.name`")
+            embed.add_field(name="Name", value=f"`{emoji.name}`")
             embed.add_field(name="Guild", value=emoji.guild.name)
             embed.add_field(name="ID", value=str(emoji.id))
             embed.add_field(name="Managed", value=lowerbool(emoji.managed))
