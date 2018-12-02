@@ -15,6 +15,8 @@ from enum import Enum, unique
 import dateparser
 import discord
 
+from futaba.emojis import ICONS
+
 
 @unique
 class Reactions(Enum):
@@ -242,6 +244,50 @@ class PunishAction(Enum):
     APPLY_JAIL = "apply_jail"
     RELIEVE_MUTE = "relieve_mute"
     RELIEVE_JAIL = "relieve_jail"
+
+
+@unique
+class InfractionType(Enum):
+    JOINED = "joined"
+    LEFT = "left"
+    KICKED = "kicked"
+    BANNED = "banned"
+    UNBANNED = "unbanned"
+    SOFTBAN = "softbanned"
+    MUFFLED = "muffled"
+    MUTED = "muted"
+    UNMUTED = "unmuted"
+    NOTE = "note"
+    WARNING = "warning"
+
+    @property
+    def emoji(self):
+        # pylint: disable=too-many-return-statements
+
+        if self == InfractionType.JOINED:
+            return ICONS["join"]
+        elif self == InfractionType.LEFT:
+            return ICONS["leave"]
+        elif self == InfractionType.KICKED:
+            return ICONS["kick"]
+        elif self == InfractionType.BANNED:
+            return ICONS["ban"]
+        elif self == InfractionType.UNBANNED:
+            return ICONS["unban"]
+        elif self == InfractionType.SOFTBAN:
+            return ICONS["soft"]
+        elif self == InfractionType.MUFFLED:
+            return ICONS["muffled"]
+        elif self == InfractionType.MUTED:
+            return ICONS["mute"]
+        elif self == InfractionType.UNMUTED:
+            return ICONS["unmute"]
+        elif self == InfractionType.NOTE:
+            return ICONS["note"]
+        elif self == InfractionType.WARNING:
+            return ICONS["warning"]
+        else:
+            raise TypeError(f"No infraction type for {self!r}")
 
 
 @unique

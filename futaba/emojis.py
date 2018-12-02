@@ -24,6 +24,7 @@ ICONS = {
     "error": "\N{CROSS MARK}",
     "forbidden": "\N{NO ENTRY}",
     "critical": "\N{SQUARED SOS}",
+    "important": "\N{HEAVY EXCLAMATION MARK SYMBOL}",
     "ok": "\N{SQUARED OK}",
     "announce": "\N{CHEERING MEGAPHONE}",
     # Management
@@ -80,6 +81,7 @@ ICONS = {
     # Documents
     "folder": "\N{OPEN FILE FOLDER}",
     "file": "\N{PAGE FACING UP}",
+    "note": "\N{MEMO}",
     "book": "\N{NOTEBOOK WITH DECORATIVE COVER}",
     "upload": "\N{OUTBOX TRAY}",
     "download": "\N{INBOX TRAY}",
