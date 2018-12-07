@@ -23,7 +23,7 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.converters import MemberConv, UserConv
-from futaba.enums import PunishAction
+from futaba.enums import InfractionType, PunishAction
 from futaba.exceptions import CommandFailed, ManualCheckFailure
 from futaba.navi import PunishTask
 from futaba.str_builder import StringBuilder

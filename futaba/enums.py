@@ -257,6 +257,8 @@ class InfractionType(Enum):
     MUFFLED = "muffled"
     MUTED = "muted"
     UNMUTED = "unmuted"
+    JAILED = "jailed"
+    UNJAILED = "unjailed"
     NOTE = "note"
     WARNING = "warning"
 
@@ -282,6 +284,10 @@ class InfractionType(Enum):
             return ICONS["mute"]
         elif self == InfractionType.UNMUTED:
             return ICONS["unmute"]
+        elif self == InfractionType.JAILED:
+            return ICONS["jail"]
+        elif self == InfractionType.UNJAILED:
+            return ICONS["jail"]
         elif self == InfractionType.NOTE:
             return ICONS["note"]
         elif self == InfractionType.WARNING:
