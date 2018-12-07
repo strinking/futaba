@@ -126,6 +126,7 @@ class InfractionModel:
             attributes=attributes or {},
         )
         result = self.sql.execute(ins)
+
         id, = result.inserted_primary_key
         return Infraction.build(
             id=id,
@@ -136,23 +137,6 @@ class InfractionModel:
             type=type,
             attributes=attributes,
         )
-
-    def add_member_event(self, causer, member, type):
-        # For all events without attributes
-        assert type in (
-            InfractionType.JOINED,
-            InfractionType.LEFT,
-            InfractionType.KICKED,
-            InfractionType.BANNED,
-            InfractionType.UNBANNED,
-            InfractionType.SOFTBAN,
-            InfractionType.MUFFLED,
-            InfractionType.MUTED,
-            InfractionType.UNMUTED,
-        )
-
-        logger.debug("Adding infraction event for member event")
-        return self.add_infraction(causer, member, type)
 
     def add_member_note(self, causer, member, note):
         logger.debug("Adding note on member")

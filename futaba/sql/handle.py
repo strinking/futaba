@@ -22,6 +22,7 @@ from .models import (
     AliasHistoryModel,
     FilterModel,
     GuildsModel,
+    InfractionModel,
     JournalModel,
     ModerationModel,
     NaviModel,
@@ -45,6 +46,7 @@ class SqlHandler:
         "alias",
         "filter",
         "guilds",
+        "infraction",
         "journal",
         "moderation",
         "navi",
@@ -65,6 +67,7 @@ class SqlHandler:
         self.alias = AliasHistoryModel(self, meta)
         self.filter = FilterModel(self, meta)
         self.guilds = GuildsModel(self, meta)
+        self.infraction = InfractionModel(self, meta)
         self.journal = JournalModel(self, meta)
         self.moderation = ModerationModel(self, meta)
         self.navi = NaviModel(self, meta)

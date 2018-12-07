@@ -18,6 +18,7 @@ and abstracted way.
 from .alias import AliasHistoryModel
 from .filter import FilterModel
 from .guilds import GuildsModel
+from .infraction import InfractionModel
 from .journal import JournalModel
 from .moderation import ModerationModel
 from .navi import NaviModel
