@@ -89,7 +89,7 @@ class Moderation(AbstractCog):
 
     @commands.command(name="nick", aliases=["nickname", "renick"])
     @commands.guild_only()
-    @permissions.check_mod()
+    @permissions.check_perm("manage_nicknames")
     async def nick(self, ctx, member: MemberConv, nick: str = None):
         """ Changes or reset a member's nickname. """
 
@@ -107,7 +107,7 @@ class Moderation(AbstractCog):
 
     @commands.command(name="mute", aliases=["shitpost"])
     @commands.guild_only()
-    @permissions.check_mod()
+    @permissions.check_perm("manage_roles")
     async def mute(self, ctx, member: MemberConv, minutes: int, *, reason: str = None):
         """
         Mutes the user for the given number of minutes.
@@ -144,7 +144,7 @@ class Moderation(AbstractCog):
 
     @commands.command(name="unmute", aliases=["unshitpost"])
     @commands.guild_only()
-    @permissions.check_mod()
+    @permissions.check_perm("manage_roles")
     async def unmute(
         self, ctx, member: MemberConv, minutes: int = 0, *, reason: str = None
     ):
@@ -173,7 +173,7 @@ class Moderation(AbstractCog):
 
     @commands.command(name="jail", aliases=["dunce"])
     @commands.guild_only()
-    @permissions.check_mod()
+    @permissions.check_perm("manage_roles")
     async def jail(self, ctx, member: MemberConv, minutes: int, *, reason: str = None):
         """
         Jails the user.
@@ -200,7 +200,7 @@ class Moderation(AbstractCog):
 
     @commands.command(name="unjail", aliases=["undunce"])
     @commands.guild_only()
-    @permissions.check_mod()
+    @permissions.check_perm("manage_roles")
     async def unjail(
         self, ctx, member: MemberConv, minutes: int = 0, *, reason: str = None
     ):
@@ -225,7 +225,7 @@ class Moderation(AbstractCog):
 
     @commands.command(name="kick")
     @commands.guild_only()
-    @permissions.check_mod()
+    @permissions.check_perm("kick_members")
     async def kick(self, ctx, user: UserConv, *, reason: str):
         """
         Kicks the user from the guild with a reason
@@ -248,7 +248,7 @@ class Moderation(AbstractCog):
 
     @commands.command(name="ban")
     @commands.guild_only()
-    @permissions.check_admin()
+    @permissions.check_perm("ban_members")
     async def ban(self, ctx, user: UserConv, *, reason: str):
         """
         Bans the user from the guild with a reason
@@ -273,7 +273,7 @@ class Moderation(AbstractCog):
 
     @commands.command(name="softban", aliases=["soft", "sban"])
     @commands.guild_only()
-    @permissions.check_admin()
+    @permissions.check_perm("ban_members")
     async def softban(self, ctx, user: UserConv, *, reason: str):
         """
         Soft-bans the user from the guild with a reason.
@@ -314,7 +314,7 @@ class Moderation(AbstractCog):
 
     @commands.command(name="unban", aliases=["pardon"])
     @commands.guild_only()
-    @permissions.check_admin()
+    @permissions.check_perm("ban_members")
     async def unban(self, ctx, user: UserConv, *, reason: str):
         """
         Unbans the id from the guild with a reason.

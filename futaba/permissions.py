@@ -28,9 +28,11 @@ __all__ = [
     "owner_perm",
     "admin_perm",
     "mod_perm",
+    "has_perm",
     "check_owner",
     "check_admin",
     "check_mod",
+    "check_perm",
 ]
 
 ELEVATED_PERMISSION_NAMES = (
@@ -140,11 +142,22 @@ def admin_perm(ctx: commands.Context):
 
 
 def mod_perm(ctx: commands.Context):
+    """ Check if the given member is a moderator. """
 
     if isinstance(ctx.channel, discord.abc.PrivateChannel):
         return False
 
     return is_mod_perm(ctx.channel.permissions_for(ctx.author))
+
+
+def has_perm(ctx: commands.Context, name: str):
+    """ Check if the given member has the specified permission. """
+
+    if isinstance(ctx.channel, discord.abc.PrivateChannel):
+        return False
+
+    perms = ctx.channel.permissions_for(ctx.author)
+    return getattr(perms, name)
 
 
 def check_owner():
@@ -157,7 +170,6 @@ def check_admin():
     """ Check if user is admin or higher """
 
     def checkperm(ctx):
-        """ Check the different perms """
         return owner_perm(ctx) or admin_perm(ctx)
 
     return commands.check(checkperm)
@@ -167,7 +179,19 @@ def check_mod():
     """ Check if user is moderator or higher """
 
     def checkperm(ctx):
-        """ Check the different perms """
         return owner_perm(ctx) or admin_perm(ctx) or mod_perm(ctx)
+
+    return commands.check(checkperm)
+
+
+def check_perm(name):
+    """ Check if user has the given permission """
+
+    perms = discord.Permissions()
+    if not hasattr(perms, name):
+        raise AttributeError(f"No such permission name: {name}")
+
+    def checkperm(ctx):
+        return has_perm(ctx, name)
 
     return commands.check(checkperm)
