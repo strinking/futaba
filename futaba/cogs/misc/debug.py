@@ -10,30 +10,39 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-"""
-Cog for miscellaneous owner-only debugging commands.
-"""
+""" Cog for miscellaneous owner-only debugging commands. """
 
+import asyncio
 import logging
 
 import aiohttp
-import discord
 from discord.ext import commands
 
 from futaba import permissions
 from futaba.enums import Reactions
+from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
 __all__ = ["Debugging"]
 
 
-class Debugging:
-    __slots__ = ("bot", "journal")
+class Debugging(AbstractCog):
+    __slots__ = ("journal",)
 
     def __init__(self, bot):
-        self.bot = bot
+        super().__init__(bot)
         self.journal = bot.get_broadcaster("/debug")
+
+    def setup(self):
+        pass
+
+    @commands.command(name="testlong", aliases=["testwait"], hidden=True)
+    @permissions.check_owner()
+    async def test_long_command(self, ctx, delay: float = 4.0):
+        """ A command that is always successful, but takes a long time to finish. """
+
+        await asyncio.sleep(abs(delay))
 
     @commands.command(name="testerror", hidden=True)
     @permissions.check_owner()

@@ -15,8 +15,10 @@ import logging
 import os
 
 import discord
+from discord import MessageType
 
 from futaba.enums import FilterType, LocationType, NameType
+from futaba.permissions import is_admin_perm
 from futaba.str_builder import StringBuilder
 from .common import MASK_NICK
 from .file import FoundFileViolation, check_file_filter
@@ -50,6 +52,18 @@ def filter_immune(bot, guild, member, channel=None):
     if member.id in bot.config.owner_ids:
         return True
 
+    # Check manually-added users
+    if bot.sql.filter.user_is_filter_immune(guild, member):
+        return True
+
+    # In the case where the author isn't a Member yet
+    if not isinstance(member, discord.Member):
+        id = member.id
+        member = guild.get_member(id)
+        if member is None:
+            logger.warning("Cannot find member for user ID %d", id)
+            return False
+
     # Fetch most specific permissions
     if channel is None:
         perms = member.guild_permissions
@@ -57,17 +71,13 @@ def filter_immune(bot, guild, member, channel=None):
         perms = channel.permissions_for(member)
 
     # Check admins
-    if perms.manage_guild:
+    if is_admin_perm(perms):
         return True
 
-    # Check moderators (if enabled)
+    # Check channel moderators (if enabled)
     if filter_settings.manage_messages_immune:
         if perms.manage_messages:
             return True
-
-    # Check manually-added users
-    if bot.sql.filter.user_is_filter_immune(guild, member):
-        return True
 
     return False
 
@@ -81,6 +91,11 @@ async def check_message(cog, message):
     # Don't filter PMs
     if message.guild is None:
         logger.debug("Not checking message because it's not from a guild")
+        return
+
+    # Don't check special messages
+    if message.type != MessageType.default:
+        logger.debug("Ignoring non-default message")
         return
 
     # Check that we actually have permissions to delete
@@ -147,10 +162,8 @@ async def check_member_update(cog, before, after):
     inappropriate.
     """
 
-    logger.debug("Checking member update")
-    guild = before.guild
-
     # Check that we actually have permissions to manage roles
+    guild = before.guild
     if not guild.me.guild_permissions.manage_roles:
         logger.debug("I don't have permission to manage roles here")
         return

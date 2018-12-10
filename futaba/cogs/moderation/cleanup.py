@@ -16,16 +16,17 @@ Commands related to cleaning up messages in bulk.
 
 import json
 import logging
-from io import BytesIO
 
 import discord
 from discord.ext import commands
 
 from futaba import permissions
+from futaba.dict_convert import message_dict
 from futaba.exceptions import CommandFailed
 from futaba.str_builder import StringBuilder
 from futaba.unicode import normalize_caseless
-from futaba.utils import escape_backticks, message_to_dict, user_discrim
+from futaba.utils import escape_backticks, user_discrim
+from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
@@ -51,13 +52,16 @@ class _Counter:
         self.value += 1
 
 
-class Cleanup:
-    __slots__ = ("bot", "journal", "dump")
+class Cleanup(AbstractCog):
+    __slots__ = ("journal", "dump")
 
     def __init__(self, bot):
-        self.bot = bot
+        super().__init__(bot)
         self.journal = bot.get_broadcaster("/moderation/cleanup")
         self.dump = bot.get_broadcaster("/dump/moderation/cleanup")
+
+    def setup(self):
+        pass
 
     async def check_count(self, ctx, count):
         embed = discord.Embed(colour=discord.Colour.red())
@@ -82,7 +86,7 @@ class Cleanup:
     @staticmethod
     def dump_messages(messages):
         buffer = StringBuilder()
-        obj = list(map(message_to_dict, reversed(messages)))
+        obj = list(map(message_dict, reversed(messages)))
         json.dump(obj, buffer, ensure_ascii=True)
         return obj, discord.File(buffer.bytes_io(), filename="deleted-messages.json")
 

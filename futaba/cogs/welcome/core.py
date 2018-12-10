@@ -18,6 +18,7 @@ import asyncio
 import logging
 import re
 from collections import deque, namedtuple
+from datetime import datetime, timedelta
 
 import discord
 from discord.ext import commands
@@ -25,7 +26,9 @@ from discord.ext import commands
 from futaba import permissions
 from futaba.exceptions import CommandFailed, InvalidCommandContext, SendHelp
 from futaba.journal import ModerationListener
-from futaba.utils import user_discrim
+from futaba.utils import plural, user_discrim
+from .role_reapplication import RoleReapplication
+from ..abc import AbstractCog
 
 FakeContext = namedtuple("FakeContext", ("author", "channel", "guild"))
 logger = logging.getLogger(__name__)
@@ -33,6 +36,7 @@ logger = logging.getLogger(__name__)
 __all__ = ["format_message", "Welcome"]
 
 AGREE_REASON = "User agreed to the server's rules and policies"
+AGREE_DELAY_MESSAGE = "Thank you for agreeing to the rules. Please wait while you are being transferred..."
 FORMAT_HELP_LIST = """
 If you want to send a literal `{` or `}`, send `{{` / `}}`.
 Accepted parameters:
@@ -77,18 +81,22 @@ def format_message(welcome_message, ctx):
     )
 
 
-class Welcome:
-    __slots__ = ("bot", "journal", "recently_joined")
+class Welcome(AbstractCog):
+    __slots__ = ("journal", "roles", "recently_joined", "recently_saved_roles")
 
     def __init__(self, bot):
-        self.bot = bot
+        super().__init__(bot)
         self.journal = bot.get_broadcaster("/welcome")
+        self.roles = RoleReapplication(bot)
         self.recently_joined = deque(maxlen=5)
+        self.recently_saved_roles = deque(maxlen=5)
 
         self.add_listener()
+        bot.add_cog(self.roles)
 
-        for guild in bot.guilds:
-            bot.sql.welcome.get_welcome(guild)
+    def setup(self):
+        for guild in self.bot.guilds:
+            self.bot.sql.welcome.get_welcome(guild)
 
     def add_listener(self):
         # Check if a moderation listener is already in place
@@ -133,22 +141,31 @@ class Welcome:
 
         welcome = self.bot.sql.welcome.get_welcome(member.guild)
         roles = self.bot.sql.settings.get_special_roles(member.guild)
-        tasks = []
+
+        # Delay to let Discord API catch up
+        # Without this, some users won't receive the guest role
+        await asyncio.sleep(2)
 
         if welcome.welcome_message and welcome.channel:
-            tasks.append(
-                self.send_welcome_message(
-                    member, welcome.welcome_message, welcome.channel
-                )
+            await self.send_welcome_message(
+                member, welcome.welcome_message, welcome.channel
             )
 
         if roles.guest:
             logger.info(
                 "Adding role %s (%d) to new guest", roles.guest.name, roles.guest.id
             )
-            tasks.append(member.add_roles(roles.guest, reason="New user joined"))
+            await member.add_roles(roles.guest, reason="New user joined")
 
-        await asyncio.gather(*tasks)
+    async def member_update(self, before, after):
+        for (member, time) in self.recently_saved_roles:
+            if member == after:
+                if datetime.now() - time < timedelta(microseconds=50000):
+                    logger.debug("Member update already processed")
+                    return
+
+        self.recently_saved_roles.append((after, datetime.now()))
+        await self.roles.member_update(before, after)
 
     async def member_leave(self, member):
         logger.info(
@@ -204,28 +221,31 @@ class Welcome:
         )
 
         self.recently_joined.append(ctx.author)
-        tasks = []
+        temp_message = await ctx.send(content=AGREE_DELAY_MESSAGE)
 
         if welcome.delete_on_agree:
-            tasks.append(ctx.message.delete())
+            await ctx.message.delete()
+
+        # Delay adding roles to let Discord API catch up
+        # Without this, some role changes might not be applied properly
+        await asyncio.sleep(5)
+        await temp_message.delete()
+
+        if welcome.agreed_message:
+            await ctx.send(content=format_message(welcome.agreed_message, ctx))
+
+        # Reapply saved, old roles
+        await self.roles.reapply_roles(ctx.author)
 
         if roles.member:
             logger.info(
                 "Adding member role %s (%d)", roles.member.name, roles.member.id
             )
-            tasks.append(ctx.author.add_roles(roles.member, reason=AGREE_REASON))
+            await ctx.author.add_roles(roles.member, reason=AGREE_REASON, atomic=True)
 
         if roles.guest:
             logger.info("Removing guest role %s (%d)", roles.guest.name, roles.guest.id)
-            tasks.append(ctx.author.remove_roles(roles.guest, reason=AGREE_REASON))
-
-        if welcome.agreed_message:
-            tasks.append(ctx.send(content=format_message(welcome.agreed_message, ctx)))
-
-        # TODO: restore old roles
-
-        # Run all tasks in parallel
-        await asyncio.gather(*tasks)
+            await ctx.author.remove_roles(roles.guest, reason=AGREE_REASON, atomic=True)
 
         # Send journal event
         agreer = f"{ctx.author.mention} ({user_discrim(ctx.author)})"
@@ -239,7 +259,6 @@ class Welcome:
             raise InvalidCommandContext()
 
     @commands.group(name="welcome", aliases=["wlm"])
-    @commands.guild_only()
     async def welcome(self, ctx):
         """ Manages the welcome cog for managing new users and roles. """
 
@@ -448,3 +467,38 @@ class Welcome:
         self.journal.send(
             "message/agree", ctx.guild, content, icon="welcome", message=agreed_message
         )
+
+    @commands.command(name="guestify")
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def guestify(self, ctx):
+        """
+        In the event that the bot is not properly assigning guest roles to users,
+        this command can be used to manually apply it to all roleless users.
+        """
+
+        roles = self.bot.sql.settings.get_special_roles(ctx.guild)
+        if roles.guest is None:
+            prefix = self.bot.prefix(ctx.guild)
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.description = (
+                f"No guest role set.\nYou can assign one using `{prefix}guest <role>`."
+            )
+            raise CommandFailed(embed=embed)
+
+        tasks = []
+        for member in ctx.guild.members:
+            if member.top_role == ctx.guild.default_role:
+                tasks.append(
+                    member.add_roles(
+                        roles.guest, reason="Manually assigning guest role", atomic=True
+                    )
+                )
+        await asyncio.gather(*tasks)
+
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
+        if tasks:
+            embed.description = f"Added the {roles.guest.mention} role to `{len(tasks)}` member{plural(len(tasks))}."
+        else:
+            embed.description = "No roleless members found."
+        await ctx.send(embed=embed)

@@ -14,7 +14,7 @@
 General module for all interfacing with the database.
 """
 
-from . import hooks
+from . import data, hooks
 from .handle import SqlHandler
 from .transaction import Transaction
 

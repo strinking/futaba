@@ -1,5 +1,5 @@
 #
-# cogs/tracking/__init__.py
+# sql/data/journal.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
@@ -10,11 +10,15 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-from .core import Tracker, LISTENERS, get_removal_cause
+from collections import namedtuple
+
+ConfiguredJournalOutput = namedtuple(
+    "ConfiguredJournalOutput", ("sink", "path", "settings")
+)
 
 
-def setup(bot):
-    cog = Tracker(bot)
-    for listener in LISTENERS:
-        bot.add_listener(getattr(cog, listener), listener)
-    bot.add_cog(cog)
+class JournalOutputData:
+    __slots__ = ("recursive",)
+
+    def __init__(self, recursive):
+        self.recursive = recursive

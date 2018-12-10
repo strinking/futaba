@@ -11,7 +11,7 @@
 #
 
 """
-Holds the custom discord client
+Contains the bot's discord client and the necessary handling functionality.
 """
 
 import asyncio
@@ -19,6 +19,7 @@ import logging
 import os
 import sys
 import traceback
+from collections import deque
 from datetime import datetime
 from io import BytesIO
 
@@ -39,6 +40,7 @@ from .exceptions import (
     SendHelp,
 )
 from .journal import Broadcaster, LoggingOutputListener
+from .lru import LruCache
 from .sql import SqlHandler
 from .str_builder import StringBuilder
 from .unicode import unicode_repr
@@ -48,7 +50,15 @@ logger = logging.getLogger(__name__)
 
 
 class Bot(commands.AutoShardedBot):
-    __slots__ = ("config", "start_time", "journal_cog", "sql", "error_channel")
+    __slots__ = (
+        "config",
+        "start_time",
+        "journal_cog",
+        "sql",
+        "error_channel",
+        "message_locks",
+        "completed_commands",
+    )
 
     def __init__(self, config: Configuration):
         self.config = config
@@ -56,6 +66,8 @@ class Bot(commands.AutoShardedBot):
         self.journal_cog = None
         self.sql = SqlHandler(config.database_url)
         self.error_channel = None
+        self.message_locks = LruCache(20)
+        self.completed_commands = deque(maxlen=20)
 
         super().__init__(
             command_prefix=self.my_command_prefix,
@@ -142,7 +154,7 @@ class Bot(commands.AutoShardedBot):
                 # Something made the loading fail
                 # So log it with reason and tell user to check it
                 logger.error("Load failed: %s", file, exc_info=error)
-                continue
+                raise
             else:
                 logger.info("Loaded cog: %s", file)
 
@@ -152,6 +164,10 @@ class Bot(commands.AutoShardedBot):
 
         # Performing migrations
         self.sql.guilds.migrate(self)
+
+        # Initialize cog databases
+        for cog in self.get_cogs():
+            cog.setup()
 
         # Finished
         pyver = sys.version_info
@@ -184,6 +200,9 @@ class Bot(commands.AutoShardedBot):
         for task in tasks:
             task.execute_later()
 
+    def get_cogs(self):
+        return filter(None, map(self.get_cog, self.cogs))
+
     async def on_guild_join(self, guild):
         """
         Event for handling joining a new guild.
@@ -204,21 +223,49 @@ class Bot(commands.AutoShardedBot):
         with self.sql.transaction():
             self.sql.guilds.remove_guild(guild)
 
-    async def on_command_completion(self, ctx):
+    def message_lock(self, message):
+        return self.message_locks.get_or_put(message, asyncio.Lock)
+
+    async def on_command(self, ctx):
         """
-        Add success reaction when any command completes successfully
+        Handles pre-command instructions, such as adding the "wait" reaction.
         """
 
-        await Reactions.SUCCESS.add(ctx.message)
+        self.loop.create_task(self._add_waiting(ctx.message))
+
+    async def _add_waiting(self, message):
+        await asyncio.sleep(0.5)
+
+        async with self.message_lock(message):
+            if message not in self.completed_commands:
+                await Reactions.WAITING.add(message)
+
+    async def on_command_completion(self, ctx):
+        """
+        Handles successful commands.
+        Adds the success reaction and removes all others.
+        """
+
+        async with self.message_lock(ctx.message):
+            await ctx.message.clear_reactions()
+            await Reactions.SUCCESS.add(ctx.message)
+            self.completed_commands.append(ctx.message)
 
     async def on_command_error(self, ctx, error):
         """
-        Handles errors when a command is invoked but raises an exception.
+        Handles errors when a command raises an exception.
+        Some exceptions are "normal", such as CommandFailed or MissingRequiredArgument.
         """
 
-        # Complains about "context" vs "ctx".
+        # Complains about "context" vs "ctx"
         # pylint: disable=arguments-differ
 
+        async with self.message_lock(ctx.message):
+            await ctx.message.clear_reactions()
+            await self.handle_error(ctx, error)
+            self.completed_commands.append(ctx.message)
+
+    async def handle_error(self, ctx, error):
         if isinstance(error, commands.errors.CommandNotFound):
             # Ignore no command found as we don't care if it wasn't one of our commands
             pass
@@ -305,7 +352,9 @@ class Bot(commands.AutoShardedBot):
                     descr.writeln(f"```py\n{error_str}\n```")
                 embed.description = str(descr)
                 await asyncio.gather(
-                    ctx.send(embed=embed), Reactions.NETWORK.add(ctx.message)
+                    ctx.send(embed=embed),
+                    self.upload_traceback(ctx, trace, filename),
+                    Reactions.NETWORK.add(ctx.message),
                 )
 
             else:
@@ -413,7 +462,7 @@ class Bot(commands.AutoShardedBot):
             full_tb.writeln(f"Roles:")
             for role in ctx.author.roles:
                 perms = role.permissions.value
-                full_tb.writeln(f"  {role.name} ({role.id}): ")
+                full_tb.writeln(f"  {role.name} ({role.id}):")
                 full_tb.writeln(f"    created at: {role.created_at}")
                 full_tb.writeln(f"    members: {len(role.members)}")
                 full_tb.writeln(f"    permissions: 0x{perms:016x}")
@@ -423,5 +472,7 @@ class Bot(commands.AutoShardedBot):
         full_tb.writeln(trace)
 
         # Upload traceback to error channel
+        unix_time = int(datetime.now().timestamp())
+        filename = f"futaba-extended-traceback-{unix_time}.log"
         file = discord.File(fp=full_tb.bytes_io(), filename=filename)
         await self.error_channel.send(file=file)

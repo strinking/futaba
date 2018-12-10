@@ -16,6 +16,7 @@ Informational commands that make finding and gathering data easier.
 
 import asyncio
 import logging
+import re
 import unicodedata
 from collections import Counter
 from itertools import islice
@@ -23,7 +24,7 @@ from itertools import islice
 import discord
 from discord.ext import commands
 
-from futaba.converters import EmojiConv, GuildChannelConv, RoleConv, UserConv
+from futaba.converters import ID_REGEX, EmojiConv, GuildChannelConv, RoleConv, UserConv
 from futaba.exceptions import CommandFailed
 from futaba.permissions import mod_perm
 from futaba.similar import similar_users
@@ -37,6 +38,7 @@ from futaba.utils import (
     user_discrim,
 )
 from futaba.unicode import UNICODE_CATEGORY_NAME
+from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
@@ -50,13 +52,11 @@ def get_unicode_url(emoji):
     )
 
 
-class Info:
-    """
-    Cog for informational commands.
-    """
+class Info(AbstractCog):
+    """ Cog for informational commands. """
 
-    def __init__(self, bot):
-        self.bot = bot
+    def setup(self):
+        pass
 
     @commands.command(name="emoji", aliases=["emojis"])
     async def emoji(self, ctx, *, name: str):
@@ -83,7 +83,7 @@ class Info:
             embed.description = str(emoji)
             embed.set_author(name=name)
             embed.set_thumbnail(url=emoji.url)
-            embed.add_field(name="Name", value=emoji.name)
+            embed.add_field(name="Name", value=f"`{emoji.name}`")
             embed.add_field(name="Guild", value=emoji.guild.name)
             embed.add_field(name="ID", value=str(emoji.id))
             embed.add_field(name="Managed", value=lowerbool(emoji.managed))
@@ -121,7 +121,9 @@ class Info:
                 embed.description = f"No user found for `{name}`. Try `{prefix}ufind`."
                 raise CommandFailed(embed=embed)
 
-    @commands.command(name="uinfo", aliases=["userinfo", "memberinfo"])
+    @commands.command(
+        name="uinfo", aliases=["user", "userinfo", "member", "memberinfo"]
+    )
     async def uinfo(self, ctx, *, name: str = None):
         """
         Fetch information about a user, whether they are in the guild or not.
@@ -406,11 +408,31 @@ class Info:
 
     @commands.command(name="rawmessage", aliases=["raw", "rawmsg"])
     @commands.guild_only()
-    async def raw_message(self, ctx, *ids: int):
+    async def raw(self, ctx, *, argument: str):
         """
         Finds and prints the raw contents of the messages with the given IDs.
         """
 
+        ids = []
+        parts = re.split(r"\s", argument)
+        if not parts:
+            raise CommandFailed(content="No message IDs or text passed!")
+
+        for part in parts:
+            if ID_REGEX.match(part) is None:
+                await self.raw_argument(ctx, argument)
+                return
+
+            ids.append(int(part))
+        await self.raw_message(ctx, ids)
+
+    async def raw_argument(self, ctx, argument):
+        logger.info("Outputting raw form of the argument: '%s'", argument)
+
+        content = "You sent:\n" f"```\n{escape_backticks(argument)}\n```"
+        await ctx.send(content=content)
+
+    async def raw_message(self, ctx, ids):
         logger.info("Finding message IDs for raws: %s", ids)
 
         if not mod_perm(ctx) and len(ids) > 5:
@@ -419,16 +441,11 @@ class Info:
 
         messages = await self.get_messages(ctx.guild.text_channels, ids)
         for message in messages:
-            await ctx.send(
-                content="\n".join(
-                    (
-                        f"{message.author.name}#{message.author.discriminator} sent:",
-                        "```",
-                        escape_backticks(message.content),
-                        "```",
-                    )
-                )
+            content = (
+                f"{message.author.name}#{message.author.discriminator} sent:\n"
+                f"```\n{escape_backticks(message.content)}\n```"
             )
+            await ctx.send(content=content)
 
     @commands.command(name="embeds")
     @commands.guild_only()

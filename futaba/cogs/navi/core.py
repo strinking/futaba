@@ -22,26 +22,27 @@ import dateparser
 import discord
 from discord.ext import commands
 
-from futaba import permissions
 from futaba.exceptions import CommandFailed
 from futaba.navi import SendMessageTask, build_navi_task
 from futaba.str_builder import StringBuilder
 from futaba.utils import escape_backticks, fancy_timedelta
+from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
 
-class Navi:
-    __slots__ = ("bot", "journal")
+class Navi(AbstractCog):
+    __slots__ = ("journal",)
 
     def __init__(self, bot):
-        self.bot = bot
+        super().__init__(bot)
         self.journal = bot.get_broadcaster("/navi")
 
-        raw_tasks = bot.sql.navi.get_tasks()
+    def setup(self):
+        raw_tasks = self.bot.sql.navi.get_tasks()
         for raw_task in raw_tasks.values():
             try:
-                task = build_navi_task(bot, raw_task)
+                task = build_navi_task(self.bot, raw_task)
                 task.execute_later()
             except ValueError as error:
                 logger.warning(

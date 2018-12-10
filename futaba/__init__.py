@@ -18,11 +18,13 @@ from . import (
     client,
     config,
     converters,
+    dict_convert,
     download,
     emojis,
     enums,
     exceptions,
     journal,
+    lru,
     navi,
     permissions,
     similar,
@@ -32,4 +34,4 @@ from . import (
     utils,
 )
 
-__version__ = "0.2.6"
+__version__ = "0.4.1"

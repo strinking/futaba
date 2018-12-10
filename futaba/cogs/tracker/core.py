@@ -24,6 +24,7 @@ from discord import AuditLogAction
 
 from futaba.enums import MemberLeaveType
 from futaba.utils import user_discrim
+from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,6 @@ MemberLeaveReason = namedtuple(
 )
 
 LISTENERS = (
-    "on_typing",
     "on_message",
     "on_message_edit",
     "on_message_delete",
@@ -54,9 +54,57 @@ LISTENERS = (
 )
 
 
-class Tracker:
+async def get_removal_cause(member, timestamp):
+    async for entry in member.guild.audit_logs(limit=20):
+        if abs(timestamp - entry.created_at) < timedelta(seconds=3):
+            if entry.action == AuditLogAction.kick:
+                if entry.target == member:
+                    return MemberLeaveReason(
+                        type=MemberLeaveType.KICKED,
+                        member=member,
+                        cause=entry.user,
+                        reason=entry.reason,
+                        left_at=entry.created_at,
+                        audit_log_entry=entry,
+                    )
+            elif entry.action == AuditLogAction.ban:
+                if entry.target == member:
+                    return MemberLeaveReason(
+                        type=MemberLeaveType.BANNED,
+                        member=member,
+                        cause=entry.user,
+                        reason=entry.reason,
+                        left_at=entry.created_at,
+                        audit_log_entry=entry,
+                    )
+            elif entry.action == AuditLogAction.member_prune:
+                # Unfortunately the audit log entry doesn't
+                # tell us enough to determine if this member was part of
+                # the prune, so we'll just take a leap of faith and say
+                # it was so.
+
+                return MemberLeaveReason(
+                    type=MemberLeaveType.PRUNED,
+                    member=member,
+                    cause=entry.user,
+                    reason=entry.reason,
+                    left_at=entry.created_at,
+                    audit_log_entry=entry,
+                )
+
+    # Couldn't find anything, must be a voluntary departure
+    return MemberLeaveReason(
+        type=MemberLeaveType.LEFT,
+        member=member,
+        cause=member,
+        reason=None,
+        left_at=timestamp,
+        audit_log_entry=None,
+    )
+
+
+class Tracker(AbstractCog):
     __slots__ = (
-        "bot",
         "journal",
         "new_messages",
         "edited_messages",
@@ -64,11 +112,10 @@ class Tracker:
         "members_joined",
         "members_left",
         "reactions",
-        "typing",
     )
 
     def __init__(self, bot):
-        self.bot = bot
+        super().__init__(bot)
         self.journal = bot.get_broadcaster("/tracking")
         self.new_messages = deque(maxlen=20)
         self.edited_messages = deque(maxlen=20)
@@ -76,7 +123,9 @@ class Tracker:
         self.members_joined = deque(maxlen=20)
         self.members_left = deque(maxlen=20)
         self.reactions = deque(maxlen=20)
-        self.typing = deque(maxlen=5)
+
+    def setup(self):
+        pass
 
     def __unload(self):
         """
@@ -85,34 +134,6 @@ class Tracker:
 
         for listener in LISTENERS:
             self.bot.remove_listener(getattr(self, listener), listener)
-
-    async def on_typing(self, channel, user, when):
-        if (channel, user, when) in self.typing:
-            return
-        else:
-            self.typing.append((channel, user, when))
-
-        if getattr(channel, "guild", None) is None:
-            return
-
-        logger.debug(
-            "Received typing event from %s (%d) in #%s (%d)",
-            user.name,
-            user.id,
-            channel.name,
-            channel.id,
-        )
-
-        content = f"{user.name}#{user.discriminator} ({user.id}) is typing in {channel.mention}"
-        self.journal.send(
-            "typing",
-            channel.guild,
-            content,
-            icon="typing",
-            channel=channel,
-            user=user,
-            when=when,
-        )
 
     @staticmethod
     def build_embed(message):
@@ -139,6 +160,19 @@ class Tracker:
             self.new_messages.append(message)
 
         if message.guild is None or message.author == self.bot.user:
+            return
+
+        blacklist = self.bot.sql.settings.get_tracking_blacklist(message.guild)
+        if blacklist.is_blocked(message.channel) or blacklist.is_blocked(
+            message.author
+        ):
+            logger.debug(
+                "Ignoring received message from %s (%d) in #%s (%d) due to the channel or user being blacklisted",
+                message.author.name,
+                message.author.id,
+                message.channel.name,
+                message.channel.id,
+            )
             return
 
         logger.debug(
@@ -176,6 +210,17 @@ class Tracker:
             self.edited_messages.append(after)
 
         if after.guild is None or after.author == self.bot.user:
+            return
+
+        blacklist = self.bot.sql.settings.get_tracking_blacklist(after.guild)
+        if blacklist.is_blocked(after.channel) or blacklist.is_blocked(after.author):
+            logger.debug(
+                "Ignoring message update from %s (%d) in #%s (%d) due to the channel or user being blacklisted",
+                after.author.name,
+                after.author.id,
+                after.channel.name,
+                after.channel.id,
+            )
             return
 
         logger.debug(
@@ -248,6 +293,18 @@ class Tracker:
         if message.guild is None:
             return
 
+        blacklist = self.bot.sql.settings.get_tracking_blacklist(message.guild)
+        if blacklist.is_blocked(message.channel) or blacklist.is_blocked(
+            message.author
+        ):
+            logger.debug(
+                "Ignoring message deletion of %d by %s (%d) due to the channel or user being blacklisted",
+                message.id,
+                message.author.name,
+                message.author.id,
+            )
+            return
+
         logger.debug(
             "Message %d by %s (%d) was deleted",
             message.id,
@@ -258,7 +315,7 @@ class Tracker:
         # Wait for a bit so we can catch the audit log entry
         timestamp = datetime.now()
         await asyncio.sleep(1)
-        cause = await self.get_removal_cause(message, timestamp)
+        cause = await get_removal_cause(message, timestamp)
 
         content = f"Message {message.id} by {user_discrim(message.author)} was deleted"
         self.journal.send(
@@ -299,6 +356,18 @@ class Tracker:
         if message.guild is None or user == self.bot.user:
             return
 
+        blacklist = self.bot.sql.settings.get_tracking_blacklist(message.guild)
+        if blacklist.is_blocked(message.channel) or blacklist.is_blocked(user):
+            logger.debug(
+                "Ignoring reaction %s added to message %d by %s (%d) due to "
+                "the channel or user adding the reaction being blacklisted",
+                emoji,
+                message.id,
+                user.name,
+                user.id,
+            )
+            return
+
         logger.debug(
             "Reaction %s added to message %d by %s (%d)",
             emoji,
@@ -306,7 +375,10 @@ class Tracker:
             user.name,
             user.id,
         )
-        content = f"{user_discrim(user)} added reaction {emoji} to message {message.id} in {channel.mention}"
+        content = (
+            f"{user_discrim(user)} added reaction {emoji} to message "
+            f"{message.id} in {channel.mention}"
+        )
         self.journal.send(
             "reaction/add",
             message.guild,
@@ -329,6 +401,18 @@ class Tracker:
         emoji = reaction.emoji
 
         if message.guild is None or user == self.bot.user:
+            return
+
+        blacklist = self.bot.sql.settings.get_tracking_blacklist(message.guild)
+        if blacklist.is_blocked(message.channel) or blacklist.is_blocked(user):
+            logger.debug(
+                "Ignoring reaction %s removed from message %d by %s (%d) due to "
+                "the channel or user adding the reaction being blacklisted",
+                emoji,
+                message.id,
+                user.name,
+                user.id,
+            )
             return
 
         logger.debug(
@@ -357,6 +441,14 @@ class Tracker:
 
     async def on_reaction_clear(self, message, reactions):
         if message.guild is None:
+            return
+
+        blacklist = self.bot.sql.settings.get_tracking_blacklist(message.guild)
+        if blacklist.is_blocked(message.channel):
+            logger.debug(
+                "Ignoring all reactions from message %d being removed due to the channel being blacklisted",
+                message.id,
+            )
             return
 
         logger.debug("All reactions from message %d were removed", message.id)
@@ -397,6 +489,17 @@ class Tracker:
         else:
             self.members_joined.append(member)
 
+        blacklist = self.bot.sql.settings.get_tracking_blacklist(member.guild)
+        if blacklist.is_blocked(member):
+            logger.debug(
+                "Ignoring member %s (%d) joining guild '%s' (%d) due to the user being blacklisted",
+                member.name,
+                member.id,
+                member.guild.name,
+                member.guild.id,
+            )
+            return
+
         logger.debug(
             "Member %s (%d) joined '%s' (%d)",
             member.name,
@@ -413,59 +516,22 @@ class Tracker:
             "member/join", member.guild, content, icon="join", member=member
         )
 
-    async def get_removal_cause(self, member, timestamp):
-        async for entry in member.guild.audit_logs(limit=20):
-            if abs(timestamp - entry.created_at) < timedelta(seconds=3):
-                if entry.action == AuditLogAction.kick:
-                    if entry.target == member:
-                        return MemberLeaveReason(
-                            type=MemberLeaveType.KICKED,
-                            member=member,
-                            cause=entry.user,
-                            reason=entry.reason,
-                            left_at=entry.created_at,
-                            audit_log_entry=entry,
-                        )
-                elif entry.action == AuditLogAction.ban:
-                    if entry.target == member:
-                        return MemberLeaveReason(
-                            type=MemberLeaveType.BANNED,
-                            member=member,
-                            cause=entry.user,
-                            reason=entry.reason,
-                            left_at=entry.created_at,
-                            audit_log_entry=entry,
-                        )
-                elif entry.action == AuditLogAction.member_prune:
-                    # Unfortunately the audit log entry doesn't
-                    # tell us enough to determine if this member was part of
-                    # the prune, so we'll just take a leap of faith and say
-                    # it was so.
-
-                    return MemberLeaveReason(
-                        type=MemberLeaveType.PRUNED,
-                        member=member,
-                        cause=entry.user,
-                        reason=entry.reason,
-                        left_at=entry.created_at,
-                        audit_log_entry=entry,
-                    )
-
-        # Couldn't find anything, must be a voluntary departure
-        return MemberLeaveReason(
-            type=MemberLeaveType.LEFT,
-            member=member,
-            cause=member,
-            reason=None,
-            left_at=timestamp,
-            audit_log_entry=None,
-        )
-
     async def on_member_remove(self, member):
         if member in self.members_left:
             return
         else:
             self.members_left.append(member)
+
+        blacklist = self.bot.sql.settings.get_tracking_blacklist(member.guild)
+        if blacklist.is_blocked(member):
+            logger.debug(
+                "Ignoring member %s (%d) leaving guild '%s' (%d) due to the user being blacklisted",
+                member.name,
+                member.id,
+                member.guild.name,
+                member.guild.id,
+            )
+            return
 
         logger.debug(
             "Member %s (%d) left '%s' (%d)",
@@ -478,7 +544,7 @@ class Tracker:
         # Wait for a bit so we can catch the audit log entry
         timestamp = datetime.now()
         await asyncio.sleep(2)
-        cause = await self.get_removal_cause(member, timestamp)
+        cause = await get_removal_cause(member, timestamp)
 
         content = f"Member {member.mention} ({user_discrim(member)}) left"
         self.journal.send(

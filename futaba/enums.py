@@ -23,10 +23,15 @@ class Reactions(Enum):
     FAIL = "\N{CROSS MARK}"
     DENY = "\N{NO ENTRY SIGN}"
     MISSING = "\N{BLACK QUESTION MARK ORNAMENT}"
+    WAITING = "\N{HOURGLASS}"
     NETWORK = "\N{ELECTRIC PLUG}"
 
     async def add(self, message: discord.Message):
-        await message.add_reaction(self.value)
+        try:
+            await message.add_reaction(self.value)
+        except discord.NotFound:
+            # Message was deleted
+            pass
 
 
 @unique
@@ -228,3 +233,13 @@ class LocationType(Enum):
 class TaskType(Enum):
     CHANGE_ROLES = "change_roles"
     SEND_MESSAGE = "send_message"
+
+
+@unique
+class ManualModActionType(Enum):
+    SPECIAL_ROLE_MEMBER = "member"
+    SPECIAL_ROLE_GUEST = "guest"
+    SPECIAL_ROLE_MUTE = "mute"
+    SPECIAL_ROLE_JAIL = "jail"
+    KICK_MEMBER = "kick"
+    BAN_MEMBER = "ban"

@@ -23,11 +23,13 @@ from hashlib import sha1
 import discord
 from discord.ext import commands
 
-from futaba import permissions, __version__
+from futaba import __version__
 from futaba.download import download_links
 from futaba.exceptions import CommandFailed
 from futaba.str_builder import StringBuilder
+from futaba.unicode import unicode_repr
 from futaba.utils import GIT_HASH, URL_REGEX, fancy_timedelta
+from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
@@ -36,12 +38,15 @@ __all__ = ["Miscellaneous"]
 SHA1_ERROR_MESSAGE = "Error downloading file".ljust(40)
 
 
-class Miscellaneous:
-    __slots__ = ("bot", "journal")
+class Miscellaneous(AbstractCog):
+    __slots__ = ("journal",)
 
     def __init__(self, bot):
-        self.bot = bot
+        super().__init__(bot)
         self.journal = bot.get_broadcaster("/misc")
+
+    def setup(self):
+        pass
 
     @commands.command(name="ping")
     async def ping(self, ctx):
@@ -54,7 +59,9 @@ class Miscellaneous:
         await ctx.send(content=content)
         self.journal.send("ping", ctx.guild, content, icon="ok")
 
-    @commands.command(name="about", aliases=["futaba", "aboutme", "botinfo"])
+    @commands.command(
+        name="about", aliases=["futaba", "aboutme", "bot", "botinfo", "uptime"]
+    )
     async def about(self, ctx):
         """ Prints information about the running bot. """
 
@@ -64,7 +71,7 @@ class Miscellaneous:
 
         embed = discord.Embed()
         embed.set_thumbnail(url=self.bot.user.avatar_url)
-        embed.set_author(name=f"Futaba v{__version__} {GIT_HASH}")
+        embed.set_author(name=f"Futaba v{__version__} [{GIT_HASH}]")
         embed.add_field(name="Running for", value=fancy_timedelta(self.bot.uptime))
         embed.add_field(
             name="Created by",
@@ -75,6 +82,7 @@ class Miscellaneous:
             (
                 f"{python_emoji} Powered by Python {pyver.major}.{pyver.minor}.{pyver.micro}",
                 f"{discord_py_emoji} Using discord.py {discord.__version__}",
+                f"\N{TIMER CLOCK} Latency: {self.bot.latency:.3} s",
             )
         )
 
@@ -108,6 +116,13 @@ class Miscellaneous:
             channel=ctx.channel,
             emoji=emoji,
         )
+
+    @commands.command(name="unicoderepr", aliases=["unicrepr", "urepr"])
+    async def unicode_repr(self, ctx, *, text: str):
+        """ Outputs the Python representation of the given unicode string. """
+
+        text_repr = unicode_repr(text)
+        await ctx.send(content=f"`{text_repr}`")
 
     @commands.command(name="sha1sum", aliases=["sha1", "sha", "hashsum", "hash"])
     async def sha1sum(self, ctx, *urls: str):

@@ -74,6 +74,8 @@ Managing user filter immunity. Has attributes: `member: discord.Member`, `cause:
 * `/journal/channel/add` - When a journal output channel is added. Attributes: `channel: discord.TextChannel, path: str, recursive: bool`
 * `/journal/channel/remove` - When a journal output channel is removed. Attributes: `channel: discord.TextChannel, path: str`
 * `/journal/channel/move` - When a journal output channel is moved. Attributes: `old_channel: discord.TextChannel, new_channel: discord.TextChannel, path: str, recursive: bool`
+* `/journal/user/add` - When a journal output is added to a user. Attributes: `user: discord.Member, path: str, recursive: bool`
+* `/journal/user/remove` - When a journal output is removed from a user. Attributes: `user: discord.Member, path: str`
 
 ### Miscellaneous
 * `/misc/ping` - Time from receiving a command to sending a message to Discord. Attributs: `ms: float`
@@ -103,21 +105,32 @@ All attributes have `channel: discord.TextChannel`, `messages: List[discord.Mess
 * `/dump/moderation/cleanup/text` - Contains the deleted messages in JSON form. Attributes: `messages: dict`.
 
 ### Welcome cog
-* `/welcome/member/agree` - Member agrees to the rules. Attributes: `user: discord.Member`
-* `/welcome/channel/set` - When the welcome change is changed. Attributes: `channel: Optional[discord.TextChannel]`, `cause: discord.Member`
-* `/welcome/message/welcome` - The welcome message was set or unset. Attributes: `message: Optional[str]`
-* `/welcome/message/goodbye` - The goodbye message was set or unset. Attributes: `message: Optional[str]`
-* `/welcome/message/agree` - The agreement message was set or unset. Attributes: `message: Optional[str]`
+Join management:
+* `/welcome/member/agree` - Member agrees to the rules. Attributes: `user: discord.Member`.
+* `/welcome/channel/set` - When the welcome change is changed. Attributes: `channel: Optional[discord.TextChannel]`, `cause: discord.Member`.
+* `/welcome/message/welcome` - The welcome message was set or unset. Attributes: `message: Optional[str]`.
+* `/welcome/message/goodbye` - The goodbye message was set or unset. Attributes: `message: Optional[str]`.
+* `/welcome/message/agree` - The agreement message was set or unset. Attributes: `message: Optional[str]`.
+
+Role reapplication:
+* `/roles/reapply` - Reapplying roles to a member. Attributes: `member: discord.Member`, `roles: Tuple[discord.Role]`.
+* `/roles/save` - Saving updated roles for a member. Attributes: `member: discord.Member`.
+
+### Self-assignable roles cog
+* `/roles/self/add` - A member added some self-assignable roles to themselves. Attributes: `roles: List[discord.Role]`.
+* `/roles/self/remove` - A member removed some self-assignable roles from themselves. Attributes: `roles: List[discord.Role]`.
+* `/roles/joinable/add` - Some role(s) were set as "joinable". Attributes: `roles: List[discord.Role]`.
+* `/roles/joinable/remove` - Some role(s) were set as "unjoinable". Attributes: `roles: List[discord.Role]`.
+* `/roles/channel/set` - The channels permitted for bot commands was changed. Attributes: `channels: List[discord.TextChannel]`.
 
 ### Settings cog
-* `/settings/prefix` - The bot command prefix was set or unset. Attributes: `prefix: Optional[str]`, `default_prefix: str`
+* `/settings/prefix` - The bot command prefix was set or unset. Attributes: `prefix: Optional[str]`, `default\_prefix: str`
 * `/settings/roles/member` - The member role was set or unset. Attributes: `role: Optional[discord.Role]`
 * `/settings/roles/guest` - The guest role was set or unset. Attributes: `role: Optional[discord.Role]`
 * `/settings/roles/mute` - The mute role was set or unset. Attributes: `role: Optional[discord.Role]`
 * `/settings/roles/jail` - The jail role was set or unset. Attributes: `role: Optional[discord.Role]`
 
 ### Tracker cog
-* `/tracking/typing` - Typing event. Attributes: `channel: discord.Messageable`, `user: discord.User`, `when: datetime`
 * `/tracking/message/new` - A new message was sent. Attributes: `message: discord.Message`
 * `/tracking/jump/message/new` - Jump link for new message. Same attributes.
 * `/tracking/full/message/new` - Full message content for new message, with jump link. Same attributes.

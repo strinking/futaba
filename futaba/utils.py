@@ -14,6 +14,7 @@ import logging
 import re
 import subprocess
 from datetime import datetime
+from io import BytesIO
 from itertools import zip_longest
 
 import discord
@@ -32,9 +33,10 @@ __all__ = [
     "async_partial",
     "map_or",
     "if_not_null",
-    "message_to_dict",
+    "copy_discord_file",
     "first",
     "chunks",
+    "partition_on",
     "lowerbool",
     "plural",
     "user_discrim",
@@ -153,69 +155,13 @@ def if_not_null(obj, alt):
     return obj
 
 
-def message_to_dict(message: discord.Message):
-    """ Converts a message into a JSON-safe python dictionary. """
+def copy_discord_file(file: discord.File):
+    if isinstance(file.fp, str):
+        # Copying is unnecessary, it's going to read from disk
+        return file
 
-    def user_dict(user):
-        return {
-            "id": str(user.id),
-            "name": user.name,
-            "nick": getattr(user, "nick", None),
-            "discriminator": user.discriminator,
-        }
-
-    def named_dict(obj):
-        return {"id": str(obj.id), "name": obj.name}
-
-    def attachment_dict(attach):
-        return {
-            "id": str(attach.id),
-            "size": attach.size,
-            "height": attach.height,
-            "width": attach.width,
-            "filename": attach.filename,
-            "url": attach.url,
-            "proxy_url": attach.proxy_url,
-        }
-
-    def emoji_dict(emoji):
-        if isinstance(emoji, str):
-            return emoji
-        else:
-            return {
-                "id": str(emoji.id),
-                "name": emoji.name,
-                "animated": emoji.animated,
-                "managed": emoji.managed,
-                "guild_id": str(emoji.guild_id),
-                "url": emoji.url,
-            }
-
-    def reaction_dict(react):
-        return {"emoji": emoji_dict(react.emoji), "count": react.count}
-
-    # Build the final dictionary
-    return {
-        "id": str(message.id),
-        "tts": message.tts,
-        "type": message.type.name,
-        "author": user_dict(message.author),
-        "content": message.content or message.system_content,
-        "embeds": [embed.to_dict() for embed in message.embeds],
-        "channel": named_dict(message.channel),
-        "mention_everyone": message.mention_everyone,
-        "user_mentions": [user_dict(user) for user in message.mentions],
-        "channel_mentions": [named_dict(chan) for chan in message.channel_mentions],
-        "role_mentions": [named_dict(role) for role in message.role_mentions],
-        "pinned": message.pinned,
-        "webhook_id": map_or(str, message.webhook_id),
-        "attachments": [attachment_dict(attach) for attach in message.attachments],
-        "reactions": [reaction_dict(react) for react in message.reactions],
-        "activity": message.activity,
-        "application": message.application,
-        "guild_id": map_or(lambda g: str(g.id), message.guild),
-        "edited_at": map_or(str, message.edited_at),
-    }
+    new_buffer = BytesIO(file.fp.getbuffer().tobytes())
+    return discord.File(new_buffer, file.filename)
 
 
 def first(iterable, default=None):
@@ -235,6 +181,27 @@ def chunks(iterable, count, fillvalue=None):
 
     args = [iter(iterable)] * count
     return zip_longest(*args, fillvalue=fillvalue)
+
+
+def partition_on(predicate, iterable, map_fn=None):
+    """ Partition an iterable into two lists on the return type of the predicate. """
+
+    left, right = [], []
+
+    if map_fn is None:
+        for i in iterable:
+            if predicate(i):
+                left.append(i)
+            else:
+                right.append(i)
+    else:
+        for i in iterable:
+            if predicate(i):
+                left.append(map_fn(i))
+            else:
+                right.append(map_fn(i))
+
+    return left, right
 
 
 def lowerbool(value):

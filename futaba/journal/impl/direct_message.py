@@ -1,5 +1,5 @@
 #
-# journal/impl/channel_output.py
+# journal/impl/direct_message.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2018 Jake Richardson, Ammon Smith, jackylam5
@@ -11,43 +11,40 @@
 #
 
 """
-A Listener that outputs messages to the configured Discord channel.
+A Listener that DMs messages to the configured Discord user.
 """
 
 import logging
 
+from futaba.permissions import is_mod_perm
 from futaba.utils import copy_discord_file
 from ..listener import Listener
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["ChannelOutputListener"]
+__all__ = ["DirectMessageListener"]
 
 
-class ChannelOutputListener(Listener):
-    def __init__(self, router, path, channel, recursive=True):
+class DirectMessageListener(Listener):
+    def __init__(self, router, path, user, recursive=True):
         super().__init__(router, path, recursive)
-        self.channel = channel
-
-    def filter(self, path, guild, content, attributes):
-        """
-        Ensures that this event is actually meant for this channel output logger.
-        """
-
-        if guild is None:
-            logger.debug("Skipping event, no guild attached")
-            return False
-
-        if self.channel not in guild.channels:
-            logger.debug("Skipping event, wrong guild!")
-            return False
-
-        return True
+        self.user = user
 
     async def handle(self, path, guild, content, attributes):
         """
         Send the message to the given channel, applying the icon if applicable.
         """
+
+        if guild is not None:
+            content = f"**[{guild.name}]** {content}"
+
+            # Don't send journal events if they're not a mod
+            member = guild.get_member(self.user.id)
+            if member is None or not is_mod_perm(member.guild_permissions):
+                logger.debug(
+                    "Not sending journal event: not a member or not a moderator"
+                )
+                return
 
         kwargs = {"content": content}
 
@@ -58,4 +55,4 @@ class ChannelOutputListener(Listener):
         if "files" in attributes:
             kwargs["files"] = list(map(copy_discord_file, attributes["files"]))
 
-        await self.channel.send(**kwargs)
+        await self.user.send(**kwargs)
