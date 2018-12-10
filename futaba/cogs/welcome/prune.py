@@ -45,7 +45,10 @@ class Prune:
 
     def __init__(self, bot):
         self.bot = bot
-        self.journal = bot.get_broadcaster("/welcome/prune")
+        self.journal = bot.get_broadcaster("/welcome")
+
+    def setup(self):
+        pass
 
     async def prune_member(self, ctx, days):
         """
@@ -81,7 +84,7 @@ class Prune:
                 logger.warning("Cannnot prunt member %s (%d)", member.name, member.id)
 
         return pruned
-    
+
     @commands.command(name="prune", aliases=["purge"])
     @commands.guild_only()
     @permissions.check_admin()
@@ -92,5 +95,14 @@ class Prune:
         """
 
         pruned_members = await self.prune_member(ctx, days)
-        
+        content = f"Pruned {len(pruned_members)}"
+        embed = discord.Embed(description=content)
+        await ctx.send(embed=embed)
 
+        self.journal.send(
+                "prune",
+                ctx.guild,
+                content,
+                icon="kick",
+                cause=ctx.author,
+            )
