@@ -16,7 +16,7 @@ from collections import namedtuple
 
 import discord
 
-from futaba.enums import FilterType, LocationType
+from futaba.enums import FilterType, InfractionType, LocationType
 from futaba.str_builder import StringBuilder
 from futaba.utils import escape_backticks
 from .common import journal_violation
@@ -80,10 +80,10 @@ async def check_text_filter(cog, message):
         logger.debug("No text violations found!")
     else:
         roles = cog.bot.sql.settings.get_special_roles(message.guild)
-        await found_text_violation(triggered, roles)
+        await found_text_violation(cog.bot.sql, triggered, roles)
 
 
-async def found_text_violation(triggered, roles):
+async def found_text_violation(sql, triggered, roles):
     """
     Processes a violation of the text filter. This coroutine is responsible
     for actual enforcement, based on the filter_type.
@@ -156,6 +156,19 @@ async def found_text_violation(triggered, roles):
         logger.info("Notifying staff of filter violation")
         journal_violation(
             journal, "text", message, filter_type, escaped_filter_text, escaped_content
+        )
+
+        infr_type = InfractionType.from_filter_type(filter_type)
+        sql.infraction.add_infraction(
+            message.author,
+            message.author,
+            infr_type,
+            {
+                "message_id": message.id,
+                "channel_id": message.channel.id,
+                "filter_text": filter_text,
+                "content": message.content,
+            },
         )
 
     if severity >= FilterType.BLOCK.level:

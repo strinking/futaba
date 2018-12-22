@@ -14,7 +14,7 @@ import asyncio
 import logging
 from collections import namedtuple
 
-from futaba.enums import FilterType, NameType
+from futaba.enums import FilterType, InfractionType, NameType
 from futaba.str_builder import StringBuilder
 from futaba.utils import escape_backticks
 from .common import MASK_NICK, journal_name_violation
@@ -94,6 +94,14 @@ async def check_name_filter(cog, name, name_type, member):
             filter_type,
             escaped_filter_text,
             escaped_name,
+        )
+
+        infr_type = InfractionType.from_filter_type(filter_type)
+        cog.bot.sql.infraction.add_infraction(
+            member,
+            member,
+            infr_type,
+            {"name": name, "name_type": name_type.value, "filter_text": filter_text},
         )
 
     if severity >= FilterType.BLOCK.level:

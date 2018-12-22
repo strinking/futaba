@@ -20,7 +20,7 @@ from urllib.parse import urlparse
 import discord
 
 from futaba.download import download_links
-from futaba.enums import FilterType
+from futaba.enums import FilterType, InfractionType
 from futaba.str_builder import StringBuilder
 from futaba.utils import URL_REGEX
 from .common import journal_violation
@@ -32,7 +32,7 @@ __all__ = ["FoundFileViolation", "check_file_filter"]
 
 FoundFileViolation = namedtuple(
     "FoundFileViolation",
-    ("bot", "journal", "message", "filter_type", "url", "binio", "hashsum"),
+    ("bot", "journal", "message", "filter_type", "description", "url", "binio", "hashsum"),
 )
 
 
@@ -53,7 +53,9 @@ async def check_file_filter(cog, message):
             digest = sha1(binio.getbuffer()).digest()
             hashsums[digest] = (binio, url)
 
-    for hashsum, (filter_type, _) in cog.content_filters[message.guild].items():
+    for hashsum, (filter_type, description) in cog.content_filters[
+        message.guild
+    ].items():
         try:
             binio, url = hashsums[hashsum]
         except KeyError:
@@ -66,6 +68,7 @@ async def check_file_filter(cog, message):
                 journal=cog.journal,
                 message=message,
                 filter_type=filter_type,
+                description=description,
                 url=url,
                 binio=binio,
                 hashsum=hashsum,
@@ -75,10 +78,17 @@ async def check_file_filter(cog, message):
         logger.debug("No content violations found!")
     else:
         settings = cog.bot.sql.filter.get_settings(message.guild)
+<<<<<<< HEAD
         await found_file_violation(triggered, settings.reupload)
 
 
 async def found_file_violation(triggered, reupload):
+=======
+        await found_file_violation(cog.bot.sql, triggered, roles, settings.reupload)
+
+
+async def found_file_violation(sql, triggered, roles, reupload):
+>>>>>>> Add filter and other infractions to database.
     """
     Processes a violation of the file content filter. This coroutine is responsible
     for actual enforcement, based on the filter_type.
@@ -88,6 +98,7 @@ async def found_file_violation(triggered, reupload):
     journal = triggered.journal
     message = triggered.message
     filter_type = triggered.filter_type
+    description = triggered.description
     url = triggered.url
     binio = triggered.binio
     hashsum = triggered.hashsum
@@ -139,6 +150,20 @@ async def found_file_violation(triggered, reupload):
     if severity >= FilterType.FLAG.level:
         logger.info("Notifying staff of filter violation")
         journal_violation(journal, "file", message, filter_type, hexsum, url)
+
+        infr_type = InfractionType.from_filter_type(filter_type)
+        sql.infraction.add_infraction(
+            message.author,
+            message.author,
+            infr_type,
+            {
+                "message_id": message.id,
+                "channel_id": message.channel.id,
+                "hashsum": hexsum,
+                "description": description,
+                "url": url,
+            },
+        )
 
     if severity >= FilterType.BLOCK.level:
         logger.info(

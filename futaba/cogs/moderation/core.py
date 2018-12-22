@@ -141,12 +141,15 @@ class Moderation(AbstractCog):
 
         self.check_other_roles(member)
 
-        # TODO store punishment in table with task ID
-
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Muted", minutes, reason, past=True)
 
         await self.bot.punish.mute(ctx.guild, member, reason)
+
+        # TODO store punishment in table with task ID
+        self.bot.sql.infraction.add_moderation_event(
+            ctx.author, member, InfractionType.MUTED
+        )
 
         # If a delayed event, schedule a Navi task
         if minutes:
@@ -178,8 +181,12 @@ class Moderation(AbstractCog):
             raise ManualCheckFailure("I don't have permission to unmute this user")
 
         # TODO store punishment in table with task ID
+        self.bot.sql.infraction.add_moderation_event(
+            ctx.author, member, InfractionType.UNMUTED
+        )
 
         minutes = max(minutes, 0)
+<<<<<<< HEAD
         reason = self.build_reason(ctx, "Unmuted", minutes, reason, past=True)
 
         if minutes:
@@ -188,6 +195,13 @@ class Moderation(AbstractCog):
             )
         else:
             await self.bot.punish.unjail(ctx.guild, member, reason)
+=======
+        full_reason = self.build_reason(ctx, "Unmuted", minutes, reason, past=True)
+        task = await self.remove_roles(ctx, member, minutes, [roles.mute], full_reason)
+        self.bot.sql.infraction.add_moderation_event(
+            ctx.author, member, InfractionType.UNMUTED, task
+        )
+>>>>>>> Add filter and other infractions to database.
 
     @commands.command(name="jail", aliases=["dunce"])
     @commands.guild_only()
@@ -213,6 +227,9 @@ class Moderation(AbstractCog):
         self.check_other_roles(member)
 
         # TODO store punishment in table with task ID
+        self.bot.sql.infraction.add_moderation_event(
+            ctx.author, member, InfractionType.JAIL
+        )
 
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Jailed", minutes, reason)
@@ -221,9 +238,20 @@ class Moderation(AbstractCog):
 
         # If a delayed event, schedule a Navi task
         if minutes:
+<<<<<<< HEAD
             await self.remove_roles(
                 ctx, member, minutes, PunishAction.RELIEVE_JAIL, reason
             )
+=======
+            task = await self.remove_roles(
+                ctx, member, minutes, [roles.jail], full_reason
+            )
+        else:
+            task = None
+        self.bot.sql.infraction.add_moderation_event(
+            ctx.author, member, InfractionType.JAILED, task
+        )
+>>>>>>> Add filter and other infractions to database.
 
     @commands.command(name="unjail", aliases=["undunce"])
     @commands.guild_only()
@@ -249,6 +277,9 @@ class Moderation(AbstractCog):
             raise ManualCheckFailure("I don't have permission to unjail this user")
 
         # TODO store punishment in table with task ID
+        self.bot.sql.infraction.add_moderation_event(
+            ctx.author, member, InfractionType.UNJAILED
+        )
 
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Released", minutes, reason, past=True)
@@ -334,6 +365,10 @@ class Moderation(AbstractCog):
             await ctx.guild.unban(user, reason=f"{reason} - {mod}")
             await ctx.send(embed=embed)
 
+            self.bot.sql.infraction.add_moderation_event(
+                ctx.author, user, InfractionType.SOFTBAN
+            )
+
             self.journal.send(
                 "member/softban",
                 ctx.guild,
@@ -370,6 +405,10 @@ class Moderation(AbstractCog):
 
             await ctx.guild.unban(user, reason=f"{reason} - {mod}")
             await ctx.send(embed=embed)
+
+            self.bot.sql.infraction.add_moderation_event(
+                ctx.author, user, InfractionType.UNBANNED
+            )
 
             self.journal.send(
                 "member/unban", ctx.guild, content, icon="unban", user=user

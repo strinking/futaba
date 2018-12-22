@@ -261,6 +261,9 @@ class InfractionType(Enum):
     UNJAILED = "unjailed"
     NOTE = "note"
     WARNING = "warning"
+    FILTER_FLAG = "filter_flag"
+    FILTER_BLOCK = "filter_block"
+    FILTER_JAIL = "filter_jail"
 
     @property
     def emoji(self):
@@ -292,8 +295,25 @@ class InfractionType(Enum):
             return ICONS["note"]
         elif self == InfractionType.WARNING:
             return ICONS["warning"]
+        elif self == InfractionType.FILTER_FLAG:
+            return ICONS["flag"]
+        elif self == InfractionType.FILTER_BLOCK:
+            return ICONS["deleted"]
+        elif self == InfractionType.FILTER_JAIL:
+            return ICONS["jail"]
         else:
             raise TypeError(f"No infraction type for {self!r}")
+
+    @classmethod
+    def from_filter_type(cls, filter_type):
+        if filter_type == FilterType.FLAG:
+            return cls.FILTER_FLAG
+        elif filter_type == FilterType.BLOCK:
+            return cls.FILTER_BLOCK
+        elif filter_type == FilterType.JAIL:
+            return cls.FILTER_JAIL
+        else:
+            raise ValueError(f"Invalid filter type: {filter_type!r}")
 
 
 @unique
