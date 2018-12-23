@@ -147,7 +147,7 @@ class Moderation(AbstractCog):
         await self.bot.punish.mute(ctx.guild, member, reason)
 
         # TODO store punishment in table with task ID
-        self.bot.sql.infraction.add_moderation_event(
+        self.bot.sql.infraction.add_infraction(
             ctx.author, member, InfractionType.MUTED
         )
 
@@ -181,7 +181,7 @@ class Moderation(AbstractCog):
             raise ManualCheckFailure("I don't have permission to unmute this user")
 
         # TODO store punishment in table with task ID
-        self.bot.sql.infraction.add_moderation_event(
+        self.bot.sql.infraction.add_infraction(
             ctx.author, member, InfractionType.UNMUTED
         )
 
@@ -198,7 +198,7 @@ class Moderation(AbstractCog):
 =======
         full_reason = self.build_reason(ctx, "Unmuted", minutes, reason, past=True)
         task = await self.remove_roles(ctx, member, minutes, [roles.mute], full_reason)
-        self.bot.sql.infraction.add_moderation_event(
+        self.bot.sql.infraction.add_infraction(
             ctx.author, member, InfractionType.UNMUTED, task
         )
 >>>>>>> Add filter and other infractions to database.
@@ -227,7 +227,7 @@ class Moderation(AbstractCog):
         self.check_other_roles(member)
 
         # TODO store punishment in table with task ID
-        self.bot.sql.infraction.add_moderation_event(
+        self.bot.sql.infraction.add_infraction(
             ctx.author, member, InfractionType.JAIL
         )
 
@@ -248,7 +248,7 @@ class Moderation(AbstractCog):
             )
         else:
             task = None
-        self.bot.sql.infraction.add_moderation_event(
+        self.bot.sql.infraction.add_infraction(
             ctx.author, member, InfractionType.JAILED, task
         )
 >>>>>>> Add filter and other infractions to database.
@@ -277,7 +277,7 @@ class Moderation(AbstractCog):
             raise ManualCheckFailure("I don't have permission to unjail this user")
 
         # TODO store punishment in table with task ID
-        self.bot.sql.infraction.add_moderation_event(
+        self.bot.sql.infraction.add_infraction(
             ctx.author, member, InfractionType.UNJAILED
         )
 
@@ -365,7 +365,7 @@ class Moderation(AbstractCog):
             await ctx.guild.unban(user, reason=f"{reason} - {mod}")
             await ctx.send(embed=embed)
 
-            self.bot.sql.infraction.add_moderation_event(
+            self.bot.sql.infraction.add_infraction(
                 ctx.author, user, InfractionType.SOFTBAN
             )
 
@@ -406,7 +406,7 @@ class Moderation(AbstractCog):
             await ctx.guild.unban(user, reason=f"{reason} - {mod}")
             await ctx.send(embed=embed)
 
-            self.bot.sql.infraction.add_moderation_event(
+            self.bot.sql.infraction.add_infraction(
                 ctx.author, user, InfractionType.UNBANNED
             )
 
