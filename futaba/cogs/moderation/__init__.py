@@ -12,11 +12,15 @@
 
 from .cleanup import Cleanup
 from .core import Moderation
+from .infractions import Infractions
 from .manual_mod_action_warn import ManualModActionWarn
 
 
 def setup(bot):
     cog = Cleanup(bot)
+    bot.add_cog(cog)
+
+    cog = Infractions(bot)
     bot.add_cog(cog)
 
     cog = Moderation(bot)
