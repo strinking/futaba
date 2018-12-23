@@ -61,7 +61,7 @@ class InfractionModel:
 
         register_hook("on_guild_leave", self.remove_all_infractions)
 
-    def get_infractions(self, member, count=15):
+    def get_infractions(self, member, count=15, types=None):
         logger.info(
             "Getting infractions for member '%s' (%d) in guild '%s' (%d)",
             member.name,
@@ -69,6 +69,7 @@ class InfractionModel:
             member.guild.name,
             member.guild.id,
         )
+        types = types or tuple(InfractionType)
         sel = (
             select(
                 [
@@ -83,6 +84,7 @@ class InfractionModel:
                 and_(
                     self.tb_infractions.c.guild_id == member.guild.id,
                     self.tb_infractions.c.user_id == member.id,
+                    self.tb_infractions.c.type.in_(types),
                 )
             )
             .order_by(desc(self.tb_infractions.c.timestamp))
