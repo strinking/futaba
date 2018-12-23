@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["Infractions"]
 
+
 class Infractions(AbstractCog):
     __slots__ = ("journal",)
 

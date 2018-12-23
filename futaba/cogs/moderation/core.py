@@ -147,9 +147,7 @@ class Moderation(AbstractCog):
         await self.bot.punish.mute(ctx.guild, member, reason)
 
         # TODO store punishment in table with task ID
-        self.bot.sql.infraction.add_infraction(
-            ctx.author, member, InfractionType.MUTED
-        )
+        self.bot.sql.infraction.add_infraction(ctx.author, member, InfractionType.MUTED)
 
         # If a delayed event, schedule a Navi task
         if minutes:
@@ -227,9 +225,7 @@ class Moderation(AbstractCog):
         self.check_other_roles(member)
 
         # TODO store punishment in table with task ID
-        self.bot.sql.infraction.add_infraction(
-            ctx.author, member, InfractionType.JAIL
-        )
+        self.bot.sql.infraction.add_infraction(ctx.author, member, InfractionType.JAIL)
 
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Jailed", minutes, reason)

@@ -17,7 +17,7 @@ kicks and ban events.
 
 import logging
 
-from futaba.enums import MemberLeaveType
+from futaba.enums import InfractionType, MemberLeaveType
 from futaba.utils import escape_backticks, user_discrim
 
 from ..listener import Listener
@@ -28,9 +28,12 @@ __all__ = ["ModerationListener"]
 
 
 class ModerationListener(Listener):
+    __slots__ = ("broadcaster", "sql")
+
     def __init__(self, router, bot):
         super().__init__(router, "/member/leave", recursive=False)
         self.broadcaster = bot.get_broadcaster("/moderation")
+        self.sql = bot.sql.infraction
 
     async def handle(self, _path, guild, _content, attributes):
         """
@@ -49,10 +52,12 @@ class ModerationListener(Listener):
             action = "kicked"
             path = "member/kick"
             icon = "kick"
+            self.sql.add_infraction(cause.user, leaver, InfractionType.KICK)
         elif cause.type == MemberLeaveType.BANNED:
             action = "banned"
             path = "member/ban"
             icon = "ban"
+            self.sql.add_infraction(cause.user, leaver, InfractionType.BAN)
         else:
             # We don't care about this event!
             return
