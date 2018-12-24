@@ -14,8 +14,14 @@
 Collection of moderation commands that manage infractions and moderation history.
 """
 
+import asyncio
 import logging
 
+import discord
+from discord.ext import commands
+
+from futaba import permissions
+from futaba.enums import InfractionType
 from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
