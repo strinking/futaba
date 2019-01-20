@@ -22,7 +22,7 @@ install -m400 "$1" "$dest_dir/config.toml"
 chown -R futaba:futaba "$dest_dir"
 echo "Installed source code to '$dest_dir'"
 
-python3.6 -m pip install -r "$repo_dir/requirements.txt" > /dev/null
+python3.7 -m pip install -r "$repo_dir/requirements.txt" > /dev/null
 echo "Installed Python dependencies"
 
 install -m644 "$service" /usr/local/lib/systemd/system/futaba.service
