@@ -151,6 +151,7 @@ class Moderation(AbstractCog):
 
         # TODO store punishment in table with task ID
 
+        minutes = max(minutes, 0)
         full_reason = self.build_reason(ctx, "Muted", minutes, reason)
         remove_other = self.bot.sql.settings.get_remove_other_roles(ctx.guild)
 
@@ -162,7 +163,6 @@ class Moderation(AbstractCog):
             await member.add_roles(roles.mute, reason=full_reason)
 
         # If a delayed event, schedule a Navi task
-        minutes = max(minutes, 0)
         if minutes:
             await self.remove_roles(ctx, member, minutes, [roles.mute], full_reason)
         if remove_other:
@@ -195,6 +195,19 @@ class Moderation(AbstractCog):
 
         minutes = max(minutes, 0)
         full_reason = self.build_reason(ctx, "Unmuted", minutes, reason, past=True)
+        remove_other = self.bot.sql.settings.get_remove_other_roles(ctx.guild)
+
+        if remove_other:
+            if minutes:
+                try:
+                    await self.bot.sql.moderation.restore_other_roles(
+                        member, full_reason
+                    )
+                except KeyError:
+                    pass
+            else:
+                await self.add_roles(ctx, member, minutes, full_reason)
+
         await self.remove_roles(ctx, member, minutes, [roles.mute], full_reason)
 
     @commands.command(name="jail", aliases=["dunce"])
@@ -216,13 +229,22 @@ class Moderation(AbstractCog):
 
         # TODO store punishment in table with task ID
 
+        minutes = max(minutes, 0)
         full_reason = self.build_reason(ctx, "Jailed", minutes, reason)
-        await member.add_roles(roles.jail, reason=full_reason)
+        remove_other = self.bot.sql.settings.get_remove_other_roles(ctx.guild)
+
+        if remove_other:
+            await self.bot.sql.moderation.remove_other_roles(
+                member, roles.jail, full_reason
+            )
+        else:
+            await member.add_roles(roles.jail, reason=full_reason)
 
         # If a delayed event, schedule a Navi task
-        minutes = max(minutes, 0)
         if minutes:
             await self.remove_roles(ctx, member, minutes, [roles.jail], full_reason)
+        if remove_other:
+            await self.add_roles(ctx, member, minutes, full_reason)
 
     @commands.command(name="unjail", aliases=["undunce"])
     @commands.guild_only()
@@ -247,6 +269,19 @@ class Moderation(AbstractCog):
 
         minutes = max(minutes, 0)
         full_reason = self.build_reason(ctx, "Released", minutes, reason, past=True)
+        remove_other = self.bot.sql.settings.get_remove_other_roles(ctx.guild)
+
+        if remove_other:
+            if minutes:
+                try:
+                    await self.bot.sql.moderation.restore_other_roles(
+                        member, full_reason
+                    )
+                except KeyError:
+                    pass
+            else:
+                await self.add_roles(ctx, member, minutes, full_reason)
+
         await self.remove_roles(ctx, member, minutes, [roles.jail], full_reason)
 
     @commands.command(name="kick")
