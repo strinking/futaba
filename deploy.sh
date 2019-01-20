@@ -6,6 +6,7 @@ if [[ $# -ne 1 ]]; then
 	exit 1
 fi
 
+python_ver=python3.7
 repo_dir="$(dirname "$0")"
 dest_dir=~futaba/repo
 
@@ -22,7 +23,7 @@ install -m400 "$1" "$dest_dir/config.toml"
 chown -R futaba:futaba "$dest_dir"
 echo "Installed source code to '$dest_dir'"
 
-python3.7 -m pip install -r "$repo_dir/requirements.txt" > /dev/null
+"$python_ver" -m pip install -r "$repo_dir/requirements.txt" > /dev/null
 echo "Installed Python dependencies"
 
 install -m644 "$service" /usr/local/lib/systemd/system/futaba.service
