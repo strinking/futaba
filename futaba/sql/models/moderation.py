@@ -48,6 +48,31 @@ class ModerationModel:
             UniqueConstraint("guild_id", "user_id", name="uq_removed_other_roles"),
         )
 
+    def get_other_roles(self, member):
+        logger.debug(
+            "Determining if there are other roles (in punishment) for member '%s' (%d) in guild '%s' (%d)",
+            member.name,
+            member.id,
+            member.guild.name,
+            member.guild.id,
+        )
+
+        sel = select([
+            self.tb_removed_other_roles.c.keep_role,
+            self.tb_removed_other_roles.c.other_roles,
+        ]).where(and_(
+            self.tb_removed_other_roles.c.guild_id == member.guild.id,
+            self.tb_removed_other_roles.c.user_id == member.id,
+        ))
+        result = self.sql.execute(sel)
+        if result.rowcount:
+            keep_role_id, other_role_ids = result.fetchone()
+            keep_role = discord.utils.get(member.guild.roles, id=keep_role_id)
+            other_roles = [discord.utils.get(member.guild.roles, id=id) for id in other_role_ids]
+            return True, keep_role, other_roles
+        else:
+            return False, None, None
+
     async def remove_other_roles(self, member, keep_role, reason):
         logger.info(
             "Removing member '%s' (%d)'s roles in guild '%s' (%d) to just '%s' (%d)",

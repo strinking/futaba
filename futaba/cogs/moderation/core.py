@@ -104,6 +104,14 @@ class Moderation(AbstractCog):
         else:
             await self.bot.sql.moderation.restore_other_roles(member, reason)
 
+    def check_other_roles(self, member):
+        has_other, punish_role, _ = self.bot.sql.moderation.get_other_roles(member)
+        if has_other:
+            embed = discord.Embed(colour=discord.Colour.red())
+            role_descr = "" if punish_role is None else f"because they already have {punish_role.mention}"
+            embed.description = f"Cannot add a new overriding role to {member.mention} {role_descr}"
+            raise CommandFailed(embed=embed)
+
     @commands.command(name="nick", aliases=["nickname", "renick"])
     @commands.guild_only()
     @permissions.check_perm("manage_nicknames")
@@ -156,6 +164,7 @@ class Moderation(AbstractCog):
         remove_other = self.bot.sql.settings.get_remove_other_roles(ctx.guild)
 
         if remove_other:
+            self.check_other_roles(member)
             await self.bot.sql.moderation.remove_other_roles(
                 member, roles.mute, full_reason
             )
@@ -234,6 +243,7 @@ class Moderation(AbstractCog):
         remove_other = self.bot.sql.settings.get_remove_other_roles(ctx.guild)
 
         if remove_other:
+            self.check_other_roles(member)
             await self.bot.sql.moderation.remove_other_roles(
                 member, roles.jail, full_reason
             )
