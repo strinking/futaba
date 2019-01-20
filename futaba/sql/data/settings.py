@@ -21,12 +21,20 @@ logger = logging.getLogger(__name__)
 
 
 class GuildSettingsData:
-    __slots__ = ("prefix", "max_delete_messages", "warn_manual_mod_action")
+    __slots__ = (
+        "prefix",
+        "max_delete_messages",
+        "warn_manual_mod_action",
+        "remove_other_roles",
+    )
 
-    def __init__(self, prefix, max_delete_messages, *, warn_manual_mod_action):
+    def __init__(
+        self, prefix, max_delete_messages, *, warn_manual_mod_action, remove_other_roles
+    ):
         self.prefix = prefix
         self.max_delete_messages = max_delete_messages
         self.warn_manual_mod_action = warn_manual_mod_action
+        self.remove_other_roles = remove_other_roles
 
 
 class ReapplyRolesData:
