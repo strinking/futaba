@@ -23,6 +23,7 @@ import discord
 from futaba.enums import TaskType
 from .change_roles import build_change_role_task
 from .send_message import build_send_message_task
+from .restore_other_roles import build_restore_other_roles_task
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,7 @@ FakeUser = namedtuple("FakeUser", ("id", "name", "discriminator"))
 TASK_BUILDERS = {
     TaskType.CHANGE_ROLES: build_change_role_task,
     TaskType.SEND_MESSAGE: build_send_message_task,
+    TaskType.RESTORE_OTHER_ROLES: build_restore_other_roles_task,
 }
 
 

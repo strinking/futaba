@@ -169,9 +169,7 @@ class Settings(AbstractCog):
             )
             embed = discord.Embed(colour=discord.Colour.dark_teal())
             state = "enabled" if warn_manual_mod_action else "disabled"
-            embed.description = (
-                f"Warning moderators about performing mod actions manually is {state}."
-            )
+            embed.description = f"Warning moderators about performing mod actions manually is **{state}**"
         elif not admin_perm(ctx):
             # Lacking authority to set warn manual mod action
             embed = discord.Embed(colour=discord.Colour.red())
@@ -183,6 +181,37 @@ class Settings(AbstractCog):
 
             embed = discord.Embed(colour=discord.Colour.teal())
             embed.description = f"Set warning moderators about performing mod actions manually to `{value}`"
+
+        await ctx.send(embed=embed)
+
+    @commands.command(name="removeother", aliases=["rmother"])
+    @commands.guild_only()
+    async def remove_other_roles_on_punish(self, ctx, value: bool = None):
+        """
+        Gets the current setting for whether punishment actions remove all other roles, or leaves them.
+        If you're an administrator, you can change this value.
+        """
+
+        if value is None:
+            remove_other_roles = self.bot.sql.settings.get_remove_other_roles(ctx.guild)
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
+            state = "are removed" if remove_other_roles else "are kept"
+            embed.description = (
+                f"When punishment roles are added other roles **{state}**"
+            )
+        elif not admin_perm(ctx):
+            # Lacking authority to set remove other roles
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.description = "You do not have permissions to change the removal of non-punishment roles"
+            raise ManualCheckFailure(embed=embed)
+        else:
+            with self.bot.sql.transaction():
+                self.bot.sql.settings.set_remove_other_roles(ctx.guild, value)
+
+            embed = discord.Embed(colour=discord.Colour.teal())
+            embed.description = (
+                f"Set removal of other non-punishment roles to `{value}`"
+            )
 
         await ctx.send(embed=embed)
 

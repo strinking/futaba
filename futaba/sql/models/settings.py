@@ -76,6 +76,7 @@ class SettingsModel:
             Column("prefix", Unicode, nullable=True),
             Column("max_delete_messages", SmallInteger),
             Column("warn_manual_mod_action", Boolean),
+            Column("remove_other_roles", Boolean),
         )
         self.tb_special_roles = Table(
             "special_roles",
@@ -167,7 +168,10 @@ class SettingsModel:
         )
         self.sql.execute(ins)
         self.guild_settings_cache[guild] = GuildSettingsData(
-            None, self.sql.max_delete_messages, warn_manual_mod_action=False
+            None,
+            self.sql.max_delete_messages,
+            warn_manual_mod_action=False,
+            remove_other_roles=True,
         )
 
     def remove_guild_settings(self, guild):
@@ -190,6 +194,7 @@ class SettingsModel:
                 self.tb_guild_settings.c.prefix,
                 self.tb_guild_settings.c.max_delete_messages,
                 self.tb_guild_settings.c.warn_manual_mod_action,
+                self.tb_guild_settings.c.remove_other_roles,
             ]
         ).where(self.tb_guild_settings.c.guild_id == guild.id)
         result = self.sql.execute(sel)
@@ -197,9 +202,14 @@ class SettingsModel:
         if not result.rowcount:
             self.add_guild_settings(guild)
 
-        prefix, max_delete_messages, warn_manual_mod_action = result.fetchone()
+        prefix, max_delete_messages, warn_manual_mod_action, remove_other_roles = (
+            result.fetchone()
+        )
         self.guild_settings_cache[guild] = GuildSettingsData(
-            prefix, max_delete_messages, warn_manual_mod_action=warn_manual_mod_action
+            prefix,
+            max_delete_messages,
+            warn_manual_mod_action=warn_manual_mod_action,
+            remove_other_roles=remove_other_roles,
         )
 
     def get_prefix(self, guild):
@@ -258,7 +268,7 @@ class SettingsModel:
 
     def set_warn_manual_mod_action(self, guild, warn_manual_mod_action):
         logger.info(
-            "Setting warn manual mod action flag to %d for guild '%s' (%d)",
+            "Setting warn manual mod action flag to %s for guild '%s' (%d)",
             warn_manual_mod_action,
             guild.name,
             guild.id,
@@ -271,6 +281,33 @@ class SettingsModel:
         )
         self.sql.execute(upd)
         self.guild_settings_cache[guild].warn_manual_mod_action = warn_manual_mod_action
+
+    def get_remove_other_roles(self, guild):
+        logger.debug(
+            "Getting whether to remove other roles on punishment for guild '%s' (%d)",
+            guild.name,
+            guild.id,
+        )
+        if guild not in self.guild_settings_cache:
+            self.fetch_guild_settings(guild)
+
+        return self.guild_settings_cache[guild].remove_other_roles
+
+    def set_remove_other_roles(self, guild, remove_other_roles):
+        logger.info(
+            "Setting whether to remove other roles on punishment to %s for guild '%s' (%d)",
+            remove_other_roles,
+            guild.name,
+            guild.id,
+        )
+
+        upd = (
+            self.tb_guild_settings.update()
+            .where(self.tb_guild_settings.c.guild_id == guild.id)
+            .values(remove_other_roles=remove_other_roles)
+        )
+        self.sql.execute(upd)
+        self.guild_settings_cache[guild].remove_other_roles = remove_other_roles
 
     def add_special_roles(self, guild):
         logger.info(
