@@ -152,7 +152,7 @@ class Moderation(AbstractCog):
         # TODO store punishment in table with task ID
 
         minutes = max(minutes, 0)
-        full_reason = self.build_reason(ctx, "Muted", minutes, reason)
+        full_reason = self.build_reason(ctx, "Muted", minutes, reason, past=True)
         remove_other = self.bot.sql.settings.get_remove_other_roles(ctx.guild)
 
         if remove_other:
@@ -163,10 +163,10 @@ class Moderation(AbstractCog):
             await member.add_roles(roles.mute, reason=full_reason)
 
         # If a delayed event, schedule a Navi task
-        if minutes:
-            await self.remove_roles(ctx, member, minutes, [roles.mute], full_reason)
         if remove_other:
             await self.add_roles(ctx, member, minutes, full_reason)
+        elif minutes:
+            await self.remove_roles(ctx, member, minutes, [roles.mute], full_reason)
 
     @commands.command(name="unmute", aliases=["unshitpost"])
     @commands.guild_only()
