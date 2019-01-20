@@ -49,7 +49,7 @@ class ModerationModel:
         )
 
     async def remove_other_roles(self, member, keep_role, reason):
-        logger.debug(
+        logger.info(
             "Removing member '%s' (%d)'s roles in guild '%s' (%d) to just '%s' (%d)",
             member.name,
             member.id,
@@ -100,7 +100,7 @@ class ModerationModel:
         await member.edit(roles=[keep_role], reason=reason)
 
     async def restore_other_roles(self, member, reason):
-        logger.debug(
+        logger.info(
             "Restoring member '%s' (%d)'s roles in guild '%s' (%d)",
             member.name,
             member.id,

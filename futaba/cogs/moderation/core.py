@@ -24,7 +24,7 @@ from discord.ext import commands
 from futaba import permissions
 from futaba.converters import MemberConv, UserConv
 from futaba.exceptions import CommandFailed, ManualCheckFailure
-from futaba.navi import ChangeRolesTask
+from futaba.navi import ChangeRolesTask, RestoreOtherRolesTask
 from futaba.str_builder import StringBuilder
 from futaba.utils import escape_backticks, plural, user_discrim
 from ..abc import AbstractCog
@@ -87,6 +87,23 @@ class Moderation(AbstractCog):
             )
             await member.remove_roles(*roles, reason=reason)
 
+    async def add_roles(self, ctx, member, minutes, reason):
+        if minutes:
+            logger.info(
+                "Creating delayed other role addition for '%s' (%d) with reason %r in %d minutes",
+                member.name,
+                member.id,
+                reason,
+                minutes,
+            )
+            timestamp = datetime.now() + timedelta(seconds=minutes * 60)
+            task = RestoreOtherRolesTask(
+                self.bot, None, ctx.author, timestamp, member=member, reason=reason
+            )
+            self.bot.add_tasks(task)
+        else:
+            await self.bot.sql.moderation.restore_other_roles(member, reason)
+
     @commands.command(name="nick", aliases=["nickname", "renick"])
     @commands.guild_only()
     @permissions.check_perm("manage_nicknames")
@@ -135,12 +152,21 @@ class Moderation(AbstractCog):
         # TODO store punishment in table with task ID
 
         full_reason = self.build_reason(ctx, "Muted", minutes, reason)
-        await member.add_roles(roles.mute, reason=full_reason)
+        remove_other = self.bot.sql.settings.get_remove_other_roles(ctx.guild)
+
+        if remove_other:
+            await self.bot.sql.moderation.remove_other_roles(
+                member, roles.mute, full_reason
+            )
+        else:
+            await member.add_roles(roles.mute, reason=full_reason)
 
         # If a delayed event, schedule a Navi task
         minutes = max(minutes, 0)
         if minutes:
             await self.remove_roles(ctx, member, minutes, [roles.mute], full_reason)
+        if remove_other:
+            await self.add_roles(ctx, member, minutes, full_reason)
 
     @commands.command(name="unmute", aliases=["unshitpost"])
     @commands.guild_only()
