@@ -108,8 +108,14 @@ class Moderation(AbstractCog):
         has_other, punish_role, _ = self.bot.sql.moderation.get_other_roles(member)
         if has_other:
             embed = discord.Embed(colour=discord.Colour.red())
-            role_descr = "" if punish_role is None else f"because they already have {punish_role.mention}"
-            embed.description = f"Cannot add a new overriding role to {member.mention} {role_descr}"
+            role_descr = (
+                ""
+                if punish_role is None
+                else f"because they already have {punish_role.mention}"
+            )
+            embed.description = (
+                f"Cannot add a new overriding role to {member.mention} {role_descr}"
+            )
             raise CommandFailed(embed=embed)
 
     @commands.command(name="nick", aliases=["nickname", "renick"])

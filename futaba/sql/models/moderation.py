@@ -57,18 +57,24 @@ class ModerationModel:
             member.guild.id,
         )
 
-        sel = select([
-            self.tb_removed_other_roles.c.keep_role,
-            self.tb_removed_other_roles.c.other_roles,
-        ]).where(and_(
-            self.tb_removed_other_roles.c.guild_id == member.guild.id,
-            self.tb_removed_other_roles.c.user_id == member.id,
-        ))
+        sel = select(
+            [
+                self.tb_removed_other_roles.c.keep_role,
+                self.tb_removed_other_roles.c.other_roles,
+            ]
+        ).where(
+            and_(
+                self.tb_removed_other_roles.c.guild_id == member.guild.id,
+                self.tb_removed_other_roles.c.user_id == member.id,
+            )
+        )
         result = self.sql.execute(sel)
         if result.rowcount:
             keep_role_id, other_role_ids = result.fetchone()
             keep_role = discord.utils.get(member.guild.roles, id=keep_role_id)
-            other_roles = [discord.utils.get(member.guild.roles, id=id) for id in other_role_ids]
+            other_roles = [
+                discord.utils.get(member.guild.roles, id=id) for id in other_role_ids
+            ]
             return True, keep_role, other_roles
         else:
             return False, None, None
