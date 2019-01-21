@@ -20,14 +20,14 @@ import re
 import sys
 import unicodedata
 from collections import Counter
-from itertools import islice
+from itertools import chain, islice
 
 import discord
 from discord.ext import commands
 
 from futaba import __version__
 from futaba.converters import ID_REGEX, EmojiConv, GuildChannelConv, RoleConv, UserConv
-from futaba.exceptions import CommandFailed
+from futaba.exceptions import CommandFailed, ManualCheckFailure
 from futaba.permissions import mod_perm
 from futaba.similar import similar_users
 from futaba.str_builder import StringBuilder
@@ -149,17 +149,29 @@ class Info(AbstractCog):
 
     @commands.command(name="lemoji", aliases=["lemojis", "allemoji", "allemojis", "listemoji", "listemojis"])
     @commands.guild_only()
-    async def all_emojis(self, ctx):
-        """ Lists all emojis in the guild. """
+    async def all_emojis(self, ctx, modifier: str = None):
+        """
+        Lists all emojis in the guild.
+        Add 'all' to list from all guilds.
+        """
 
-        await self.list_emojis(ctx)
+        await self.list_emojis(ctx, modifier == 'all')
 
-    async def list_emojis(self, ctx):
+    async def list_emojis(self, ctx, all_guilds=False):
         contents = []
         content = StringBuilder()
 
+        if all_guilds:
+            if not mod_perm(ctx):
+                raise ManualCheckFailure(content="Only moderators can do this.")
+
+            guild_emojis = (guild.emojis for guild in self.bot.guilds)
+            emojis = chain(*guild_emojis)
+        else:
+            emojis = ctx.guild.emojis
+
         logger.info("Listing all emojis within the guild")
-        for emoji in ctx.guild.emojis:
+        for emoji in emojis:
             managed = "M" if emoji.managed else ""
             content.writeln(
                 f"- [{emoji}]({emoji.url}) id: `{emoji.id}`, name: `{emoji.name}` {managed}"
@@ -180,8 +192,13 @@ class Info(AbstractCog):
                 description=content, colour=discord.Colour.dark_teal()
             )
             embed.set_footer(text=f"Page {i + 1}/{len(contents)}")
+
             if i == 0:
-                embed.set_author(name=f"Emojis within {ctx.guild.name}")
+                if all_guilds:
+                    embed.set_author(name="Emojis in all guilds")
+                else:
+                    embed.set_author(name=f"Emojis within {ctx.guild.name}")
+
             await ctx.send(embed=embed)
 
     async def get_user(self, ctx, name):
