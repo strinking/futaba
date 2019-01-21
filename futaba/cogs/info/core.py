@@ -147,7 +147,10 @@ class Info(AbstractCog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(name="lemoji", aliases=["lemojis", "allemoji", "allemojis", "listemoji", "listemojis"])
+    @commands.command(
+        name="lemoji",
+        aliases=["lemojis", "allemoji", "allemojis", "listemoji", "listemojis"],
+    )
     @commands.guild_only()
     async def all_emojis(self, ctx, modifier: str = None):
         """
@@ -155,7 +158,7 @@ class Info(AbstractCog):
         Add 'all' to list from all guilds.
         """
 
-        await self.list_emojis(ctx, modifier == 'all')
+        await self.list_emojis(ctx, modifier == "all")
 
     async def list_emojis(self, ctx, all_guilds=False):
         contents = []
@@ -386,7 +389,9 @@ class Info(AbstractCog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(name="lrole", aliases=["lroles", "allrole", "allroles", "listrole", "listroles"])
+    @commands.command(
+        name="lrole", aliases=["lroles", "allrole", "allroles", "listrole", "listroles"]
+    )
     @commands.guild_only()
     async def roles(self, ctx):
         """ Lists all roles in the guild. """
