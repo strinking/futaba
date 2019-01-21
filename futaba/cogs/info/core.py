@@ -94,12 +94,17 @@ class Info(AbstractCog):
         await ctx.send(embed=embed)
 
     @commands.command(name="emoji", aliases=["emojis"])
-    async def emoji(self, ctx, *, name: str):
+    async def emoji(self, ctx, *, name: str = None):
         """
         Fetches information about the given emojis.
         This supports both Discord and unicode emojis, and will check
         all guilds the bot is in.
         """
+
+        if name is None:
+            # If no argument, list all emojis in guild.
+            await self.list_emojis(ctx)
+            return
 
         conv = EmojiConv()
         try:
@@ -141,6 +146,43 @@ class Info(AbstractCog):
             raise ValueError(f"Unknown emoji object returned: {emoji!r}")
 
         await ctx.send(embed=embed)
+
+    @commands.command(name="lemoji", aliases=["lemojis", "allemoji", "allemojis", "listemoji", "listemojis"])
+    @commands.guild_only()
+    async def all_emojis(self, ctx):
+        """ Lists all emojis in the guild. """
+
+        await self.list_emojis(ctx)
+
+    async def list_emojis(self, ctx):
+        contents = []
+        content = StringBuilder()
+
+        logger.info("Listing all emojis within the guild")
+        for emoji in ctx.guild.emojis:
+            managed = "M" if emoji.managed else ""
+            content.writeln(
+                f"- [{emoji}]({emoji.url}) id: `{emoji.id}`, name: `{emoji.name}` {managed}"
+            )
+
+            if len(content) > 1900:
+                # Too long, break into new embed
+                contents.append(str(content))
+
+                # Start content over
+                content.clear()
+
+        if content:
+            contents.append(str(content))
+
+        for i, content in enumerate(contents):
+            embed = discord.Embed(
+                description=content, colour=discord.Colour.dark_teal()
+            )
+            embed.set_footer(text=f"Page {i + 1}/{len(contents)}")
+            if i == 0:
+                embed.set_author(name=f"Emojis within {ctx.guild.name}")
+            await ctx.send(embed=embed)
 
     async def get_user(self, ctx, name):
         if name is None:
@@ -327,7 +369,7 @@ class Info(AbstractCog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(name="lroles", aliases=["allroles", "listroles"])
+    @commands.command(name="lrole", aliases=["lroles", "allrole", "allroles", "listrole", "listroles"])
     @commands.guild_only()
     async def roles(self, ctx):
         """ Lists all roles in the guild. """
@@ -352,7 +394,9 @@ class Info(AbstractCog):
             contents.append(str(content))
 
         for i, content in enumerate(contents):
-            embed = discord.Embed(description=content)
+            embed = discord.Embed(
+                description=content, colour=discord.Colour.dark_teal()
+            )
             embed.set_footer(text=f"Page {i + 1}/{len(contents)}")
             await ctx.send(embed=embed)
 

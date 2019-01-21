@@ -26,7 +26,7 @@ from futaba.download import download_links
 from futaba.exceptions import CommandFailed
 from futaba.str_builder import StringBuilder
 from futaba.unicode import unicode_repr
-from futaba.utils import URL_REGEX, fancy_timedelta
+from futaba.utils import URL_REGEX
 from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
