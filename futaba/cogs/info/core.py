@@ -327,7 +327,7 @@ class Info(AbstractCog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(name="roles", aliases=["lroles", "listroles"])
+    @commands.command(name="lroles", aliases=["allroles", "listroles"])
     @commands.guild_only()
     async def roles(self, ctx):
         """ Lists all roles in the guild. """
