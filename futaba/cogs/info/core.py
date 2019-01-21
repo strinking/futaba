@@ -17,6 +17,7 @@ Informational commands that make finding and gathering data easier.
 import asyncio
 import logging
 import re
+import sys
 import unicodedata
 from collections import Counter
 from itertools import islice
@@ -24,12 +25,14 @@ from itertools import islice
 import discord
 from discord.ext import commands
 
+from futaba import __version__
 from futaba.converters import ID_REGEX, EmojiConv, GuildChannelConv, RoleConv, UserConv
 from futaba.exceptions import CommandFailed
 from futaba.permissions import mod_perm
 from futaba.similar import similar_users
 from futaba.str_builder import StringBuilder
 from futaba.utils import (
+    GIT_HASH,
     escape_backticks,
     fancy_timedelta,
     first,
@@ -57,6 +60,38 @@ class Info(AbstractCog):
 
     def setup(self):
         pass
+
+    @commands.command(
+        name="about", aliases=["futaba", "aboutme", "bot", "botinfo", "uptime"]
+    )
+    async def about(self, ctx):
+        """ Prints information about the running bot. """
+
+        pyver = sys.version_info
+        python_emoji = self.bot.get_emoji(self.bot.config.python_emoji_id) or ""
+        discord_py_emoji = self.bot.get_emoji(self.bot.config.discord_py_emoji_id) or ""
+
+        embed = discord.Embed()
+        embed.set_thumbnail(url=self.bot.user.avatar_url)
+        embed.set_author(name=f"Futaba v{__version__} [{GIT_HASH}]")
+        embed.add_field(name="Running for", value=fancy_timedelta(self.bot.uptime))
+        embed.add_field(
+            name="Created by",
+            value="[Programming Discord](https://discord.gg/010z0Kw1A9ql5c1Qe)",
+        )
+        embed.add_field(name="Source code", value="https://github.com/strinking/futaba")
+        embed.description = "\n".join(
+            (
+                f"{python_emoji} Powered by Python {pyver.major}.{pyver.minor}.{pyver.micro}",
+                f"{discord_py_emoji} Using discord.py {discord.__version__}",
+                f"\N{TIMER CLOCK} Latency: {self.bot.latency:.3} s",
+            )
+        )
+
+        if ctx.guild is not None:
+            embed.colour = ctx.guild.me.colour
+
+        await ctx.send(embed=embed)
 
     @commands.command(name="emoji", aliases=["emojis"])
     async def emoji(self, ctx, *, name: str):
