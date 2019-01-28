@@ -17,19 +17,22 @@ Informational commands that make finding and gathering data easier.
 import asyncio
 import logging
 import re
+import sys
 import unicodedata
 from collections import Counter
-from itertools import islice
+from itertools import chain, islice
 
 import discord
 from discord.ext import commands
 
+from futaba import __version__
 from futaba.converters import ID_REGEX, EmojiConv, GuildChannelConv, RoleConv, UserConv
-from futaba.exceptions import CommandFailed
+from futaba.exceptions import CommandFailed, ManualCheckFailure
 from futaba.permissions import mod_perm
 from futaba.similar import similar_users
 from futaba.str_builder import StringBuilder
 from futaba.utils import (
+    GIT_HASH,
     escape_backticks,
     fancy_timedelta,
     first,
@@ -58,13 +61,50 @@ class Info(AbstractCog):
     def setup(self):
         pass
 
+    @commands.command(
+        name="about", aliases=["futaba", "aboutme", "bot", "botinfo", "uptime"]
+    )
+    async def about(self, ctx):
+        """ Prints information about the running bot. """
+
+        pyver = sys.version_info
+        python_emoji = self.bot.get_emoji(self.bot.config.python_emoji_id) or ""
+        discord_py_emoji = self.bot.get_emoji(self.bot.config.discord_py_emoji_id) or ""
+
+        embed = discord.Embed()
+        embed.set_thumbnail(url=self.bot.user.avatar_url)
+        embed.set_author(name=f"Futaba v{__version__} [{GIT_HASH}]")
+        embed.add_field(name="Running for", value=fancy_timedelta(self.bot.uptime))
+        embed.add_field(
+            name="Created by",
+            value="[Programming Discord](https://discord.gg/010z0Kw1A9ql5c1Qe)",
+        )
+        embed.add_field(name="Source code", value="https://github.com/strinking/futaba")
+        embed.description = "\n".join(
+            (
+                f"{python_emoji} Powered by Python {pyver.major}.{pyver.minor}.{pyver.micro}",
+                f"{discord_py_emoji} Using discord.py {discord.__version__}",
+                f"\N{TIMER CLOCK} Latency: {self.bot.latency:.3} s",
+            )
+        )
+
+        if ctx.guild is not None:
+            embed.colour = ctx.guild.me.colour
+
+        await ctx.send(embed=embed)
+
     @commands.command(name="emoji", aliases=["emojis"])
-    async def emoji(self, ctx, *, name: str):
+    async def emoji(self, ctx, *, name: str = None):
         """
         Fetches information about the given emojis.
         This supports both Discord and unicode emojis, and will check
         all guilds the bot is in.
         """
+
+        if name is None:
+            # If no argument, list all emojis in guild.
+            await self.list_emojis(ctx)
+            return
 
         conv = EmojiConv()
         try:
@@ -106,6 +146,63 @@ class Info(AbstractCog):
             raise ValueError(f"Unknown emoji object returned: {emoji!r}")
 
         await ctx.send(embed=embed)
+
+    @commands.command(
+        name="lemoji",
+        aliases=["lemojis", "allemoji", "allemojis", "listemoji", "listemojis"],
+    )
+    @commands.guild_only()
+    async def all_emojis(self, ctx, modifier: str = None):
+        """
+        Lists all emojis in the guild.
+        Add 'all' to list from all guilds.
+        """
+
+        await self.list_emojis(ctx, modifier == "all")
+
+    async def list_emojis(self, ctx, all_guilds=False):
+        contents = []
+        content = StringBuilder()
+
+        if all_guilds:
+            if not mod_perm(ctx):
+                raise ManualCheckFailure(content="Only moderators can do this.")
+
+            guild_emojis = (guild.emojis for guild in self.bot.guilds)
+            emojis = chain(*guild_emojis)
+        else:
+            emojis = ctx.guild.emojis
+
+        logger.info("Listing all emojis within the guild")
+        for emoji in emojis:
+            managed = "M" if emoji.managed else ""
+            content.writeln(
+                f"- [{emoji}]({emoji.url}) id: `{emoji.id}`, name: `{emoji.name}` {managed}"
+            )
+
+            if len(content) > 1900:
+                # Too long, break into new embed
+                contents.append(str(content))
+
+                # Start content over
+                content.clear()
+
+        if content:
+            contents.append(str(content))
+
+        for i, content in enumerate(contents):
+            embed = discord.Embed(
+                description=content, colour=discord.Colour.dark_teal()
+            )
+            embed.set_footer(text=f"Page {i + 1}/{len(contents)}")
+
+            if i == 0:
+                if all_guilds:
+                    embed.set_author(name="Emojis in all guilds")
+                else:
+                    embed.set_author(name=f"Emojis within {ctx.guild.name}")
+
+            await ctx.send(embed=embed)
 
     async def get_user(self, ctx, name):
         if name is None:
@@ -292,7 +389,9 @@ class Info(AbstractCog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(name="roles", aliases=["lroles", "listroles"])
+    @commands.command(
+        name="lrole", aliases=["lroles", "allrole", "allroles", "listrole", "listroles"]
+    )
     @commands.guild_only()
     async def roles(self, ctx):
         """ Lists all roles in the guild. """
@@ -317,7 +416,9 @@ class Info(AbstractCog):
             contents.append(str(content))
 
         for i, content in enumerate(contents):
-            embed = discord.Embed(description=content)
+            embed = discord.Embed(
+                description=content, colour=discord.Colour.dark_teal()
+            )
             embed.set_footer(text=f"Page {i + 1}/{len(contents)}")
             await ctx.send(embed=embed)
 
