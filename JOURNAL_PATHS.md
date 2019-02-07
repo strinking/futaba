@@ -119,7 +119,6 @@ Role reapplication:
 Prune:
 * `/welcome/prune` - Displays the number of members that were removed from the server `members: [discord.Member]`
 
-
 ### Self-assignable roles cog
 * `/roles/self/add` - A member added some self-assignable roles to themselves. Attributes: `roles: List[discord.Role]`.
 * `/roles/self/remove` - A member removed some self-assignable roles from themselves. Attributes: `roles: List[discord.Role]`.

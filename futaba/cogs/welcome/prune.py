@@ -114,7 +114,7 @@ class Prune:
     async def prune(self, ctx, days: int = 7):
         """
         Prunes users that have not used the !agree command for at least the given number of days.
-        Defaults to seven days
+        Defaults to seven days.
         """
 
         pruned_members = await self.prune_member(ctx, days)
@@ -122,7 +122,7 @@ class Prune:
         # Check if prune_members is none as if it is there is not member role set
         # If there is no member role set pruning members makes no sense
         if pruned_members is None:
-            error_message = "The server has no member role set, so pruning the server will have no effect"
+            error_message = "The server has no member role set, so pruning will have no effect"
             embed = discord.Embed(
                 description=error_message, colour=discord.Colour.red()
             )
