@@ -117,8 +117,8 @@ Role reapplication:
 * `/roles/save` - Saving updated roles for a member. Attributes: `member: discord.Member`.
 
 Prune:
-* `/welcome/prune/count` - Displays the number of members that were removed from the server `message: Optional[str]`
-* `/welcome/prune/full` - Displays the members that were removed from the server `members: List[discord.Member]`
+* `/welcome/prune` - Displays the number of members that were removed from the server `members: [discord.Member]`
+
 
 ### Self-assignable roles cog
 * `/roles/self/add` - A member added some self-assignable roles to themselves. Attributes: `roles: List[discord.Role]`.

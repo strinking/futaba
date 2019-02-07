@@ -42,6 +42,7 @@ ICONS = {
     "agree": "\N{THUMBS UP SIGN}",
     "member": "\N{MAN}",
     "guest": "\N{EXTRATERRESTRIAL ALIEN}",
+    "snip": "\N{BLACK SCISSORS}",
     # Filter
     "filter": "\N{PAGE WITH CURL}",
     "flag": "\N{TRIANGULAR FLAG ON POST}",

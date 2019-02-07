@@ -97,7 +97,7 @@ class Prune:
         pruned = []
 
         for member in to_be_pruned:
-            if member.top_role > ctx.me.top_role:
+            if ctx.me.top_role > member.top_role:
                 await ctx.guild.kick(
                     member, reason=f"Pruning guests older than {days} days"
                 )
@@ -122,18 +122,21 @@ class Prune:
         # Check if prune_members is none as if it is there is not member role set
         # If there is no member role set pruning members makes no sense
         if pruned_members is None:
-            error_message = "The server has no Member role set, so pruning the server will have no affect"
-            embed = discord.Embed(description=error_message)
+            error_message = "The server has no member role set, so pruning the server will have no effect"
+            embed = discord.Embed(
+                description=error_message, colour=discord.Colour.red()
+            )
             raise CommandFailed(embed=embed)
 
-        content = f"Pruned {len(pruned_members)}"
-        embed = discord.Embed(description=content)
+        content = f"Pruned {len(pruned_members)} members"
+        embed = discord.Embed(description=content, colour=discord.Colour.dark_teal())
         await ctx.send(embed=embed)
 
-        journal_message = f"Pruned members: {pruned_members}"
         self.journal.send(
-            "prune/count", ctx.guild, content, icon="kick", cause=ctx.author
-        )
-        self.journal.send(
-            "prune/full", ctx.guild, journal_message, icon="kick", cause=ctx.author
+            "prune",
+            ctx.guild,
+            content,
+            icon="snip",
+            cause=ctx.author,
+            members=pruned_members,
         )
