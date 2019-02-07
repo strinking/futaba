@@ -21,24 +21,23 @@ import discord
 from discord.ext import commands
 
 from futaba import permissions
+from futaba.exceptions import CommandFailed
 
 logger = logging.getLogger(__name__)
 
 __all__ = ["Prune"]
 
 
-def prune_filter(member, prune_date, role, has_role=True):
+def prune_filter(member, prune_date, role, should_have_role=True):
     """
     Fuction used to filter members by.
-    If has_role is False it will check if the user dosen't have the role specified
+    If should_has_role is False it will check if the user dosen't have the role specified
     """
-    if has_role:
-        if role in member.roles:
-            if member.joined_at < prune_date:
-                return True
-    elif role not in member.roles:
-        if member.joined_at < prune_date:
-            return True
+
+    has_role = role in member.roles
+    prune = member.joined_at < prune_date
+    if has_role == should_have_role:
+        return prune
 
     return False
 
@@ -53,8 +52,8 @@ class Prune:
 
     async def prune_member(self, ctx, days):
         """
-        Checks if a member has had the guest role for longer that the days specified.
-        Once done will kick all members that meet that condition
+        Checks if a member has had the guest role for longer than the number of days specified.
+        Afterwords, will kick all members that meet that condition.
         """
 
         # Get guild special roles
@@ -76,6 +75,11 @@ class Prune:
                 lambda x: prune_filter(x, prune_date, roles.guest), ctx.guild.members
             )
 
+        elif roles.member is None:
+            # If no member role is set the prune command should not do anything
+
+            return None
+
         else:
             logger.info(
                 "Pruning members without role %s (%d) who joined more than %d days ago",
@@ -93,28 +97,39 @@ class Prune:
         pruned = []
 
         for member in to_be_pruned:
-            try:
+            if member.top_role > ctx.me.top_role:
                 await ctx.guild.kick(
                     member, reason=f"Pruning guests older than {days} days"
                 )
-                pruned.append(member)
-            except:
-                logger.warning("Cannnot prunt member %s (%d)", member.name, member.id)
+                pruned.append(str(member))
+
+            else:
+                logger.warning("Cannnot prune member %s (%d)", member.name, member.id)
 
         return pruned
 
     @commands.command(name="prune", aliases=["purge"])
     @commands.guild_only()
-    @permissions.check_admin()
-    async def purge(self, ctx, days: int = 7):
+    @permissions.check_mod()
+    async def prune(self, ctx, days: int = 7):
         """
-        Prunes users that have not used the agree command over the days specified.
-        Deafults to seven days
+        Prunes users that have not used the !agree command for at least the given number of days.
+        Defaults to seven days
         """
 
         pruned_members = await self.prune_member(ctx, days)
+        
+        # Check if prune_members is none as if it is there is not member role set
+        # If there is no member role set pruning members makes no sense
+        if pruned_members is None:
+            error_message = 'The server has no Member role set, so pruning the server will have no affect'
+            embed = discord.Embed(description=error_message)
+            raise CommandFailed(embed=embed)
+
         content = f"Pruned {len(pruned_members)}"
         embed = discord.Embed(description=content)
         await ctx.send(embed=embed)
 
-        self.journal.send("prune", ctx.guild, content, icon="kick", cause=ctx.author)
+        journal_message = f"Pruned members: {pruned_members}"
+        self.journal.send("prune/count", ctx.guild, content, icon="kick", cause=ctx.author)
+        self.journal.send("prune/full", ctx.guild, journal_message, icon="kick", cause=ctx.author)
