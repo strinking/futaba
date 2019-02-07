@@ -24,7 +24,7 @@ from discord.ext import commands
 from futaba import permissions
 from futaba.converters import MemberConv, UserConv
 from futaba.exceptions import CommandFailed, ManualCheckFailure
-from futaba.navi import ChangeRolesTask
+from futaba.navi import ChangeRolesTask, RestoreOtherRolesTask
 from futaba.str_builder import StringBuilder
 from futaba.utils import escape_backticks, plural, user_discrim
 from ..abc import AbstractCog
@@ -87,6 +87,37 @@ class Moderation(AbstractCog):
             )
             await member.remove_roles(*roles, reason=reason)
 
+    async def add_roles(self, ctx, member, minutes, reason):
+        if minutes:
+            logger.info(
+                "Creating delayed other role addition for '%s' (%d) with reason %r in %d minutes",
+                member.name,
+                member.id,
+                reason,
+                minutes,
+            )
+            timestamp = datetime.now() + timedelta(seconds=minutes * 60)
+            task = RestoreOtherRolesTask(
+                self.bot, None, ctx.author, timestamp, member=member, reason=reason
+            )
+            self.bot.add_tasks(task)
+        else:
+            await self.bot.sql.moderation.restore_other_roles(member, reason)
+
+    def check_other_roles(self, member):
+        has_other, punish_role, _ = self.bot.sql.moderation.get_other_roles(member)
+        if has_other:
+            embed = discord.Embed(colour=discord.Colour.red())
+            role_descr = (
+                ""
+                if punish_role is None
+                else f"because they already have {punish_role.mention}"
+            )
+            embed.description = (
+                f"Cannot add a new overriding role to {member.mention} {role_descr}"
+            )
+            raise CommandFailed(embed=embed)
+
     @commands.command(name="nick", aliases=["nickname", "renick"])
     @commands.guild_only()
     @permissions.check_perm("manage_nicknames")
@@ -134,12 +165,22 @@ class Moderation(AbstractCog):
 
         # TODO store punishment in table with task ID
 
-        full_reason = self.build_reason(ctx, "Muted", minutes, reason)
-        await member.add_roles(roles.mute, reason=full_reason)
+        minutes = max(minutes, 0)
+        full_reason = self.build_reason(ctx, "Muted", minutes, reason, past=True)
+        remove_other = self.bot.sql.settings.get_remove_other_roles(ctx.guild)
+
+        if remove_other:
+            self.check_other_roles(member)
+            await self.bot.sql.moderation.remove_other_roles(
+                member, roles.mute, full_reason
+            )
+        else:
+            await member.add_roles(roles.mute, reason=full_reason)
 
         # If a delayed event, schedule a Navi task
-        minutes = max(minutes, 0)
-        if minutes:
+        if remove_other:
+            await self.add_roles(ctx, member, minutes, full_reason)
+        elif minutes:
             await self.remove_roles(ctx, member, minutes, [roles.mute], full_reason)
 
     @commands.command(name="unmute", aliases=["unshitpost"])
@@ -169,6 +210,19 @@ class Moderation(AbstractCog):
 
         minutes = max(minutes, 0)
         full_reason = self.build_reason(ctx, "Unmuted", minutes, reason, past=True)
+        remove_other = self.bot.sql.settings.get_remove_other_roles(ctx.guild)
+
+        if remove_other:
+            if minutes:
+                try:
+                    await self.bot.sql.moderation.restore_other_roles(
+                        member, full_reason
+                    )
+                except KeyError:
+                    pass
+            else:
+                await self.add_roles(ctx, member, minutes, full_reason)
+
         await self.remove_roles(ctx, member, minutes, [roles.mute], full_reason)
 
     @commands.command(name="jail", aliases=["dunce"])
@@ -190,13 +244,23 @@ class Moderation(AbstractCog):
 
         # TODO store punishment in table with task ID
 
+        minutes = max(minutes, 0)
         full_reason = self.build_reason(ctx, "Jailed", minutes, reason)
-        await member.add_roles(roles.jail, reason=full_reason)
+        remove_other = self.bot.sql.settings.get_remove_other_roles(ctx.guild)
+
+        if remove_other:
+            self.check_other_roles(member)
+            await self.bot.sql.moderation.remove_other_roles(
+                member, roles.jail, full_reason
+            )
+        else:
+            await member.add_roles(roles.jail, reason=full_reason)
 
         # If a delayed event, schedule a Navi task
-        minutes = max(minutes, 0)
         if minutes:
             await self.remove_roles(ctx, member, minutes, [roles.jail], full_reason)
+        if remove_other:
+            await self.add_roles(ctx, member, minutes, full_reason)
 
     @commands.command(name="unjail", aliases=["undunce"])
     @commands.guild_only()
@@ -221,6 +285,19 @@ class Moderation(AbstractCog):
 
         minutes = max(minutes, 0)
         full_reason = self.build_reason(ctx, "Released", minutes, reason, past=True)
+        remove_other = self.bot.sql.settings.get_remove_other_roles(ctx.guild)
+
+        if remove_other:
+            if minutes:
+                try:
+                    await self.bot.sql.moderation.restore_other_roles(
+                        member, full_reason
+                    )
+                except KeyError:
+                    pass
+            else:
+                await self.add_roles(ctx, member, minutes, full_reason)
+
         await self.remove_roles(ctx, member, minutes, [roles.jail], full_reason)
 
     @commands.command(name="kick")

@@ -16,19 +16,17 @@ Cog for misceallaneous commands that don't really belong anywhere else.
 
 import logging
 import random
-import sys
 from datetime import datetime
 from hashlib import sha1
 
 import discord
 from discord.ext import commands
 
-from futaba import __version__
 from futaba.download import download_links
 from futaba.exceptions import CommandFailed
 from futaba.str_builder import StringBuilder
 from futaba.unicode import unicode_repr
-from futaba.utils import GIT_HASH, URL_REGEX, fancy_timedelta
+from futaba.utils import URL_REGEX
 from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
@@ -58,38 +56,6 @@ class Miscellaneous(AbstractCog):
 
         await ctx.send(content=content)
         self.journal.send("ping", ctx.guild, content, icon="ok")
-
-    @commands.command(
-        name="about", aliases=["futaba", "aboutme", "bot", "botinfo", "uptime"]
-    )
-    async def about(self, ctx):
-        """ Prints information about the running bot. """
-
-        pyver = sys.version_info
-        python_emoji = self.bot.get_emoji(self.bot.config.python_emoji_id) or ""
-        discord_py_emoji = self.bot.get_emoji(self.bot.config.discord_py_emoji_id) or ""
-
-        embed = discord.Embed()
-        embed.set_thumbnail(url=self.bot.user.avatar_url)
-        embed.set_author(name=f"Futaba v{__version__} [{GIT_HASH}]")
-        embed.add_field(name="Running for", value=fancy_timedelta(self.bot.uptime))
-        embed.add_field(
-            name="Created by",
-            value="[Programming Discord](https://discord.gg/010z0Kw1A9ql5c1Qe)",
-        )
-        embed.add_field(name="Source code", value="https://github.com/strinking/futaba")
-        embed.description = "\n".join(
-            (
-                f"{python_emoji} Powered by Python {pyver.major}.{pyver.minor}.{pyver.micro}",
-                f"{discord_py_emoji} Using discord.py {discord.__version__}",
-                f"\N{TIMER CLOCK} Latency: {self.bot.latency:.3} s",
-            )
-        )
-
-        if ctx.guild is not None:
-            embed.colour = ctx.guild.me.colour
-
-        await ctx.send(embed=embed)
 
     @commands.command(name="randomemoji", aliases=["randemoji", "remoji"])
     async def random_emoji(self, ctx):
