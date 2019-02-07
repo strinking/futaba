@@ -118,11 +118,11 @@ class Prune:
         """
 
         pruned_members = await self.prune_member(ctx, days)
-        
+
         # Check if prune_members is none as if it is there is not member role set
         # If there is no member role set pruning members makes no sense
         if pruned_members is None:
-            error_message = 'The server has no Member role set, so pruning the server will have no affect'
+            error_message = "The server has no Member role set, so pruning the server will have no affect"
             embed = discord.Embed(description=error_message)
             raise CommandFailed(embed=embed)
 
@@ -131,5 +131,9 @@ class Prune:
         await ctx.send(embed=embed)
 
         journal_message = f"Pruned members: {pruned_members}"
-        self.journal.send("prune/count", ctx.guild, content, icon="kick", cause=ctx.author)
-        self.journal.send("prune/full", ctx.guild, journal_message, icon="kick", cause=ctx.author)
+        self.journal.send(
+            "prune/count", ctx.guild, content, icon="kick", cause=ctx.author
+        )
+        self.journal.send(
+            "prune/full", ctx.guild, journal_message, icon="kick", cause=ctx.author
+        )
