@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["Prune"]
 
+
 def prune_filter(member, prune_date, role, has_role=True):
     """
     Fuction used to filter members by.
@@ -41,8 +42,8 @@ def prune_filter(member, prune_date, role, has_role=True):
 
     return False
 
-class Prune:
 
+class Prune:
     def __init__(self, bot):
         self.bot = bot
         self.journal = bot.get_broadcaster("/welcome")
@@ -63,22 +64,39 @@ class Prune:
         prune_date = datetime.now() - timedelta(days=days)
 
         if roles.guest:
-            logger.info("Pruning members with role %s (%d) who joined more than %d days ago", roles.guest.name, roles.guest.id, days)        
+            logger.info(
+                "Pruning members with role %s (%d) who joined more than %d days ago",
+                roles.guest.name,
+                roles.guest.id,
+                days,
+            )
 
             # Get users to be pruned
-            to_be_pruned = filter(lambda x: prune_filter(x, prune_date, roles.guest), ctx.guild.members)
+            to_be_pruned = filter(
+                lambda x: prune_filter(x, prune_date, roles.guest), ctx.guild.members
+            )
 
         else:
-            logger.info("Pruning members without role %s (%d) who joined more than %d days ago", roles.member.name, roles.member.id, days)
+            logger.info(
+                "Pruning members without role %s (%d) who joined more than %d days ago",
+                roles.member.name,
+                roles.member.id,
+                days,
+            )
 
             # Get users to be pruned
-            to_be_pruned = filter(lambda x: prune_filter(x, prune_date, roles.member, False), ctx.guild.members)
+            to_be_pruned = filter(
+                lambda x: prune_filter(x, prune_date, roles.member, False),
+                ctx.guild.members,
+            )
 
         pruned = []
 
         for member in to_be_pruned:
             try:
-                await ctx.guild.kick(member, reason=f'Pruning guests older than {days} days')
+                await ctx.guild.kick(
+                    member, reason=f"Pruning guests older than {days} days"
+                )
                 pruned.append(member)
             except:
                 logger.warning("Cannnot prunt member %s (%d)", member.name, member.id)
@@ -99,10 +117,4 @@ class Prune:
         embed = discord.Embed(description=content)
         await ctx.send(embed=embed)
 
-        self.journal.send(
-                "prune",
-                ctx.guild,
-                content,
-                icon="kick",
-                cause=ctx.author,
-            )
+        self.journal.send("prune", ctx.guild, content, icon="kick", cause=ctx.author)
