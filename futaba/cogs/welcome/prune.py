@@ -122,7 +122,9 @@ class Prune:
         # Check if prune_members is none as if it is there is not member role set
         # If there is no member role set pruning members makes no sense
         if pruned_members is None:
-            error_message = "The server has no member role set, so pruning will have no effect"
+            error_message = (
+                "The server has no member role set, so pruning will have no effect"
+            )
             embed = discord.Embed(
                 description=error_message, colour=discord.Colour.red()
             )
