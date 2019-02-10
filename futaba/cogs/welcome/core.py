@@ -132,12 +132,18 @@ class Welcome(AbstractCog):
 
     async def member_join(self, member):
         logger.info(
-            "Member %s (%d) joined '%s' (%d)",
+            "Member %s (%d) joined '%s' (%d) %s",
             user_discrim(member),
             member.id,
             member.guild.name,
             member.guild.id,
+            "(BOT)" if member.bot else "",
         )
+
+        if member.bot:
+            # Since bots have to be manually invited by an admin,
+            # let them handle all the roles and stuff.
+            return
 
         welcome = self.bot.sql.welcome.get_welcome(member.guild)
         roles = self.bot.sql.settings.get_special_roles(member.guild)
