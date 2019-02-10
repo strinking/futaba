@@ -235,7 +235,9 @@ class Moderation(AbstractCog):
         The minutes parameter must be set to a positive number.
         """
 
-        logger.info("Jailing user '%s' (%d) for %d minutes", member.name, member.id, minutes)
+        logger.info(
+            "Jailing user '%s' (%d) for %d minutes", member.name, member.id, minutes
+        )
 
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)
         if roles.jail is None:
@@ -277,7 +279,9 @@ class Moderation(AbstractCog):
         Set 'minutes' to 0 to release immediately.
         """
 
-        logger.info("Un-jailing user '%s' (%d) in %d minutes", member.name, member.id, minutes)
+        logger.info(
+            "Un-jailing user '%s' (%d) in %d minutes", member.name, member.id, minutes
+        )
 
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)
         if roles.jail is None:
