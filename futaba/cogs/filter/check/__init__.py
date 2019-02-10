@@ -147,8 +147,8 @@ async def check_member_join(cog, member):
     if not guild.me.guild_permissions.manage_roles:
         logger.debug(
             "Lacks permissions to manage roles in guild '%s' (%d)",
-            message.guild.name,
-            message.guild.id,
+            member.guild.name,
+            member.guild.id,
         )
         return
 
@@ -175,8 +175,8 @@ async def check_member_update(cog, before, after):
     if not guild.me.guild_permissions.manage_roles:
         logger.debug(
             "Lacks permissions to manage roles in guild '%s' (%d)",
-            message.guild.name,
-            message.guild.id,
+            after.guild.name,
+            after.guild.id,
         )
         return
 
