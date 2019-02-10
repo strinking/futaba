@@ -100,7 +100,11 @@ async def check_message(cog, message):
 
     # Check that we actually have permissions to delete
     if not message.channel.permissions_for(message.guild.me).manage_messages:
-        logger.debug("I don't have permission to delete messages here")
+        logger.debug(
+            "Lacks permissions to delete messages in guild '%s' (%d)",
+            message.guild.name,
+            message.guild.id,
+        )
         return
 
     # Check filter immunity
@@ -141,7 +145,11 @@ async def check_member_join(cog, member):
 
     # Check that we actually have permissions to manage roles
     if not guild.me.guild_permissions.manage_roles:
-        logger.debug("I don't have permission to manage roles here")
+        logger.debug(
+            "Lacks permissions to manage roles in guild '%s' (%d)",
+            member.guild.name,
+            member.guild.id,
+        )
         return
 
     # Check filter immunity
@@ -165,7 +173,11 @@ async def check_member_update(cog, before, after):
     # Check that we actually have permissions to manage roles
     guild = before.guild
     if not guild.me.guild_permissions.manage_roles:
-        logger.debug("I don't have permission to manage roles here")
+        logger.debug(
+            "Lacks permissions to manage roles in guild '%s' (%d)",
+            after.guild.name,
+            after.guild.id,
+        )
         return
 
     # Cannot be parallelized because we can only renick if the username is ok
