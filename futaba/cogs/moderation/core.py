@@ -87,7 +87,7 @@ class Moderation(AbstractCog):
             )
             await member.remove_roles(*roles, reason=reason)
 
-    async def add_roles(self, ctx, member, minutes, reason):
+    async def restore_roles(self, ctx, member, minutes, reason):
         if minutes:
             logger.info(
                 "Creating delayed other role addition for '%s' (%d) with reason %r in %d minutes",
@@ -179,7 +179,7 @@ class Moderation(AbstractCog):
 
         # If a delayed event, schedule a Navi task
         if remove_other:
-            await self.add_roles(ctx, member, minutes, full_reason)
+            await self.restore_roles(ctx, member, minutes, full_reason)
         elif minutes:
             await self.remove_roles(ctx, member, minutes, [roles.mute], full_reason)
 
@@ -221,7 +221,7 @@ class Moderation(AbstractCog):
                 except KeyError:
                     pass
             else:
-                await self.add_roles(ctx, member, minutes, full_reason)
+                await self.restore_roles(ctx, member, minutes, full_reason)
 
         await self.remove_roles(ctx, member, minutes, [roles.mute], full_reason)
 
@@ -234,6 +234,10 @@ class Moderation(AbstractCog):
         Requires a jail role to be configured.
         The minutes parameter must be set to a positive number.
         """
+
+        logger.info(
+            "Jailing user '%s' (%d) for %d minutes", member.name, member.id, minutes
+        )
 
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)
         if roles.jail is None:
@@ -259,8 +263,9 @@ class Moderation(AbstractCog):
         # If a delayed event, schedule a Navi task
         if minutes:
             await self.remove_roles(ctx, member, minutes, [roles.jail], full_reason)
-        if remove_other:
-            await self.add_roles(ctx, member, minutes, full_reason)
+
+            if remove_other:
+                await self.restore_roles(ctx, member, minutes, full_reason)
 
     @commands.command(name="unjail", aliases=["undunce"])
     @commands.guild_only()
@@ -273,6 +278,10 @@ class Moderation(AbstractCog):
         Requires a jail role to be configured.
         Set 'minutes' to 0 to release immediately.
         """
+
+        logger.info(
+            "Un-jailing user '%s' (%d) in %d minutes", member.name, member.id, minutes
+        )
 
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)
         if roles.jail is None:
@@ -296,7 +305,7 @@ class Moderation(AbstractCog):
                 except KeyError:
                     pass
             else:
-                await self.add_roles(ctx, member, minutes, full_reason)
+                await self.restore_roles(ctx, member, minutes, full_reason)
 
         await self.remove_roles(ctx, member, minutes, [roles.jail], full_reason)
 
