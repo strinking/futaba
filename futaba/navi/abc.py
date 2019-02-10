@@ -121,7 +121,7 @@ class AbstractNaviTask:
         does whatever this task is supposed to do.
         """
 
-        pass
+        # - pass -
 
     @abstractmethod
     def build_parameters(self):

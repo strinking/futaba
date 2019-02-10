@@ -66,7 +66,7 @@ URL_REGEX = re.compile(
 class Dummy:
     """ Dummy class that can freely be assigned any fields or members. """
 
-    pass
+    # - pass -
 
 
 class DictEmbed:
