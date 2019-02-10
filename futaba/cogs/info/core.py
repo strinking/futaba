@@ -218,6 +218,21 @@ class Info(AbstractCog):
                 embed.description = f"No user found for `{name}`. Try `{prefix}ufind`."
                 raise CommandFailed(embed=embed)
 
+    @commands.command(name="avatar", aliases=["profilepic"])
+    async def avatar(self, ctx, *, name: str = None):
+        """
+        Displays the given user's avatar and its URL.
+        If no argument is passed, the caller is checked instead.
+        """
+
+        user = await self.get_user(ctx, name)
+        logger.info("Displaying avatar on '%s' (%d)", user.name, user.id)
+
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
+        embed.set_author(name=user_discrim(user))
+        embed.set_image(url=user.avatar_url)
+        await ctx.send(content=user.avatar_url, embed=embed)
+
     @commands.command(
         name="uinfo", aliases=["user", "userinfo", "member", "memberinfo"]
     )
