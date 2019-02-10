@@ -165,6 +165,7 @@ class SettingsModel:
             prefix=None,
             max_delete_messages=self.sql.max_delete_messages,
             warn_manual_mod_action=False,
+            remove_other_roles=True,
         )
         self.sql.execute(ins)
         self.guild_settings_cache[guild] = GuildSettingsData(
