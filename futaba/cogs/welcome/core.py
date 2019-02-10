@@ -30,6 +30,7 @@ from futaba.utils import plural, user_discrim
 from .role_reapplication import RoleReapplication
 from ..abc import AbstractCog
 
+# Can't use get_context() since there isn't a discord.Message to base it on.
 FakeContext = namedtuple("FakeContext", ("author", "channel", "guild"))
 logger = logging.getLogger(__name__)
 
