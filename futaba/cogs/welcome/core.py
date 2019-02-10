@@ -235,9 +235,9 @@ class Welcome(AbstractCog):
             await ctx.send(content=format_message(welcome.agreed_message, ctx))
 
         # Reapply saved, old roles
-        await self.roles.reapply_roles(ctx.author)
+        applied = await self.roles.reapply_roles(ctx.author)
 
-        if roles.member:
+        if roles.member and not applied:
             logger.info(
                 "Adding member role %s (%d)", roles.member.name, roles.member.id
             )

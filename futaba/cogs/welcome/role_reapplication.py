@@ -116,7 +116,7 @@ class RoleReapplication(AbstractCog):
     async def reapply_roles(self, member):
         roles = self.get_roles_to_reapply(member)
         if roles is None:
-            return
+            return None
 
         logger.info(
             "Reapplying roles to member '%s' (%d): [%s]",
@@ -132,6 +132,7 @@ class RoleReapplication(AbstractCog):
         self.journal.send(
             "reapply", member.guild, content, member=member, roles=roles, icon="role"
         )
+        return roles
 
     async def save_roles(self, member):
         logger.info(
