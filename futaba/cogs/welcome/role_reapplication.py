@@ -14,6 +14,7 @@
 Handling to reapply roles when the member rejoins the guild.
 """
 
+import asyncio
 import logging
 from collections import namedtuple
 
@@ -31,16 +32,22 @@ __all__ = ["RoleReapplication"]
 
 
 class RoleReapplication(AbstractCog):
-    __slots__ = ("journal",)
+    __slots__ = ("journal", "lock")
 
     def __init__(self, bot):
         super().__init__(bot)
         self.journal = bot.get_broadcaster("/roles")
+        self.lock = asyncio.Lock()
+
+    async def bg_setup(self):
+        async with self.lock:
+            with self.bot.sql.transaction():
+                for member in self.bot.get_all_members():
+                    self.bot.sql.roles.update_saved_roles(member)
 
     def setup(self):
-        with self.bot.sql.transaction():
-            for member in self.bot.get_all_members():
-                self.bot.sql.roles.update_saved_roles(member)
+        logger.info("Running member role update in background")
+        self.bot.loop.create_task(self.bg_setup())
 
     async def member_update(self, before, after):
         if before.roles == after.roles:
@@ -142,8 +149,9 @@ class RoleReapplication(AbstractCog):
             member.guild.id,
         )
 
-        with self.bot.sql.transaction():
-            self.bot.sql.roles.update_saved_roles(member)
+        async with self.lock:
+            with self.bot.sql.transaction():
+                self.bot.sql.roles.update_saved_roles(member)
 
         content = f"Saved updated roles for {user_discrim(member)}"
         self.journal.send("save", member.guild, content, member=member, icon="save")
