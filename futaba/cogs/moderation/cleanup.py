@@ -87,7 +87,7 @@ class Cleanup(AbstractCog):
     def dump_messages(messages):
         buffer = StringBuilder()
         obj = list(map(message_dict, reversed(messages)))
-        json.dump(obj, buffer, ensure_ascii=True)
+        json.dump(obj, buffer, ensure_ascii=True, indent=4)
         return obj, discord.File(buffer.bytes_io(), filename="deleted-messages.json")
 
     @commands.command(name="cleanup", aliases=["clean"])
