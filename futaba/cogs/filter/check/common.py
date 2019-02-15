@@ -75,7 +75,7 @@ def journal_name_violation(
     journal.send(
         f"jump/{name_type.value}/{props.path}",
         member.guild,
-        member.mention,
+        f"{member.mention} (`{member.id}`)",
         icons="previous",
         filter_type=filter_type,
         filter_text=filter_text,
