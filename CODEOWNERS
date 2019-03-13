@@ -1,0 +1,3 @@
+# These owners will be the default owners for the main file type in the project.
+*.py   @Ma-wa-re
+*.py   @ammongit
