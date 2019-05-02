@@ -41,6 +41,7 @@ from .exceptions import (
 )
 from .journal import Broadcaster, LoggingOutputListener
 from .lru import LruCache
+from .punishment import PunishmentHandler
 from .sql import SqlHandler
 from .str_builder import StringBuilder
 from .unicode import unicode_repr
@@ -55,6 +56,7 @@ class Bot(commands.AutoShardedBot):
         "start_time",
         "journal_cog",
         "sql",
+        "punish",
         "error_channel",
         "message_locks",
         "completed_commands",
@@ -65,6 +67,7 @@ class Bot(commands.AutoShardedBot):
         self.start_time = datetime.utcnow()
         self.journal_cog = None
         self.sql = SqlHandler(config.database_url)
+        self.punish = PunishmentHandler(self)
         self.error_channel = None
         self.message_locks = LruCache(20)
         self.completed_commands = deque(maxlen=20)

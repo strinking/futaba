@@ -27,6 +27,7 @@ from . import (
     lru,
     navi,
     permissions,
+    punishment,
     similar,
     sql,
     str_builder,
