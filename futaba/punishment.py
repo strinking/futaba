@@ -21,6 +21,8 @@ import discord
 
 logger = logging.getLogger(__name__)
 
+__all__ = ["PunishmentHandler"]
+
 class PunishmentHandler:
     __slots__ = (
         "bot",
