@@ -23,6 +23,7 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.converters import MemberConv, UserConv
+from futaba.enums import PunishAction
 from futaba.exceptions import CommandFailed, ManualCheckFailure
 from futaba.navi import PunishTask, RestoreOtherRolesTask
 from futaba.str_builder import StringBuilder
@@ -74,7 +75,7 @@ class Moderation(AbstractCog):
             timestamp,
             None,
             member=member,
-            action=action
+            action=action,
             reason=reason,
         )
         self.bot.add_tasks(task)
@@ -95,6 +96,20 @@ class Moderation(AbstractCog):
             self.bot.add_tasks(task)
         else:
             await self.bot.sql.moderation.restore_other_roles(member, reason)
+
+    def check_other_roles(self, member):
+        has_other, punish_role, _ = self.bot.sql.moderation.get_other_roles(member)
+        if has_other:
+            embed = discord.Embed(colour=discord.Colour.red())
+            role_descr = (
+                ""
+                if punish_role is None
+                else f"because they already have {punish_role.mention}"
+            )
+            embed.description = (
+                f"Cannot add a new overriding role to {member.mention} {role_descr}"
+            )
+            raise CommandFailed(embed=embed)
 
     @commands.command(name="nick", aliases=["nickname", "renick"])
     @commands.guild_only()
@@ -141,12 +156,14 @@ class Moderation(AbstractCog):
         if member.top_role > ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to mute this user")
 
+        self.check_other_roles(member)
+
         # TODO store punishment in table with task ID
 
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Muted", minutes, reason, past=True)
 
-        await self.bot.punish.mute(guild, member, reason)
+        await self.bot.punish.mute(ctx.guild, member, reason)
 
         # If a delayed event, schedule a Navi task
         if minutes:
@@ -206,6 +223,8 @@ class Moderation(AbstractCog):
         if member.top_role > ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to jail this user")
 
+        self.check_other_roles(member)
+
         # TODO store punishment in table with task ID
 
         minutes = max(minutes, 0)
@@ -214,9 +233,7 @@ class Moderation(AbstractCog):
 
         if remove_other:
             self.check_other_roles(member)
-            await self.bot.sql.moderation.remove_other_roles(
-                member, roles.jail, full_reason
-            )
+            await self.bot.sql.moderation.remove_other_roles(member, roles.jail, reason)
         else:
             await member.add_roles(roles.jail, reason=reason)
 

@@ -99,8 +99,6 @@ class RoleReapplication(AbstractCog):
     async def saved_roles(self, ctx, user: UserConv = None):
         """ Returns all roles that would be reapplied when a given user rejoins. """
 
-        # TODO integrate current punishment role if any
-
         if user is None:
             member = ctx.author
             mention = ctx.author.mention
