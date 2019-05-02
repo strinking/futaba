@@ -24,7 +24,7 @@ from discord.ext import commands
 from futaba import permissions
 from futaba.converters import MemberConv, UserConv
 from futaba.exceptions import CommandFailed, ManualCheckFailure
-from futaba.navi import ChangeRolesTask, RestoreOtherRolesTask
+from futaba.navi import PunishTask, RestoreOtherRolesTask
 from futaba.str_builder import StringBuilder
 from futaba.utils import escape_backticks, plural, user_discrim
 from ..abc import AbstractCog
@@ -55,37 +55,29 @@ class Moderation(AbstractCog):
             full_reason.write(f" with reason: {reason}")
         return str(full_reason)
 
-    async def remove_roles(self, ctx, member, minutes, roles, reason):
-        if minutes:
-            logger.info(
-                "Creating delayed role removal for '%s' (%d) with reason %r for roles %s in %d minutes",
-                member.name,
-                member.id,
-                reason,
-                roles,
-                minutes,
-            )
-            timestamp = datetime.now() + timedelta(seconds=minutes * 60)
-            task = ChangeRolesTask(
-                self.bot,
-                None,
-                ctx.author,
-                timestamp,
-                None,
-                member=member,
-                to_remove=roles,
-                reason=reason,
-            )
-            self.bot.add_tasks(task)
-        else:
-            logger.info(
-                "Removing roles %s from '%s' (%d) with reason %s",
-                roles,
-                member.name,
-                member.id,
-                reason,
-            )
-            await member.remove_roles(*roles, reason=reason)
+    async def remove_roles(self, ctx, member, minutes, action, reason):
+        assert minutes
+
+        logger.info(
+            "Creating delayed role removal for '%s' (%d) with reason %r for '%s' in %d minutes",
+            member.name,
+            member.id,
+            reason,
+            action,
+            minutes,
+        )
+        timestamp = datetime.now() + timedelta(seconds=minutes * 60)
+        task = PunishTask(
+            self.bot,
+            None,
+            ctx.author,
+            timestamp,
+            None,
+            member=member,
+            action=action
+            reason=reason,
+        )
+        self.bot.add_tasks(task)
 
     async def restore_roles(self, ctx, member, minutes, reason):
         if minutes:
@@ -157,11 +149,8 @@ class Moderation(AbstractCog):
         await self.bot.punish.mute(guild, member, reason)
 
         # If a delayed event, schedule a Navi task
-        remove_other = self.bot.sql.settings.get_remove_other_roles(guild)
-        if remove_other:
-            await self.restore_roles(ctx, member, minutes, reason)
-        elif minutes:
-            await self.remove_roles(ctx, member, minutes, [roles.mute], reason)
+        if minutes:
+            await self.remove_roles(ctx, member, minutes, PunishAction.RELIEVE_JAIL, reason)
 
     @commands.command(name="unmute", aliases=["unshitpost"])
     @commands.guild_only()
@@ -190,18 +179,11 @@ class Moderation(AbstractCog):
 
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Unmuted", minutes, reason, past=True)
-        remove_other = self.bot.sql.settings.get_remove_other_roles(ctx.guild)
 
-        if remove_other:
-            if minutes:
-                try:
-                    await self.bot.sql.moderation.restore_other_roles(member, reason)
-                except KeyError:
-                    pass
-            else:
-                await self.restore_roles(ctx, member, minutes, reason)
-
-        await self.remove_roles(ctx, member, minutes, [roles.mute], reason)
+        if minutes:
+            await self.remove_roles(ctx, member, minutes, PunishAction.RELIEVE_MUTE, reason)
+        else:
+            await self.bot.punish.unjail(ctx.guild, member, reason)
 
     @commands.command(name="jail", aliases=["dunce"])
     @commands.guild_only()
@@ -227,7 +209,7 @@ class Moderation(AbstractCog):
         # TODO store punishment in table with task ID
 
         minutes = max(minutes, 0)
-        full_reason = self.build_reason(ctx, "Jailed", minutes, reason)
+        reason = self.build_reason(ctx, "Jailed", minutes, reason)
         remove_other = self.bot.sql.settings.get_remove_other_roles(ctx.guild)
 
         if remove_other:
@@ -236,14 +218,11 @@ class Moderation(AbstractCog):
                 member, roles.jail, full_reason
             )
         else:
-            await member.add_roles(roles.jail, reason=full_reason)
+            await member.add_roles(roles.jail, reason=reason)
 
         # If a delayed event, schedule a Navi task
         if minutes:
-            await self.remove_roles(ctx, member, minutes, [roles.jail], full_reason)
-
-            if remove_other:
-                await self.restore_roles(ctx, member, minutes, full_reason)
+            await self.remove_roles(ctx, member, minutes, PunishAction.RELIEVE_JAIL, reason)
 
     @commands.command(name="unjail", aliases=["undunce"])
     @commands.guild_only()
@@ -271,21 +250,12 @@ class Moderation(AbstractCog):
         # TODO store punishment in table with task ID
 
         minutes = max(minutes, 0)
-        full_reason = self.build_reason(ctx, "Released", minutes, reason, past=True)
-        remove_other = self.bot.sql.settings.get_remove_other_roles(ctx.guild)
+        reason = self.build_reason(ctx, "Released", minutes, reason, past=True)
 
-        if remove_other:
-            if minutes:
-                try:
-                    await self.bot.sql.moderation.restore_other_roles(
-                        member, full_reason
-                    )
-                except KeyError:
-                    pass
-            else:
-                await self.restore_roles(ctx, member, minutes, full_reason)
-
-        await self.remove_roles(ctx, member, minutes, [roles.jail], full_reason)
+        if minutes:
+            await self.remove_roles(ctx, member, minutes, PunishAction.RELIEVE_JAIL, reason)
+        else:
+            await self.bot.punish.unjail(ctx.guild, member, reason)
 
     @commands.command(name="kick")
     @commands.guild_only()

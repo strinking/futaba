@@ -70,20 +70,7 @@ class PunishmentHandler:
         else:
             await member.add_roles(role, reason=reason)
 
-    async def mute(self, guild, member, reason = None):
-        logger.info("Muting user '%s' (%d) for reason: %s", member.name, member.id, reason)
-        await self.apply('mute', guild, member, reason)
-
-    async def jail(self, guild, member, reason = None):
-        logger.info("Jailing user '%s' (%d) for reason: %s", member.name, member.id, reason)
-        await self.apply('jail')
-
     async def relieve(self, action, guild, member, reason):
-        ...
-
-    async def unmute(self, guild, member, reason = None):
-        logger.info("Unmuting user '%s' (%d)", member.name, member.id)
-
         role = self.get_role('mute')
         if role is None:
             return
@@ -93,5 +80,29 @@ class PunishmentHandler:
             return
 
         remove_other = self.bot.sql.settings.get_remove_other_roles(guild)
-        # TODO finish
+        if remove_other:
+            try:
+                await self.bot.sql.moderation.restore_other_roles(member, reason)
+            except KeyError as error:
+                logger.warning(f"Received KeyError while restoring other roles: {error}")
 
+        await member.remove_roles(role, reason=reason)
+
+    async def mute(self, guild, member, reason = None):
+        logger.info("Muting user '%s' (%d) for reason: %s", member.name, member.id, reason)
+        await self.apply('mute', guild, member, reason)
+
+    async def jail(self, guild, member, reason = None):
+        logger.info("Jailing user '%s' (%d) for reason: %s", member.name, member.id, reason)
+        await self.apply('jail', guild, member, reason)
+
+    async def unmute(self, guild, member, reason = None):
+        logger.info("Unmuting user '%s' (%d) for reason: %s", member.name, member.id, reason)
+        await self.relieve('mute', guild, member, reason)
+
+    async def unjail(self, guild, member, reason = None):
+        logger.info("Unjailing user '%s' (%d) for reason: %s", member.name, member.id, reason)
+        await self.relieve('jail', guild, member, reason)
+
+    async def unmute(self, guild, member, reason = None):
+        logger.info("Unmuting user '%s' (%d)", member.name, member.id)
