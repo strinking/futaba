@@ -168,7 +168,7 @@ class Moderation(AbstractCog):
         # If a delayed event, schedule a Navi task
         if minutes:
             await self.remove_roles(
-                ctx, member, minutes, PunishAction.RELIEVE_JAIL, reason
+                ctx, member, minutes, PunishAction.RELIEVE_MUTE, reason
             )
 
     @commands.command(name="unmute", aliases=["unshitpost"])
@@ -236,7 +236,6 @@ class Moderation(AbstractCog):
         remove_other = self.bot.sql.settings.get_remove_other_roles(ctx.guild)
 
         if remove_other:
-            self.check_other_roles(member)
             await self.bot.sql.moderation.remove_other_roles(member, roles.jail, reason)
         else:
             await member.add_roles(roles.jail, reason=reason)

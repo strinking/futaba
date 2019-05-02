@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 __all__ = ["RestoreOtherRolesTask", "build_restore_other_roles_task"]
 
 
+# TODO deprecate this?
 class RestoreOtherRolesTask(AbstractNaviTask):
     __slots__ = ("member", "reason")
 

@@ -76,7 +76,7 @@ class PunishTask(AbstractNaviTask):
     def build_parameters(self):
         return {
             "member_id": self.member.id,
-            "action": self.action,
+            "action": self.action.value,
             "reason": self.reason,
         }
 
