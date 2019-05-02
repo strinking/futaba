@@ -19,5 +19,4 @@ from .abc import TASK_COMPLETE, AbstractNaviTask
 from .change_roles import ChangeRolesTask, build_change_role_task
 from .factory import build_navi_task
 from .punish import PunishTask
-from .restore_other_roles import RestoreOtherRolesTask, build_restore_other_roles_task
 from .send_message import SendMessageTask, build_send_message_task

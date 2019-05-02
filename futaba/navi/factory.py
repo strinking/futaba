@@ -34,7 +34,6 @@ FakeUser = namedtuple("FakeUser", ("id", "name", "discriminator"))
 TASK_BUILDERS = {
     TaskType.CHANGE_ROLES: build_change_role_task,
     TaskType.SEND_MESSAGE: build_send_message_task,
-    TaskType.RESTORE_OTHER_ROLES: build_restore_other_roles_task,
 }
 
 

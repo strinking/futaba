@@ -233,7 +233,6 @@ class LocationType(Enum):
 class TaskType(Enum):
     CHANGE_ROLES = "change_roles"
     SEND_MESSAGE = "send_message"
-    RESTORE_OTHER_ROLES = "restore_other_roles"
     PUNISH = "punish"
 
 

@@ -25,7 +25,6 @@ from futaba import permissions
 from futaba.converters import MemberConv, UserConv
 from futaba.enums import PunishAction
 from futaba.exceptions import CommandFailed, ManualCheckFailure
-from futaba.navi import PunishTask, RestoreOtherRolesTask
 from futaba.str_builder import StringBuilder
 from futaba.utils import escape_backticks, plural, user_discrim
 from ..abc import AbstractCog
@@ -79,23 +78,6 @@ class Moderation(AbstractCog):
             reason=reason,
         )
         self.bot.add_tasks(task)
-
-    async def restore_roles(self, ctx, member, minutes, reason):
-        if minutes:
-            logger.info(
-                "Creating delayed other role addition for '%s' (%d) with reason %r in %d minutes",
-                member.name,
-                member.id,
-                reason,
-                minutes,
-            )
-            timestamp = datetime.now() + timedelta(seconds=minutes * 60)
-            task = RestoreOtherRolesTask(
-                self.bot, None, ctx.author, timestamp, member=member, reason=reason
-            )
-            self.bot.add_tasks(task)
-        else:
-            await self.bot.sql.moderation.restore_other_roles(member, reason)
 
     def check_other_roles(self, member):
         has_other, punish_role, _ = self.bot.sql.moderation.get_other_roles(member)
