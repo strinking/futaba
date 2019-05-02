@@ -167,7 +167,9 @@ class Moderation(AbstractCog):
 
         # If a delayed event, schedule a Navi task
         if minutes:
-            await self.remove_roles(ctx, member, minutes, PunishAction.RELIEVE_JAIL, reason)
+            await self.remove_roles(
+                ctx, member, minutes, PunishAction.RELIEVE_JAIL, reason
+            )
 
     @commands.command(name="unmute", aliases=["unshitpost"])
     @commands.guild_only()
@@ -198,7 +200,9 @@ class Moderation(AbstractCog):
         reason = self.build_reason(ctx, "Unmuted", minutes, reason, past=True)
 
         if minutes:
-            await self.remove_roles(ctx, member, minutes, PunishAction.RELIEVE_MUTE, reason)
+            await self.remove_roles(
+                ctx, member, minutes, PunishAction.RELIEVE_MUTE, reason
+            )
         else:
             await self.bot.punish.unjail(ctx.guild, member, reason)
 
@@ -239,7 +243,9 @@ class Moderation(AbstractCog):
 
         # If a delayed event, schedule a Navi task
         if minutes:
-            await self.remove_roles(ctx, member, minutes, PunishAction.RELIEVE_JAIL, reason)
+            await self.remove_roles(
+                ctx, member, minutes, PunishAction.RELIEVE_JAIL, reason
+            )
 
     @commands.command(name="unjail", aliases=["undunce"])
     @commands.guild_only()
@@ -270,7 +276,9 @@ class Moderation(AbstractCog):
         reason = self.build_reason(ctx, "Released", minutes, reason, past=True)
 
         if minutes:
-            await self.remove_roles(ctx, member, minutes, PunishAction.RELIEVE_JAIL, reason)
+            await self.remove_roles(
+                ctx, member, minutes, PunishAction.RELIEVE_JAIL, reason
+            )
         else:
             await self.bot.punish.unjail(ctx.guild, member, reason)
 

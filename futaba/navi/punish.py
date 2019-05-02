@@ -22,20 +22,12 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["PunishTask", "build_punish_task"]
 
+
 class PunishTask(AbstractNaviTask):
     __slots__ = ("member", "action", "reason")
 
     def __init__(
-        self,
-        bot,
-        id,
-        causer,
-        timestamp,
-        recurrence,
-        *,
-        member,
-        action,
-        reason,
+        self, bot, id, causer, timestamp, recurrence, *, member, action, reason
     ):
         super().__init__(bot, id, causer, timestamp, recurrence)
         self.member = member
@@ -44,16 +36,36 @@ class PunishTask(AbstractNaviTask):
 
     async def execute(self):
         if self.action == PunishAction.APPLY_MUTE:
-            logger.info("Applying mute on '%s' (%d) to fulfill navi task %d", self.member.name, self.member.id, self.id)
+            logger.info(
+                "Applying mute on '%s' (%d) to fulfill navi task %d",
+                self.member.name,
+                self.member.id,
+                self.id,
+            )
             await self.bot.punish.mute(self.guild, self.member, self.reason)
         elif self.action == PunishAction.APPLY_JAIL:
-            logger.info("Applying jail on '%s' (%d) to fulfill navi task %d", self.member.name, self.member.id, self.id)
+            logger.info(
+                "Applying jail on '%s' (%d) to fulfill navi task %d",
+                self.member.name,
+                self.member.id,
+                self.id,
+            )
             await self.bot.punish.jail(self.guild, self.member, self.reason)
         elif self.action == PunishAction.RELIEVE_MUTE:
-            logger.info("Relieving mute on '%s' (%d) to fulfill navi task %d", self.member.name, self.member.id, self.id)
+            logger.info(
+                "Relieving mute on '%s' (%d) to fulfill navi task %d",
+                self.member.name,
+                self.member.id,
+                self.id,
+            )
             await self.bot.punish.unmute(self.guild, self.member, self.reason)
         elif self.action == PunishAction.RELIEVE_JAIL:
-            logger.info("Relieving jail on '%s' (%d) to fulfill navi task %d", self.member.name, self.member.id, self.id)
+            logger.info(
+                "Relieving jail on '%s' (%d) to fulfill navi task %d",
+                self.member.name,
+                self.member.id,
+                self.id,
+            )
             await self.bot.punish.unjail(self.guild, self.member, self.reason)
 
     @class_property
