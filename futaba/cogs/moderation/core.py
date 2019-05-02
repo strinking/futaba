@@ -25,6 +25,7 @@ from futaba import permissions
 from futaba.converters import MemberConv, UserConv
 from futaba.enums import PunishAction
 from futaba.exceptions import CommandFailed, ManualCheckFailure
+from futaba.navi import PunishTask
 from futaba.str_builder import StringBuilder
 from futaba.utils import escape_backticks, plural, user_discrim
 from ..abc import AbstractCog
