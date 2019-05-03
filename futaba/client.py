@@ -333,10 +333,7 @@ class Bot(commands.AutoShardedBot):
 
         elif isinstance(error, SendHelp):
             logger.info("Manually sending help for command")
-            command = ctx.invoked_subcommand or ctx.command
-            pages = await self.formatter.format_help_for(ctx, command)
-            for page in pages:
-                await ctx.author.send(content=page)
+            await ctx.author.send_command_help(ctx.command)
             await Reactions.SUCCESS.add(ctx.message)
 
         elif isinstance(error, commands.errors.CommandInvokeError):
