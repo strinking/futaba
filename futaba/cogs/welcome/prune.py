@@ -45,6 +45,7 @@ def prune_filter(member, prune_date, role, should_have_role=True):
 
 class Prune(AbstractCog):
     def __init__(self, bot):
+        super().__init__(bot)
         self.bot = bot
         self.journal = bot.get_broadcaster("/welcome")
 
