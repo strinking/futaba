@@ -123,5 +123,7 @@ async def check_name_filter(cog, name, name_type, member):
             logger.info("Jailing user for inappropriate name")
             await asyncio.gather(
                 message_violator(jailed=True),
-                cog.bot.punish.jail(member.guild, member, "Jailed for violating name filter"),
+                cog.bot.punish.jail(
+                    member.guild, member, "Jailed for violating name filter"
+                ),
             )

@@ -16,6 +16,7 @@ from abc import abstractmethod
 
 from discord.ext import commands
 
+
 class AbstractCog(commands.Cog):
     __slots__ = ("bot",)
 

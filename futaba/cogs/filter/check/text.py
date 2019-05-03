@@ -165,4 +165,6 @@ async def found_text_violation(triggered, roles):
             journal.send("text/jail", message.guild, content, icon="warning")
         else:
             logger.info("Jailing user for inappropriate message")
-            await bot.punish.jail(message.guild, message.author, "Jailed for violating file filter")
+            await bot.punish.jail(
+                message.guild, message.author, "Jailed for violating file filter"
+            )

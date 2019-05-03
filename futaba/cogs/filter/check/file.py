@@ -155,4 +155,6 @@ async def found_file_violation(triggered, reupload):
             journal.send("file/jail", message.guild, content, icon="warning")
         else:
             logger.info("Jailing user for inappropriate file")
-            await bot.punish.jail(message.guild, message.author, "Jailed for violating file filter")
+            await bot.punish.jail(
+                message.guild, message.author, "Jailed for violating file filter"
+            )
