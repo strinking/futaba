@@ -216,12 +216,8 @@ class Moderation(AbstractCog):
 
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Jailed", minutes, reason)
-        remove_other = self.bot.sql.settings.get_remove_other_roles(ctx.guild)
 
-        if remove_other:
-            await self.bot.sql.moderation.remove_other_roles(member, roles.jail, reason)
-        else:
-            await member.add_roles(roles.jail, reason=reason)
+        await self.bot.punish.jail(ctx.guild, member, reason)
 
         # If a delayed event, schedule a Navi task
         if minutes:
