@@ -59,6 +59,7 @@ async def check_text_filter(cog, message):
             if filter.matches(to_check):
                 if triggered is None or filter_type.value > triggered.filter_type.value:
                     triggered = FoundTextViolation(
+                        bot=cog.bot,
                         journal=cog.journal,
                         message=message,
                         content=to_check,
@@ -80,6 +81,7 @@ async def found_text_violation(triggered, roles):
     for actual enforcement, based on the filter_type.
     """
 
+    bot = triggered.bot
     journal = triggered.journal
     message = triggered.message
     content = triggered.content
@@ -163,6 +165,6 @@ async def found_text_violation(triggered, roles):
             journal.send("text/jail", message.guild, content, icon="warning")
         else:
             logger.info("Jailing user for inappropriate message")
-            await message.author.add_roles(
-                roles.jail, reason="Jailed for violating file filter"
+            await bot.punish.jail(
+                message.guild, message.author, "Jailed for violating file filter"
             )

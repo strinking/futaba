@@ -102,11 +102,15 @@ class AbstractNaviTask:
             self.bot.sql.navi.remove_task(self)
 
     @property
-    def guild_id(self):
+    def guild(self):
         if isinstance(self.causer, discord.Member):
-            return self.causer.guild.id
+            return self.causer.guild
 
         return None
+
+    @property
+    def guild_id(self):
+        return getattr(self.guild, "id", None)
 
     @class_property
     @classmethod

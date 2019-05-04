@@ -22,6 +22,7 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.exceptions import CommandFailed
+from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
@@ -42,8 +43,9 @@ def prune_filter(member, prune_date, role, should_have_role=True):
     return False
 
 
-class Prune:
+class Prune(AbstractCog):
     def __init__(self, bot):
+        super().__init__(bot)
         self.bot = bot
         self.journal = bot.get_broadcaster("/welcome")
 

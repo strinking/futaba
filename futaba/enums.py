@@ -233,7 +233,15 @@ class LocationType(Enum):
 class TaskType(Enum):
     CHANGE_ROLES = "change_roles"
     SEND_MESSAGE = "send_message"
-    RESTORE_OTHER_ROLES = "restore_other_roles"
+    PUNISH = "punish"
+
+
+@unique
+class PunishAction(Enum):
+    APPLY_MUTE = "apply_mute"
+    APPLY_JAIL = "apply_jail"
+    RELIEVE_MUTE = "relieve_mute"
+    RELIEVE_JAIL = "relieve_jail"
 
 
 @unique

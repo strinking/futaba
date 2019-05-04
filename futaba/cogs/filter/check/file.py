@@ -32,7 +32,7 @@ __all__ = ["FoundFileViolation", "check_file_filter"]
 
 FoundFileViolation = namedtuple(
     "FoundFileViolation",
-    ("journal", "message", "filter_type", "url", "binio", "hashsum"),
+    ("bot", "journal", "message", "filter_type", "url", "binio", "hashsum"),
 )
 
 
@@ -62,6 +62,7 @@ async def check_file_filter(cog, message):
 
         if triggered is None or filter_type.value > triggered.filter_type.value:
             triggered = FoundFileViolation(
+                bot=cog.bot,
                 journal=cog.journal,
                 message=message,
                 filter_type=filter_type,
@@ -73,17 +74,17 @@ async def check_file_filter(cog, message):
     if triggered is None:
         logger.debug("No content violations found!")
     else:
-        roles = cog.bot.sql.settings.get_special_roles(message.guild)
         settings = cog.bot.sql.filter.get_settings(message.guild)
-        await found_file_violation(triggered, roles, settings.reupload)
+        await found_file_violation(triggered, settings.reupload)
 
 
-async def found_file_violation(triggered, roles, reupload):
+async def found_file_violation(triggered, reupload):
     """
     Processes a violation of the file content filter. This coroutine is responsible
     for actual enforcement, based on the filter_type.
     """
 
+    bot = triggered.bot
     journal = triggered.journal
     message = triggered.message
     filter_type = triggered.filter_type
@@ -100,6 +101,7 @@ async def found_file_violation(triggered, roles, reupload):
         message.author.id,
     )
 
+    roles = bot.sql.get_special_roles(message.guild)
     severity = filter_type.level
 
     async def message_violator():
@@ -145,7 +147,6 @@ async def found_file_violation(triggered, roles, reupload):
         await asyncio.gather(message.delete(), message_violator())
 
     if severity >= FilterType.JAIL.level:
-
         if roles.jail is None:
             logger.info(
                 "Jailing user for inappropriate file, except there is no jail role configured!"
@@ -154,6 +155,6 @@ async def found_file_violation(triggered, roles, reupload):
             journal.send("file/jail", message.guild, content, icon="warning")
         else:
             logger.info("Jailing user for inappropriate file")
-            await message.author.add_roles(
-                roles.jail, reason="Jailed for violating file filter"
+            await bot.punish.jail(
+                message.guild, message.author, "Jailed for violating file filter"
             )
