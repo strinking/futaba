@@ -445,7 +445,7 @@ class Info(AbstractCog):
     async def get_message(channels, id):
         async def from_channel(channel, id):
             try:
-                return await channel.get_message(id)
+                return await channel.fetch_message(id)
             except discord.NotFound:
                 return None
 
