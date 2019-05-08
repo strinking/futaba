@@ -82,12 +82,12 @@ async def get_user(bot, argument, user_list):
     match = ID_REGEX.match(argument) or MENTION_REGEX.match(argument)
     if match is not None:
         id = int(match[1])
-        user = discord.utils.get(user_list, id=id)
+        user = bot.get_user(id)
         if user is not None:
             return user
 
         try:
-            return await bot.get_user_info(id)
+            return await bot.fetch_user(id)
         except discord.NotFound:
             pass
 
