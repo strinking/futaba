@@ -77,8 +77,9 @@ class Bot(commands.AutoShardedBot):
             description="futaba - A discord mod bot",
             max_messages=100_000,
             fetch_offline_members=True,
-            pm_help=True,
         )
+
+        self.help_command = commands.DefaultHelpCommand(width=90, dm_help=True)
 
     @staticmethod
     def my_command_prefix(bot, message):
@@ -333,7 +334,7 @@ class Bot(commands.AutoShardedBot):
 
         elif isinstance(error, SendHelp):
             logger.info("Manually sending help for command")
-            await ctx.author.send_command_help(ctx.command)
+            await self.help_command.send_command_help(ctx.command)
             await Reactions.SUCCESS.add(ctx.message)
 
         elif isinstance(error, commands.errors.CommandInvokeError):
