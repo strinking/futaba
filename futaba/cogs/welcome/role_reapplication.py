@@ -54,8 +54,8 @@ class RoleReapplication(AbstractCog):
                 for i, member in enumerate(self.bot.get_all_members()):
                     self.bot.sql.roles.update_saved_roles(member)
 
-                    if i % 100 == 0:
-                        await asyncio.sleep(0.5)
+                    if i % 20 == 0:
+                        await asyncio.sleep(0.2)
 
     def setup(self):
         logger.info("Running member role update in background")
