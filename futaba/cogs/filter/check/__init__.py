@@ -40,20 +40,24 @@ def filter_immune(bot, guild, member, channel=None):
 
     # Don't trigger on ourselves
     if member == bot:
+        logger.debug("Filter check: ignoring self")
         return True
 
     # Check if bots have filter immunity
     filter_settings = bot.sql.filter.get_settings(guild)
     if filter_settings.bot_immune:
         if member.bot:
+            logger.debug("Filter check: this server ignores all bots")
             return True
 
     # Ignore owners
     if member.id in bot.config.owner_ids:
+        logger.debug("Filter check: is an owner")
         return True
 
     # Check manually-added users
     if bot.sql.filter.user_is_filter_immune(guild, member):
+        logger.debug("Filter check: added to filter immunity list")
         return True
 
     # In the case where the author isn't a Member yet
@@ -62,6 +66,7 @@ def filter_immune(bot, guild, member, channel=None):
         member = guild.get_member(id)
         if member is None:
             logger.warning("Cannot find member for user ID %d", id)
+            logger.debug("Filter check: isn't a member yet")
             return False
 
     # Fetch most specific permissions
@@ -72,11 +77,13 @@ def filter_immune(bot, guild, member, channel=None):
 
     # Check admins
     if is_admin_perm(perms):
+        logger.debug("Filter check: is an admin")
         return True
 
     # Check channel moderators (if enabled)
     if filter_settings.manage_messages_immune:
         if perms.manage_messages:
+            logger.debug("Filter check: has manage messages")
             return True
 
     return False
