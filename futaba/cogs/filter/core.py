@@ -23,7 +23,8 @@ from discord.ext import commands
 
 from futaba import permissions
 from futaba.enums import FilterType
-from futaba.exceptions import CommandFailed, SendHelp
+from futaba.exceptions import CommandFailed, ManualCheckFailure, SendHelp
+from futaba.permissions import admin_perm
 from futaba.utils import async_partial, escape_backticks
 from .check import (
     check_message,
@@ -318,6 +319,41 @@ class Filtering(AbstractCog):
         else:
             embed = discord.Embed()
             embed.set_author(name="No members with special filter immunity")
+
+        await ctx.send(embed=embed)
+
+    @filter.command(name="managemsg", aliases=["mmsg"])
+    @commands.guild_only()
+    async def filter_manage_messages(self, ctx, value: bool = None):
+        """
+        Gets the current setting for whether manage message members are filter immune.
+        If you're an administrator, you can change this value.
+        """
+
+        if value is None:
+            filter_settings = self.bot.sql.filter.get_settings(ctx.guild)
+            if filter_settings.manage_messages_immune:
+                result = "**are filter immune**"
+            else:
+                result = "are **not** filter immune"
+
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
+            embed.description = f"Those with the `Manage Messages` permission {result}."
+        elif not admin_perm(ctx):
+            # Lacking authority to set warn manual mod action
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.description = "You do not have permission to enable or disable manage messages filter immunity"
+            raise ManualCheckFailure(embed=embed)
+        else:
+            with self.bot.sql.transaction():
+                self.bot.sql.filter.set_bot_filter_immunity(
+                    ctx.guild, manage_messages_immune=value
+                )
+
+            embed = discord.Embed(colour=discord.Colour.teal())
+            embed.description = (
+                f"Set filter immunity for those with manage messages to `{value}`"
+            )
 
         await ctx.send(embed=embed)
 
