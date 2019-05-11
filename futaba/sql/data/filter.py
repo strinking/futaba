@@ -25,7 +25,7 @@ class FilterSettingsData:
         Useful for getting an excluded field, and updating the storage object too.
         """
 
-        if value is None:
+        if value is not None:
             setattr(self, field, value)
 
         return getattr(self, field)
