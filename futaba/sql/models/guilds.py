@@ -23,7 +23,7 @@ import functools
 import logging
 from collections import namedtuple
 
-from sqlalchemy import BigInteger, Column, Table
+from sqlalchemy import Boolean, BigInteger, Column, Table
 from sqlalchemy.sql import select
 
 from ..hooks import run_hooks
@@ -41,26 +41,47 @@ class GuildsModel:
     def __init__(self, sql, meta):
         self.sql = sql
         self.tb_guilds = Table(
-            "guilds", meta, Column("guild_id", BigInteger, primary_key=True)
+            "guilds",
+            meta,
+            Column("guild_id", BigInteger, primary_key=True),
+            Column("active", Boolean, default=True),
         )
 
     # Note: Do NOT register the on_guild_join/on_guild_leave hooks here,
     # as this is where those hooks are invoked. This method itself is
     # called by the client on an actual guild join or leave event.
 
-    def add_guild(self, guild):
+    def activate_guild(self, guild):
         logger.info("Adding guild '%s' (%d) to guilds list", guild.name, guild.id)
-        ins = self.tb_guilds.insert().values(guild_id=guild.id)
-        self.sql.execute(ins)
+
+        if guild.id in self.get_guild_ids():
+            upd = (
+                self.tb_guilds.update()
+                .values(active=True)
+                .where(self.tb_guilds.c.guild_id == guild.id)
+            )
+            self.sql.execute(upd)
+        else:
+            ins = self.tb_guilds.insert().values(guild_id=guild.id)
+            self.sql.execute(ins)
+
         run_hooks("on_guild_join", guild)
 
-    def remove_guild(self, guild):
+    def deactivate_guild(self, guild):
         logger.info("Removing guild '%s' (%d) from guilds list", guild.name, guild.id)
         run_hooks("on_guild_leave", guild)
+
+        upd = (
+            self.tb_guilds.update()
+            .values(active=False)
+            .where(self.tb_guilds.c.guild_id == guild.id)
+        )
+        self.sql.execute(upd)
+
         delet = self.tb_guilds.delete().where(self.tb_guilds.c.guild_id == guild.id)
         self.sql.execute(delet)
 
-    def get_guild_ids(self, bot):
+    def get_guild_ids(self):
         logger.info("Fetching guilds currently in database")
         sel = select([self.tb_guilds.c.guild_id])
         result = self.sql.execute(sel)
@@ -74,7 +95,7 @@ class GuildsModel:
         )
 
     def migrate(self, bot):
-        migrated_guild_ids = frozenset(self.get_guild_ids(self))
+        migrated_guild_ids = frozenset(self.get_guild_ids())
         current_guild_ids = frozenset(guild.id for guild in bot.guilds)
 
         logger.info(
@@ -86,10 +107,10 @@ class GuildsModel:
         with self.sql.transaction():
             for guild_id in current_guild_ids - migrated_guild_ids:
                 guild = self._get_guild(bot, guild_id)
-                self.add_guild(guild)
+                self.activate_guild(guild)
 
         logger.debug("Running deletions...")
         with self.sql.transaction():
             for guild_id in migrated_guild_ids - current_guild_ids:
                 guild = self._get_guild(bot, guild_id)
-                self.remove_guild(guild)
+                self.deactivate_guild(guild)

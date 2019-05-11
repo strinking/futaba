@@ -148,13 +148,8 @@ class SettingsModel:
         self.tracking_blacklist_cache = {}
 
         register_hook("on_guild_join", self.add_guild_settings)
-        register_hook("on_guild_leave", self.remove_guild_settings)
-
         register_hook("on_guild_join", self.add_special_roles)
-        register_hook("on_guild_leave", self.remove_special_roles)
-
         register_hook("on_guild_join", self.add_reapply_roles)
-        register_hook("on_guild_leave", self.remove_reapply_roles)
 
     def add_guild_settings(self, guild):
         logger.info(
@@ -174,18 +169,6 @@ class SettingsModel:
             warn_manual_mod_action=False,
             remove_other_roles=True,
         )
-
-    def remove_guild_settings(self, guild):
-        logger.info(
-            "Removing guild settings row for departing guild '%s' (%d)",
-            guild.name,
-            guild.id,
-        )
-        delet = self.tb_guild_settings.delete().where(
-            self.tb_guild_settings.c.guild_id == guild.id
-        )
-        self.sql.execute(delet)
-        self.guild_settings_cache.pop(guild, None)
 
     def fetch_guild_settings(self, guild):
         logger.info("Getting guild settings for guild '%s' (%d)", guild.name, guild.id)
@@ -324,16 +307,6 @@ class SettingsModel:
         self.sql.execute(ins)
         self.special_roles_cache[guild] = SpecialRoleData(guild, None, None, None, None)
 
-    def remove_special_roles(self, guild):
-        logger.info(
-            "Removing special roles row for guild '%s' (%d)", guild.name, guild.id
-        )
-        delet = self.tb_special_roles.delete().where(
-            self.tb_special_roles.c.guild_id == guild.id
-        )
-        self.sql.execute(delet)
-        self.special_roles_cache.pop(guild, None)
-
     def get_special_roles(self, guild):
         logger.debug("Getting special roles for guild '%s' (%d)", guild.name, guild.id)
         if guild in self.special_roles_cache:
@@ -387,16 +360,6 @@ class SettingsModel:
         )
         self.sql.execute(ins)
         self.reapply_roles_cache[guild] = ReapplyRolesData(set(), True)
-
-    def remove_reapply_roles(self, guild):
-        logger.info(
-            "Removing reappliable roles for guild '%s' (%d)", guild.name, guild.id
-        )
-        delet = self.tb_reapply_roles.delete().where(
-            self.tb_reapply_roles.c.guild_id == guild.id
-        )
-        self.sql.execute(delet)
-        self.reapply_roles_cache.pop(guild, None)
 
     def fetch_reapply_roles(self, guild):
         logger.info(
@@ -524,27 +487,3 @@ class SettingsModel:
         blacklist = TrackingBlacklistData(guild, result.fetchall())
         self.tracking_blacklist_cache[guild] = blacklist
         return blacklist
-
-    def remove_from_tracking_blacklist(self, guild, user_or_channel):
-        logger.info(
-            "Deleting '%s' (%d) from the tracking blacklist for guild '%s' (%d)",
-            user_or_channel.name,
-            user_or_channel.id,
-            guild.name,
-            guild.id,
-        )
-
-        block_type = (
-            LocationType.USER
-            if isinstance(user_or_channel, discord.abc.User)
-            else LocationType.CHANNEL
-        )
-
-        delet = self.tb_tracking_blacklists.delete().where(
-            self.tb_tracking_blacklists.c.guild_id == guild.id,
-            self.tb_tracking_blacklists.c.type == block_type,
-            self.tb_tracking_blacklists.c.data_id == user_or_channel.id,
-        )
-        self.sql.execute(delet)
-        if guild in self.tracking_blacklist_cache:
-            self.tracking_blacklist_cache[guild].remove_block(user_or_channel)

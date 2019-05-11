@@ -99,7 +99,6 @@ class FilterModel:
         self.settings_cache = {}
 
         register_hook("on_guild_join", self.add_settings)
-        register_hook("on_guild_leave", self.remove_settings)
 
     def get_filters(self, location):
         logger.debug(
@@ -399,15 +398,3 @@ class FilterModel:
             )
         )
         self.sql.execute(upd)
-
-    def remove_settings(self, guild):
-        logger.info(
-            "Removing filter settings for guild '%s' (%d)", guild.name, guild.id
-        )
-
-        delet = self.tb_filter_settings.delete().where(
-            self.tb_filter_settings.c.guild_id == guild.id
-        )
-        result = self.sql.execute(delet)
-        assert result.rowcount in (0, 1), "Only one matching settings row"
-        self.settings_cache.pop(guild, None)

@@ -26,8 +26,6 @@ from sqlalchemy import ARRAY, BigInteger, Column, Table
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.sql import select
 
-from ..hooks import register_hook
-
 Column = functools.partial(Column, nullable=False)
 logger = logging.getLogger(__name__)
 
@@ -80,19 +78,6 @@ class RolesModel:
         self.roles_cache = {}
         self.channels_cache = {}
 
-        register_hook("on_guild_leave", self.remove_all_assignable_roles)
-        register_hook("on_guild_leave", self.remove_all_role_command_channels)
-
-    def remove_all_assignable_roles(self, guild):
-        logger.info(
-            "Remove all assignable roles for guild '%s' (%d)", guild.name, guild.id
-        )
-        delet = self.tb_assignable_roles.delete().where(
-            self.tb_assignable_roles.c.guild_id == guild.id
-        )
-        self.sql.execute(delet)
-        self.roles_cache.pop(guild, None)
-
     def get_assignable_roles(self, guild):
         logger.info(
             "Getting all assignable roles for guild '%s' (%d)", guild.name, guild.id
@@ -141,16 +126,6 @@ class RolesModel:
 
         if result.rowcount:
             self.roles_cache[guild].remove(role)
-
-    def remove_all_role_command_channels(self, guild):
-        logger.info(
-            "Remove all role command channels for guild '%s' (%d)", guild.name, guild.id
-        )
-        delet = self.tb_role_command_channels.delete().where(
-            self.tb_role_command_channels.c.guild_id == guild.id
-        )
-        self.sql.execute(delet)
-        self.channels_cache[guild].clear()
 
     def get_role_command_channels(self, guild):
         logger.info(
