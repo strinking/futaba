@@ -347,7 +347,7 @@ class Filtering(AbstractCog):
         else:
             with self.bot.sql.transaction():
                 self.bot.sql.filter.set_bot_filter_immunity(
-                    manage_messages_immune=value
+                    ctx.guild, manage_messages_immune=value
                 )
 
             embed = discord.Embed(colour=discord.Colour.teal())
