@@ -35,6 +35,9 @@ def prune_filter(member, prune_date, role, should_have_role=True):
     If should_has_role is False it will check if the user dosen't have the role specified
     """
 
+    if member.bot:
+        return False
+
     has_role = role in member.roles
     prune = member.joined_at < prune_date
     if has_role == should_have_role:
@@ -74,12 +77,12 @@ class Prune(AbstractCog):
 
             # Get users to be pruned
             to_be_pruned = filter(
-                lambda x: prune_filter(x, prune_date, roles.guest), ctx.guild.members
+                lambda member: prune_filter(member, prune_date, roles.guest),
+                ctx.guild.members,
             )
 
         elif roles.member is None:
             # If no member role is set the prune command should not do anything
-
             return None
 
         else:
@@ -121,7 +124,7 @@ class Prune(AbstractCog):
 
         pruned_members = await self.prune_member(ctx, days)
 
-        # Check if prune_members is none as if it is there is not member role set
+        # Check if prune_members is None as if it is there is not member role set
         # If there is no member role set pruning members makes no sense
         if pruned_members is None:
             error_message = (
