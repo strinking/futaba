@@ -40,10 +40,22 @@ class RoleReapplication(AbstractCog):
         self.lock = asyncio.Lock()
 
     async def bg_setup(self):
+        """
+        Update all of the member's saved roles.
+
+        Since this task can be very slow with several thousand members,
+        the task is run in the background delays itself to avoid clogging
+        the bot. However, this will degrade reapply-role performance until
+        it's finished.
+        """
+
         async with self.lock:
             with self.bot.sql.transaction():
-                for member in self.bot.get_all_members():
+                for i, member in enumerate(self.bot.get_all_members()):
                     self.bot.sql.roles.update_saved_roles(member)
+
+                    if i % 100 == 0:
+                        await asyncio.sleep(0.5)
 
     def setup(self):
         logger.info("Running member role update in background")
