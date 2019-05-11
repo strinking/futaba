@@ -39,7 +39,7 @@ def filter_immune(bot, guild, member, channel=None):
     # pylint: disable=too-many-return-statements
 
     # Don't trigger on ourselves
-    if member == bot:
+    if member.id == bot.id:
         logger.debug("Filter check: ignoring self")
         return True
 
