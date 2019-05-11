@@ -215,7 +215,7 @@ class Bot(commands.AutoShardedBot):
 
         logger.info("Guild join event for '%s' (%d)", guild.name, guild.id)
         with self.sql.transaction():
-            self.sql.guilds.add_guild(guild)
+            self.sql.guilds.activate_guild(guild)
 
     async def on_guild_remove(self, guild):
         """
@@ -225,7 +225,7 @@ class Bot(commands.AutoShardedBot):
 
         logger.info("Guild leave event for '%s' (%d)", guild.name, guild.id)
         with self.sql.transaction():
-            self.sql.guilds.remove_guild(guild)
+            self.sql.guilds.deactivate_guild(guild)
 
     def message_lock(self, message):
         return self.message_locks.get_or_put(message, asyncio.Lock)

@@ -30,7 +30,6 @@ from sqlalchemy.sql import select
 
 from futaba.enums import LocationType
 from ..data import ConfiguredJournalOutput, JournalOutputData
-from ..hooks import register_hook
 
 Column = functools.partial(Column, nullable=False)
 logger = logging.getLogger(__name__)
@@ -69,8 +68,6 @@ class JournalModel:
         )
         self.journal_outputs_cache = defaultdict(dict)
         self.journal_guild_cache = set()
-
-        register_hook("on_guild_leave", self.delete_journal_channels)
 
     def add_journal_output(self, guild, location, path, recursive):
         location_type = LocationType.of(location)
@@ -282,15 +279,3 @@ class JournalModel:
 
         for path, settings in self.journal_outputs_cache[user].items():
             yield ConfiguredJournalOutput(sink=user, path=path, settings=settings)
-
-    def delete_journal_channels(self, guild):
-        logger.info(
-            "Removing all journal channel outputs for guild '%s' (%d)",
-            guild.name,
-            guild.id,
-        )
-        delet = self.tb_journal_outputs.delete().where(
-            self.tb_journal_outputs.c.guild_id == guild.id
-        )
-        result = self.sql.execute(delet)
-        return bool(result.rowcount)

@@ -51,7 +51,7 @@ class GuildsModel:
     # as this is where those hooks are invoked. This method itself is
     # called by the client on an actual guild join or leave event.
 
-    def add_guild(self, guild):
+    def activate_guild(self, guild):
         logger.info("Adding guild '%s' (%d) to guilds list", guild.name, guild.id)
 
         if guild.id in self.get_guild_ids():
@@ -67,7 +67,7 @@ class GuildsModel:
 
         run_hooks("on_guild_join", guild)
 
-    def remove_guild(self, guild):
+    def deactivate_guild(self, guild):
         logger.info("Removing guild '%s' (%d) from guilds list", guild.name, guild.id)
         run_hooks("on_guild_leave", guild)
 
@@ -107,10 +107,10 @@ class GuildsModel:
         with self.sql.transaction():
             for guild_id in current_guild_ids - migrated_guild_ids:
                 guild = self._get_guild(bot, guild_id)
-                self.add_guild(guild)
+                self.activate_guild(guild)
 
         logger.debug("Running deletions...")
         with self.sql.transaction():
             for guild_id in migrated_guild_ids - current_guild_ids:
                 guild = self._get_guild(bot, guild_id)
-                self.remove_guild(guild)
+                self.deactivate_guild(guild)

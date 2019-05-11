@@ -20,7 +20,6 @@ Has the model for managing the welcome cog and its functionality.
 import functools
 import logging
 
-from sqlalchemy import and_
 from sqlalchemy import (
     BigInteger,
     Boolean,
@@ -79,8 +78,6 @@ class WelcomeModel:
         self.welcome_cache = {}
 
         register_hook("on_guild_join", self.add_welcome)
-        register_hook("on_guild_leave", self.remove_welcome)
-        register_hook("on_guild_leave", self.remove_all_alerts)
 
     def add_welcome(self, guild):
         logger.info(
@@ -245,19 +242,6 @@ class WelcomeModel:
         result = self.sql.execute(ins)
         alert.id, = result.inserted_primary_key
 
-    def remove_alert(self, guild, id):
-        logger.info("Remove join alert for guild '%s' (%d)", guild.name, guild.id)
-
-        delet = self.tb_join_alerts.delete().where(
-            and_(
-                self.tb_join_alerts.c.guild_id == guild.id,
-                self.tb_join_alerts.c.alert_id == id,
-            )
-        )
-        result = self.sql.execute(delet)
-        if result.rowcount != 1:
-            raise ValueError("No join alert with that id found")
-
     def get_all_alerts(self, guild):
         logger.info("Getting all join alerts for guild '%s' (%d)", guild.name, guild.id)
 
@@ -280,13 +264,3 @@ class WelcomeModel:
             value = key.parse_value(raw_value)
             alerts.append((id, key, op, value))
         return alerts
-
-    def remove_all_alerts(self, guild):
-        logger.info(
-            "Deleting all join alerts for guild '%s' (%d)", guild.name, guild.id
-        )
-
-        delet = self.tb_join_alerts.delete().where(
-            self.tb_join_alerts.c.guild_id == guild.id
-        )
-        self.sql.execute(delet)
