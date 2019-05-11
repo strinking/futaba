@@ -27,7 +27,15 @@ __all__ = ["FoundTextViolation", "check_text_filter"]
 
 FoundTextViolation = namedtuple(
     "FoundTextViolation",
-    ("journal", "message", "content", "location_type", "filter_type", "filter_text"),
+    (
+        "bot",
+        "journal",
+        "message",
+        "content",
+        "location_type",
+        "filter_type",
+        "filter_text",
+    ),
 )
 
 
