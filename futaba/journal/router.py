@@ -31,9 +31,10 @@ def attrs_match(obj, attrs):
 
 
 class Router:
-    __slots__ = ("paths", "queue", "history")
+    __slots__ = ("bot", "paths", "queue", "history")
 
-    def __init__(self):
+    def __init__(self, bot):
+        self.bot = bot
         self.paths = defaultdict(list)
         self.queue = asyncio.Queue()
         self.history = deque(maxlen=1024)

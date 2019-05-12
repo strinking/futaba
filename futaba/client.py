@@ -32,6 +32,7 @@ from .cogs.navi import Navi
 from .cogs.reloader import Reloader
 from .config import Configuration
 from .converters.annotations import ANNOTATIONS
+from .delayed import DelayedQueue
 from .enums import Reactions
 from .exceptions import (
     CommandFailed,
@@ -60,6 +61,7 @@ class Bot(commands.AutoShardedBot):
         "error_channel",
         "message_locks",
         "completed_commands",
+        "queue",
     )
 
     def __init__(self, config: Configuration):
@@ -71,6 +73,7 @@ class Bot(commands.AutoShardedBot):
         self.error_channel = None
         self.message_locks = LruCache(20)
         self.completed_commands = deque(maxlen=20)
+        self.queue = DelayedQueue()
 
         super().__init__(
             command_prefix=self.my_command_prefix,
@@ -172,6 +175,9 @@ class Bot(commands.AutoShardedBot):
         # Initialize cog databases
         for cog in self.get_cogs():
             cog.setup()
+
+        # Start processing backlogged events
+        self.queue.start(self.loop)
 
         # Finished
         pyver = sys.version_info
