@@ -18,6 +18,9 @@ slowed down or gridlocked over long-running or mass operations.
 
 import asyncio
 import inspect
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class DelayedQueue:
@@ -27,7 +30,7 @@ class DelayedQueue:
         self.queue = asyncio.Queue()
 
     def start(self, eventloop):
-        loop.create_task(self.main_loop())
+        eventloop.create_task(self.main_loop())
 
     def push(self, coro):
         assert inspect.iscoroutine(coro)
