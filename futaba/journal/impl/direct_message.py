@@ -55,4 +55,5 @@ class DirectMessageListener(Listener):
         if "files" in attributes:
             kwargs["files"] = list(map(copy_discord_file, attributes["files"]))
 
-        await self.user.send(**kwargs)
+        coro = self.user.send(**kwargs)
+        self.bot.queue.push(coro)

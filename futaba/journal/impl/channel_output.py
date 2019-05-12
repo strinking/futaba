@@ -58,4 +58,5 @@ class ChannelOutputListener(Listener):
         if "files" in attributes:
             kwargs["files"] = list(map(copy_discord_file, attributes["files"]))
 
-        await self.channel.send(**kwargs)
+        coro = self.channel.send(**kwargs)
+        self.bot.queue.push(coro)
