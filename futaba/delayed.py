@@ -19,6 +19,7 @@ slowed down or gridlocked over long-running or mass operations.
 import asyncio
 import inspect
 
+
 class DelayedQueue:
     __slots__ = ("queue",)
 
@@ -38,7 +39,9 @@ class DelayedQueue:
             coro = await self.queue.get()
             await coro
 
-            logger.debug("Sleeping for %.1f seconds until next delayed event", self.delay)
+            logger.debug(
+                "Sleeping for %.1f seconds until next delayed event", self.delay
+            )
             await asyncio.sleep(self.delay)
 
     @property
