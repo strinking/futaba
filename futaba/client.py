@@ -257,7 +257,9 @@ class Bot(commands.AutoShardedBot):
         """
 
         async with self.message_lock(ctx.message):
-            await ctx.message.clear_reactions()
+            if isinstance(ctx.channel, discord.abc.GuildChannel):
+                await ctx.message.clear_reactions()
+
             await Reactions.SUCCESS.add(ctx.message)
             self.completed_commands.append(ctx.message)
 
@@ -271,7 +273,9 @@ class Bot(commands.AutoShardedBot):
         # pylint: disable=arguments-differ
 
         async with self.message_lock(ctx.message):
-            await ctx.message.clear_reactions()
+            if isinstance(ctx.channel, discord.abc.GuildChannel):
+                await ctx.message.clear_reactions()
+
             await self.handle_error(ctx, error)
             self.completed_commands.append(ctx.message)
 
