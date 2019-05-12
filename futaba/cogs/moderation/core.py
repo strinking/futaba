@@ -222,7 +222,9 @@ class Moderation(AbstractCog):
         self.check_other_roles(member)
 
         # TODO store punishment in table with task ID
-        self.bot.sql.infraction.add_infraction(ctx.author, member, InfractionType.JAIL)
+        self.bot.sql.infraction.add_infraction(
+            ctx.author, member, InfractionType.JAILED
+        )
 
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Jailed", minutes, reason)

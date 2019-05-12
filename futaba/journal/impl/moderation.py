@@ -52,12 +52,12 @@ class ModerationListener(Listener):
             action = "kicked"
             path = "member/kick"
             icon = "kick"
-            self.sql.add_infraction(cause.user, leaver, InfractionType.KICK)
+            self.sql.add_infraction(cause.user, leaver, InfractionType.KICKED)
         elif cause.type == MemberLeaveType.BANNED:
             action = "banned"
             path = "member/ban"
             icon = "ban"
-            self.sql.add_infraction(cause.user, leaver, InfractionType.BAN)
+            self.sql.add_infraction(cause.user, leaver, InfractionType.BANNED)
         else:
             # We don't care about this event!
             return
