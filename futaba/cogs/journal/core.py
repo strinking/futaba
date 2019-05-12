@@ -44,7 +44,7 @@ class Journal(AbstractCog):
     def __init__(self, bot):
         super().__init__(bot)
         bot.journal_cog = self
-        self.router = Router()
+        self.router = Router(bot)
         self.journal = bot.get_broadcaster("/journal")
 
     def setup(self):
