@@ -56,7 +56,7 @@ class Moderation(AbstractCog):
             full_reason.write(f" with reason: {reason}")
         return str(full_reason)
 
-    async def remove_roles(self, ctx, member, minutes, action, reason):
+    def remove_roles(self, ctx, member, minutes, action, reason):
         assert minutes
 
         logger.info(
@@ -79,6 +79,7 @@ class Moderation(AbstractCog):
             reason=reason,
         )
         self.bot.add_tasks(task)
+        return task
 
     def check_other_roles(self, member):
         has_other, punish_role, _ = self.bot.sql.moderation.get_other_roles(member)
@@ -184,22 +185,18 @@ class Moderation(AbstractCog):
         )
 
         minutes = max(minutes, 0)
-<<<<<<< HEAD
         reason = self.build_reason(ctx, "Unmuted", minutes, reason, past=True)
 
         if minutes:
-            await self.remove_roles(
+            task = self.remove_roles(
                 ctx, member, minutes, PunishAction.RELIEVE_MUTE, reason
             )
         else:
             await self.bot.punish.unjail(ctx.guild, member, reason)
-=======
-        full_reason = self.build_reason(ctx, "Unmuted", minutes, reason, past=True)
-        task = await self.remove_roles(ctx, member, minutes, [roles.mute], full_reason)
+
         self.bot.sql.infraction.add_infraction(
-            ctx.author, member, InfractionType.UNMUTED, task
+            ctx.author, member, InfractionType.UNMUTED, task=task
         )
->>>>>>> Add filter and other infractions to database.
 
     @commands.command(name="jail", aliases=["dunce"])
     @commands.guild_only()
@@ -234,20 +231,15 @@ class Moderation(AbstractCog):
 
         # If a delayed event, schedule a Navi task
         if minutes:
-<<<<<<< HEAD
-            await self.remove_roles(
+            task = self.remove_roles(
                 ctx, member, minutes, PunishAction.RELIEVE_JAIL, reason
-            )
-=======
-            task = await self.remove_roles(
-                ctx, member, minutes, [roles.jail], full_reason
             )
         else:
             task = None
+
         self.bot.sql.infraction.add_infraction(
-            ctx.author, member, InfractionType.JAILED, task
+            ctx.author, member, InfractionType.JAILED, task=task
         )
->>>>>>> Add filter and other infractions to database.
 
     @commands.command(name="unjail", aliases=["undunce"])
     @commands.guild_only()
@@ -281,9 +273,7 @@ class Moderation(AbstractCog):
         reason = self.build_reason(ctx, "Released", minutes, reason, past=True)
 
         if minutes:
-            await self.remove_roles(
-                ctx, member, minutes, PunishAction.RELIEVE_JAIL, reason
-            )
+            self.remove_roles(ctx, member, minutes, PunishAction.RELIEVE_JAIL, reason)
         else:
             await self.bot.punish.unjail(ctx.guild, member, reason)
 

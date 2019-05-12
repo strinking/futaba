@@ -32,7 +32,16 @@ __all__ = ["FoundFileViolation", "check_file_filter"]
 
 FoundFileViolation = namedtuple(
     "FoundFileViolation",
-    ("bot", "journal", "message", "filter_type", "description", "url", "binio", "hashsum"),
+    (
+        "bot",
+        "journal",
+        "message",
+        "filter_type",
+        "description",
+        "url",
+        "binio",
+        "hashsum",
+    ),
 )
 
 
@@ -78,17 +87,10 @@ async def check_file_filter(cog, message):
         logger.debug("No content violations found!")
     else:
         settings = cog.bot.sql.filter.get_settings(message.guild)
-<<<<<<< HEAD
-        await found_file_violation(triggered, settings.reupload)
+        await found_file_violation(cog.bot.sql, triggered, settings.reupload)
 
 
-async def found_file_violation(triggered, reupload):
-=======
-        await found_file_violation(cog.bot.sql, triggered, roles, settings.reupload)
-
-
-async def found_file_violation(sql, triggered, roles, reupload):
->>>>>>> Add filter and other infractions to database.
+async def found_file_violation(sql, triggered, reupload):
     """
     Processes a violation of the file content filter. This coroutine is responsible
     for actual enforcement, based on the filter_type.
