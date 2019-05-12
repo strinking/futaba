@@ -110,10 +110,11 @@ class Welcome(AbstractCog):
         router.register(ModerationListener(router, self.bot))
 
     @staticmethod
-    async def send_welcome_message(member, fmt_message, channel):
+    def send_welcome_message(bot, member, fmt_message, channel):
         ctx = FakeContext(author=member, channel=channel, guild=member.guild)
         content = format_message(fmt_message, ctx)
-        await channel.send(content=content)
+        coro = channel.send(content=content)
+        bot.queue.push(coro)
 
     @staticmethod
     async def check_welcome_message(ctx, fmt_message):
@@ -154,8 +155,8 @@ class Welcome(AbstractCog):
         await asyncio.sleep(2)
 
         if welcome.welcome_message and welcome.channel:
-            await self.send_welcome_message(
-                member, welcome.welcome_message, welcome.channel
+            self.send_welcome_message(
+                self.bot, member, welcome.welcome_message, welcome.channel
             )
 
         if roles.guest:
@@ -186,8 +187,8 @@ class Welcome(AbstractCog):
         welcome = self.bot.sql.welcome.get_welcome(member.guild)
 
         if welcome.goodbye_message and welcome.channel:
-            await self.send_welcome_message(
-                member, welcome.goodbye_message, welcome.channel
+            self.send_welcome_message(
+                self.bot, member, welcome.goodbye_message, welcome.channel
             )
 
         # Remove from recently_joined, they need to re-agree!
