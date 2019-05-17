@@ -251,9 +251,9 @@ class FilterModel:
         assert result.rowcount in (0, 1), "Multiple rows deleted"
         return bool(result.rowcount)
 
-    def get_filter_immune_users(self, guild):
+    def fetch_filter_immune_users(self, guild):
         logger.info(
-            "Getting users about filter immunity in guild '%s' (%d)",
+            "Fetching users about filter immunity in guild '%s' (%d)",
             guild.name,
             guild.id,
         )
@@ -265,6 +265,18 @@ class FilterModel:
         self.immune_users_cache[guild].update(user_id for user_id, in result.fetchall())
         return self.immune_users_cache[guild]
 
+    def get_filter_immune_users(self, guild):
+        logger.info(
+            "Getting users about filter immunity in guild '%s' (%d)",
+            guild.name,
+            guild.id,
+        )
+
+        if guild not in self.immune_users_cache:
+            self.fetch_filter_immune_users(guild)
+
+        return self.immune_users_cache[guild]
+
     def user_is_filter_immune(self, guild, user):
         logger.debug(
             "Checking if user '%s' (%d) is filter immune in guild '%s' (%d)",
@@ -274,7 +286,7 @@ class FilterModel:
             guild.id,
         )
 
-        return user.id in self.immune_users_cache[guild]
+        return user.id in self.get_filter_immune_users(guild)
 
     def add_filter_immune_user(self, guild, user):
         logger.info(

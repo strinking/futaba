@@ -91,6 +91,9 @@ class Filtering(AbstractCog):
             ).items():
                 self.content_filters[guild][hashsum] = (filter_type, description)
 
+            # Guild filter-immune users
+            sql.fetch_filter_immune_users(guild)
+
     def __unload(self):
         """
         Remove listeners when unloading the cog.
