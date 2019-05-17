@@ -208,7 +208,6 @@ class Welcome(AbstractCog):
         logger.debug("Command '!join' received, discarding")
 
         welcome = self.bot.sql.welcome.get_welcome(ctx.guild)
-        roles = self.bot.sql.settings.get_special_roles(ctx.guild)
 
         if ctx.channel != welcome.channel:
             # Not the welcome channel, ignore
