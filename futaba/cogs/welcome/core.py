@@ -197,6 +197,35 @@ class Welcome(AbstractCog):
         except ValueError:
             pass
 
+    @commands.command(name="join", hidden=True)
+    @commands.guild_only()
+    async def join(self, ctx):
+        """
+        Command that absorbs bad attempts to join the server.
+        Prevents people from copying those above them instead of reading the rules.
+        """
+
+        logger.debug("Command '!join' received, discarding")
+
+        welcome = self.bot.sql.welcome.get_welcome(ctx.guild)
+        roles = self.bot.sql.settings.get_special_roles(ctx.guild)
+
+        if ctx.channel != welcome.channel:
+            # Not the welcome channel, ignore
+            raise InvalidCommandContext()
+
+        if ctx.author.permissions_in(ctx.channel).manage_messages:
+            # Not a guest, ignore
+            raise InvalidCommandContext()
+
+        if ctx.author in self.recently_joined:
+            # Already joining, ignore
+            raise InvalidCommandContext()
+
+        await asyncio.gather(
+            ctx.message.delete(), ctx.author.send("This is the wrong command!")
+        )
+
     @commands.command(name="agree", aliases=["accept"], hidden=True)
     @commands.guild_only()
     async def agree(self, ctx):
