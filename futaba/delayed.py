@@ -49,5 +49,5 @@ class DelayedQueue:
 
     @property
     def delay(self):
-        mod_delay = self.queue.qsize() / 0.1
+        mod_delay = self.queue.qsize() // 0.05
         return min(mod_delay, 5)
