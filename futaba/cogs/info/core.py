@@ -45,6 +45,8 @@ from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
+MAX_ROLES_SHOWN = 20
+
 __all__ = ["Info"]
 
 
@@ -269,9 +271,12 @@ class Info(AbstractCog):
 
         # Roles
         if getattr(user, "roles", None):
-            roles = " ".join(
-                role.mention for role in islice(user.roles, 1, len(user.roles))
-            )
+            roles_len = min(len(user.roles), MAX_ROLES_SHOWN + 1)
+            roles = " ".join(role.mention for role in islice(user.roles, 1, roles_len))
+
+            if len(user.roles) > roles_len:
+                roles = f"{roles} (and {len(user.roles) - roles_len} others)"
+
             if roles:
                 embed.add_field(name="Roles", value=roles)
 
