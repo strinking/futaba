@@ -16,10 +16,12 @@ import asyncio
 import logging
 
 import aiohttp
+import discord
 from discord.ext import commands
 
 from futaba import permissions
 from futaba.enums import Reactions
+from futaba.utils import plural
 from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
@@ -36,6 +38,18 @@ class Debugging(AbstractCog):
 
     def setup(self):
         pass
+
+    @commands.command(name="queuesize", aliases=["qsize"], hidden=True)
+    @permissions.check_admin()
+    async def queue_size(self, ctx):
+        """ Displays how many journal events are in the delayed queue. """
+
+        qsize = len(self.bot.queue)
+        embed = discord.Embed(colour=discord.Colour.teal())
+        embed.description = (
+            f"There are currently `{qsize}` item{plural(qsize)} in the delayed queue."
+        )
+        await ctx.send(embed=embed)
 
     @commands.command(name="testlong", aliases=["testwait"], hidden=True)
     @permissions.check_owner()
