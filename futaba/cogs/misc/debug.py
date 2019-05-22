@@ -46,7 +46,9 @@ class Debugging(AbstractCog):
 
         qsize = len(self.bot.queue)
         embed = discord.Embed(colour=discord.Colour.teal())
-        embed.description = f"There are currently `{qsize}` item{plural(qsize)} in the delayed queue."
+        embed.description = (
+            f"There are currently `{qsize}` item{plural(qsize)} in the delayed queue."
+        )
         await ctx.send(embed=embed)
 
     @commands.command(name="testlong", aliases=["testwait"], hidden=True)
