@@ -51,3 +51,6 @@ class DelayedQueue:
     def delay(self):
         mod_delay = self.queue.qsize() // 0.05
         return min(mod_delay, 5)
+
+    def __len__(self):
+        return self.queue.qsize()
