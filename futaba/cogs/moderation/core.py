@@ -292,7 +292,7 @@ class Moderation(AbstractCog):
         If guild has moderation logging enabled, it is logged
         """
 
-        if 0 > delete_days or delete_days > 7:
+        if delete_days < 0 or delete_days > 7:
             embed = discord.Embed(colour=discord.Colour.red())
             embed.description = (
                 f"Invalid specification for number of days to delete: `{delete_days}`. "
