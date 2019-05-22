@@ -286,22 +286,35 @@ class Moderation(AbstractCog):
     @commands.command(name="ban")
     @commands.guild_only()
     @permissions.check_perm("ban_members")
-    async def ban(self, ctx, user: UserConv, *, reason: str):
+    async def ban(self, ctx, user: UserConv, delete_days: int, *, reason: str):
         """
         Bans the user from the guild with a reason
         If guild has moderation logging enabled, it is logged
         """
 
+        if delete_days < 0 or delete_days > 7:
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.description = (
+                f"Invalid specification for number of days to delete: `{delete_days}`. "
+                "Must be between 0 and 7 inclusive."
+            )
+            await ctx.send(embed=embed)
+            return
+
         try:
-            embed = discord.Embed(description="Done! User Banned")
+            embed = discord.Embed(colour=discord.Colour.teal())
+            embed.description = (
+                f"Done! {user.mention} ({user_discrim(user)}) was banned"
+            )
             embed.add_field(name="Reason", value=reason)
+            embed.add_field(name="Deleted messages", value=f"{delete_days} days")
 
             # Don't send a journal event, that is handled by the moderation journal listener
 
             await ctx.guild.ban(
                 user,
                 reason=f"{reason} - {user_discrim(ctx.author)}",
-                delete_message_days=1,
+                delete_message_days=delete_days,
             )
             await ctx.send(embed=embed)
 
