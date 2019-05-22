@@ -8,18 +8,18 @@ Requires Python 3.6 or later. There is a sample configuration file at `misc/conf
 ## Running locally
 Setup:
 ```
-$ pip3.6 install --user -r requirements.txt
+$ pip3 install --user -r requirements.txt
 ```
 
 To run:
 ```
-$ python3.6 -m futaba <config.toml>
+$ python3 -m futaba <config.toml>
 ```
 
 ## Development
 More setup:
 ```
-$ pip3.6 install --user -r requirements-dev.txt
+$ pip3 install --user -r requirements-dev.txt
 ```
 
 Formatting and linting code:
