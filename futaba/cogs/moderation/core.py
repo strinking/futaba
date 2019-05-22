@@ -303,7 +303,9 @@ class Moderation(AbstractCog):
 
         try:
             embed = discord.Embed(colour=discord.Colour.teal())
-            embed.description = f"Done! {user.mention} ({user_discrim(user)}) was banned"
+            embed.description = (
+                f"Done! {user.mention} ({user_discrim(user)}) was banned"
+            )
             embed.add_field(name="Reason", value=reason)
             embed.add_field(name="Deleted messages", value=f"{delete_days} days")
 
