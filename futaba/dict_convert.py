@@ -47,7 +47,7 @@ def user_dict(user):
         "id": user.id,
         "name": user.name,
         "discriminator": user.discriminator,
-        "avatar": user.avatar,
+        "avatar": str(user.avatar),
         "bot": user.bot,
     }
 
@@ -58,7 +58,7 @@ def member_dict(member):
         "name": member.name,
         "discriminator": member.discriminator,
         "nick": member.nick,
-        "avatar": member.avatar,
+        "avatar": str(member.avatar),
         "bot": member.bot,
         "joined_at": member.joined_at.isoformat(),
         "status": str(member.status),
@@ -100,7 +100,7 @@ def emoji_dict(emoji):
             "animated": emoji.animated,
             "managed": getattr(emoji, "managed", False),
             "guild_id": map_or(str, getattr(emoji, "guild_id", None)),
-            "url": emoji.url,
+            "url": str(emoji.url),
         }
 
 
