@@ -50,7 +50,7 @@ class DelayedQueue:
     @property
     def delay(self):
         rate = self.queue.qsize() // 100
-        return min(rate / 4, 0.5)
+        return min(rate / 16, 0.10)
 
     def __len__(self):
         return self.queue.qsize()
