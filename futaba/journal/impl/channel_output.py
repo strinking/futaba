@@ -39,7 +39,13 @@ class ChannelOutputListener(Listener):
             return False
 
         if self.channel not in guild.channels:
-            logger.debug("Skipping event, wrong guild!")
+            logger.debug(
+                "Skipping event, wrong guild! (this channel '%s' (%d) not in guild '%s' (%d))",
+                self.channel.name,
+                self.channel.id,
+                guild.name,
+                guild.id,
+            )
             return False
 
         return True

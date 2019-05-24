@@ -24,9 +24,12 @@ logger = logging.getLogger(__name__)
 
 
 class DelayedQueue:
-    __slots__ = ("queue",)
+    __slots__ = ("bracket_size", "rate", "max_delay", "queue")
 
-    def __init__(self):
+    def __init__(self, config):
+        self.bracket_size = config.delay_bracket_size
+        self.rate = config.delay_rate
+        self.max_delay = config.delay_max
         self.queue = asyncio.Queue()
 
     def start(self, eventloop):
@@ -49,8 +52,8 @@ class DelayedQueue:
 
     @property
     def delay(self):
-        rate = self.queue.qsize() // 100
-        return min(rate / 16, 0.10)
+        rate = self.queue.qsize() // self.bracket_size
+        return min(rate * self.rate, self.max_delay)
 
     def __len__(self):
         return self.queue.qsize()

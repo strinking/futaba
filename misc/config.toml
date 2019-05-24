@@ -18,6 +18,18 @@ error-channel-id = "488543452305555456"
 # when doing a bulk message cleanup
 max-cleanup-messages = "500"
 
+[delay]
+# Configuration for the delayed event queue
+
+# How many events are needed to move up one delay bracket
+bracket-size = "100"
+
+# How many seconds of wait each new bracket should add
+rate = "0.005"
+
+# The maximum pause in sending events, regardless of how full the queue is
+max-delay = "0.1"
+
 # Emojis to display for certain icons within the bot
 # Set to "0" to disable
 [emojis]
