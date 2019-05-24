@@ -30,6 +30,9 @@ Configuration = namedtuple(
         "default_prefix",
         "error_channel_id",
         "max_cleanup_messages",
+        "delay_bracket_size",
+        "delay_rate",
+        "delay_max",
         "anger_emoji_id",
         "python_emoji_id",
         "discord_py_emoji_id",
@@ -83,6 +86,15 @@ def load_config(path):
             "Maximum cleanup messages value must be a positive integer", config
         )
 
+    config_delay = _get(config, "delay")
+
+    try:
+        delay_bracket_size = int(_get(config_delay, "bracket-size", "delay"))
+        delay_rate = float(_get(config_delay, "rate", "delay"))
+        delay_max = float(_get(config_delay, "max-delay", "delay"))
+    except ValueError:
+        raise InvalidConfigError("Delay values must be numbers", config)
+
     config_emoji = _get(config, "emojis")
 
     try:
@@ -101,6 +113,9 @@ def load_config(path):
         default_prefix=prefix,
         error_channel_id=error_channel_id,
         max_cleanup_messages=max_cleanup_messages,
+        delay_bracket_size=delay_bracket_size,
+        delay_rate=delay_rate,
+        delay_max=delay_max,
         anger_emoji_id=anger_emoji_id,
         python_emoji_id=python_emoji_id,
         discord_py_emoji_id=discord_py_emoji_id,

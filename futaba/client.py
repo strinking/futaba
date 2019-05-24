@@ -73,7 +73,7 @@ class Bot(commands.AutoShardedBot):
         self.error_channel = None
         self.message_locks = LruCache(20)
         self.completed_commands = deque(maxlen=20)
-        self.queue = DelayedQueue()
+        self.queue = DelayedQueue(config)
 
         super().__init__(
             command_prefix=self.my_command_prefix,
