@@ -51,6 +51,40 @@ class Debugging(AbstractCog):
         )
         await ctx.send(embed=embed)
 
+    @commands.command(name="delayvalues", aliases=["delayval"], hidden=True)
+    @permissions.check_owner()
+    async def delay_values(
+        self, ctx, bracket_size: int = None, rate: float = None, max_delay: float = None
+    ):
+        """ Allows live modification of the delay queue values. """
+
+        old_bracket_size = self.bot.config.delay_bracket_size
+        old_rate = self.bot.config.delay_rate
+        old_max_delay = self.bot.config.delay_max
+
+        embed = discord.Embed(colour=discord.Colour.teal())
+        if bracket_size is None or rate is None or max_delay is None:
+            embed.description = "Current values for delayed event queue:"
+            embed.add_field(name="Bracket size", value=f"`{old_bracket_size}`")
+            embed.add_field(name="Rate", value=f"`{old_rate}` seconds")
+            embed.add_field(name="Maximum delay", value=f"`{old_max_delay}` seconds")
+        else:
+            self.bot.config.delay_bracket_size = bracket_size
+            self.bot.config.delay_rate = rate
+            self.bot.config.delay_max = max_delay
+
+            embed.description = "Updated values for delayed event queue:"
+            embed.add_field(
+                name="Bracket size", value=f"`{old_bracket_size}` -> `{bracket_size}`"
+            )
+            embed.add_field(name="Rate", value=f"`{old_rate}` -> `{rate}` seconds")
+            embed.add_field(
+                name="Maximum delay",
+                value=f"`{old_max_delay}` -> `{max_delay}` seconds",
+            )
+
+        await ctx.send(embed=embed)
+
     @commands.command(name="testlong", aliases=["testwait"], hidden=True)
     @permissions.check_owner()
     async def test_long_command(self, ctx, delay: float = 4.0):
