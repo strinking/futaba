@@ -58,9 +58,9 @@ class Debugging(AbstractCog):
     ):
         """ Allows live modification of the delay queue values. """
 
-        old_bracket_size = self.bot.config.delay_bracket_size
-        old_rate = self.bot.config.delay_rate
-        old_max_delay = self.bot.config.delay_max
+        old_bracket_size = self.bot.queue.bracket_size
+        old_rate = self.bot.queue.rate
+        old_max_delay = self.bot.queue.max_delay
 
         embed = discord.Embed(colour=discord.Colour.teal())
         if bracket_size is None or rate is None or max_delay is None:
@@ -69,9 +69,9 @@ class Debugging(AbstractCog):
             embed.add_field(name="Rate", value=f"`{old_rate}` seconds")
             embed.add_field(name="Maximum delay", value=f"`{old_max_delay}` seconds")
         else:
-            self.bot.config.delay_bracket_size = bracket_size
-            self.bot.config.delay_rate = rate
-            self.bot.config.delay_max = max_delay
+            self.bot.queue.bracket_size = bracket_size
+            self.bot.queue.rate = rate
+            self.bot.queue.max_delay = max_delay
 
             embed.description = "Updated values for delayed event queue:"
             embed.add_field(
