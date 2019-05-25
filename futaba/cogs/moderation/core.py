@@ -269,9 +269,6 @@ class Moderation(AbstractCog):
         If guild has moderation logging enabled, it is logged
         """
 
-        if member.top_role >= ctx.me.top_role:
-            raise ManualCheckFailure("I don't have permission to kick this user")
-
         try:
             embed = discord.Embed(description="Done! User Kicked")
             embed.add_field(name="Reason", value=reason)
@@ -294,9 +291,6 @@ class Moderation(AbstractCog):
         Bans the user from the guild with a reason
         If guild has moderation logging enabled, it is logged
         """
-
-        if member.top_role >= ctx.me.top_role:
-            raise ManualCheckFailure("I don't have permission to ban this user")
 
         if delete_days < 0 or delete_days > 7:
             embed = discord.Embed(colour=discord.Colour.red())
@@ -338,9 +332,6 @@ class Moderation(AbstractCog):
         Soft-ban is a kick that cleans up the chat
         """
 
-        if member.top_role >= ctx.me.top_role:
-            raise ManualCheckFailure("I don't have permission to soft-ban this user")
-
         try:
             embed = discord.Embed(description="Done! User Soft-banned")
             embed.add_field(name="Reason", value=reason)
@@ -379,9 +370,6 @@ class Moderation(AbstractCog):
         Unbans the id from the guild with a reason.
         If guild has moderation logging enabled, it is logged
         """
-
-        if member.top_role >= ctx.me.top_role:
-            raise ManualCheckFailure("I don't have permission to unban this user")
 
         try:
             embed = discord.Embed(description="Done! User Unbanned")
