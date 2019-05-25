@@ -46,7 +46,7 @@ class DelayedQueue:
             await coro
 
             logger.debug(
-                "Sleeping for %.1f seconds until next delayed event", self.delay
+                "Sleeping for %.3f seconds until next delayed event", self.delay
             )
             await asyncio.sleep(self.delay)
 
