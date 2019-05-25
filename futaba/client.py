@@ -56,6 +56,7 @@ class Bot(commands.AutoShardedBot):
         "config",
         "start_time",
         "journal_cog",
+        "reloader_cog",
         "sql",
         "punish",
         "error_channel",
@@ -68,6 +69,7 @@ class Bot(commands.AutoShardedBot):
         self.config = config
         self.start_time = datetime.utcnow()
         self.journal_cog = None
+        self.reloader_cog = None
         self.sql = SqlHandler(config.database_url)
         self.punish = PunishmentHandler(self)
         self.error_channel = None

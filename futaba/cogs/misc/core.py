@@ -11,7 +11,7 @@
 #
 
 """
-Cog for misceallaneous commands that don't really belong anywhere else.
+Cog for miscellaneous commands that don't really belong anywhere else.
 """
 
 import logging
