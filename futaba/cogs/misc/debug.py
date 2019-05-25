@@ -47,42 +47,10 @@ class Debugging(AbstractCog):
         qsize = len(self.bot.queue)
         embed = discord.Embed(colour=discord.Colour.teal())
         embed.description = (
-            f"There are currently `{qsize}` item{plural(qsize)} in the delayed queue."
+            f"There are currently `{qsize}` item{plural(qsize)} in the delayed queue.\n"
+            f"Every {self.bot.config.delay_chunk_size} entries the loop will sleep for "
+            f"{self.bot.config.delay_sleep:.3f} seconds."
         )
-        await ctx.send(embed=embed)
-
-    @commands.command(name="delayvalues", aliases=["delayval"], hidden=True)
-    @permissions.check_owner()
-    async def delay_values(
-        self, ctx, bracket_size: int = None, rate: float = None, max_delay: float = None
-    ):
-        """ Allows live modification of the delay queue values. """
-
-        old_bracket_size = self.bot.queue.bracket_size
-        old_rate = self.bot.queue.rate
-        old_max_delay = self.bot.queue.max_delay
-
-        embed = discord.Embed(colour=discord.Colour.teal())
-        if bracket_size is None or rate is None or max_delay is None:
-            embed.description = "Current values for delayed event queue:"
-            embed.add_field(name="Bracket size", value=f"`{old_bracket_size}`")
-            embed.add_field(name="Rate", value=f"`{old_rate}` seconds")
-            embed.add_field(name="Maximum delay", value=f"`{old_max_delay}` seconds")
-        else:
-            self.bot.queue.bracket_size = bracket_size
-            self.bot.queue.rate = rate
-            self.bot.queue.max_delay = max_delay
-
-            embed.description = "Updated values for delayed event queue:"
-            embed.add_field(
-                name="Bracket size", value=f"`{old_bracket_size}` -> `{bracket_size}`"
-            )
-            embed.add_field(name="Rate", value=f"`{old_rate}` -> `{rate}` seconds")
-            embed.add_field(
-                name="Maximum delay",
-                value=f"`{old_max_delay}` -> `{max_delay}` seconds",
-            )
-
         await ctx.send(embed=embed)
 
     @commands.command(name="testlong", aliases=["testwait"], hidden=True)
