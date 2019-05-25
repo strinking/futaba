@@ -569,6 +569,43 @@ class Info(AbstractCog):
         for i, embed in enumerate(message.embeds, 1):
             await ctx.send(content=f"#{i}:", embed=embed)
 
+    @commands.command(name="reactions", aliases=["reacts"])
+    @commands.guild_only()
+    async def reactions(self, ctx, *, message: MessageConv):
+        """
+        Displays all reactions on a message.
+        """
+
+        logger.info("Displaying reactions for message ID %d", message.id)
+
+        if not message.reactions:
+            logger.debug("This message has no reactions")
+            embed = discord.Embed(colour=discord.Colour.dark_purple())
+            embed.description = "This message has no reactions."
+            await ctx.send(embed=embed)
+            return
+
+        descr = StringBuilder()
+        for reaction in message.reactions:
+            if descr:
+                descr.writeln()
+
+            descr.write(reaction.emoji)
+            async for user in reaction.users():
+                descr.write(f" {user.mention}")
+
+                if len(descr) > 1800:
+                    embed = discord.Embed(colour=discord.Colour.teal())
+                    embed.description = str(descr)
+                    await ctx.send(embed=embed)
+                    descr.clear()
+                    descr.write(reaction.emoji)
+
+        if descr:
+            embed = discord.Embed(colour=discord.Colour.teal())
+            embed.description = str(descr)
+            await ctx.send(embed=embed)
+
     @commands.command(name="cinfo", aliases=["chaninfo", "channelinfo"])
     @commands.guild_only()
     async def cinfo(self, ctx, name: str = None):
