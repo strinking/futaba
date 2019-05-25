@@ -557,11 +557,11 @@ class Info(AbstractCog):
         Finds and copies embeds from the given message.
         """
 
-        logger.info("Copying embeds from message %d", message.id)
+        logger.info("Copying embeds from message ID %d", message.id)
 
         if not message.embeds:
             logger.debug("This message does not have any embeds")
-            embed = discord.Embed(colour=discord.Colour.teal())
+            embed = discord.Embed(colour=discord.Colour.dark_purple())
             embed.description = "This message contains no embeds."
             await ctx.send(embed=embed)
             return
