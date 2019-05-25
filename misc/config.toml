@@ -13,6 +13,9 @@ prefix = "!"
 # Set to "0" to disable
 error-channel-id = "488543452305555456"
 
+[cogs]
+statbot = false
+
 [moderation]
 # Maximum number of messages that may be specified
 # when doing a bulk message cleanup
