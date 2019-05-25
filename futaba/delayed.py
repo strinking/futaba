@@ -43,7 +43,7 @@ class DelayedQueue:
             logger.debug("Waiting for new delayed event")
             coro = await self.queue.get()
 
-            logger.debug("Got event, is #%d to be processed", i)
+            logger.debug("Got event #%d for processing", i)
             try:
                 await coro
             except Exception as error:

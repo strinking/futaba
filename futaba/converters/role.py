@@ -30,7 +30,7 @@ ROLE_MENTION_REGEX = re.compile(r"<@&([0-9]+)>")
 class RoleConv(Converter):
     async def convert(self, ctx, argument) -> discord.Role:
         if ctx.guild is None:
-            raise BadArgument(f"Unable to find role because we are not in a guild")
+            raise BadArgument("Unable to find role because we are not in a guild")
 
         logger.debug("Checking if it's a role ID")
         match = ID_REGEX.match(argument)
@@ -64,4 +64,4 @@ class RoleConv(Converter):
             return ctx.guild.default_role
 
         logger.debug("No results found")
-        raise BadArgument(f'Unable to find role with description "{argument}"')
+        raise BadArgument(f"Unable to find role with description '{argument}'")
