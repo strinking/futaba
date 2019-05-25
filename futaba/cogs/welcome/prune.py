@@ -112,19 +112,17 @@ class Prune(AbstractCog):
                 ctx.guild.members,
             )
 
-        pruned = []
-
+        count = 0
         for member in to_be_pruned:
             if ctx.me.top_role > member.top_role:
                 await ctx.guild.kick(
                     member, reason=f"Pruning guests older than {days} days"
                 )
-                pruned.append(str(member))
+                count += 1
 
             else:
                 logger.warning("Cannnot prune member %s (%d)", member.name, member.id)
-
-        return pruned
+        return count
 
     @commands.command(name="prune", aliases=["purge"])
     @commands.guild_only()
@@ -148,7 +146,7 @@ class Prune(AbstractCog):
             )
             raise CommandFailed(embed=embed)
 
-        content = f"Pruned {len(pruned_members)} members"
+        content = f"Pruned {pruned_members} members"
         embed = discord.Embed(description=content, colour=discord.Colour.dark_teal())
         await ctx.send(embed=embed)
 
