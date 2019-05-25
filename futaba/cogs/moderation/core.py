@@ -136,7 +136,7 @@ class Moderation(AbstractCog):
         if roles.mute is None:
             raise CommandFailed(content="No configured mute role")
 
-        if member.top_role > ctx.me.top_role:
+        if member.top_role >= ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to mute this user")
 
         self.check_other_roles(member)
@@ -174,7 +174,7 @@ class Moderation(AbstractCog):
         if roles.mute is None:
             raise CommandFailed(content="No configured mute role")
 
-        if member.top_role > ctx.me.top_role:
+        if member.top_role >= ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to unmute this user")
 
         # TODO store punishment in table with task ID
@@ -207,7 +207,7 @@ class Moderation(AbstractCog):
         if roles.jail is None:
             raise CommandFailed(content="No configured jail role")
 
-        if member.top_role > ctx.me.top_role:
+        if member.top_role >= ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to jail this user")
 
         self.check_other_roles(member)
@@ -245,7 +245,7 @@ class Moderation(AbstractCog):
         if roles.jail is None:
             raise CommandFailed(content="No configured jail role")
 
-        if member.top_role > ctx.me.top_role:
+        if member.top_role >= ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to unjail this user")
 
         # TODO store punishment in table with task ID
