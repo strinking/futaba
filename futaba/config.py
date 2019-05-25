@@ -71,7 +71,7 @@ def load_config(path):
     optional_cogs = _get(config_bot, "cogs", "bot")
     for key, value in optional_cogs.items():
         if not isinstance(value, bool):
-            raise InvalidConfigError("Cog settings must be booleans", config)
+            raise InvalidConfigError(f"Cog setting for {key} is not a boolean", config)
 
     try:
         owner_ids = [int(id) for id in _get(config_bot, "owners", "bot")]
