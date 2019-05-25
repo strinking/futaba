@@ -29,21 +29,24 @@ logger = logging.getLogger(__name__)
 __all__ = ["Prune"]
 
 
-def prune_filter(member, prune_date, role, should_have_role=True):
+def prune_filter(member, prune_date, *, has_roles, lacks_roles):
     """
     Fuction used to filter members by.
-    If should_has_role is False it will check if the user dosen't have the role specified
+    Ensures they have all of the roles in 'has_roles' and doesn't
+    have any of the roles in 'lacks_roles'.
     """
 
     if member.bot:
         return False
 
-    has_role = role in member.roles
-    prune = member.joined_at < prune_date
-    if has_role == should_have_role:
-        return prune
+    for role in member.roles:
+        if role not in has_roles:
+            return False
 
-    return False
+        if role in lacks_roles:
+            return False
+
+    return member.joined_at < prune_date
 
 
 class Prune(AbstractCog):
@@ -77,7 +80,12 @@ class Prune(AbstractCog):
 
             # Get users to be pruned
             to_be_pruned = filter(
-                lambda member: prune_filter(member, prune_date, roles.guest),
+                lambda member: prune_filter(
+                    member,
+                    prune_date,
+                    has_roles={roles.guest},
+                    lacks_roles={roles.member, roles.mute, roles.jail},
+                ),
                 ctx.guild.members,
             )
 
@@ -95,7 +103,12 @@ class Prune(AbstractCog):
 
             # Get users to be pruned
             to_be_pruned = filter(
-                lambda x: prune_filter(x, prune_date, roles.member, False),
+                lambda member: prune_filter(
+                    member,
+                    prune_date,
+                    has_roles=(),
+                    lacks_roles={roles.member, roles.mute, roles.jail},
+                ),
                 ctx.guild.members,
             )
 
