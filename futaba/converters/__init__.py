@@ -12,6 +12,7 @@
 
 from .channel import TextChannelConv, GuildChannelConv
 from .emoji import EmojiConv
+from .message import MessageConv
 from .role import RoleConv
 from .user import MemberConv, UserConv
 from .utils import ID_REGEX

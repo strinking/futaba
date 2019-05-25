@@ -14,7 +14,6 @@
 Informational commands that make finding and gathering data easier.
 """
 
-import asyncio
 import logging
 import re
 import sys
@@ -26,7 +25,13 @@ import discord
 from discord.ext import commands
 
 from futaba import __version__
-from futaba.converters import ID_REGEX, EmojiConv, GuildChannelConv, RoleConv, UserConv
+from futaba.converters import (
+    EmojiConv,
+    GuildChannelConv,
+    MessageConv,
+    RoleConv,
+    UserConv,
+)
 from futaba.exceptions import CommandFailed, ManualCheckFailure
 from futaba.permissions import mod_perm
 from futaba.similar import similar_users
@@ -35,7 +40,6 @@ from futaba.utils import (
     GIT_HASH,
     escape_backticks,
     fancy_timedelta,
-    first,
     lowerbool,
     plural,
     user_discrim,
@@ -442,90 +446,67 @@ class Info(AbstractCog):
             embed.set_footer(text=f"Page {i + 1}/{len(contents)}")
             await ctx.send(embed=embed)
 
-    @staticmethod
-    async def get_messages(channels, ids):
-        return await asyncio.gather(*[Info.get_message(channels, id) for id in ids])
-
-    @staticmethod
-    async def get_message(channels, id):
-        async def from_channel(channel, id):
-            try:
-                return await channel.fetch_message(id)
-            except discord.NotFound:
-                return None
-
-        results = await asyncio.gather(
-            *[from_channel(channel, id) for channel in channels]
-        )
-        return first(results)
-
     @commands.command(name="message", aliases=["findmsg", "msg"])
     @commands.guild_only()
-    async def message(self, ctx, *ids: int):
+    async def message(self, ctx, *messages: MessageConv):
         """
         Finds and prints the contents of the messages with the given IDs.
         """
 
-        logger.info("Finding message IDs for dump: %s", ids)
+        logger.info("Displaying %d messages", len(messages))
 
-        if not mod_perm(ctx) and len(ids) > 3:
-            ids = islice(ids, 0, 3)
+        if not mod_perm(ctx) and len(messages) > 3:
+            messages = islice(messages, 0, 3)
             await ctx.send(content="Too many messages requested, stopping at 3...")
 
-        def make_embed(message, id):
-            if message is None:
-                embed = discord.Embed(colour=discord.Colour.red())
-                embed.description = f"No message with id `{id}` found"
-                embed.timestamp = discord.utils.snowflake_time(id)
-            else:
-                embed = discord.Embed(colour=message.author.colour)
-                embed.description = message.content or None
-                embed.timestamp = message.created_at
-                embed.url = message.jump_url
-                embed.set_author(
-                    name=f"{message.author.name}#{message.author.discriminator}"
+        def make_embed(message):
+            embed = discord.Embed(colour=message.author.colour)
+            embed.description = message.content or None
+            embed.timestamp = message.created_at
+            embed.url = message.jump_url
+            embed.set_author(
+                name=f"{message.author.name}#{message.author.discriminator}"
+            )
+            embed.set_thumbnail(url=message.author.avatar_url)
+            embed.add_field(name="Sent by", value=message.author.mention)
+
+            if ctx.guild is not None:
+                embed.add_field(name="Channel", value=message.channel.mention)
+
+            embed.add_field(name="Permalink", value=message.jump_url)
+
+            if message.edited_at is not None:
+                delta = fancy_timedelta(message.edited_at - message.created_at)
+                embed.add_field(
+                    name="Edited at",
+                    value=f"`{message.edited_at}` ({delta} afterwords)",
                 )
-                embed.set_thumbnail(url=message.author.avatar_url)
-                embed.add_field(name="Sent by", value=message.author.mention)
 
-                if ctx.guild is not None:
-                    embed.add_field(name="Channel", value=message.channel.mention)
+            if message.attachments:
+                embed.add_field(
+                    name="Attachments",
+                    value="\n".join(attach.url for attach in message.attachments),
+                )
 
-                embed.add_field(name="Permalink", value=message.jump_url)
+            if message.embeds:
+                embed.add_field(name="Embeds", value=str(len(message.embeds)))
 
-                if message.edited_at is not None:
-                    delta = fancy_timedelta(message.edited_at - message.created_at)
-                    embed.add_field(
-                        name="Edited at",
-                        value=f"`{message.edited_at}` ({delta} afterwords)",
-                    )
+            if message.reactions:
+                emojis = Counter()
+                for reaction in message.reactions:
+                    emojis[str(reaction.emoji)] += 1
 
-                if message.attachments:
-                    embed.add_field(
-                        name="Attachments",
-                        value="\n".join(attach.url for attach in message.attachments),
-                    )
-
-                if message.embeds:
-                    embed.add_field(name="Embeds", value=str(len(message.embeds)))
-
-                if message.reactions:
-                    emojis = Counter()
-                    for reaction in message.reactions:
-                        emojis[str(reaction.emoji)] += 1
-
-                    embed.add_field(
-                        name="Reactions",
-                        value="\n".join(
-                            (f"{count}: {emoji}" for emoji, count in emojis.items())
-                        ),
-                    )
+                embed.add_field(
+                    name="Reactions",
+                    value="\n".join(
+                        (f"{count}: {emoji}" for emoji, count in emojis.items())
+                    ),
+                )
 
             return embed
 
-        messages = await self.get_messages(ctx.guild.text_channels, ids)
-        for message, id in zip(messages, ids):
-            await ctx.send(embed=make_embed(message, id))
+        for message in messages:
+            await ctx.send(embed=make_embed(message))
 
     @commands.command(name="rawmessage", aliases=["raw", "rawmsg"])
     @commands.guild_only()
@@ -534,18 +515,20 @@ class Info(AbstractCog):
         Finds and prints the raw contents of the messages with the given IDs.
         """
 
-        ids = []
-        parts = re.split(r"\s", argument)
+        messages = []
+        parts = re.split(r"\s+", argument)
         if not parts:
-            raise CommandFailed(content="No message IDs or text passed!")
+            raise CommandFailed(content="No message references or text passed")
 
         for part in parts:
-            if ID_REGEX.match(part) is None:
+            try:
+                message = await MessageConv().convert(ctx, part)
+                messages.append(message)
+            except Exception:
                 await self.raw_argument(ctx, argument)
                 return
 
-            ids.append(int(part))
-        await self.raw_message(ctx, ids)
+        await self.raw_message(ctx, messages)
 
     async def raw_argument(self, ctx, argument):
         logger.info("Outputting raw form of the argument: '%s'", argument)
@@ -553,14 +536,13 @@ class Info(AbstractCog):
         content = "You sent:\n" f"```\n{escape_backticks(argument)}\n```"
         await ctx.send(content=content)
 
-    async def raw_message(self, ctx, ids):
-        logger.info("Finding message IDs for raws: %s", ids)
+    async def raw_message(self, ctx, messages):
+        logger.info("Outputting raw message contents for %d messages", len(messages))
 
-        if not mod_perm(ctx) and len(ids) > 5:
-            ids = islice(ids, 0, 5)
+        if not mod_perm(ctx) and len(messages) > 4:
+            messages = islice(messages, 0, 4)
             await ctx.send(content="Too many messages requested, stopping at 5...")
 
-        messages = await self.get_messages(ctx.guild.text_channels, ids)
         for message in messages:
             content = (
                 f"{message.author.name}#{message.author.discriminator} sent:\n"
@@ -570,18 +552,12 @@ class Info(AbstractCog):
 
     @commands.command(name="embeds")
     @commands.guild_only()
-    async def embeds(self, ctx, id: int):
+    async def embeds(self, ctx, *, message: MessageConv):
         """
         Finds and copies embeds from the given message.
         """
 
-        logger.info("Copying embeds from message %d", id)
-        message = await self.get_message(ctx.guild.text_channels, id)
-        if message is None:
-            logger.debug("No message with this id found")
-            embed = discord.Embed(colour=discord.Colour.red())
-            embed.description = f"No message with id `{id}` found"
-            raise CommandFailed(embed=embed)
+        logger.info("Copying embeds from message %d", message.id)
 
         if not message.embeds:
             logger.debug("This message does not have any embeds")
