@@ -272,10 +272,28 @@ class Info(AbstractCog):
         if hasattr(user, "colour"):
             embed.colour = user.colour
 
-        # User id
         embed.add_field(name="ID", value=f"`{user.id}`")
+        self.uinfo_add_roles(embed, user)
+        self.uinfo_add_activity(embed, user, content)
 
-        # Roles
+        embed.description = str(content)
+        content.clear()
+
+        self.uinfo_add_voice(embed, user)
+        self.uinfo_add_aliases(embed, content, usernames, nicknames)
+
+        # Guild join date
+        if hasattr(user, "joined_at"):
+            embed.add_field(name="Member for", value=fancy_timedelta(user.joined_at))
+
+        # Discord join date
+        embed.add_field(name="Account age", value=fancy_timedelta(user.created_at))
+
+        # Send them
+        await ctx.send(embed=embed)
+
+    @staticmethod
+    def uinfo_add_roles(embed, user):
         if getattr(user, "roles", None):
             roles_len = min(len(user.roles), MAX_ROLES_SHOWN + 1)
             roles = " ".join(role.mention for role in islice(user.roles, 1, roles_len))
@@ -286,7 +304,8 @@ class Info(AbstractCog):
             if roles:
                 embed.add_field(name="Roles", value=roles)
 
-        # Current game
+    @staticmethod
+    def uinfo_add_activity(embed, user, content):
         if getattr(user, "activity", None):
             act = user.activity
             if isinstance(act, discord.Game):
@@ -309,10 +328,8 @@ class Info(AbstractCog):
             elif isinstance(act, discord.Activity):
                 content.writeln(f"{act.state} [{act.name}]({act.url})")
 
-        embed.description = str(content)
-        content.clear()
-
-        # Voice activity
+    @staticmethod
+    def uinfo_add_voice(embed, user):
         if getattr(user, "voice", None):
             mute = user.voice.mute or user.voice.self_mute
             deaf = user.voice.deaf or user.voice.self_deaf
@@ -326,7 +343,8 @@ class Info(AbstractCog):
             state = str(states) if states else "active"
             embed.add_field(name="Voice", value=state)
 
-        # Aliases
+    @staticmethod
+    def uinfo_add_aliases(embed, content, usernames, nicknames):
         if usernames:
             for username, timestamp in usernames:
                 content.writeln(f"- `{username}` set {fancy_timedelta(timestamp)} ago")
@@ -338,16 +356,6 @@ class Info(AbstractCog):
                 content.writeln(f"- `{nickname}` set {fancy_timedelta(timestamp)} ago")
             embed.add_field(name="Past nicknames", value=str(content))
             content.clear()
-
-        # Guild join date
-        if hasattr(user, "joined_at"):
-            embed.add_field(name="Member for", value=fancy_timedelta(user.joined_at))
-
-        # Discord join date
-        embed.add_field(name="Account age", value=fancy_timedelta(user.created_at))
-
-        # Send them
-        await ctx.send(embed=embed)
 
     @commands.command(name="ufind", aliases=["userfind", "usearch", "usersearch"])
     async def ufind(self, ctx, *, name: str):
