@@ -30,9 +30,7 @@ def _check_gtz(type):
             value = type(value)
         except ValueError:
             return False
-
         return value > 0
-
     return wrapper
 
 
