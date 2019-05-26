@@ -14,6 +14,9 @@
 Example optional cog.
 """
 
+# REMOVE THIS IN REGULAR COGS:
+# pylint: disable=unused-import
+
 import asyncio
 import logging
 import math

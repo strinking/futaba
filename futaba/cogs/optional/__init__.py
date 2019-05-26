@@ -18,7 +18,8 @@ logger = logging.getLogger(__name__)
 
 
 def setup(bot):
-    for cog_name, enabled in bot.config.optional_cogs.items():
+    for cog_name, options in bot.config.optional_cogs.items():
+        enabled = options.enabled
         logger.info(
             "Optional cog: %s %s", " [ENABLED]" if enabled else "[DISABLED]", cog_name
         )

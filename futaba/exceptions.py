@@ -12,13 +12,7 @@
 
 from discord.ext.commands import CommandError
 
-__all__ = [
-    "CommandFailed",
-    "ManualCheckFailure",
-    "SendHelp",
-    "InvalidCommandContext",
-    "InvalidConfigError",
-]
+__all__ = ["CommandFailed", "ManualCheckFailure", "SendHelp", "InvalidCommandContext"]
 
 
 class SendOnError(CommandError):
@@ -48,9 +42,3 @@ class SendHelp(CommandError):
 
 class InvalidCommandContext(CommandError):
     pass
-
-
-class InvalidConfigError(RuntimeError):
-    def __init__(self, message, config):
-        super().__init__(message)
-        self.config = config

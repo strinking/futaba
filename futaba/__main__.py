@@ -18,10 +18,11 @@ import logging
 import argparse
 import sys
 
+import schema
 from toml import TomlDecodeError
 
 from . import client
-from .config import InvalidConfigError, load_config
+from .config import load_config
 
 LOG_FILE = "futaba.log"
 LOG_FILE_MODE = "w"
@@ -91,7 +92,7 @@ if __name__ == "__main__":
     except (TomlDecodeError, IOError) as error:
         logger.error("Unable to read configuration file.", exc_info=error)
         exit(1)
-    except InvalidConfigError as error:
+    except schema.SchemaError as error:
         logger.error("Error when processing configuration file: %s", error)
         exit(1)
 
