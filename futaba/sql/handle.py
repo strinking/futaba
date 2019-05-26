@@ -79,6 +79,7 @@ class SqlHandler:
         return self.conn.execute(*args, **kwargs)
 
     def transaction(self, trans_logger=logger):
-        assert self.trans is None, "Already in a transaction"
-        self.trans = Transaction(self, self.conn, trans_logger)
+        if self.trans is None:
+            self.trans = Transaction(self, self.conn, trans_logger)
+
         return self.trans
