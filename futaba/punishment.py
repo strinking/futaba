@@ -39,21 +39,9 @@ class PunishmentHandler:
 
         return role
 
-    def check_other_roles(self, member):
-        has_other, _, _ = self.bot.sql.moderation.get_other_roles(member)
-        if has_other:
-            logger.warning(
-                "Cannot add an overriding role to '%s' (%d)", member.name, member.id
-            )
-
-        return not has_other
-
     async def apply(self, name, guild, member, reason):
         role = self.get_role(name, guild)
         if role is None:
-            return
-
-        if not self.check_other_roles(member):
             return
 
         if member.top_role > guild.me.top_role:
