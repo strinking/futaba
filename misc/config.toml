@@ -14,6 +14,8 @@ prefix = "!"
 error-channel-id = "488543452305555456"
 
 [cogs]
+# Settings for optional cogs
+example = true
 statbot = false
 
 [moderation]

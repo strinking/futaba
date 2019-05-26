@@ -68,7 +68,7 @@ def load_config(path):
     except ValueError:
         raise InvalidConfigError("Channel IDs must be integers", config)
 
-    optional_cogs = _get(config_bot, "cogs", "bot")
+    optional_cogs = _get(config, "cogs")
     for key, value in optional_cogs.items():
         if not isinstance(value, bool):
             raise InvalidConfigError(f"Cog setting for {key} is not a boolean", config)
