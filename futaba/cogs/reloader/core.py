@@ -39,6 +39,7 @@ class Reloader(AbstractCog):
 
     def __init__(self, bot):
         super().__init__(bot)
+        bot.reloader_cog = self
         self.journal = bot.get_broadcaster("/cog")
 
     def setup(self):

@@ -29,6 +29,7 @@ Configuration = namedtuple(
         "owner_ids",
         "default_prefix",
         "error_channel_id",
+        "optional_cogs",
         "max_cleanup_messages",
         "delay_chunk_size",
         "delay_sleep",
@@ -66,6 +67,11 @@ def load_config(path):
         error_channel_id = int(_get(config_bot, "error-channel-id", "bot"))
     except ValueError:
         raise InvalidConfigError("Channel IDs must be integers", config)
+
+    optional_cogs = _get(config, "cogs")
+    for key, value in optional_cogs.items():
+        if not isinstance(value, bool):
+            raise InvalidConfigError(f"Cog setting for {key} is not a boolean", config)
 
     try:
         owner_ids = [int(id) for id in _get(config_bot, "owners", "bot")]
@@ -110,6 +116,7 @@ def load_config(path):
         owner_ids=owner_ids,
         default_prefix=prefix,
         error_channel_id=error_channel_id,
+        optional_cogs=optional_cogs,
         max_cleanup_messages=max_cleanup_messages,
         delay_chunk_size=delay_chunk_size,
         delay_sleep=delay_sleep,
