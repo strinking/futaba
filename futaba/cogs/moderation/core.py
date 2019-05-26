@@ -80,21 +80,6 @@ class Moderation(AbstractCog):
         )
         self.bot.add_tasks(task)
 
-    def check_other_roles(self, member):
-        # FIXME
-        has_other, punish_role, _ = self.bot.sql.moderation.get_other_roles(member)
-        if has_other:
-            embed = discord.Embed(colour=discord.Colour.red())
-            role_descr = (
-                ""
-                if punish_role is None
-                else f"because they already have {punish_role.mention}"
-            )
-            embed.description = (
-                f"Cannot add a new overriding role to {member.mention} {role_descr}"
-            )
-            raise CommandFailed(embed=embed)
-
     @commands.command(name="nick", aliases=["nickname", "renick"])
     @commands.guild_only()
     @permissions.check_perm("manage_nicknames")
@@ -139,8 +124,6 @@ class Moderation(AbstractCog):
 
         if member.top_role >= ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to mute this user")
-
-        self.check_other_roles(member)
 
         # TODO store punishment in table with task ID
 
@@ -210,8 +193,6 @@ class Moderation(AbstractCog):
 
         if member.top_role >= ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to jail this user")
-
-        self.check_other_roles(member)
 
         # TODO store punishment in table with task ID
 
