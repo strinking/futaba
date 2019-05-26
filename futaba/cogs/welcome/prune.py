@@ -39,10 +39,13 @@ def prune_filter(member, prune_date, *, has_roles, lacks_roles):
     if member.bot:
         return False
 
-    for role in member.roles:
-        if role not in has_roles:
+    # Ensures that all roles in has_roles exist in member.roles
+    for role in has_roles:
+        if role not in member.roles:
             return False
 
+    # Ensure that all roles aren't in lacks_roles
+    for role in member.roles:
         if role in lacks_roles:
             return False
 
