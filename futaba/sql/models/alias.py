@@ -206,6 +206,42 @@ class AliasHistoryModel:
         alt_user_ids = self.get_alt_user_ids(guild, [user.id])
         return avatars, usernames, nicknames, alt_user_ids
 
+    def get_alias_names(self, guild, user, username_limit=6, nickname_limit=6):
+        logger.info("Getting alias names of user '%s' (%d)", user.name, user.id)
+
+        # Basically get_aliases() but only usernames and nicknames. The other queries
+        # are relatively expensive, and if they're not needed, they shouldn't be run.
+
+        sel = (
+            select(
+                [
+                    self.tb_alias_usernames.c.username,
+                    self.tb_alias_usernames.c.timestamp,
+                ]
+            )
+            .where(self.tb_alias_usernames.c.user_id == user.id)
+            .order_by(self.tb_alias_usernames.c.timestamp)
+            .limit(username_limit)
+        )
+        result = self.sql.execute(sel)
+        usernames = list(result)
+
+        sel = (
+            select(
+                [
+                    self.tb_alias_nicknames.c.nickname,
+                    self.tb_alias_nicknames.c.timestamp,
+                ]
+            )
+            .where(self.tb_alias_nicknames.c.user_id == user.id)
+            .order_by(self.tb_alias_nicknames.c.timestamp)
+            .limit(nickname_limit)
+        )
+        result = self.sql.execute(sel)
+        nicknames = list(result)
+
+        return usernames, nicknames
+
     def get_alt_user_ids(self, guild, starting_user_ids):
         logger.info("Iteratively fetching all chained user alt connections.")
         assert starting_user_ids, "No starting user IDs"

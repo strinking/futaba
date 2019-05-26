@@ -249,19 +249,21 @@ class Info(AbstractCog):
         """
 
         user = await self.get_user(ctx, name)
+        usernames, nicknames = self.bot.sql.alias.get_alias_names(ctx.guild, user)
+
         logger.info("Running uinfo on '%s' (%d)", user.name, user.id)
 
         # Status
-        descr = StringBuilder()
+        content = StringBuilder()
         if getattr(user, "status", None):
             status = (
                 "do not disturb" if user.status == discord.Status.dnd else user.status
             )
-            descr.writeln(f"{user.mention}, {status}")
+            content.writeln(f"{user.mention}, {status}")
         else:
-            descr.writeln(user.mention)
+            content.writeln(user.mention)
 
-        embed = discord.Embed(description=descr)
+        embed = discord.Embed()
         embed.timestamp = user.created_at
         embed.set_author(name=user_discrim(user))
         embed.set_thumbnail(url=user.avatar_url)
@@ -270,10 +272,28 @@ class Info(AbstractCog):
         if hasattr(user, "colour"):
             embed.colour = user.colour
 
-        # User id
         embed.add_field(name="ID", value=f"`{user.id}`")
+        self.uinfo_add_roles(embed, user)
+        self.uinfo_add_activity(embed, user, content)
 
-        # Roles
+        embed.description = str(content)
+        content.clear()
+
+        self.uinfo_add_voice(embed, user)
+        self.uinfo_add_aliases(embed, content, usernames, nicknames)
+
+        # Guild join date
+        if hasattr(user, "joined_at"):
+            embed.add_field(name="Member for", value=fancy_timedelta(user.joined_at))
+
+        # Discord join date
+        embed.add_field(name="Account age", value=fancy_timedelta(user.created_at))
+
+        # Send them
+        await ctx.send(embed=embed)
+
+    @staticmethod
+    def uinfo_add_roles(embed, user):
         if getattr(user, "roles", None):
             roles_len = min(len(user.roles), MAX_ROLES_SHOWN + 1)
             roles = " ".join(role.mention for role in islice(user.roles, 1, roles_len))
@@ -284,7 +304,8 @@ class Info(AbstractCog):
             if roles:
                 embed.add_field(name="Roles", value=roles)
 
-        # Current game
+    @staticmethod
+    def uinfo_add_activity(embed, user, content):
         if getattr(user, "activity", None):
             act = user.activity
             if isinstance(act, discord.Game):
@@ -299,17 +320,16 @@ class Info(AbstractCog):
                     else:
                         time_msg = f"from {act.start} to {act.end}"
 
-                descr.writeln(f"Playing `{act.name}` {time_msg}")
+                content.writeln(f"Playing `{act.name}` {time_msg}")
             elif isinstance(act, discord.Streaming):
-                descr.writeln(f"Streaming [{act.name}]({act.url})")
+                content.writeln(f"Streaming [{act.name}]({act.url})")
                 if act.details is not None:
-                    descr.writeln(f"\n{act.details}")
+                    content.writeln(f"\n{act.details}")
             elif isinstance(act, discord.Activity):
-                descr.writeln(f"{act.state} [{act.name}]({act.url})")
+                content.writeln(f"{act.state} [{act.name}]({act.url})")
 
-        embed.description = str(descr)
-
-        # Voice activity
+    @staticmethod
+    def uinfo_add_voice(embed, user):
         if getattr(user, "voice", None):
             mute = user.voice.mute or user.voice.self_mute
             deaf = user.voice.deaf or user.voice.self_deaf
@@ -323,15 +343,19 @@ class Info(AbstractCog):
             state = str(states) if states else "active"
             embed.add_field(name="Voice", value=state)
 
-        # Guild join date
-        if hasattr(user, "joined_at"):
-            embed.add_field(name="Member for", value=fancy_timedelta(user.joined_at))
+    @staticmethod
+    def uinfo_add_aliases(embed, content, usernames, nicknames):
+        if usernames:
+            for username, timestamp in usernames:
+                content.writeln(f"- `{username}` set {fancy_timedelta(timestamp)} ago")
+            embed.add_field(name="Past usernames", value=str(content))
+            content.clear()
 
-        # Discord join date
-        embed.add_field(name="Account age", value=fancy_timedelta(user.created_at))
-
-        # Send them
-        await ctx.send(embed=embed)
+        if nicknames:
+            for nickname, timestamp in nicknames:
+                content.writeln(f"- `{nickname}` set {fancy_timedelta(timestamp)} ago")
+            embed.add_field(name="Past nicknames", value=str(content))
+            content.clear()
 
     @commands.command(name="ufind", aliases=["userfind", "usearch", "usersearch"])
     async def ufind(self, ctx, *, name: str):
