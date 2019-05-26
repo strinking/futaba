@@ -70,7 +70,8 @@ def load_config(path):
 
     optional_cogs = _get(config, "cogs")
     for key, value in optional_cogs.items():
-        if not isinstance(value, bool):
+        enabled = _get(value, "enabled", key)
+        if not isinstance(enabled, bool):
             raise InvalidConfigError(f"Cog setting for {key} is not a boolean", config)
 
     try:

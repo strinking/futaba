@@ -13,10 +13,13 @@ prefix = "!"
 # Set to "0" to disable
 error-channel-id = "488543452305555456"
 
-[cogs]
 # Settings for optional cogs
-example = true
-statbot = false
+[cogs.example]
+enabled = true
+
+[cogs.statbot]
+url = "postgres://statbot:passwordhere@localhost/statbot_ro"
+enabled = false
 
 [moderation]
 # Maximum number of messages that may be specified
