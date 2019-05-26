@@ -24,7 +24,7 @@ import discord
 
 from sqlalchemy import and_
 from sqlalchemy import ARRAY, BigInteger, Column, Table
-from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy import CheckConstraint, ForeignKey, UniqueConstraint
 from sqlalchemy.sql import select
 
 Column = functools.partial(Column, nullable=False)
@@ -43,8 +43,11 @@ class ModerationModel:
             meta,
             Column("guild_id", BigInteger, ForeignKey("guilds.guild_id")),
             Column("user_id", BigInteger),
-            Column("keep_role", BigInteger),
+            Column("kept_roles", ARRAY(BigInteger)),
             Column("other_roles", ARRAY(BigInteger)),
+            CheckConstraint(
+                "array_length(kept_roles, 1) > 0", name="kept_roles_not_empty_check"
+            ),
             UniqueConstraint("guild_id", "user_id", name="uq_removed_other_roles"),
         )
 
@@ -59,7 +62,7 @@ class ModerationModel:
 
         sel = select(
             [
-                self.tb_removed_other_roles.c.keep_role,
+                self.tb_removed_other_roles.c.kept_roles,
                 self.tb_removed_other_roles.c.other_roles,
             ]
         ).where(
@@ -70,29 +73,31 @@ class ModerationModel:
         )
         result = self.sql.execute(sel)
         if result.rowcount:
-            keep_role_id, other_role_ids = result.fetchone()
-            keep_role = discord.utils.get(member.guild.roles, id=keep_role_id)
+            kept_role_ids, other_role_ids = result.fetchone()
+            kept_roles = [
+                discord.utils.get(member.guild.roles, id=id) for id in kept_role_ids
+            ]
             other_roles = [
                 discord.utils.get(member.guild.roles, id=id) for id in other_role_ids
             ]
-            return True, keep_role, other_roles
+            return True, kept_roles, other_roles
         else:
             return False, None, None
 
-    async def remove_other_roles(self, member, keep_role, reason):
+    async def remove_other_roles(self, member, kept_role, reason):
         logger.info(
             "Removing member '%s' (%d)'s roles in guild '%s' (%d) to just '%s' (%d)",
             member.name,
             member.id,
             member.guild.name,
             member.guild.id,
-            keep_role.name,
-            keep_role.id,
+            kept_role.name,
+            kept_role.id,
         )
 
         sel = select(
             [
-                self.tb_removed_other_roles.c.keep_role,
+                self.tb_removed_other_roles.c.kept_roles,
                 self.tb_removed_other_roles.c.other_roles,
             ]
         ).where(
@@ -103,10 +108,16 @@ class ModerationModel:
         )
         result = self.sql.execute(sel)
         if result.rowcount == 1:
-            # Update only the keep role, leave the others alone
+            # Append the new kept role
+            kept_role_ids, _ = result.fetchone()
+            kept_role_ids.append(kept_role.id)
+            kept_roles = [
+                discord.utils.get(member.guild.roles, id=id) for id in kept_role_ids
+            ]
+
             upd = (
                 self.tb_removed_other_roles.update()
-                .values(keep_role=keep_role.id)
+                .values(kept_roles=kept_role_ids)
                 .where(
                     and_(
                         self.tb_removed_other_roles.c.guild_id == member.guild.id,
@@ -115,20 +126,20 @@ class ModerationModel:
                 )
             )
             self.sql.execute(upd)
-            return
-
-        # Add new removed_other_roles entry
-        other_roles = [role.id for role in member.roles if role != keep_role]
-        ins = self.tb_removed_other_roles.insert().values(
-            guild_id=member.guild.id,
-            user_id=member.id,
-            keep_role=keep_role.id,
-            other_roles=other_roles,
-        )
-        self.sql.execute(ins)
+        else:
+            # Add new removed_other_roles row
+            kept_roles = [kept_role]
+            other_role_ids = [role.id for role in member.roles if role != kept_role]
+            ins = self.tb_removed_other_roles.insert().values(
+                guild_id=member.guild.id,
+                user_id=member.id,
+                kept_roles=[kept_role.id],
+                other_roles=other_role_ids,
+            )
+            self.sql.execute(ins)
 
         # Replaces all the member's roles with just keep_role
-        await member.edit(roles=[keep_role], reason=reason)
+        await member.edit(roles=kept_roles, reason=reason)
 
     async def restore_other_roles(self, member, reason):
         logger.info(

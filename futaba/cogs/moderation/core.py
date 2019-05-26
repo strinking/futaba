@@ -81,6 +81,7 @@ class Moderation(AbstractCog):
         self.bot.add_tasks(task)
 
     def check_other_roles(self, member):
+        # FIXME
         has_other, punish_role, _ = self.bot.sql.moderation.get_other_roles(member)
         if has_other:
             embed = discord.Embed(colour=discord.Colour.red())
