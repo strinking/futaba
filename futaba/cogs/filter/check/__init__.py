@@ -158,16 +158,18 @@ async def check_all_members_on_filter(cog, guild, filter):
     # Check that we actually have permissions to manage roles
     if not guild.me.guild_permissions.manage_roles:
         logger.debug(
-            "Lacks permissions to manage roles in guild '%s' (%d)",
-            guild.name,
-            guild.id,
+            "Lacks permissions to manage roles in guild '%s' (%d)", guild.name, guild.id
         )
         return
 
     # Run filter checks on members, with delays
     for member in guild.members:
+        logger.debug(
+            "Checking member '%s' (%d) against new filter", member.name, member.id
+        )
+
         if filter_immune(cog.bot, guild, member):
-            return
+            continue
 
         # We're using the existing functions to avoid duplicating functionality
         await check_name_filter(
