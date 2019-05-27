@@ -49,15 +49,31 @@ class ExampleCog(AbstractCog):
         Example command for optional cogs.
         """
 
+        # Get previous number, if any
+        #
+        # This is a JSON blob stored persistently.
+        # It can take whatever form or schema is most appropriate for the cog.
+        settings = self.bot.sql.settings.get_optional_cog_settings(ctx.guild, "example")
+        previous = settings.get("example-command-previous", 0.0)
+
+        # Build response
         embed = discord.Embed(colour=discord.Colour.teal())
-        embed.set_author(name=f"Input: {number}")
+        embed.set_author(name=f"Input: {number}, Previous: {previous}")
         embed.description = (
-            f"Square root: `{math.sqrt(number)}`\n"
-            f"Natural logarithm: `{math.log(number)}`\n"
-            f"Sine / cosine: `{math.sin(number)}` / `{math.cos(number)}`"
+            f"Square root: `{math.sqrt(abs(number + previous))}`\n"
+            f"Natural logarithm: `{math.log(abs(number + previous))}`\n"
+            f"Sine / cosine: `{math.sin(number + previous)}` / `{math.cos(number + previous)}`"
         )
         await ctx.send(embed=embed)
 
+        # Save previous number
+        #
+        # You need to save the entire settings blob, not just the fields you updated.
+        settings["example-command-previous"] = number
+        self.bot.sql.settings.set_optional_cog_settings(ctx.guild, "example", settings)
+
+        # Send journal event
+        content = f"Test command, inputted number: {number}, previous: {previous}"
         self.journal.send(
-            "command", ctx, f"Test command, inputted number: {number}", icon="ok"
+            "command", ctx.guild, content, icon="ok", number=number, previous=previous
         )

@@ -22,8 +22,10 @@ import logging
 
 import discord
 
+from sqlalchemy import and_
 from sqlalchemy import (
     ARRAY,
+    JSON,
     BigInteger,
     Boolean,
     CheckConstraint,
@@ -31,6 +33,7 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     SmallInteger,
+    String,
     Table,
     Unicode,
     UniqueConstraint,
@@ -38,6 +41,7 @@ from sqlalchemy import (
 from sqlalchemy.sql import select
 
 from futaba.enums import LocationType
+from futaba.utils import if_not_null
 from ..data import (
     GuildSettingsData,
     ReapplyRolesData,
@@ -59,10 +63,12 @@ class SettingsModel:
         "tb_special_roles",
         "tb_reapply_roles",
         "tb_tracking_blacklists",
+        "tb_optional_cog_settings",
         "guild_settings_cache",
         "special_roles_cache",
         "reapply_roles_cache",
         "tracking_blacklist_cache",
+        "optional_cog_settings_cache",
     )
 
     def __init__(self, sql, meta):
@@ -142,10 +148,21 @@ class SettingsModel:
                 name="type_is_channel_or_user_check",
             ),
         )
+        self.tb_optional_cog_settings = Table(
+            "optional_cog_settings",
+            meta,
+            Column(
+                "guild_id", BigInteger, ForeignKey("guilds.guild_id"), primary_key=True
+            ),
+            Column("cog_name", String, primary_key=True),
+            Column("settings", JSON),
+        )
+
         self.guild_settings_cache = {}
         self.special_roles_cache = {}
         self.reapply_roles_cache = {}
         self.tracking_blacklist_cache = {}
+        self.optional_cog_settings_cache = {}
 
         register_hook("on_guild_join", self.add_guild_settings)
         register_hook("on_guild_join", self.add_special_roles)
@@ -487,3 +504,70 @@ class SettingsModel:
         blacklist = TrackingBlacklistData(guild, result.fetchall())
         self.tracking_blacklist_cache[guild] = blacklist
         return blacklist
+
+    def fetch_optional_cog_settings(self, guild, cog_name, default=None):
+        logger.info(
+            "Fetching or inserting settings for optional cog '%s' in guild '%s' (%d)",
+            cog_name,
+            guild.name,
+            guild.id,
+        )
+
+        sel = select([self.tb_optional_cog_settings.c.settings]).where(
+            and_(
+                self.tb_optional_cog_settings.c.guild_id == guild.id,
+                self.tb_optional_cog_settings.c.cog_name == cog_name,
+            )
+        )
+        result = self.sql.execute(sel)
+
+        if result.rowcount:
+            (settings,) = result.fetchone()
+        else:
+            logger.info("Settings didn't exist, creating...")
+            ins = self.tb_optional_cog_settings.insert().values(
+                guild_id=guild.id, cog_name=cog_name, settings={}
+            )
+            self.sql.execute(ins)
+            settings = if_not_null(default, {})
+
+        self.optional_cog_settings_cache[(guild, cog_name)] = settings
+        return settings
+
+    def get_optional_cog_settings(self, guild, cog_name, default=None):
+        logger.debug(
+            "Getting settings for optional cog '%s' in guild '%s' (%d)",
+            cog_name,
+            guild.name,
+            guild.id,
+        )
+
+        if (guild, cog_name) not in self.optional_cog_settings_cache:
+            self.fetch_optional_cog_settings(guild, cog_name)
+
+        return self.optional_cog_settings_cache[(guild, cog_name)]
+
+    def set_optional_cog_settings(self, guild, cog_name, settings):
+        logger.debug(
+            "Updating settings for optional cog '%s' in guild '%s' (%d)",
+            cog_name,
+            guild.name,
+            guild.id,
+        )
+
+        # Insert if it doesn't already exist
+        _ = self.get_optional_cog_settings(guild, cog_name)
+
+        upd = (
+            self.tb_optional_cog_settings.update()
+            .values(settings=settings)
+            .where(
+                and_(
+                    self.tb_optional_cog_settings.c.guild_id == guild.id,
+                    self.tb_optional_cog_settings.c.cog_name == cog_name,
+                )
+            )
+        )
+        self.sql.execute(upd)
+
+        self.optional_cog_settings_cache[(guild, cog_name)] = settings
