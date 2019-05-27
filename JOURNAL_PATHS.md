@@ -153,3 +153,4 @@ Prune:
 * `/tracking/channel/delete` - Guild channel was deleted. Attributes: `channel: discord.GuildChannel`
 * `/tracking/member/join` - Member joined the guild. Attributes: `member: discord.Member`
 * `/tracking/member/leave` - Member left the guild. Includes kicks, bans, etc. Attributes: `member: discord.Member`, `cause: MemberLeaveReason`.
+* `/tracking/member/update` - This path does not exist. To get information on when members are updated, use paths `/roles/save` and `/alias/member/update`.
