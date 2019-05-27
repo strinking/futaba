@@ -400,7 +400,7 @@ class Filtering(AbstractCog):
             text=text,
             cause=ctx.author,
         )
-        await add_filter(self.bot, self.filters, ctx.guild, FilterType.FLAG, text)
+        await add_filter(self, self.filters, ctx.guild, FilterType.FLAG, text)
 
     @filter_guild.command(name="block", aliases=["deny", "autoremove"])
     @commands.guild_only()
@@ -416,7 +416,7 @@ class Filtering(AbstractCog):
 
         content = f"Added guild block filter for `{escape_backticks(text)}`"
         self.journal.send("guild/new/block", ctx.guild, content, icon="filter")
-        await add_filter(self.bot, self.filters, ctx.guild, FilterType.BLOCK, text)
+        await add_filter(self, self.filters, ctx.guild, FilterType.BLOCK, text)
 
     @filter_guild.command(name="jail", aliases=["dunce", "punish", "mute"])
     @commands.guild_only()
@@ -432,7 +432,7 @@ class Filtering(AbstractCog):
 
         content = f"Added guild jail filter for `{escape_backticks(text)}`"
         self.journal.send("guild/new/jail", ctx.guild, content, icon="filter")
-        await add_filter(self.bot, self.filters, ctx.guild, FilterType.JAIL, text)
+        await add_filter(self, self.filters, ctx.guild, FilterType.JAIL, text)
 
     @filter_guild.command(name="remove", aliases=["rm", "delete", "del"])
     @commands.guild_only()
@@ -497,7 +497,7 @@ class Filtering(AbstractCog):
             channel=channel,
             cause=ctx.author,
         )
-        await add_filter(self.bot, self.filters, channel, FilterType.FLAG, text)
+        await add_filter(self, self.filters, channel, FilterType.FLAG, text)
 
     @filter_channel.command(name="block", aliases=["deny", "autoremove"])
     @commands.guild_only()
@@ -523,7 +523,7 @@ class Filtering(AbstractCog):
             channel=channel,
             cause=ctx.author,
         )
-        await add_filter(self.bot, self.filters, channel, FilterType.BLOCK, text)
+        await add_filter(self, self.filters, channel, FilterType.BLOCK, text)
 
     @filter_channel.command(name="jail", aliases=["dunce", "punish", "mute"])
     @commands.guild_only()
@@ -549,7 +549,7 @@ class Filtering(AbstractCog):
             channel=channel,
             cause=ctx.author,
         )
-        await add_filter(self.bot, self.filters, channel, FilterType.JAIL, text)
+        await add_filter(self, self.filters, channel, FilterType.JAIL, text)
 
     @filter_channel.command(name="remove", aliases=["rm", "delete", "del"])
     @commands.guild_only()

@@ -14,10 +14,13 @@ import logging
 import re
 from collections import defaultdict
 
+import discord
+
 from futaba.enums import FilterType
 from futaba.exceptions import CommandFailed
 from futaba.str_builder import StringBuilder
 from futaba.unicode import READABLE_CHAR_SET, unicode_repr
+from .check import check_all_members_on_filter
 from .filter import Filter
 
 HEXADECIMAL_REGEX = re.compile(r"[A-Fa-f0-9]+")
@@ -39,7 +42,7 @@ __all__ = [
 ]
 
 
-async def add_filter(bot, filters, location, level, text):
+async def add_filter(cog, filters, location, level, text):
     logger.info(
         "Adding %r to server filter '%s' for '%s' (%d)",
         text,
@@ -49,16 +52,21 @@ async def add_filter(bot, filters, location, level, text):
     )
 
     try:
-        with bot.sql.transaction():
+        with cog.bot.sql.transaction():
             if text in filters[location]:
-                bot.sql.filter.update_filter(location, level, text)
+                cog.bot.sql.filter.update_filter(location, level, text)
             else:
-                bot.sql.filter.add_filter(location, level, text)
+                cog.bot.sql.filter.add_filter(location, level, text)
     except Exception as error:
         logger.error("Error adding filter", exc_info=error)
         raise CommandFailed()
     else:
-        filters[location][text] = (Filter(text), level)
+        filter = Filter(text)
+        filters[location][text] = (filter, level)
+
+    if isinstance(location, discord.Guild):
+        logger.debug("Checking all members against new guild text filter")
+        cog.bot.loop.create_task(check_all_members_on_filter(cog, location, filter))
 
 
 async def delete_filter(bot, filters, location, text):
