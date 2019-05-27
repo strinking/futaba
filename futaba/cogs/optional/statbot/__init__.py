@@ -1,5 +1,5 @@
 #
-# cogs/optional/__init__.py
+# cogs/optional/statbot/__init__.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2019 Jake Richardson, Ammon Smith, jackylam5
@@ -10,17 +10,9 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-import logging
-
-logger = logging.getLogger(__name__)
+from .core import StatbotCog
 
 
 def setup(bot):
-    for cog_name, options in bot.config.optional_cogs.items():
-        enabled = options["enabled"]
-        logger.info(
-            "Optional cog: %s %s", " [ENABLED]" if enabled else "[DISABLED]", cog_name
-        )
-
-        if enabled:
-            bot.reloader_cog.load_cog(f"optional.{cog_name}")
+    cog = StatbotCog(bot)
+    bot.add_cog(cog)
