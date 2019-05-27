@@ -1,5 +1,5 @@
 #
-# cogs/optional/statbot/__init__.py
+# cogs/optional/statbot/utils.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2019 Jake Richardson, Ammon Smith, jackylam5
@@ -10,9 +10,20 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-from .core import Statbot
+"""
+Utilities for the Statbot cog.
+"""
+
+import struct
+import hashlib
 
 
-def setup(bot):
-    cog = Statbot(bot)
-    bot.add_cog(cog)
+def int_hash(num):
+    """
+    The integer hashing algorithm used by Statbot to transform real user IDs.
+    """
+
+    data = struct.pack(">q", num)
+    hashed = hashlib.sha512(data).digest()
+    (result,) = struct.unpack(">q", hashed[24:32])
+    return result

@@ -15,9 +15,7 @@ Cog for querying a local statbot database.
 """
 
 import asyncio
-import hashlib
 import logging
-import struct
 from urllib.parse import urlencode
 from typing import Union
 
@@ -25,30 +23,24 @@ import discord
 from discord.ext import commands
 
 from futaba import permissions
-from futaba.converters import TextChannelConv, UserConv
 from futaba.cogs.abc import AbstractCog
+from futaba.converters import TextChannelConv, UserConv
 from futaba.exceptions import CommandFailed
+from futaba.str_builder import StringBuilder
+from futaba.utils import fancy_timedelta, plural
+from .sql import StatbotSqlHandler
+from .utils import int_hash
 
 logger = logging.getLogger(__name__)
 
 
-def int_hash(num):
-    """
-    The integer hashing algorithm used by Statbot to transform real user IDs.
-    """
-
-    data = struct.pack(">q", num)
-    hashed = hashlib.sha512(data).digest()
-    (result,) = struct.unpack(">q", hashed[24:32])
-    return result
-
-
-class StatbotCog(AbstractCog):
-    __slots__ = ("journal",)
+class Statbot(AbstractCog):
+    __slots__ = ("journal", "sql")
 
     def __init__(self, bot):
         super().__init__(bot)
         self.journal = bot.get_broadcaster("/statbot")
+        self.sql = StatbotSqlHandler(bot.config.optional_cogs["statbot"]["url"])
 
     def setup(self):
         # Fetching information from the database for this cog
@@ -79,3 +71,40 @@ class StatbotCog(AbstractCog):
         await ctx.send(
             content=f"https://ddd.raylu.net/guild/{ctx.guild.id}/{'?' if params else ''}{urlencode(params)}"
         )
+
+    @commands.command(
+        name="msgcount", aliases=["messagecount", "msgstat", "messagestat"]
+    )
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def message_count(self, ctx, user: UserConv, *exclude: TextChannelConv):
+        """
+        Gets the total number of messages this user has sent in the guild.
+        Text channels to exclude from the search can be added as optional arguments.
+        """
+
+        message_count, edited_count, deleted_count = self.sql.message_count(
+            ctx.guild, user, exclude
+        )
+
+        descr = StringBuilder()
+        descr.writeln(
+            f"Found `{message_count}` message{plural(message_count)} from {user.mention}."
+        )
+
+        if message_count:
+            descr.writeln(
+                f"Of those, `{edited_count}` (or `{edited_count / message_count * 100:.2f}%`) are edited,\n"
+                f"and `{deleted_count}` (or `{deleted_count / message_count * 100:.2f}%`) are deleted."
+            )
+
+        if hasattr(user, "joined_at"):
+            descr.writeln()
+            descr.writeln(
+                f"They have been a member for {fancy_timedelta(user.joined_at)}."
+            )
+
+        embed = discord.Embed(colour=discord.Colour.teal())
+        embed.description = str(descr)
+
+        await ctx.send(embed=embed)

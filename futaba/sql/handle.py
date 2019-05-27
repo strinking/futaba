@@ -75,6 +75,9 @@ class SqlHandler:
         meta.create_all(self.db)
         logger.info("Created all tables.")
 
+    def __del__(self):
+        self.conn.close()
+
     def execute(self, *args, **kwargs):
         return self.conn.execute(*args, **kwargs)
 
