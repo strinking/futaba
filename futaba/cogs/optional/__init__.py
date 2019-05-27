@@ -12,8 +12,6 @@
 
 import logging
 
-from . import example
-
 logger = logging.getLogger(__name__)
 
 
