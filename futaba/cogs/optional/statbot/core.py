@@ -28,6 +28,7 @@ from futaba import permissions
 from futaba.converters import TextChannelConv, UserConv
 from futaba.cogs.abc import AbstractCog
 from futaba.exceptions import CommandFailed
+from .sql import StatbotSqlHandler
 
 logger = logging.getLogger(__name__)
 
@@ -44,11 +45,12 @@ def int_hash(num):
 
 
 class StatbotCog(AbstractCog):
-    __slots__ = ("journal",)
+    __slots__ = ("journal", "sql")
 
     def __init__(self, bot):
         super().__init__(bot)
         self.journal = bot.get_broadcaster("/statbot")
+        self.sql = StatbotSqlHandler(bot.config.cogs["statbot"]["url"])
 
     def setup(self):
         # Fetching information from the database for this cog
