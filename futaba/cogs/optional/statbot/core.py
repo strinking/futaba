@@ -69,13 +69,13 @@ class StatbotCog(AbstractCog):
             len(items),
         )
 
-        base_link = f"https://ddd.raylu.net/guild/{ctx.guild.id}/"
         params = {}
-
         for item in items:
             if isinstance(item, discord.TextChannel):
                 params["channel_id"] = item.id
             elif isinstance(item, discord.abc.User):
                 params["int_user_id"] = int_hash(item.id)
 
-        await ctx.send(content=f"{base_link}{'?' if params else ''}{urlencode(params)}")
+        await ctx.send(
+            content=f"https://ddd.raylu.net/guild/{ctx.guild.id}/{'?' if params else ''}{urlencode(params)}"
+        )
