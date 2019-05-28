@@ -27,7 +27,13 @@ from .text import FoundTextViolation, check_text_filter
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["MASK_NICK", "check_message", "check_message_edit", "check_member_update"]
+__all__ = [
+    "MASK_NICK",
+    "check_message",
+    "check_message_edit",
+    "check_member_update",
+    "check_all_members_on_filter",
+]
 
 
 def filter_immune(bot, guild, member, channel=None):
@@ -141,6 +147,42 @@ async def check_message_edit(cog, before, after):
     await check_message(cog, after)
 
 
+async def check_all_members_on_filter(cog, guild, filter):
+    """
+    Checks all members in the guild against the given filter.
+    See also check_name_filter.
+    """
+
+    logger.debug("Checking members against new filter: %r", filter.text)
+
+    # Check that we actually have permissions to manage roles
+    if not guild.me.guild_permissions.manage_roles:
+        logger.debug(
+            "Lacks permissions to manage roles in guild '%s' (%d)", guild.name, guild.id
+        )
+        return
+
+    # Run filter checks on members, with delays
+    for member in guild.members:
+        logger.debug(
+            "Checking member '%s' (%d) against new filter", member.name, member.id
+        )
+
+        if filter_immune(cog.bot, guild, member):
+            continue
+
+        # We're using the existing functions to avoid duplicating functionality
+        await check_name_filter(
+            cog, member.name, NameType.USER, member, only_filter=filter
+        )
+        if member.nick is not None:
+            await check_name_filter(
+                cog, member.nick, NameType.NICK, member, only_filter=filter
+            )
+
+        await asyncio.sleep(0.01)
+
+
 async def check_member_join(cog, member):
     """
     Checks a new member against all text filters to ensure
@@ -161,7 +203,6 @@ async def check_member_join(cog, member):
 
     # Check filter immunity
     if filter_immune(cog.bot, guild, member):
-        logger.debug("This user is immune to the filter")
         return
 
     # Cannot be parallelized because we can only renick if the username is ok
@@ -185,6 +226,10 @@ async def check_member_update(cog, before, after):
             after.guild.name,
             after.guild.id,
         )
+        return
+
+    # Check filter immunity
+    if filter_immune(cog.bot, guild, after):
         return
 
     # Cannot be parallelized because we can only renick if the username is ok

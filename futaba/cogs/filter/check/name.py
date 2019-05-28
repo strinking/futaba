@@ -26,22 +26,31 @@ __all__ = ["FoundNameViolation", "check_name_filter"]
 FoundNameViolation = namedtuple("FoundNameViolation", ("filter_type", "filter_text"))
 
 
-async def check_name_filter(cog, name, name_type, member):
+async def check_name_filter(cog, name, name_type, member, only_filter=None):
     """
     Checks the given name against all filters, and enforces with a dunce.
     """
 
     logger.debug("Checking name: %r", name)
 
-    # Iterate through all guild filters
-    triggered = None
-
-    for filter_text, (filter, filter_type) in cog.filters[member.guild].items():
-        if filter.matches(name):
-            if triggered is None or filter_type.value > triggered.filter_type.value:
-                triggered = FoundNameViolation(
-                    filter_type=filter_type, filter_text=filter_text
-                )
+    if only_filter is None:
+        # Check all the filters
+        triggered = None
+        for filter_text, (filter, filter_type) in cog.filters[member.guild].items():
+            if filter.matches(name):
+                if triggered is None or filter_type.value > triggered.filter_type.value:
+                    triggered = FoundNameViolation(
+                        filter_type=filter_type, filter_text=filter_text
+                    )
+    else:
+        # Only check this filter
+        filter_type = cog.filters[member.guild][only_filter.text][1]
+        if only_filter.matches(name):
+            triggered = FoundNameViolation(
+                filter_type=filter_type, filter_text=only_filter.text
+            )
+        else:
+            triggered = None
 
     if triggered is None:
         logger.debug("No name violations found!")

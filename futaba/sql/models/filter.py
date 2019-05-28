@@ -253,7 +253,7 @@ class FilterModel:
 
     def fetch_filter_immune_users(self, guild):
         logger.info(
-            "Fetching users about filter immunity in guild '%s' (%d)",
+            "Fetching users with filter immunity in guild '%s' (%d)",
             guild.name,
             guild.id,
         )
@@ -267,7 +267,7 @@ class FilterModel:
 
     def get_filter_immune_users(self, guild):
         logger.info(
-            "Getting users about filter immunity in guild '%s' (%d)",
+            "Getting users with filter immunity in guild '%s' (%d)",
             guild.name,
             guild.id,
         )
