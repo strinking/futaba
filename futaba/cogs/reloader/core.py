@@ -16,9 +16,11 @@ Cog for loading, unloading, or reloading other cogs.
 
 import importlib
 import logging
+from operator import itemgetter
 
 import discord
 from discord.ext import commands
+from tree_format import format_tree
 
 from futaba import permissions
 from futaba.exceptions import CommandFailed
@@ -248,22 +250,27 @@ class Reloader(AbstractCog):
     async def listcogs(self, ctx):
         """ Lists all currently loaded cogs. """
 
-        content = StringBuilder("```yaml\nCogs loaded:\n")
-        if self.bot.cogs:
-            extensions = {}
-            for cog_name, cog in self.bot.cogs.items():
-                ext_name = cog.__module__.rsplit('.', 1)[0]
-                if ext_name in extensions:
-                    extensions[ext_name].append(cog_name)
-                else:
-                    extensions[ext_name] = [(cog_name)]
-            
-            for extension in extensions:
-                content.writeln(f" - {extension}")
-                for cog in extensions[extension]:
-                    content.writeln(f"\t- {cog}")
-        else:
-            content.writeln(" - (none)")
+        content = StringBuilder("```\n")
 
+        extensions = {}
+        for cog_name, cog in self.bot.cogs.items():
+            ext_name = cog.__module__.rsplit('.', 1)[0]
+            ext_name = ext_name.rsplit('.', 1)[1]
+            if ext_name in extensions:
+                extensions[ext_name].append(cog_name)
+            else:
+                extensions[ext_name] = [cog_name]         
+        
+        # I hate this but tree-format uses lists and tuples for some reason
+        # So this takes the nice dictionary and converts it to that
+        extensions = [(ext, [(cog_name, []) for cog_name in cog]) for ext, cog in extensions.items()]
+        
+        tree = ('futaba', [
+            ('cogs', 
+                extensions,
+            ),
+        ])
+
+        content.writeln(format_tree(tree, format_node=itemgetter(0), get_children=itemgetter(1)))
         content.writeln("```")
         await ctx.send(content=str(content))
