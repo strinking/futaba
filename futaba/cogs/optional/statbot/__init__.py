@@ -11,10 +11,14 @@
 #
 
 from .core import Statbot
+from .citizen import Citizen
 from .sql import StatbotSqlHandler
 
 def setup(bot):
     sql = StatbotSqlHandler(bot.config.optional_cogs["statbot"]["url"])
 
     cog = Statbot(bot, sql)
+    bot.add_cog(cog)
+
+    cog = Citizen(bot, sql)
     bot.add_cog(cog)
