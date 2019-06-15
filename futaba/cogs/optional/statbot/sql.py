@@ -41,7 +41,7 @@ class StatbotSqlHandler:
         return self.conn.execute(*args, **kwargs)
 
     # Specific queries
-    def message_count(self, guild, user, excluded_channels=()):
+    def message_count(self, guild, user, excluded_channels=None, included_channels=None):
         """
         Determines how many messages a user has in the guild.
         A list of excluded channels can be specified.
@@ -55,8 +55,21 @@ class StatbotSqlHandler:
             guild.id,
         )
 
+        if excluded_channels and included_channels:
+            raise ValueError("both included_channels and excluded_channels present")
+        rest_of_stmt = ""
+        channel_ids = ()
+
+        if excluded_channels:
+            rest_of_stmt = "AND channel_id NOT IN :channel_ids"
+            channel_ids = tuple(channel.id for channel in excluded_channels)
+
+        if included_channels:
+            rest_of_stmt = "AND channel_id IN :channel_ids"
+            channel_ids = tuple(channel.id for channel in included_channels)
+
         stmt = text(
-            """
+            f"""
             SELECT
                 COUNT(message_id) AS messages,
                 COUNT(edited_at) AS edited,
@@ -64,16 +77,15 @@ class StatbotSqlHandler:
             FROM messages
             WHERE guild_id = :guild_id
                 AND int_user_id = :user_id
-                AND channel_id NOT IN :excluded_channel_ids
+                {rest_of_stmt}
         """
         )
 
-        excluded_channel_ids = tuple(channel.id for channel in excluded_channels)
         result = self.conn.execute(
             stmt,
             guild_id=guild.id,
             user_id=int_hash(user.id),
-            excluded_channel_ids=excluded_channel_ids or (0,),
+            channel_ids=channel_ids,
         )
 
         message_count, edited_count, deleted_count = result.fetchone()
