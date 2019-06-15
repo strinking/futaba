@@ -26,7 +26,6 @@ from futaba.cogs.abc import AbstractCog
 from futaba.converters import TextChannelConv, UserConv
 from futaba.str_builder import StringBuilder
 from futaba.utils import fancy_timedelta, plural
-from .sql import StatbotSqlHandler
 from .utils import int_hash
 
 logger = logging.getLogger(__name__)
@@ -35,10 +34,10 @@ logger = logging.getLogger(__name__)
 class Statbot(AbstractCog):
     __slots__ = ("journal", "sql")
 
-    def __init__(self, bot):
+    def __init__(self, bot, sql):
         super().__init__(bot)
         self.journal = bot.get_broadcaster("/statbot")
-        self.sql = StatbotSqlHandler(bot.config.optional_cogs["statbot"]["url"])
+        self.sql = sql
 
     def setup(self):
         # Fetching information from the database for this cog

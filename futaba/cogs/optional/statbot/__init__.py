@@ -11,8 +11,10 @@
 #
 
 from .core import Statbot
-
+from .sql import StatbotSqlHandler
 
 def setup(bot):
-    cog = Statbot(bot)
+    sql = StatbotSqlHandler(bot.config.optional_cogs["statbot"]["url"])
+
+    cog = Statbot(bot, sql)
     bot.add_cog(cog)
