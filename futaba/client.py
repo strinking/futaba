@@ -84,7 +84,7 @@ class Bot(commands.AutoShardedBot):
             fetch_offline_members=True,
         )
 
-        self.help_command = commands.DefaultHelpCommand(width=90, dm_help=True)
+        self.help_command = commands.MinimalHelpCommand(width=90, dm_help=True)
 
     @staticmethod
     def my_command_prefix(bot, message):
@@ -347,7 +347,6 @@ class Bot(commands.AutoShardedBot):
         elif isinstance(error, SendHelp):
             logger.info("Manually sending help for command")
             # FIXME no help provider set up
-            await self.help_command.send_command_help(ctx.command)
             await Reactions.HELP.add(ctx.message)
 
         elif isinstance(error, commands.errors.CommandInvokeError):
