@@ -16,7 +16,7 @@ Handling to reapply roles when the member rejoins the guild.
 
 import asyncio
 import logging
-from collections import namedtuple
+from collections import deque, namedtuple
 
 import discord
 from discord.ext import commands
@@ -32,12 +32,13 @@ __all__ = ["RoleReapplication"]
 
 
 class RoleReapplication(AbstractCog):
-    __slots__ = ("journal", "lock")
+    __slots__ = ("journal", "lock", "recent_updates")
 
     def __init__(self, bot):
         super().__init__(bot)
         self.journal = bot.get_broadcaster("/roles")
         self.lock = asyncio.Lock()
+        self.recent_updates = deque(maxlen=20)
 
     async def bg_setup(self):
         """
@@ -64,6 +65,12 @@ class RoleReapplication(AbstractCog):
     async def member_update(self, before, after):
         if before.roles == after.roles:
             return
+
+        entry = (before, after)
+        if entry in self.recent_updates:
+            return
+        else:
+            self.recent_updates.append(entry)
 
         special_roles = self.bot.sql.settings.get_special_roles(after.guild)
         if special_roles.guest_role in after.roles:
