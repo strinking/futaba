@@ -155,7 +155,7 @@ class RoleReapplication(AbstractCog):
         )
 
         content = (
-            f"Reapplied roles to {member.mention}: {', '.join(role.mention for role in roles)}"
+            f"Reapplied roles to {member.mention}: {', '.join(f'`{role.name}`' for role in roles)}"
             if roles
             else f"Reapplied no roles to {member.mention}"
         )
