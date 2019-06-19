@@ -346,8 +346,9 @@ class Bot(commands.AutoShardedBot):
 
         elif isinstance(error, SendHelp):
             logger.info("Manually sending help for command")
+            # FIXME no help provider set up
             await self.help_command.send_command_help(ctx.command)
-            await Reactions.SUCCESS.add(ctx.message)
+            await Reactions.HELP.add(ctx.message)
 
         elif isinstance(error, commands.errors.CommandInvokeError):
             logger.debug("Handling CommandInvokeError...")
