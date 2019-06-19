@@ -25,6 +25,7 @@ class Reactions(Enum):
     MISSING = "\N{BLACK QUESTION MARK ORNAMENT}"
     WAITING = "\N{HOURGLASS}"
     NETWORK = "\N{ELECTRIC PLUG}"
+    HELP = "\N{BOOKS}"
 
     async def add(self, message: discord.Message):
         try:
