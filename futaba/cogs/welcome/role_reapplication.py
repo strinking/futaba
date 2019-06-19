@@ -154,7 +154,11 @@ class RoleReapplication(AbstractCog):
             *roles, reason="Automatically reapplying roles", atomic=True
         )
 
-        content = f"Reapplied roles to {member.mention}: {', '.join(role.mention for role in roles)}"
+        content = (
+            f"Reapplied roles to {member.mention}: {', '.join(role.mention for role in roles)}"
+            if roles
+            else f"Reapplied no roles to {member.mention}"
+        )
         self.journal.send(
             "reapply", member.guild, content, member=member, roles=roles, icon="role"
         )
