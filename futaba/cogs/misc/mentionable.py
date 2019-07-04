@@ -57,10 +57,9 @@ class Mentionable(AbstractCog):
     def random_prefix(length):
         return "".join(random.choice(PREFIX_CHARACTERS) for _ in range(length))
 
-    async def notify_user(self, member):
+    async def notify_user(self, member, prefix):
         try:
             length = self.bot.sql.settings.get_mentionable_name_prefix(member.guild)
-            prefix = member.nick[:length]
 
             await member.send(
                 content=(
@@ -99,7 +98,7 @@ class Mentionable(AbstractCog):
             nick=nick,
             reason=f"Unmentionable username, applying random prefix of {prefix}",
         )
-        await self.notify_user(member)
+        await self.notify_user(member, prefix)
 
         content = f"{user_discrim(member)} given mentionable nickname: {nick}"
         self.journal.send(
