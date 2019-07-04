@@ -319,6 +319,33 @@ class SettingsModel:
         self.sql.execute(upd)
         self.guild_settings_cache[guild].remove_other_roles = remove_other_roles
 
+    def get_mentionable_name_prefix(self, guild):
+        logger.debug(
+            "Getting the mentionable name prefix for guild '%s' (%d)",
+            guild.name,
+            guild.id,
+        )
+        if guild not in self.guild_settings_cache:
+            self.fetch_guild_settings(guild)
+
+        return self.guild_settings_cache[guild].mentionable_name_prefix
+
+    def set_mentionable_name_prefix(self, guild, prefix):
+        logger.debug(
+            "Setting the mentionable name prefix for guild '%s' (%d) to %d",
+            guild.name,
+            guild.id,
+            prefix,
+        )
+
+        upd = (
+            self.tb_guild_settings.update()
+            .where(self.tb_guild_settings.c.guild_id == guild.id)
+            .values(mentionable_name_prefix=prefix)
+        )
+        self.sql.execute(upd)
+        self.guild_settings_cache[guild].mentionable_name_prefix = prefix
+
     def add_special_roles(self, guild):
         logger.info(
             "Adding special roles row for new guild '%s' (%d)", guild.name, guild.id
