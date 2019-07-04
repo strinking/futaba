@@ -84,16 +84,7 @@ class Mentionable(AbstractCog):
             return False
 
         prefix = self.bot.sql.settings.get_mentionable_name_prefix(member.guild)
-
-        # Check username and nickname
-        if member.nick is not None:
-            if self.invalid_name(prefix, member.nick):
-                return True
-
-        if self.invalid_name(prefix, member.name):
-            return True
-
-        return False
+        return self.invalid_name(prefix, member.display_name)
 
     async def enforce_mentionable_name(self, member):
         if not self.check_mentionable_name(member):
