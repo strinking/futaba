@@ -98,6 +98,7 @@ ICONS = {
     "hourglass": "\N{HOURGLASS WITH FLOWING SAND}",
     "person": "\N{BUST IN SILHOUETTE}",
     "bot": "\N{ROBOT FACE}",
+    "reference": "\N{NUMBER SIGN}\N{COMBINING ENCLOSING KEYCAP}",
     "fun": "\N{FACE WITH STUCK-OUT TONGUE}",
     "news": "\N{NEWSPAPER}",
     "art": "\N{ARTIST PALETTE}",

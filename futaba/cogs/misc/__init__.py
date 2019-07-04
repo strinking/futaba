@@ -12,6 +12,7 @@
 
 from .core import Miscellaneous
 from .debug import Debugging
+from .mentionable import Mentionable
 
 
 def setup(bot):
@@ -19,4 +20,9 @@ def setup(bot):
     bot.add_cog(cog)
 
     cog = Debugging(bot)
+    bot.add_cog(cog)
+
+    cog = Mentionable(bot)
+    bot.add_listener(cog.member_join, "on_member_join")
+    bot.add_listener(cog.member_update, "on_member_update")
     bot.add_cog(cog)

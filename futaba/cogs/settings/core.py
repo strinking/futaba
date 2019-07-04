@@ -29,6 +29,7 @@ from futaba.emojis import ICONS
 from futaba.exceptions import CommandFailed, ManualCheckFailure, SendHelp
 from futaba.permissions import admin_perm, mod_perm
 from futaba.str_builder import StringBuilder
+from futaba.utils import plural
 from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
@@ -555,6 +556,50 @@ class Settings(AbstractCog):
             embed = discord.Embed(colour=discord.Colour.dark_teal())
             embed.description = (
                 f"{'Enabled' if value else 'Disabled'} automatic role reapplication"
+            )
+
+        await ctx.send(embed=embed)
+
+    @commands.command(name="mentionprefix", aliases=["mprefix", "menpfx"])
+    @commands.guild_only()
+    async def mentionable_prefix(self, ctx, value: int = None):
+        """
+        Gets the current number of typeable characters required for your mention.
+        If you're a moderator, you can change this value. (Set to 0 to disable)
+        """
+
+        if value is None:
+            # Get prefix
+            value = self.bot.sql.settings.get_mentionable_name_prefix(ctx.guild)
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
+            embed.description = (
+                f"Names must begin with at least {value} typeable character{plural(value)}"
+                if value
+                else "No guild requirement for mentionable names"
+            )
+        elif not mod_perm(ctx):
+            # Lacking authority to set mentionable prefix
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.description = (
+                "You do not have permission to set the mentionable name prefix"
+            )
+            raise ManualCheckFailure(embed=embed)
+        else:
+            # Set prefix
+            if value < 0 or value > 32:
+                embed = discord.Embed()
+                embed.colour = discord.Colour.red()
+                embed.description = "Prefix lengths must be between `0` and `32`."
+                raise CommandFailed(embed=embed)
+
+            with self.bot.sql.transaction():
+                self.bot.sql.settings.set_mentionable_name_prefix(ctx.guild, value)
+
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
+            embed.description = (
+                f"Set mentionable prefix to {value} character{plural(value)}"
+                if value
+                else "Disabled mentionable prefix requirement"
             )
 
         await ctx.send(embed=embed)
