@@ -101,7 +101,7 @@ class Mentionable(AbstractCog):
 
         length = self.bot.sql.settings.get_mentionable_name_prefix(member.guild)
         prefix = self.random_prefix(length)
-        nick = f"{prefix}{member.nick or member.name}"
+        nick = f"{prefix}{member.display_name}"
         nick = nick[:MAX_NAME_LENGTH]
 
         await member.edit(
