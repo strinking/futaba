@@ -222,17 +222,20 @@ class SettingsModel:
             mentionable_name_prefix=mentionable_name_prefix,
         )
 
-    def get_prefix(self, guild):
-        logger.debug("Getting prefix for guild '%s' (%d)", guild.name, guild.id)
+    def ensure_guild_settings(self, guild):
         if guild not in self.guild_settings_cache:
             self.fetch_guild_settings(guild)
 
+    def get_prefix(self, guild):
+        logger.debug("Getting prefix for guild '%s' (%d)", guild.name, guild.id)
+        self.ensure_guild_settings(guild)
         return self.guild_settings_cache[guild].prefix
 
     def set_prefix(self, guild, prefix):
         logger.info(
             "Setting prefix to %r for guild '%s' (%d)", prefix, guild.name, guild.id
         )
+        self.ensure_guild_settings(guild)
         upd = (
             self.tb_guild_settings.update()
             .where(self.tb_guild_settings.c.guild_id == guild.id)
@@ -245,9 +248,7 @@ class SettingsModel:
         logger.info(
             "Getting maximum delete messages for guild '%s' (%d)", guild.name, guild.id
         )
-        if guild not in self.guild_settings_cache:
-            self.fetch_guild_settings(guild)
-
+        self.ensure_guild_settings(guild)
         return self.guild_settings_cache[guild].max_delete_messages
 
     def set_max_delete_messages(self, guild, max_delete_messages):
@@ -257,6 +258,7 @@ class SettingsModel:
             guild.name,
             guild.id,
         )
+        self.ensure_guild_settings(guild)
         upd = (
             self.tb_guild_settings.update()
             .where(self.tb_guild_settings.c.guild_id == guild.id)
@@ -271,9 +273,7 @@ class SettingsModel:
             guild.name,
             guild.id,
         )
-        if guild not in self.guild_settings_cache:
-            self.fetch_guild_settings(guild)
-
+        self.ensure_guild_settings(guild)
         return self.guild_settings_cache[guild].warn_manual_mod_action
 
     def set_warn_manual_mod_action(self, guild, warn_manual_mod_action):
@@ -283,7 +283,7 @@ class SettingsModel:
             guild.name,
             guild.id,
         )
-
+        self.ensure_guild_settings(guild)
         upd = (
             self.tb_guild_settings.update()
             .where(self.tb_guild_settings.c.guild_id == guild.id)
@@ -298,9 +298,7 @@ class SettingsModel:
             guild.name,
             guild.id,
         )
-        if guild not in self.guild_settings_cache:
-            self.fetch_guild_settings(guild)
-
+        self.ensure_guild_settings(guild)
         return self.guild_settings_cache[guild].remove_other_roles
 
     def set_remove_other_roles(self, guild, remove_other_roles):
@@ -310,7 +308,7 @@ class SettingsModel:
             guild.name,
             guild.id,
         )
-
+        self.ensure_guild_settings(guild)
         upd = (
             self.tb_guild_settings.update()
             .where(self.tb_guild_settings.c.guild_id == guild.id)
@@ -325,9 +323,7 @@ class SettingsModel:
             guild.name,
             guild.id,
         )
-        if guild not in self.guild_settings_cache:
-            self.fetch_guild_settings(guild)
-
+        self.ensure_guild_settings(guild)
         return self.guild_settings_cache[guild].mentionable_name_prefix
 
     def set_mentionable_name_prefix(self, guild, prefix):
@@ -337,7 +333,7 @@ class SettingsModel:
             guild.id,
             prefix,
         )
-
+        self.ensure_guild_settings(guild)
         upd = (
             self.tb_guild_settings.update()
             .where(self.tb_guild_settings.c.guild_id == guild.id)
