@@ -147,7 +147,6 @@ class Mentionable(AbstractCog):
             count = sum(
                 1 for member in ctx.guild.members if self.check_mentionable_name(member)
             )
-            print(list(filter(self.check_mentionable_name, ctx.guild.members)))
 
         embed = discord.Embed()
         embed.colour = discord.Colour.dark_teal()
