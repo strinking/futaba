@@ -14,7 +14,6 @@
 Cog for querying a local statbot database.
 """
 
-import asyncio
 import logging
 from urllib.parse import urlencode
 from typing import Union
@@ -25,7 +24,6 @@ from discord.ext import commands
 from futaba import permissions
 from futaba.cogs.abc import AbstractCog
 from futaba.converters import TextChannelConv, UserConv
-from futaba.exceptions import CommandFailed
 from futaba.str_builder import StringBuilder
 from futaba.utils import fancy_timedelta, plural
 from .sql import StatbotSqlHandler

@@ -61,7 +61,8 @@ class Navi(AbstractCog):
                 f"Unknown date specification: `{escape_backticks(when)}`"
             )
             raise CommandFailed(embed=embed)
-        elif now > timestamp:
+
+        if now > timestamp:
             # First, try to see if a naive time specification put it in the past
             new_timestamp = dateparser.parse(f"in {when}")
             if new_timestamp is None or now > new_timestamp:

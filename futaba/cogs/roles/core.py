@@ -121,7 +121,8 @@ class SelfAssignableRoles(AbstractCog):
                 embed.set_author(name="Role not assignable")
                 embed.description = f"The role {role.mention} cannot be self-assigned"
                 raise CommandFailed(embed=embed)
-            elif role >= ctx.me.top_role:
+
+            if role >= ctx.me.top_role:
                 embed = discord.Embed(colour=discord.Colour.red())
                 embed.set_author(name="Error assigning roles")
                 embed.description = (
