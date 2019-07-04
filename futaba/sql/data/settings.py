@@ -26,15 +26,23 @@ class GuildSettingsData:
         "max_delete_messages",
         "warn_manual_mod_action",
         "remove_other_roles",
+        "mentionable_name_prefix",
     )
 
     def __init__(
-        self, prefix, max_delete_messages, *, warn_manual_mod_action, remove_other_roles
+        self,
+        prefix,
+        max_delete_messages,
+        *,
+        warn_manual_mod_action,
+        remove_other_roles,
+        mentionable_name_prefix,
     ):
         self.prefix = prefix
         self.max_delete_messages = max_delete_messages
         self.warn_manual_mod_action = warn_manual_mod_action
         self.remove_other_roles = remove_other_roles
+        self.mentionable_name_prefix = mentionable_name_prefix
 
 
 class ReapplyRolesData:

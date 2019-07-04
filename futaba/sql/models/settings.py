@@ -83,6 +83,11 @@ class SettingsModel:
             Column("max_delete_messages", SmallInteger),
             Column("warn_manual_mod_action", Boolean),
             Column("remove_other_roles", Boolean),
+            Column("mentionable_name_prefix", SmallInteger),
+            CheckConstraint(
+                "mentionable_name_prefix >= 0 AND mentionable_name_prefix <= 32",
+                name="mentionable_name_prefix_in_range",
+            ),
         )
         self.tb_special_roles = Table(
             "special_roles",
@@ -178,6 +183,7 @@ class SettingsModel:
             max_delete_messages=self.sql.max_delete_messages,
             warn_manual_mod_action=False,
             remove_other_roles=True,
+            mentionable_name_prefix=0,
         )
         self.sql.execute(ins)
         self.guild_settings_cache[guild] = GuildSettingsData(
@@ -185,6 +191,7 @@ class SettingsModel:
             self.sql.max_delete_messages,
             warn_manual_mod_action=False,
             remove_other_roles=True,
+            mentionable_name_prefix=0,
         )
 
     def fetch_guild_settings(self, guild):
@@ -196,6 +203,7 @@ class SettingsModel:
                 self.tb_guild_settings.c.max_delete_messages,
                 self.tb_guild_settings.c.warn_manual_mod_action,
                 self.tb_guild_settings.c.remove_other_roles,
+                self.tb_guild_settings.c.mentionable_name_prefix,
             ]
         ).where(self.tb_guild_settings.c.guild_id == guild.id)
         result = self.sql.execute(sel)
@@ -203,7 +211,7 @@ class SettingsModel:
         if not result.rowcount:
             self.add_guild_settings(guild)
 
-        prefix, max_delete_messages, warn_manual_mod_action, remove_other_roles = (
+        prefix, max_delete_messages, warn_manual_mod_action, remove_other_roles, mentionable_name_prefix = (
             result.fetchone()
         )
         self.guild_settings_cache[guild] = GuildSettingsData(
@@ -211,6 +219,7 @@ class SettingsModel:
             max_delete_messages,
             warn_manual_mod_action=warn_manual_mod_action,
             remove_other_roles=remove_other_roles,
+            mentionable_name_prefix=mentionable_name_prefix,
         )
 
     def get_prefix(self, guild):
