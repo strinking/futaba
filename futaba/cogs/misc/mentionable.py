@@ -111,7 +111,15 @@ class Mentionable(AbstractCog):
         await self.notify_user(member)
 
         content = f"{user_discrim(member)} given mentionable nickname: {nick}"
-        self.journal.send("enforce", member.guild, content, icon="reference")
+        self.journal.send(
+            "enforce",
+            member.guild,
+            content,
+            icon="reference",
+            member=member,
+            prefix=prefix,
+            nick=nick,
+        )
         return True
 
     async def member_join(self, member):

@@ -83,6 +83,7 @@ Managing user filter immunity. Has attributes: `member: discord.Member`, `cause:
 * `/debug/error/runtime` - A deliberately raised `RuntimeError`.
 * `/debug/error/network` - A deliberately raised `aiohttp.ClientError`.
 * `/debug/admin/shutdown` - Signifies the bot is about to shut down.
+* `/mentionable/enforce` - A person was renicked to make their name mentionable. Attributes: `member: discord.Member`, `prefix: str`, `nick: str`.
 
 ### Moderation
 Actually handled in the tracking cog. This behavior is in the middle of changing.
