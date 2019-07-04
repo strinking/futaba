@@ -259,11 +259,14 @@ class Bot(commands.AutoShardedBot):
         """
 
         async with self.message_lock(ctx.message):
-            if isinstance(ctx.channel, discord.abc.GuildChannel):
-                await ctx.message.clear_reactions()
+            try:
+                if isinstance(ctx.channel, discord.abc.GuildChannel):
+                    await ctx.message.clear_reactions()
 
-            await Reactions.SUCCESS.add(ctx.message)
-            self.completed_commands.append(ctx.message)
+                await Reactions.SUCCESS.add(ctx.message)
+                self.completed_commands.append(ctx.message)
+            except discord.NotFound:
+                pass
 
     async def on_command_error(self, ctx, error):
         """
@@ -275,11 +278,14 @@ class Bot(commands.AutoShardedBot):
         # pylint: disable=arguments-differ
 
         async with self.message_lock(ctx.message):
-            if isinstance(ctx.channel, discord.abc.GuildChannel):
-                await ctx.message.clear_reactions()
+            try:
+                if isinstance(ctx.channel, discord.abc.GuildChannel):
+                    await ctx.message.clear_reactions()
 
-            await self.handle_error(ctx, error)
-            self.completed_commands.append(ctx.message)
+                await self.handle_error(ctx, error)
+                self.completed_commands.append(ctx.message)
+            except discord.NotFound:
+                pass
 
     async def handle_error(self, ctx, error):
         if isinstance(error, commands.errors.CommandNotFound):
