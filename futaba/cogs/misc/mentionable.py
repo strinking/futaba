@@ -63,7 +63,7 @@ class Mentionable(AbstractCog):
                 content=(
                     f"Your name in __{member.guild.name}__ is not easily mentionable due to special "
                     f"characters.\nModerators there have required that **at least {length} "
-                    f"character{plural(length)} at the beginning of your name are easily typeable**\n"
+                    f"character{plural(length)} at the beginning of your name are easily typeable**.\n"
                     f"This message to inform you that you have been given the random prefix `{prefix}` "
                     "to make you mentionable in chat."
                 )
