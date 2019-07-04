@@ -134,7 +134,8 @@ async def show_filter(all_filters, author, location_name):
 async def check_hashsums(*hashsums):
     if not hashsums:
         raise CommandFailed()
-    elif not all(map(lambda h: len(h) == 40 and HEXADECIMAL_REGEX.match(h), hashsums)):
+
+    if not all(map(lambda h: len(h) == 40 and HEXADECIMAL_REGEX.match(h), hashsums)):
         raise CommandFailed(content="SHA1 hashes are 40 hex digits long.")
 
 

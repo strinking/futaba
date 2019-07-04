@@ -69,14 +69,16 @@ class Cleanup(AbstractCog):
         if count < 1:
             embed.description = f"Invalid message count: {count}"
             raise CommandFailed(embed=embed)
-        elif is_discord_id(count):
+
+        if is_discord_id(count):
             prefix = self.bot.prefix(ctx.guild)
             embed.description = (
                 "This looks like a Discord ID. If you want to delete all "
                 f"messages up to a message ID, use `{prefix}cleanupid`."
             )
             raise CommandFailed(embed=embed)
-        elif count > max_count:
+
+        if count > max_count:
             embed.description = (
                 "Count too high. Maximum configured for this guild is "
                 f"`{max_count}`."
