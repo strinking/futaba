@@ -586,6 +586,12 @@ class Settings(AbstractCog):
             raise ManualCheckFailure(embed=embed)
         else:
             # Set prefix
+            if value < 0 or value > 32:
+                embed = discord.Embed()
+                embed.colour = discord.Colour.red()
+                embed.description = "Prefix lengths must be between `0` and `32`."
+                raise CommandFailed(embed=embed)
+
             with self.bot.sql.transaction():
                 self.bot.sql.settings.set_mentionable_name_prefix(ctx.guild, value)
 
