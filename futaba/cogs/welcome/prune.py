@@ -14,6 +14,7 @@
 Functions to prune a user either manually or automatically
 """
 
+import asyncio
 import logging
 from datetime import datetime, timedelta
 
@@ -122,9 +123,8 @@ class Prune(AbstractCog):
                     member, reason=f"Pruning guests older than {days} days"
                 )
                 count += 1
+                await asyncio.sleep(0.01)
 
-            else:
-                logger.warning("Cannnot prune member %s (%d)", member.name, member.id)
         return count
 
     @commands.command(name="prune", aliases=["purge"])

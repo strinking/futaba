@@ -14,6 +14,7 @@
 Cog for automatically checking and enforcing un-mentionable names.
 """
 
+import asyncio
 import logging
 import random
 import string
@@ -21,6 +22,7 @@ import string
 import discord
 from discord.ext import commands
 
+from futaba import permissions
 from futaba.utils import plural, user_discrim
 from ..abc import AbstractCog
 
@@ -30,7 +32,7 @@ __all__ = ["Mentionable"]
 
 MAX_NAME_LENGTH = 32
 PREFIX_CHARACTERS = f"{string.ascii_letters}{string.digits}"
-TYPEABLE_CHARACTERS = f"{PREFIX_CHARACTERS}!\"'$%&()*+,-./:;<=>?[\\]^_`{{|}}~"
+TYPEABLE_CHARACTERS = f"{PREFIX_CHARACTERS}!\"'$%&()*+,-./:;<=>?[\\]^_`{{|}}~ "
 
 
 class Mentionable(AbstractCog):
@@ -55,10 +57,11 @@ class Mentionable(AbstractCog):
     def random_prefix(length):
         return "".join(random.choice(PREFIX_CHARACTERS) for _ in range(length))
 
-    @staticmethod
-    async def notify_user(member, length):
+    async def notify_user(self, member):
         try:
+            length = self.bot.sql.settings.get_mentionable_name_prefix(member.guild)
             prefix = member.nick[:length]
+
             await member.send(
                 content=(
                     f"Your name in __{member.guild.name}__ is not easily mentionable due to special "
@@ -71,39 +74,78 @@ class Mentionable(AbstractCog):
         except discord.Forbidden:
             logger.debug("Cannot PM user '%s' (%d) about unmentionable name")
 
-    async def enforce_mentionable_name(self, member):
+    def check_mentionable_name(self, member):
         # Check member permissions
         myself = member.guild.me
         if member.top_role >= myself.top_role:
-            return
+            return False
+
+        if member.bot:
+            return False
 
         prefix = self.bot.sql.settings.get_mentionable_name_prefix(member.guild)
-        renick = None
 
         # Check username and nickname
         if member.nick is not None:
             if self.invalid_name(prefix, member.nick):
-                renick = f"{self.random_prefix(prefix)}{member.nick}"
+                return True
 
-        if renick is None:
-            if self.invalid_name(prefix, member.name):
-                renick = f"{self.random_prefix(prefix)}{member.name}"
+        if self.invalid_name(prefix, member.name):
+            return True
 
-        # Apply nickname change
-        if renick is not None:
-            renick = renick[:MAX_NAME_LENGTH]
+        return False
 
-            await member.edit(
-                nick=renick,
-                reason=f"Unmentionable username, applying random prefix of {prefix}",
-            )
-            await self.notify_user(member, prefix)
+    async def enforce_mentionable_name(self, member):
+        if not self.check_mentionable_name(member):
+            return False
 
-            content = f"{user_discrim(member)} given mentionable nickname: {renick}"
-            self.journal.send("renick", member.guild, content, icon="reference")
+        length = self.bot.sql.settings.get_mentionable_name_prefix(member.guild)
+        prefix = self.random_prefix(length)
+        nick = f"{prefix}{member.nick or member.name}"
+        nick = nick[:MAX_NAME_LENGTH]
+
+        await member.edit(
+            nick=nick,
+            reason=f"Unmentionable username, applying random prefix of {prefix}",
+        )
+        await self.notify_user(member)
+
+        content = f"{user_discrim(member)} given mentionable nickname: {nick}"
+        self.journal.send("enforce", member.guild, content, icon="reference")
+        return True
 
     async def member_join(self, member):
         await self.enforce_mentionable_name(member)
 
     async def member_update(self, before, after):
         await self.enforce_mentionable_name(after)
+
+    @commands.command(name="ensurementionable", aliases=["ensuremention", "fmention"])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def ensure_members_mentionable(self, ctx, enforce: bool = False):
+        """
+        Processes all members and checks if they are mentionable by guild policy or not.
+        Requires a true argument to run in enforce mode.
+        """
+
+        if enforce:
+            count = 0
+            for member in ctx.guild.members:
+                did_enforce = await self.enforce_mentionable_name(member)
+                count += int(did_enforce)
+                await asyncio.sleep(0.01)
+        else:
+            count = sum(
+                1 for member in ctx.guild.members if self.check_mentionable_name(member)
+            )
+            print(list(filter(self.check_mentionable_name, ctx.guild.members)))
+
+        embed = discord.Embed()
+        embed.colour = discord.Colour.dark_teal()
+        embed.set_author(
+            name=f"Mentionable members {'enforcement' if enforce else 'report'}"
+        )
+        verb = "were" if enforce else "would be"
+        embed.description = f"`{count}` members {verb} given mentionable nicknames"
+        await ctx.send(embed=embed)
