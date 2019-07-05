@@ -47,6 +47,10 @@ class Mentionable(AbstractCog):
 
     @staticmethod
     def invalid_name(prefix, name):
+        # Ignore if no nickname is set
+        if name is None:
+            return False
+
         head = name[:prefix]
         for ch in head:
             if ch not in TYPEABLE_CHARACTERS:
@@ -83,7 +87,7 @@ class Mentionable(AbstractCog):
             return False
 
         prefix = self.bot.sql.settings.get_mentionable_name_prefix(member.guild)
-        return self.invalid_name(prefix, member.display_name)
+        return self.invalid_name(prefix, member.name) and self.invalid_name(prefix, member.nick)
 
     async def enforce_mentionable_name(self, member):
         if not self.check_mentionable_name(member):
