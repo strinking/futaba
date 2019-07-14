@@ -374,7 +374,7 @@ class Info(AbstractCog):
 
         for user in users:
             extra = "\N{GLOBE WITH MERIDIANS}" if user in users_not_in_guild else ""
-            descr.writeln(f"- {user.mention} {extra}")
+            descr.writeln(f"- {user.mention} {user.name}#{user.discriminator} {extra}")
 
         if users:
             embed = discord.Embed(description=str(descr), colour=discord.Colour.teal())
