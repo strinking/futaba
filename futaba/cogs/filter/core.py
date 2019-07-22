@@ -259,7 +259,11 @@ class Filtering(AbstractCog):
 
         with self.bot.sql.transaction():
             for member in members:
-                logger.debug("Adding member to filter immune: %s (%d)", member.display_name, member.id)
+                logger.debug(
+                    "Adding member to filter immune: %s (%d)",
+                    member.display_name,
+                    member.id,
+                )
                 self.bot.sql.filter.add_filter_immune_user(ctx.guild, member)
 
         for member in members:
@@ -298,7 +302,11 @@ class Filtering(AbstractCog):
 
         with self.bot.sql.transaction():
             for member in members:
-                logger.debug("Removing member to filter immune: %s (%d)", member.display_name, member.id)
+                logger.debug(
+                    "Removing member to filter immune: %s (%d)",
+                    member.display_name,
+                    member.id,
+                )
                 self.bot.sql.filter.remove_filter_immune_user(ctx.guild, member)
 
         for member in members:
