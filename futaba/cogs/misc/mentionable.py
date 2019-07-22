@@ -75,7 +75,7 @@ class Mentionable(AbstractCog):
                 )
             )
         except discord.Forbidden:
-            logger.debug("Cannot PM user '%s' (%d) about unmentionable name")
+            logger.info("Cannot PM user '%s' (%d) about unmentionable name")
 
     def check_mentionable_name(self, member):
         # Check member permissions

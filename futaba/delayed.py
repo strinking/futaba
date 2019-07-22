@@ -40,7 +40,6 @@ class DelayedQueue:
 
     async def main_loop(self):
         for i in itertools.count():
-            logger.debug("Waiting for new delayed event")
             coro = await self.queue.get()
 
             logger.debug("Got event #%d for processing", i)

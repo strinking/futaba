@@ -32,26 +32,26 @@ class RoleConv(Converter):
         if ctx.guild is None:
             raise BadArgument("Unable to find role because we are not in a guild")
 
-        logger.debug("Checking if it's a role ID")
+        # Checking if it's a role id
         match = ID_REGEX.match(argument)
         if match is not None:
             role = discord.utils.get(ctx.guild.roles, id=int(match[1]))
             if role is not None:
                 return role
 
-        logger.debug("Checking if it's a role mention")
+        # Checking if it's a role mention
         match = ROLE_MENTION_REGEX.match(argument)
         if match is not None:
             role = discord.utils.get(ctx.guild.roles, id=int(match[1]))
             if role is not None:
                 return role
 
-        logger.debug("Checking if it's a role's name")
+        # Checking if it's a role's name
         role = discord.utils.get(ctx.guild.roles, name=argument)
         if role is not None:
             return role
 
-        logger.debug("Checking if it's a role's name (case-insensitive)")
+        # Same but case-insensitive
         argument = normalize_caseless(argument)
         role = discord.utils.find(
             lambda r: argument == normalize_caseless(r.name), ctx.guild.roles
@@ -59,9 +59,9 @@ class RoleConv(Converter):
         if role is not None:
             return role
 
-        logger.debug("Checking if it's the default role")
+        # Checking if it's the default role
         if argument in ("@everyone", "everyone", "@here", "here", "default"):
             return ctx.guild.default_role
 
-        logger.debug("No results found")
+        # No results!
         raise BadArgument(f"Unable to find role with description '{argument}'")

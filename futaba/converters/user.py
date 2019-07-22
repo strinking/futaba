@@ -78,7 +78,7 @@ async def similar_users(bot, argument, max_entries=10) -> Iterable[discord.User]
 async def get_user(bot, argument, user_list):
     argument = normalize_caseless(argument)
 
-    logger.debug("Checking if it's a user ID or mention")
+    # Checking if it's a user id or mention
     match = ID_REGEX.match(argument) or MENTION_REGEX.match(argument)
     if match is not None:
         id = int(match[1])
@@ -91,7 +91,7 @@ async def get_user(bot, argument, user_list):
         except discord.NotFound:
             pass
 
-    logger.debug("Checking if it's in the form username#discriminator")
+    # Checking if it's a user#discrim
     match = USERNAME_DISCRIM_REGEX.match(argument)
     if match is not None:
         name, discrim = normalize_caseless(match[1]), match[2]
@@ -106,8 +106,7 @@ async def get_user(bot, argument, user_list):
             return user
         del name, discrim
 
-    logger.debug("Checking if it's a username or nickname")
-
+    # Checking if it's a username or nickname
     def name_check(user):
         if argument == normalize_caseless(user.name):
             return True
@@ -123,7 +122,7 @@ async def get_user(bot, argument, user_list):
     if user is not None:
         return user
 
-    logger.debug("No results found")
+    # No results!
     raise BadArgument(f'Unable to find user with description "{argument}"')
 
 

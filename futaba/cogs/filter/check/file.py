@@ -41,7 +41,6 @@ async def check_file_filter(cog, message):
     file_urls.extend(attach.url for attach in message.attachments)
 
     if not file_urls:
-        logger.debug("Message has no attachments, skipping")
         return
 
     triggered = None
@@ -71,9 +70,7 @@ async def check_file_filter(cog, message):
                 hashsum=hashsum,
             )
 
-    if triggered is None:
-        logger.debug("No content violations found!")
-    else:
+    if triggered is not None:
         settings = cog.bot.sql.filter.get_settings(message.guild)
         await found_file_violation(triggered, settings.reupload)
 

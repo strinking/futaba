@@ -169,7 +169,6 @@ class Welcome(AbstractCog):
         for (member, time) in self.recently_saved_roles:
             if member == after:
                 if datetime.now() - time < timedelta(microseconds=50000):
-                    logger.debug("Member update already processed")
                     return
 
         self.recently_saved_roles.append((after, datetime.now()))

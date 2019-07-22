@@ -31,46 +31,46 @@ EMOJI_REGEX = re.compile(r"<:([A-Za-z0-9_\-]+(?:~[0-9]+)?):([0-9]+)>")
 
 class EmojiConv(Converter):
     async def convert(self, ctx, argument) -> Union[discord.Emoji, str]:
-        logger.debug("Checking if it's not ASCII")
+        # Checking if it's not ASCII
         if not any(map(lambda c: ord(c) < 127, argument)):
             return argument
 
         # Search case-insensitively
         argument = normalize_caseless(argument)
 
-        logger.debug("Checking if it's an emoji ID")
+        # Checking if it's an emoji id
         match = ID_REGEX.match(argument)
         if match is not None:
             emoji = discord.utils.get(ctx.bot.emojis, id=int(match[1]))
             if emoji is not None:
                 return emoji
 
-        logger.debug("Checking if it's a unicode codepoint")
+        # Checking if it's a unicode codepoint
         if argument.isdigit():
             try:
                 return chr(int(argument))
             except (OverflowError, ValueError):
                 pass
 
-        logger.debug("Checking if it's a emoji mention")
+        # Checking if it's a discord emoji mention
         match = EMOJI_REGEX.match(argument)
         if match is not None:
             emoji = discord.utils.get(ctx.bot.emojis, id=int(match[2]))
             if emoji is not None:
                 return emoji
 
-        logger.debug("Checking if it's the name of a discord emoji")
+        # Checking if it's the name of a discord emoji
         emoji = discord.utils.find(
             lambda e: argument == normalize_caseless(e.name), ctx.bot.emojis
         )
         if emoji is not None:
             return emoji
 
-        logger.debug("Checking if it's the name of a unicode emoji")
+        # Checking if it's the name of a unicode emoji
         try:
             return unicodedata.lookup(argument)
         except KeyError:
             pass
 
-        logger.debug("No results found")
+        # No results!
         raise BadArgument(f'Unable to convert "{argument}" into an emoji')

@@ -227,7 +227,6 @@ class SettingsModel:
             self.fetch_guild_settings(guild)
 
     def get_prefix(self, guild):
-        logger.debug("Getting prefix for guild '%s' (%d)", guild.name, guild.id)
         self.ensure_guild_settings(guild)
         return self.guild_settings_cache[guild].prefix
 
@@ -293,11 +292,6 @@ class SettingsModel:
         self.guild_settings_cache[guild].warn_manual_mod_action = warn_manual_mod_action
 
     def get_remove_other_roles(self, guild):
-        logger.debug(
-            "Getting whether to remove other roles on punishment for guild '%s' (%d)",
-            guild.name,
-            guild.id,
-        )
         self.ensure_guild_settings(guild)
         return self.guild_settings_cache[guild].remove_other_roles
 
@@ -318,11 +312,6 @@ class SettingsModel:
         self.guild_settings_cache[guild].remove_other_roles = remove_other_roles
 
     def get_mentionable_name_prefix(self, guild):
-        logger.debug(
-            "Getting the mentionable name prefix for guild '%s' (%d)",
-            guild.name,
-            guild.id,
-        )
         self.ensure_guild_settings(guild)
         return self.guild_settings_cache[guild].mentionable_name_prefix
 
@@ -357,9 +346,7 @@ class SettingsModel:
         self.special_roles_cache[guild] = SpecialRoleData(guild, None, None, None, None)
 
     def get_special_roles(self, guild):
-        logger.debug("Getting special roles for guild '%s' (%d)", guild.name, guild.id)
         if guild in self.special_roles_cache:
-            logger.debug("Special roles found in cache, returning")
             return self.special_roles_cache[guild]
 
         sel = select(
@@ -459,7 +446,6 @@ class SettingsModel:
             new_roles = old_roles - roles
 
         if old_roles == new_roles:
-            logger.debug("No effective changes in database")
             return
 
         upd = (
@@ -525,7 +511,6 @@ class SettingsModel:
             "Getting tracking blacklist for guild '%s' (%d)", guild.name, guild.id
         )
         if guild in self.tracking_blacklist_cache:
-            logger.debug("Tracking blacklist found in cache, returning")
             return self.tracking_blacklist_cache[guild]
 
         sel = select(

@@ -87,7 +87,6 @@ def build_punish_task(bot, causer, guild, storage):
     # - action: PunishAction
     # - reason: str
 
-    logger.debug("Creating PunishTask with %s", storage.parameters)
     member_id = storage.parameters["member_id"]
     member = discord.utils.get(guild.members, id=member_id)
     if member is None:

@@ -30,26 +30,26 @@ CHANNEL_MENTION_REGEX = re.compile(r"<#([0-9]+)>")
 async def get_channel(bot, argument):
     argument = normalize_caseless(argument)
 
-    logger.debug("Checking if it's a channel ID")
+    # Checking if it's a channel id
     match = ID_REGEX.match(argument)
     if match is not None:
         chan = bot.get_channel(int(match[1]))
         if chan is not None:
             return chan
 
-    logger.debug("Checking if it's a channel mention")
+    # Checking if it's a channel mention
     match = CHANNEL_MENTION_REGEX.match(argument)
     if match is not None:
         chan = bot.get_channel(int(match[1]))
         if chan is not None:
             return chan
 
-    logger.debug("Checking if it's a channel name")
+    # Checking if it's a channel name
     for chan in bot.get_all_channels():
         if argument == normalize_caseless(chan.name):
             return chan
 
-    logger.debug("No results found")
+    # No results!
     raise BadArgument(f'Unable to find channel with description "{argument}"')
 
 

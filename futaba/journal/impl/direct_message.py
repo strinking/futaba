@@ -41,9 +41,6 @@ class DirectMessageListener(Listener):
             # Don't send journal events if they're not a mod
             member = guild.get_member(self.user.id)
             if member is None or not is_mod_perm(member.guild_permissions):
-                logger.debug(
-                    "Not sending journal event: not a member or not a moderator"
-                )
                 return
 
         kwargs = {"content": content}

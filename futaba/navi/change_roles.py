@@ -74,7 +74,6 @@ def build_change_role_task(bot, causer, guild, storage):
     # - remove_role_ids: List[int]
     # - reason: str
 
-    logger.debug("Creating ChangeRolesTask with %s", storage.parameters)
     member_id = storage.parameters["member_id"]
     member = discord.utils.get(guild.members, id=member_id)
     if member is None:

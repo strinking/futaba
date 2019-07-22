@@ -35,12 +35,6 @@ class Broadcaster:
         path = self.path.joinpath(subpath)
 
         # Queue up event
-        logger.debug(
-            "Sending journal entry to %s: '%s'. Attributes: %s.",
-            path,
-            content,
-            ", ".join(attributes.keys()) or "(none)",
-        )
         event = JournalEvent(
             path=path, guild=guild, content=content, attributes=attributes
         )
