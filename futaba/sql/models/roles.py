@@ -84,7 +84,6 @@ class RolesModel:
         )
 
         if guild in self.roles_cache:
-            logger.debug("Found roles in cache, returning")
             return self.roles_cache[guild]
 
         sel = select([self.tb_assignable_roles.c.role_id]).where(
@@ -135,7 +134,6 @@ class RolesModel:
         )
 
         if guild in self.channels_cache:
-            logger.debug("Found channels in cache, returning")
             return self.channels_cache[guild]
 
         sel = select([self.tb_role_command_channels.c.channel_id]).where(

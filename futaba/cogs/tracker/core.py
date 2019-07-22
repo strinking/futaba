@@ -166,13 +166,6 @@ class Tracker(AbstractCog):
         if blacklist.is_blocked(message.channel) or blacklist.is_blocked(
             message.author
         ):
-            logger.debug(
-                "Ignoring received message from %s (%d) in #%s (%d) due to the channel or user being blacklisted",
-                message.author.name,
-                message.author.id,
-                message.channel.name,
-                message.channel.id,
-            )
             return
 
         logger.debug(
@@ -214,13 +207,6 @@ class Tracker(AbstractCog):
 
         blacklist = self.bot.sql.settings.get_tracking_blacklist(after.guild)
         if blacklist.is_blocked(after.channel) or blacklist.is_blocked(after.author):
-            logger.debug(
-                "Ignoring message update from %s (%d) in #%s (%d) due to the channel or user being blacklisted",
-                after.author.name,
-                after.author.id,
-                after.channel.name,
-                after.channel.id,
-            )
             return
 
         logger.debug(
@@ -297,12 +283,6 @@ class Tracker(AbstractCog):
         if blacklist.is_blocked(message.channel) or blacklist.is_blocked(
             message.author
         ):
-            logger.debug(
-                "Ignoring message deletion of %d by %s (%d) due to the channel or user being blacklisted",
-                message.id,
-                message.author.name,
-                message.author.id,
-            )
             return
 
         logger.debug(

@@ -33,12 +33,12 @@ JUMP_LINK_REGEX = re.compile(
 class MessageConv(Converter):
     @staticmethod
     def get_channels_and_id(ctx, argument):
-        logger.debug("Checking if it's an ID")
+        # Checking if it's an id
         match = ID_REGEX.match(argument)
         if match is not None:
             return ctx.guild.text_channels, int(match[1])
 
-        logger.debug("Checking if it's a jump link")
+        # Checking if it's a jump link
         match = JUMP_LINK_REGEX.match(argument)
         if match is not None:
             guild_id = int(match[1])
@@ -58,7 +58,7 @@ class MessageConv(Converter):
 
             return [channel], message_id
 
-        logger.debug("No results found")
+        # No results!
         raise BadArgument(f"Unable to find message with description '{argument}'")
 
     @staticmethod

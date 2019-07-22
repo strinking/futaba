@@ -33,7 +33,6 @@ class StatbotSqlHandler:
         self.db = create_engine(db_path)
         self.conn = self.db.connect()
         logger.info("Connected to database...")
-        logger.debug("DB URL is: %s", db_path)
 
     def __del__(self):
         self.conn.close()

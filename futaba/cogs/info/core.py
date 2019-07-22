@@ -584,7 +584,6 @@ class Info(AbstractCog):
         logger.info("Copying embeds from message ID %d", message.id)
 
         if not message.embeds:
-            logger.debug("This message does not have any embeds")
             embed = discord.Embed(colour=discord.Colour.dark_purple())
             embed.description = "This message contains no embeds."
             await ctx.send(embed=embed)
@@ -603,7 +602,6 @@ class Info(AbstractCog):
         logger.info("Displaying reactions for message ID %d", message.id)
 
         if not message.reactions:
-            logger.debug("This message has no reactions")
             embed = discord.Embed(colour=discord.Colour.dark_purple())
             embed.description = "This message has no reactions."
             await ctx.send(embed=embed)
@@ -645,7 +643,6 @@ class Info(AbstractCog):
             try:
                 channel = await conv.convert(ctx, name)
             except commands.BadArgument:
-                logger.debug("No channel with this description found")
                 embed = discord.Embed(colour=discord.Colour.red())
                 embed.description = (
                     f"No channel found in this guild for `{escape_backticks(name)}`"

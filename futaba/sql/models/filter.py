@@ -105,7 +105,6 @@ class FilterModel:
             "Getting filters for location '%s' (%d)", location.name, location.id
         )
         if location in self.filter_cache:
-            logger.debug("Filter list was found in cache, returning")
             return self.filter_cache[location]
 
         sel = select([self.tb_filters.c.filter_type, self.tb_filters.c.text]).where(
@@ -177,7 +176,6 @@ class FilterModel:
             "Getting content filters for guild '%s' (%d)", guild.name, guild.id
         )
         if guild in self.content_filter_cache:
-            logger.debug("Content filter list found in cache, returning")
             return self.content_filter_cache[guild]
 
         sel = select(

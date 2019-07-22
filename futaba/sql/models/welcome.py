@@ -107,7 +107,6 @@ class WelcomeModel:
             "Getting welcome message data for guild '%s' (%d)", guild.name, guild.id
         )
         if guild in self.welcome_cache:
-            logger.debug("Welcome message data found in cache, returning")
             return self.welcome_cache[guild]
 
         sel = select(

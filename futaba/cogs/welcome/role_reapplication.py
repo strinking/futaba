@@ -76,11 +76,6 @@ class RoleReapplication(AbstractCog):
         if special_roles.guest_role in after.roles:
             return
 
-        logger.debug(
-            "Member '%s' (%d) roles changed, saving for potential reapplication",
-            after.name,
-            after.id,
-        )
         await self.save_roles(after)
 
     def get_reapply_roles(self, guild):

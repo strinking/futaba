@@ -76,9 +76,7 @@ async def check_text_filter(cog, message):
                         filter_text=filter_text,
                     )
 
-    if triggered is None:
-        logger.debug("No text violations found!")
-    else:
+    if triggered is not None:
         roles = cog.bot.sql.settings.get_special_roles(message.guild)
         await found_text_violation(triggered, roles)
 

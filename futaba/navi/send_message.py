@@ -71,7 +71,6 @@ def build_send_message_task(bot, causer, guild, storage):
     # - content: Optional[str]
     # - embed: Optional[dict]
 
-    logger.debug("Creating SendMessageTask with %s", storage.parameters)
     location_id = storage.parameters["location_id"]
     location_type = storage.parameters["location_type"]
     if location_type == LocationType.CHANNEL:
