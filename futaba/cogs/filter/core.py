@@ -163,7 +163,7 @@ class Filtering(AbstractCog):
             description,
         )
 
-    @ffilter.command(name="block", aliases=["deny", "autoremove"])
+    @ffilter.command(name="block", aliases=["deny", "autoremove", "add"])
     @commands.guild_only()
     @permissions.check_mod()
     async def ffilter_block(self, ctx, hashsum: str, *, description: str):
@@ -410,7 +410,7 @@ class Filtering(AbstractCog):
         )
         await add_filter(self, self.filters, ctx.guild, FilterType.FLAG, text)
 
-    @filter_guild.command(name="block", aliases=["deny", "autoremove"])
+    @filter_guild.command(name="block", aliases=["deny", "autoremove", "add"])
     @commands.guild_only()
     @permissions.check_mod()
     async def filter_guild_block(self, ctx, *, text: str):
@@ -507,7 +507,7 @@ class Filtering(AbstractCog):
         )
         await add_filter(self, self.filters, channel, FilterType.FLAG, text)
 
-    @filter_channel.command(name="block", aliases=["deny", "autoremove"])
+    @filter_channel.command(name="block", aliases=["deny", "autoremove", "add"])
     @commands.guild_only()
     @permissions.check_mod()
     async def filter_channel_block(
