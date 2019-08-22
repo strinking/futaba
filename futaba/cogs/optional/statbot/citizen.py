@@ -10,11 +10,15 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+from collections import defaultdict
+
 from discord.ext import commands
 
 from futaba.cogs.abc import AbstractCog
 from futaba.exceptions import CommandFailed, SendHelp
 from futaba.str_builder import StringBuilder
+
+from futaba.journal.listener import Listener
 
 guild_settings = {
         247400063981191169: {
@@ -25,12 +29,42 @@ guild_settings = {
             }
         }
 
+
+class CitizenMessageListener(Listener):
+    __slots__ = ("cog",)
+
+    def __init__(self, router, bot, cog):
+        super().__init__(router, "/tracking/message", recursive=True)
+        self.cog = cog
+
+    async def handle(self, path, guild, _content, attributes):
+        # pylint: disable=arguments-differ
+        call = None
+        str_path = str(path)
+        if str_path == "/tracking/message/new":
+            call = self.cog.handle_new
+        if str_path == "/tracking/message/delete":
+            call = self.cog.handle_delete
+
+        if call:
+            message = attributes["message"]
+            await self.cog.freshen_cache(message)
+            await call(guild, message)
+
+
 class Citizen(AbstractCog):
+    __slots__ = ("journal", "sql", "member_status_cache", "listening_from_message_id")
 
     def __init__(self, bot, sql):
         super().__init__(bot)
         self.journal = bot.get_broadcaster("/citizen")
+        router = self.journal.router
+        router.register(CitizenMessageListener(router, bot, self))
+
+        self.member_status_cache = defaultdict(lambda: defaultdict(int))
         self.sql = sql
+
+        self.listening_from_message_id = float("inf")
 
     def setup(self):
         new_guild_settings = {}
@@ -43,6 +77,37 @@ class Citizen(AbstractCog):
                     }
             new_guild_settings[guild] = new_settings
         self.guild_settings = new_guild_settings
+
+    async def freshen_cache(self, message):
+        included_channels = []
+        for guild in self.guild_settings:
+            included_channels += [channel.id for channel in self.guild_settings[guild]['tracked-channels']]
+        rollup = self.sql.rollup_channel_usage(before_message_id=message.id, included_channels=included_channels)
+
+        for row in rollup:
+            guild = self.bot.get_guild(row['guild_id'])
+            member_id = row['real_user_id']
+            self.update_cache(guild, member_id, row['count'])
+
+    async def update_cache(self, guild, member_id, points):
+        self.member_status_cache[guild][member_id] += points
+        return self.member_status_cache[guild][member_id]
+
+    def is_channel_tracked(self, channel):
+        return (channel.guild in self.guild_settings) and (channel in self.guild_settings[channel.guild]['tracked-channels'])
+
+    def is_member_already_citizen(self, guild, member):
+        return self.guild_settings[guild]['first-class-role'] in member.roles
+
+    async def handle_delete(self, guild, message):
+        if not self.is_channel_tracked(message.channel):
+            return
+        await self.update_cache(guild, message.author.id, -1)
+
+    async def handle_new(self, guild, message):
+        if not self.is_channel_tracked(message.channel):
+            return
+        await self.update_cache(guild, message.author.id, 1)
 
     @commands.group(name="citizen", aliases=["citi", "civ"])
     @commands.guild_only()
