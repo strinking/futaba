@@ -90,3 +90,33 @@ class StatbotSqlHandler:
 
         message_count, edited_count, deleted_count = result.fetchone()
         return message_count, edited_count, deleted_count
+
+    def rollup_channel_usage(self, before_message_id=None, included_channels=()):
+        message_id_fragment = ""
+
+        if before_message_id is not None:
+            message_id_fragment = "message_id < :before_message_id AND"
+
+        stmt = text(
+        f"""
+            SELECT guild_id, channel_id, real_user_id, count
+            FROM (
+                SELECT guild_id, channel_id, int_user_id, COUNT(message_id) AS count
+                FROM messages
+                WHERE
+                    {message_id_fragment}
+                    channel_id IN :included_channels AND
+                    deleted_at IS NULL
+                GROUP BY guild_id, channel_id, int_user_id
+            ) AS t
+            JOIN users ON t.int_user_id=users.int_user_id;
+        """
+        )
+
+        result = self.conn.execute(
+            stmt,
+            included_channels=included_channels,
+            before_message_id=before_message_id,
+        )
+
+        return (row._asdict() for row in result)
