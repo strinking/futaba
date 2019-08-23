@@ -51,7 +51,13 @@ class CitizenMessageListener(Listener):
 
 
 class Citizen(AbstractCog):
-    __slots__ = ("journal", "sql", "member_status_cache", "listening_from_message_id", "guild_settings")
+    __slots__ = (
+        "journal",
+        "sql",
+        "member_status_cache",
+        "listening_from_message_id",
+        "guild_settings",
+    )
 
     def __init__(self, bot, sql):
         super().__init__(bot)
