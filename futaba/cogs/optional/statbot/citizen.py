@@ -21,13 +21,12 @@ from futaba.str_builder import StringBuilder
 from futaba.journal.listener import Listener
 
 guild_settings = {
-        247400063981191169: {
-            "tracked-channels": [589312192902594576, 589312207301378048],
-            "first-class-role": 589309608951021570,
-            "min-msg": 5,
-
-            }
-        }
+    247400063981191169: {
+        "tracked-channels": [589312192902594576, 589312207301378048],
+        "first-class-role": 589309608951021570,
+        "min-msg": 5,
+    }
+}
 
 
 class CitizenMessageListener(Listener):
@@ -71,33 +70,41 @@ class Citizen(AbstractCog):
         for guild_id, settings in guild_settings.items():
             guild = self.bot.get_guild(guild_id)
             new_settings = {
-                    **settings,
-                    "first-class-role": guild.get_role(settings["first-class-role"]),
-                    "tracked-channels": [guild.get_channel(id) for id in settings["tracked-channels"]],
-                    }
+                **settings,
+                "first-class-role": guild.get_role(settings["first-class-role"]),
+                "tracked-channels": [
+                    guild.get_channel(id) for id in settings["tracked-channels"]
+                ],
+            }
             new_guild_settings[guild] = new_settings
         self.guild_settings = new_guild_settings
 
     async def freshen_cache(self, message):
         included_channels = []
         for guild in self.guild_settings:
-            included_channels += [channel.id for channel in self.guild_settings[guild]['tracked-channels']]
-        rollup = self.sql.rollup_channel_usage(before_message_id=message.id, included_channels=included_channels)
+            included_channels += [
+                channel.id for channel in self.guild_settings[guild]["tracked-channels"]
+            ]
+        rollup = self.sql.rollup_channel_usage(
+            before_message_id=message.id, included_channels=included_channels
+        )
 
         for row in rollup:
-            guild = self.bot.get_guild(row['guild_id'])
-            member_id = row['real_user_id']
-            self.update_cache(guild, member_id, row['count'])
+            guild = self.bot.get_guild(row["guild_id"])
+            member_id = row["real_user_id"]
+            self.update_cache(guild, member_id, row["count"])
 
     async def update_cache(self, guild, member_id, points):
         self.member_status_cache[guild][member_id] += points
         return self.member_status_cache[guild][member_id]
 
     def is_channel_tracked(self, channel):
-        return (channel.guild in self.guild_settings) and (channel in self.guild_settings[channel.guild]['tracked-channels'])
+        return (channel.guild in self.guild_settings) and (
+            channel in self.guild_settings[channel.guild]["tracked-channels"]
+        )
 
     def is_member_already_citizen(self, guild, member):
-        return self.guild_settings[guild]['first-class-role'] in member.roles
+        return self.guild_settings[guild]["first-class-role"] in member.roles
 
     async def handle_delete(self, guild, message):
         if not self.is_channel_tracked(message.channel):
@@ -125,7 +132,9 @@ class Citizen(AbstractCog):
         Reports a member's citizenship status.
         """
         guild_settings = self.guild_settings[ctx.guild]
-        m, e, d = self.sql.message_count(ctx.guild, ctx.author, included_channels=guild_settings["tracked-channels"])
+        m, e, d = self.sql.message_count(
+            ctx.guild, ctx.author, included_channels=guild_settings["tracked-channels"]
+        )
         existing_msgs = m - d
         if existing_msgs >= guild_settings["min-msg"]:
             await ctx.send(content="Thanks for your contributions!")
