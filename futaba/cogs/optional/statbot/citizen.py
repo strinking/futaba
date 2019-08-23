@@ -15,8 +15,7 @@ from collections import defaultdict
 from discord.ext import commands
 
 from futaba.cogs.abc import AbstractCog
-from futaba.exceptions import CommandFailed, SendHelp
-from futaba.str_builder import StringBuilder
+from futaba.exceptions import SendHelp
 
 from futaba.journal.listener import Listener
 
@@ -52,7 +51,7 @@ class CitizenMessageListener(Listener):
 
 
 class Citizen(AbstractCog):
-    __slots__ = ("journal", "sql", "member_status_cache", "listening_from_message_id")
+    __slots__ = ("journal", "sql", "member_status_cache", "listening_from_message_id", "guild_settings")
 
     def __init__(self, bot, sql):
         super().__init__(bot)
@@ -64,6 +63,7 @@ class Citizen(AbstractCog):
         self.sql = sql
 
         self.listening_from_message_id = float("inf")
+        self.guild_settings = None
 
     def setup(self):
         new_guild_settings = {}
@@ -77,6 +77,7 @@ class Citizen(AbstractCog):
                 ],
             }
             new_guild_settings[guild] = new_settings
+
         self.guild_settings = new_guild_settings
 
     async def freshen_cache(self, message):
@@ -131,12 +132,13 @@ class Citizen(AbstractCog):
         """
         Reports a member's citizenship status.
         """
-        guild_settings = self.guild_settings[ctx.guild]
-        m, e, d = self.sql.message_count(
-            ctx.guild, ctx.author, included_channels=guild_settings["tracked-channels"]
+
+        settings = self.guild_settings[ctx.guild]
+        messages, _, deleted = self.sql.message_count(
+            ctx.guild, ctx.author, included_channels=settings["tracked-channels"]
         )
-        existing_msgs = m - d
-        if existing_msgs >= guild_settings["min-msg"]:
+        existing_msgs = messages - deleted
+        if existing_msgs >= settings["min-msg"]:
             await ctx.send(content="Thanks for your contributions!")
         else:
             await ctx.send(content="You'll get there soon!")
