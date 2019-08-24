@@ -18,7 +18,7 @@ import logging
 
 import discord
 from sqlalchemy import create_engine, func
-from sqlalchemy import and_, not_
+from sqlalchemy import and_, not_, case
 from sqlalchemy import ARRAY, Boolean, BigInteger, Column, DateTime, Enum
 from sqlalchemy import Integer, JSON, SmallInteger, String, Table, Unicode, UnicodeText
 from sqlalchemy import ForeignKey, MetaData
@@ -175,11 +175,14 @@ class StatbotSqlHandler:
 
             conditions.append(condition)
 
+        def not_null(column):
+            return case([(column != None, 1)], else_=0)
+
         sel = select(
             [
-                func.sum(self.tb_messages.c.message_id),
-                func.sum(self.tb_messages.c.edited_at),
-                func.sum(self.tb_messages.c.deleted_at),
+                func.sum(not_null(self.tb_messages.c.message_id)),
+                func.sum(not_null(self.tb_messages.c.edited_at)),
+                func.sum(not_null(self.tb_messages.c.deleted_at)),
             ]
         ).where(and_(*conditions))
 
