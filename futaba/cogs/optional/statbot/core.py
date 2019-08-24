@@ -81,7 +81,7 @@ class Statbot(AbstractCog):
         """
 
         message_count, edited_count, deleted_count = self.sql.message_count(
-            ctx.guild, user, exclude
+            ctx.guild, user, excluded_channels=exclude
         )
 
         descr = StringBuilder()
