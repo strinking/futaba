@@ -175,14 +175,11 @@ class StatbotSqlHandler:
 
             conditions.append(condition)
 
-        def not_null(column):
-            return case([(column != None, 1)], else_=0)
-
         sel = select(
             [
-                func.sum(not_null(self.tb_messages.c.message_id)),
-                func.sum(not_null(self.tb_messages.c.edited_at)),
-                func.sum(not_null(self.tb_messages.c.deleted_at)),
+                func.count(self.tb_messages.c.message_id),
+                func.count(self.tb_messages.c.edited_at),
+                func.count(self.tb_messages.c.deleted_at),
             ]
         ).where(and_(*conditions))
 
