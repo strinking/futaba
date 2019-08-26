@@ -38,13 +38,12 @@ class CitizenMessageListener(Listener):
     async def handle(self, path, guild, _content, attributes):
         # pylint: disable=arguments-differ
         call = None
-        str_path = str(path)
-        if str_path == "/tracking/message/new":
+        if path.stem == "new":
             call = self.cog.handle_new
-        if str_path == "/tracking/message/delete":
+        elif path.stem == "delete":
             call = self.cog.handle_delete
 
-        if call:
+        if call is not None:
             message = attributes["message"]
             await self.cog.freshen_cache(message)
             await call(guild, message)
