@@ -18,7 +18,7 @@ import logging
 
 import discord
 from sqlalchemy import create_engine, func
-from sqlalchemy import and_, not_, case
+from sqlalchemy import and_, not_
 from sqlalchemy import ARRAY, Boolean, BigInteger, Column, DateTime, Enum
 from sqlalchemy import Integer, JSON, SmallInteger, String, Table, Unicode, UnicodeText
 from sqlalchemy import ForeignKey, MetaData
@@ -211,7 +211,7 @@ class StatbotSqlHandler:
 
         result = self.conn.execute(
             stmt,
-            included_channels=included_channels,
+            included_channels=tuple(included_channels),
             before_message_id=before_message_id,
         )
 

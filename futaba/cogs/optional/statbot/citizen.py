@@ -12,9 +12,12 @@
 
 from collections import defaultdict
 
+import discord
 from discord.ext import commands
 
+from futaba import permissions
 from futaba.cogs.abc import AbstractCog
+from futaba.converters import MemberConv
 from futaba.exceptions import SendHelp
 
 from futaba.journal.listener import Listener
@@ -131,7 +134,7 @@ class Citizen(AbstractCog):
         if ctx.invoked_subcommand is None:
             raise SendHelp()
 
-    @citizen.command(name="check", aliases=["c"])
+    @citizen.command(name="check", aliases=["c", "ch"])
     @commands.guild_only()
     async def check(self, ctx):
         """
@@ -147,3 +150,36 @@ class Citizen(AbstractCog):
             await ctx.send(content="Thanks for your contributions!")
         else:
             await ctx.send(content="You'll get there soon!")
+
+    @citizen.command(name="query", aliases=["q", "que"])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def query(self, ctx, member: MemberConv = None):
+        """
+        Reports a member's citizenship status.
+        Can only be used by moderators.
+        """
+
+        if member is None:
+            member = ctx.author
+
+        settings = self.guild_settings[ctx.guild]
+        messages, _, deleted = self.sql.message_count(
+            ctx.guild, member, included_channels=settings["tracked-channels"]
+        )
+        existing_msgs = messages - deleted
+        deleted_pct = deleted / messages * 100
+
+        needs_msgs = settings["min-msg"]
+        if existing_msgs >= needs_msgs:
+            status = f"**QUALIFIES** (has at least {needs_msgs}) messages"
+        else:
+            status = f"**INSUFFICIENT** (still needs {needs_msgs - existing_msgs} more messages)"
+
+        embed = discord.Embed()
+        embed.colour = discord.Colour.dark_teal()
+        embed.description = (
+            f"{member.mention} has {existing_msgs} messages ({deleted_pct:.2}% deleted)\n"
+            f"Member {status}"
+        )
+        await ctx.send(embed=embed)
