@@ -166,7 +166,7 @@ class StatbotSqlHandler:
 
         channels = included_channels or excluded_channels
         if channels:
-            condition = self.tb_channels.c.channel_id.in_(
+            condition = self.tb_messages.c.channel_id.in_(
                 [channel.id for channel in channels]
             )
 
