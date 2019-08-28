@@ -184,9 +184,14 @@ class Citizen(AbstractCog):
         )
         existing_msgs = messages - deleted
         if existing_msgs >= settings["min-msg"]:
-            await ctx.send(content="Thanks for your contributions!")
+            description = f"{ctx.author.mention}, thank you for your contributions!"
         else:
-            await ctx.send(content="You'll get there soon!")
+            description = f"{ctx.author.mention}, you'll get there soon! Just keep being a good citizen!"
+
+        embed = discord.Embed()
+        embed.colour = discord.Colour.dark_teal()
+        embed.description = description
+        await ctx.send(embed=embed)
 
     @citizen.command(name="query", aliases=["q", "que"])
     @commands.guild_only()
