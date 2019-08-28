@@ -202,6 +202,7 @@ class Citizen(AbstractCog):
             ctx.guild, member, included_channels=settings["tracked-channels"]
         )
         existing_msgs = messages - deleted
+        messages = messages or 1
         deleted_pct = deleted / messages * 100
 
         needs_msgs = settings["min-msg"]
