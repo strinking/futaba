@@ -60,7 +60,7 @@ guild_settings = {
     247400063981191169: {
         "tracked-channels": [589312192902594576, 589312207301378048],
         "first-class-role": 589309608951021570,
-        "min-msg": 5,
+        "min-msg": 50,
     },
 }
 
