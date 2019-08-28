@@ -111,6 +111,9 @@ class Citizen(AbstractCog):
         new_guild_settings = {}
         for guild_id, settings in guild_settings.items():
             guild = self.bot.get_guild(guild_id)
+            if guild is None:
+                continue
+
             new_settings = {
                 **settings,
                 "first-class-role": guild.get_role(settings["first-class-role"]),
