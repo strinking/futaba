@@ -191,7 +191,7 @@ class Citizen(AbstractCog):
         Reports a member's citizenship status.
         """
 
-        await check_channel(ctx)
+        await self.check_channel(ctx)
 
         settings = self.guild_settings[ctx.guild]
         messages, _, deleted = self.sql.message_count(
