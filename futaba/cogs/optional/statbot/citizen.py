@@ -18,7 +18,7 @@ from discord.ext import commands
 from futaba import permissions
 from futaba.cogs.abc import AbstractCog
 from futaba.converters import MemberConv
-from futaba.exceptions import SendHelp
+from futaba.exceptions import CommandFailed, SendHelp
 
 from futaba.journal.listener import Listener
 
