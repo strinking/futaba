@@ -171,12 +171,27 @@ class Citizen(AbstractCog):
         if ctx.invoked_subcommand is None:
             raise SendHelp()
 
+    async def check_channel(self, ctx):
+        ok_channels = self.bot.sql.roles.get_role_command_channels(ctx.guild)
+
+        # Any channel is allowed
+        if not ok_channels:
+            return
+
+        # This channel is allowed
+        if ctx.channel in ok_channels:
+            return
+
+        raise CommandFailed()
+
     @citizen.command(name="check", aliases=["c", "ch"])
     @commands.guild_only()
     async def check(self, ctx):
         """
         Reports a member's citizenship status.
         """
+
+        await check_channel(ctx)
 
         settings = self.guild_settings[ctx.guild]
         messages, _, deleted = self.sql.message_count(
