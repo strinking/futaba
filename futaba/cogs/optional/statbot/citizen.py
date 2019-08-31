@@ -72,7 +72,7 @@ class CitizenMessageListener(Listener):
         super().__init__(router, "/tracking/message", recursive=True)
         self.cog = cog
 
-    async def handle(self, path, guild, _content, attributes):
+    async def _handle(self, path, guild, _content, attributes):
         # pylint: disable=arguments-differ
         call = None
         if path.stem == "new":
