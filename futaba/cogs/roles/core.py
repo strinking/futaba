@@ -130,6 +130,10 @@ class SelfAssignableRoles(AbstractCog):
                 )
                 raise ManualCheckFailure(embed=embed)
 
+    @staticmethod
+    def str_roles(roles):
+        return ", ".join(f"`{role.name}`" for role in roles)
+
     @role.command(name="add", aliases=["join", "give", "set", "update"])
     @commands.guild_only()
     async def role_add(self, ctx, *roles: RoleConv):
@@ -144,8 +148,7 @@ class SelfAssignableRoles(AbstractCog):
             *roles, reason="Adding self-assignable roles", atomic=True
         )
 
-        str_roles = ", ".join(role.mention for role in roles)
-        content = f"{user_discrim(ctx.author)} added self-assignable roles: {str_roles}"
+        content = f"{user_discrim(ctx.author)} added self-assignable roles: {self.str_roles(roles)}"
         self.journal.send("self/add", ctx.guild, content, icon="role")
 
     @role.command(
@@ -164,9 +167,8 @@ class SelfAssignableRoles(AbstractCog):
             *roles, reason="Removing self-assignable roles", atomic=True
         )
 
-        str_roles = ", ".join(role.mention for role in roles)
         content = (
-            f"{user_discrim(ctx.author)} removed self-assignable roles: {str_roles}"
+            f"{user_discrim(ctx.author)} removed self-assignable roles: {self.str_roles(roles)}"
         )
         self.journal.send("self/remove", ctx.guild, content, icon="role")
 
