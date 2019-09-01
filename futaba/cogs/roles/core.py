@@ -132,7 +132,7 @@ class SelfAssignableRoles(AbstractCog):
 
     @staticmethod
     def str_roles(roles):
-        return ", ".join(f"`{role.name}`" for role in roles)
+        return " ".join(f"`{role.name}`" for role in roles)
 
     @role.command(name="add", aliases=["join", "give", "set", "update"])
     @commands.guild_only()
@@ -224,8 +224,7 @@ class SelfAssignableRoles(AbstractCog):
         await ctx.send(embed=embed)
 
         # Send journal event
-        role_names = ", ".join(f"`role.name`" for role in roles)
-        content = f"Roles were set as joinable: {role_names}"
+        content = f"Roles were set as joinable: {self.str_roles(roles)}"
         self.journal.send("joinable/add", ctx.guild, content, icon="role", roles=roles)
 
     @role.command(
@@ -261,8 +260,7 @@ class SelfAssignableRoles(AbstractCog):
         await ctx.send(embed=embed)
 
         # Send journal event
-        role_names = ", ".join(f"`role.name`" for role in roles)
-        content = f"Roles were set as not joinable: {role_names}"
+        content = f"Roles were set as not joinable: {self.str_roles(roles)}"
         self.journal.send(
             "joinable/remove", ctx.guild, content, icon="role", roles=roles
         )
