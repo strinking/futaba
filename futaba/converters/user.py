@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 __all__ = ["similar_text", "similar_users", "MemberConv", "UserConv"]
 
 MENTION_REGEX = re.compile(r"<@!?([0-9]{15,21})>$")
-USERNAME_DISCRIM_REGEX = re.compile(r"(.+)#([0-9]{4})")
+USERNAME_DISCRIM_REGEX = re.compile(r"@?(.+)#([0-9]{4})")
 
 
 def similar_text(word1, word2) -> float:
