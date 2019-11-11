@@ -17,6 +17,7 @@ Cog for loading, unloading, or reloading other cogs.
 import importlib
 import logging
 from operator import itemgetter
+from collections import defaultdict
 
 import discord
 from discord.ext import commands
@@ -234,14 +235,12 @@ class Reloader(AbstractCog):
 
         content = StringBuilder("```\n")
 
-        extensions = {}
+        extensions = defaultdict(list)
         for cog_name, cog in self.bot.cogs.items():
             ext_name = cog.__module__.rsplit('.', 1)[0]
             ext_name = ext_name.rsplit('.', 1)[1]
-            if ext_name in extensions:
-                extensions[ext_name].append(cog_name)
-            else:
-                extensions[ext_name] = [cog_name]         
+
+            extensions[ext_name].append(cog_name)   
 
         # I hate this but tree-format uses lists and tuples for some reason
         # So this takes the nice dictionary and converts it to that
