@@ -237,21 +237,22 @@ class Reloader(AbstractCog):
 
         extensions = defaultdict(list)
         for cog_name, cog in self.bot.cogs.items():
-            ext_name = cog.__module__.rsplit('.', 1)[0]
-            ext_name = ext_name.rsplit('.', 1)[1]
+            ext_name = cog.__module__.rsplit(".", 1)[0]
+            ext_name = ext_name.rsplit(".", 1)[1]
 
-            extensions[ext_name].append(cog_name)   
+            extensions[ext_name].append(cog_name)
 
         # I hate this but tree-format uses lists and tuples for some reason
         # So this takes the nice dictionary and converts it to that
-        extensions = [(ext, [(cog_name, []) for cog_name in cog]) for ext, cog in extensions.items()]
+        extensions = [
+            (ext, [(cog_name, []) for cog_name in cog])
+            for ext, cog in extensions.items()
+        ]
 
-        tree = ('futaba', [
-            ('cogs', 
-                extensions,
-            ),
-        ])
+        tree = ("futaba", [("cogs", extensions)])
 
-        content.writeln(format_tree(tree, format_node=itemgetter(0), get_children=itemgetter(1)))
+        content.writeln(
+            format_tree(tree, format_node=itemgetter(0), get_children=itemgetter(1))
+        )
         content.writeln("```")
         await ctx.send(content=str(content))
