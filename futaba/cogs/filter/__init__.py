@@ -21,6 +21,7 @@ from .filter import Filter
 def setup(bot):
     setup_Filtering(bot)
 
+
 def setup_Filtering(bot):
     cog = Filtering(bot)
     bot.add_listener(cog.check_message, "on_message")
@@ -29,9 +30,11 @@ def setup_Filtering(bot):
     bot.add_listener(cog.check_member_update, "on_member_update")
     bot.add_cog(cog)
 
+
 # Remove all the cogs when cog is unloaded
 def teardown(bot):
     teardown_Filtering(bot)
+
 
 def teardown_Filtering(bot):
     bot.remove_cog(Filtering.__name__)

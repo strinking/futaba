@@ -16,13 +16,16 @@ from .core import Journal
 def setup(bot):
     setup_Journal(bot)
 
+
 def setup_Journal(bot):
     cog = Journal(bot)
     bot.add_cog(cog)
 
+
 # Remove all the cogs when cog is unloaded
 def teardown(bot):
     teardown_Journal(bot)
+
 
 def teardown_Reloader(bot):
     bot.remove_cog(Journal.__name__)

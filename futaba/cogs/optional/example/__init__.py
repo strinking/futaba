@@ -16,13 +16,16 @@ from .core import ExampleCog
 def setup(bot):
     setup_ExampleCog(bot)
 
+
 def setup_ExampleCog(bot):
     cog = ExampleCog(bot)
     bot.add_cog(cog)
 
+
 # Remove all the cogs when cog is unloaded
 def teardown(bot):
     teardown_ExampleCog(bot)
+
 
 def teardown_ExampleCog(bot):
     bot.remove_cog(ExampleCog.__name__)

@@ -20,10 +20,12 @@ def setup(bot):
     setup_Welcome(bot)
     setup_Prune(bot)
 
+
 def setup_Alert(bot):
     cog = Alert(bot)
     bot.add_listener(cog.member_join, "on_member_join")
     bot.add_cog(cog)
+
 
 def setup_Welcome(bot):
     cog = Welcome(bot)
@@ -32,9 +34,11 @@ def setup_Welcome(bot):
     bot.add_listener(cog.member_leave, "on_member_remove")
     bot.add_cog(cog)
 
+
 def setup_Prune(bot):
     cog = Prune(bot)
     bot.add_cog(cog)
+
 
 # Remove all the cogs when cog is unloaded
 def teardown(bot):
@@ -42,11 +46,14 @@ def teardown(bot):
     teardown_Welcome(bot)
     teardown_Prune(bot)
 
+
 def teardown_Alert(bot):
     bot.remove_cog(Alert.__name__)
 
+
 def teardown_Welcome(bot):
     bot.remove_cog(Welcome.__name__)
+
 
 def teardown_Prune(bot):
     bot.remove_cog(Prune.__name__)

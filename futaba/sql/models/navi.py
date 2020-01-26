@@ -129,7 +129,7 @@ class NaviModel:
             parameters=task.build_parameters(),
         )
         result = self.sql.execute(ins)
-        task.id, = result.inserted_primary_key
+        (task.id,) = result.inserted_primary_key
 
     def remove_task(self, task):
         logger.info("Deleting task id %d", task.id)

@@ -239,7 +239,7 @@ class WelcomeModel:
             guild_id=guild.id, alert_key=alert.key, op=alert.op, value=str(alert.value)
         )
         result = self.sql.execute(ins)
-        alert.id, = result.inserted_primary_key
+        (alert.id,) = result.inserted_primary_key
 
     def get_all_alerts(self, guild):
         logger.info("Getting all join alerts for guild '%s' (%d)", guild.name, guild.id)

@@ -161,7 +161,7 @@ class ModerationModel:
             return KeyError(member)
 
         other_roles = []
-        other_role_ids, = result.fetchone()
+        (other_role_ids,) = result.fetchone()
         for role_id in other_role_ids:
             role = discord.utils.get(member.guild.roles, id=role_id)
             if role is not None:
