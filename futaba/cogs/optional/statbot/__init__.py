@@ -12,7 +12,17 @@
 
 from .core import Statbot
 
-
+# Setup for when cog is loaded
 def setup(bot):
+    setup_Statbot(bot)
+
+def setup_Statbot(bot):
     cog = Statbot(bot)
     bot.add_cog(cog)
+
+# Remove all the cogs when cog is unloaded
+def teardown(bot):
+    teardown_Statbot(bot)
+
+def teardown_Statbot(bot):
+    bot.remove_cog(Statbot.__name__)

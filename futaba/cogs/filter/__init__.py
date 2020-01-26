@@ -17,11 +17,21 @@ from .manage import add_filter, delete_filter, show_filter
 from .core import Filtering
 from .filter import Filter
 
-
+# Setup for when cog is loaded
 def setup(bot):
+    setup_Filtering(bot)
+
+def setup_Filtering(bot):
     cog = Filtering(bot)
     bot.add_listener(cog.check_message, "on_message")
     bot.add_listener(cog.check_message_edit, "on_message_edit")
     bot.add_listener(cog.check_member_join, "on_member_join")
     bot.add_listener(cog.check_member_update, "on_member_update")
     bot.add_cog(cog)
+
+# Remove all the cogs when cog is unloaded
+def teardown(bot):
+    teardown_Filtering(bot)
+
+def teardown_Filtering(bot):
+    bot.remove_cog(Filtering.__name__)
