@@ -19,10 +19,10 @@ from .filter import Filter
 
 # Setup for when cog is loaded
 def setup(bot):
-    setup_Filtering(bot)
+    setup_filtering(bot)
 
 
-def setup_Filtering(bot):
+def setup_filtering(bot):
     cog = Filtering(bot)
     bot.add_listener(cog.check_message, "on_message")
     bot.add_listener(cog.check_message_edit, "on_message_edit")
@@ -33,8 +33,8 @@ def setup_Filtering(bot):
 
 # Remove all the cogs when cog is unloaded
 def teardown(bot):
-    teardown_Filtering(bot)
+    teardown_filtering(bot)
 
 
-def teardown_Filtering(bot):
+def teardown_filtering(bot):
     bot.remove_cog(Filtering.__name__)

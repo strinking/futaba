@@ -14,18 +14,18 @@ from .core import Statbot
 
 # Setup for when cog is loaded
 def setup(bot):
-    setup_Statbot(bot)
+    setup_statbot(bot)
 
 
-def setup_Statbot(bot):
+def setup_statbot(bot):
     cog = Statbot(bot)
     bot.add_cog(cog)
 
 
 # Remove all the cogs when cog is unloaded
 def teardown(bot):
-    teardown_Statbot(bot)
+    teardown_statbot(bot)
 
 
-def teardown_Statbot(bot):
+def teardown_statbot(bot):
     bot.remove_cog(Statbot.__name__)

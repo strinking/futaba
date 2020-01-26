@@ -56,7 +56,7 @@ class Reloader(AbstractCog):
 
             if ext_name in self.bot.extensions:
                 setup_function = getattr(
-                    self.bot.extensions[ext_name], f"setup_{cogname}"
+                    self.bot.extensions[ext_name], f"setup_{cogname.lower()}"
                 )
                 setup_function(self.bot)
         else:
@@ -72,7 +72,7 @@ class Reloader(AbstractCog):
 
             if ext_name in self.bot.extensions:
                 teardown_function = getattr(
-                    self.bot.extensions[ext_name], f"teardown_{cogname}"
+                    self.bot.extensions[ext_name], f"teardown_{cogname.lower()}"
                 )
                 teardown_function(self.bot)
         else:

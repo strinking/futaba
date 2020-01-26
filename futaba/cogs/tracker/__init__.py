@@ -14,10 +14,10 @@ from .core import Tracker, LISTENERS, get_removal_cause
 
 # Setup for when cog is loaded
 def setup(bot):
-    setup_Tracker(bot)
+    setup_tracker(bot)
 
 
-def setup_Tracker(bot):
+def setup_tracker(bot):
     cog = Tracker(bot)
     for listener in LISTENERS:
         bot.add_listener(getattr(cog, listener), listener)
@@ -26,8 +26,8 @@ def setup_Tracker(bot):
 
 # Remove all the cogs when cog is unloaded
 def teardown(bot):
-    teardown_Tracker(bot)
+    teardown_tracker(bot)
 
 
-def teardown_Tracker(bot):
+def teardown_tracker(bot):
     bot.remove_cog(Tracker.__name__)

@@ -15,16 +15,16 @@ from .core import Info
 
 # Setup for when cog is loaded
 def setup(bot):
-    setup_Info(bot)
-    setup_Alias(bot)
+    setup_info(bot)
+    setup_alias(bot)
 
 
-def setup_Info(bot):
+def setup_info(bot):
     cog = Info(bot)
     bot.add_cog(cog)
 
 
-def setup_Alias(bot):
+def setup_alias(bot):
     cog = Alias(bot)
     bot.add_listener(cog.member_update, "on_member_update")
     bot.add_cog(cog)
@@ -32,13 +32,13 @@ def setup_Alias(bot):
 
 # Remove all the cogs when cog is unloaded
 def teardown(bot):
-    teardown_Info(bot)
-    teardown_Alias(bot)
+    teardown_info(bot)
+    teardown_alias(bot)
 
 
-def teardown_Info(bot):
+def teardown_info(bot):
     bot.remove_cog(Info.__name__)
 
 
-def teardown_Alias(bot):
+def teardown_alias(bot):
     bot.remove_cog(Alias.__name__)

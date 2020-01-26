@@ -14,18 +14,18 @@ from .core import SelfAssignableRoles
 
 # Setup for when cog is loaded
 def setup(bot):
-    setup_SelfAssignableRoles(bot)
+    setup_selfassignableroles(bot)
 
 
-def setup_SelfAssignableRoles(bot):
+def setup_selfassignableroles(bot):
     cog = SelfAssignableRoles(bot)
     bot.add_cog(cog)
 
 
 # Remove all the cogs when cog is unloaded
 def teardown(bot):
-    teardown_SelfAssignableRoles(bot)
+    teardown_selfassignableroles(bot)
 
 
-def teardown_SelfAssignableRoles(bot):
+def teardown_selfassignableroles(bot):
     bot.remove_cog(SelfAssignableRoles.__name__)
