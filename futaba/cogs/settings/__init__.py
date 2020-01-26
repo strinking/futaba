@@ -12,7 +12,20 @@
 
 from .core import Settings
 
-
+# Setup for when cog is loaded
 def setup(bot):
+    setup_settings(bot)
+
+
+def setup_settings(bot):
     cog = Settings(bot)
     bot.add_cog(cog)
+
+
+# Remove all the cogs when cog is unloaded
+def teardown(bot):
+    teardown_settings(bot)
+
+
+def teardown_settings(bot):
+    bot.remove_cog(Settings.__name__)

@@ -13,6 +13,20 @@
 from .core import Reloader
 
 
+# Setup for when cog is loaded
 def setup(bot):
+    setup_reloader(bot)
+
+
+def setup_reloader(bot):
     cog = Reloader(bot)
     bot.add_cog(cog)
+
+
+# Remove all the cogs when cog is unloaded
+def teardown(bot):
+    teardown_reloader(bot)
+
+
+def teardown_reloader(bot):
+    bot.remove_cog(Reloader.__name__)
