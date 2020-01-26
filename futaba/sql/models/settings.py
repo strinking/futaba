@@ -211,9 +211,13 @@ class SettingsModel:
         if not result.rowcount:
             self.add_guild_settings(guild)
 
-        prefix, max_delete_messages, warn_manual_mod_action, remove_other_roles, mentionable_name_prefix = (
-            result.fetchone()
-        )
+        (
+            prefix,
+            max_delete_messages,
+            warn_manual_mod_action,
+            remove_other_roles,
+            mentionable_name_prefix,
+        ) = result.fetchone()
         self.guild_settings_cache[guild] = GuildSettingsData(
             prefix,
             max_delete_messages,

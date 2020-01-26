@@ -49,17 +49,39 @@ class Reloader(AbstractCog):
         pass
 
     def load_cog(self, cogname):
-        if not cogname.startswith(COGS_DIR):
-            cogname = f"{COGS_DIR}{cogname}"
-        self.bot.load_extension(cogname)
+        if "." in cogname:
+            ext_name, cogname = cogname.split(".", 1)
+            if not ext_name.startswith(COGS_DIR):
+                ext_name = f"{COGS_DIR}{ext_name}"
+
+            if ext_name in self.bot.extensions:
+                setup_function = getattr(
+                    self.bot.extensions[ext_name], f"setup_{cogname.lower()}"
+                )
+                setup_function(self.bot)
+        else:
+            if not cogname.startswith(COGS_DIR):
+                cogname = f"{COGS_DIR}{cogname}"
+            self.bot.load_extension(cogname)
 
     def unload_cog(self, cogname, check_missing=True):
-        if not cogname.startswith(COGS_DIR):
-            cogname = f"{COGS_DIR}{cogname}"
-        if check_missing:
-            if importlib.util.find_spec(cogname) is None:
-                raise KeyError(f"No such cog: {cogname}")
-        self.bot.unload_extension(cogname)
+        if "." in cogname:
+            ext_name, cogname = cogname.split(".", 1)
+            if not ext_name.startswith(COGS_DIR):
+                ext_name = f"{COGS_DIR}{ext_name}"
+
+            if ext_name in self.bot.extensions:
+                teardown_function = getattr(
+                    self.bot.extensions[ext_name], f"teardown_{cogname.lower()}"
+                )
+                teardown_function(self.bot)
+        else:
+            if not cogname.startswith(COGS_DIR):
+                cogname = f"{COGS_DIR}{cogname}"
+            if check_missing:
+                if importlib.util.find_spec(cogname) is None:
+                    raise KeyError(f"No such cog: {cogname}")
+            self.bot.unload_extension(cogname)
 
     @commands.command(name="load", aliases=["l"])
     @permissions.check_owner()

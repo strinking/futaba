@@ -12,7 +12,20 @@
 
 from .core import ExampleCog
 
-
+# Setup for when cog is loaded
 def setup(bot):
+    setup_examplecog(bot)
+
+
+def setup_examplecog(bot):
     cog = ExampleCog(bot)
     bot.add_cog(cog)
+
+
+# Remove all the cogs when cog is unloaded
+def teardown(bot):
+    teardown_examplecog(bot)
+
+
+def teardown_ExampleCog(bot):
+    bot.remove_cog(examplecog.__name__)
