@@ -48,40 +48,69 @@ class Reloader(AbstractCog):
     def setup(self):
         pass
 
-    def load_cog(self, cogname):
-        if "." in cogname:
-            ext_name, cogname = cogname.split(".", 1)
-            if not ext_name.startswith(COGS_DIR):
-                ext_name = f"{COGS_DIR}{ext_name}"
-
-            if ext_name in self.bot.extensions:
-                setup_function = getattr(
-                    self.bot.extensions[ext_name], f"setup_{cogname.lower()}"
+    def load_cog(self, input_cogname, check_missing=True):
+        fixed_cogname = input_cogname
+        if not input_cogname.startswith(COGS_DIR):
+            fixed_cogname = f"{COGS_DIR}{input_cogname}"
+        if "." in input_cogname:
+            ext_name, cogname = fixed_cogname.rsplit(".", 1)
+            try:
+                try:
+                    setup_function = getattr(
+                        importlib.import_module(f"{ext_name}.{cogname}"),
+                        f"setup_{cogname.lower()}",
+                    )
+                    setup_function(self.bot)
+                except (AttributeError, ModuleNotFoundError) as error:
+                    setup_function = getattr(
+                        importlib.import_module(f"{ext_name}"),
+                        f"setup_{cogname.lower()}",
+                    )
+                    setup_function(self.bot)
+            except (AttributeError, ModuleNotFoundError) as error:
+                raise KeyError(
+                    f"Failed to load submodule {cogname} of module {ext_name}."
                 )
-                setup_function(self.bot)
+            except Exception as error:
+                raise error
         else:
-            if not cogname.startswith(COGS_DIR):
-                cogname = f"{COGS_DIR}{cogname}"
-            self.bot.load_extension(cogname)
-
-    def unload_cog(self, cogname, check_missing=True):
-        if "." in cogname:
-            ext_name, cogname = cogname.split(".", 1)
-            if not ext_name.startswith(COGS_DIR):
-                ext_name = f"{COGS_DIR}{ext_name}"
-
-            if ext_name in self.bot.extensions:
-                teardown_function = getattr(
-                    self.bot.extensions[ext_name], f"teardown_{cogname.lower()}"
-                )
-                teardown_function(self.bot)
-        else:
-            if not cogname.startswith(COGS_DIR):
-                cogname = f"{COGS_DIR}{cogname}"
             if check_missing:
-                if importlib.util.find_spec(cogname) is None:
-                    raise KeyError(f"No such cog: {cogname}")
-            self.bot.unload_extension(cogname)
+                if importlib.util.find_spec(fixed_cogname) is None:
+                    raise KeyError(f"No such cog: {fixed_cogname}")
+            self.bot.load_extension(fixed_cogname)
+
+    def unload_cog(self, input_cogname, check_missing=True):
+        fixed_cogname = input_cogname
+        if not input_cogname.startswith(COGS_DIR):
+            fixed_cogname = f"{COGS_DIR}{input_cogname}"
+        if "." in input_cogname:
+            ext_name, cogname = fixed_cogname.rsplit(".", 1)
+            if not ext_name.startswith(COGS_DIR):
+                ext_name = f"{COGS_DIR}{ext_name}"
+            try:
+                try:
+                    teardown_function = getattr(
+                        importlib.import_module(f"{ext_name}.{cogname}"),
+                        f"teardown_{cogname.lower()}",
+                    )
+                    teardown_function(self.bot)
+                except (AttributeError, ModuleNotFoundError) as error:
+                    teardown_function = getattr(
+                        importlib.import_module(f"{ext_name}"),
+                        f"teardown_{cogname.lower()}",
+                    )
+                    teardown_function(self.bot)
+            except (AttributeError, ModuleNotFoundError) as error:
+                raise KeyError(
+                    f"Failed to unload submodule {cogname} of module {ext_name}. (Is it already unloaded?)"
+                )
+            except Exception as error:
+                raise error
+        else:
+            if check_missing:
+                if importlib.util.find_spec(fixed_cogname) is None:
+                    raise KeyError(f"No such cog: {fixed_cogname}")
+            self.bot.unload_extension(fixed_cogname)
 
     @commands.command(name="load", aliases=["l"])
     @permissions.check_owner()
