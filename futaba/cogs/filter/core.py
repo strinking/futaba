@@ -94,7 +94,7 @@ class Filtering(AbstractCog):
             # Guild filter-immune users
             sql.fetch_filter_immune_users(guild)
 
-    def __unload(self):
+    def cog_unload(self):
         """
         Remove listeners when unloading the cog.
         """
