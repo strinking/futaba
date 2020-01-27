@@ -69,7 +69,7 @@ class Reloader(AbstractCog):
                     setup_function(self.bot)
             except (AttributeError, ModuleNotFoundError) as error:
                 raise KeyError(
-                    f"Failed to unload submodule {cogname} of module {ext_name}."
+                    f"Failed to load submodule {cogname} of module {ext_name}."
                 )
             except Exception as error:
                 raise error
