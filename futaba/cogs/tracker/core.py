@@ -127,7 +127,7 @@ class Tracker(AbstractCog):
     def setup(self):
         pass
 
-    def __unload(self):
+    def cog_unload(self):
         """
         Remove listeners when unloading the cog.
         """
