@@ -24,7 +24,7 @@ def setup_example(bot):
 
 # Remove all the cogs when cog is unloaded
 def teardown(bot):
-    teardown_examplecog(bot)
+    teardown_example(bot)
 
 
 def teardown_example(bot):
