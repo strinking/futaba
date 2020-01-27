@@ -85,8 +85,6 @@ class Reloader(AbstractCog):
             fixed_cogname = f"{COGS_DIR}{input_cogname}"
         if "." in input_cogname:
             ext_name, cogname = fixed_cogname.rsplit(".", 1)
-            if not ext_name.startswith(COGS_DIR):
-                ext_name = f"{COGS_DIR}{ext_name}"
             try:
                 try:
                     teardown_function = getattr(
@@ -251,7 +249,7 @@ class Reloader(AbstractCog):
 
         try:
             self.unload_cog(cogname, check_missing=False)
-            self.load_cog(cogname)
+            self.load_cog(cogname, check_missing=False)
         except Exception as error:
             logger.error("Reloading cog %s failed", cogname, exc_info=error)
             embed = discord.Embed(
