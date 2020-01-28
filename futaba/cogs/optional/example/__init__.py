@@ -14,18 +14,18 @@ from .core import ExampleCog
 
 # Setup for when cog is loaded
 def setup(bot):
-    setup_examplecog(bot)
+    setup_example(bot)
 
 
-def setup_examplecog(bot):
+def setup_example(bot):
     cog = ExampleCog(bot)
     bot.add_cog(cog)
 
 
 # Remove all the cogs when cog is unloaded
 def teardown(bot):
-    teardown_examplecog(bot)
+    teardown_example(bot)
 
 
-def teardown_ExampleCog(bot):
-    bot.remove_cog(examplecog.__name__)
+def teardown_example(bot):
+    bot.remove_cog(ExampleCog.__name__)
