@@ -114,7 +114,7 @@ class Bot(commands.AutoShardedBot):
             logger.critical(
                 "Token is empty. Please open the config file and add the bot's token!"
             )
-            exit(1)
+            sys.exit(1)
         else:
             self.run(self.config.token)
 
