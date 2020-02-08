@@ -18,7 +18,7 @@ from discord.ext.commands import BadArgument, Converter
 
 from futaba.unicode import normalize_caseless
 
-from .utils import ID_REGEX
+from .utils import DUAL_ID_REGEX, ID_REGEX
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +29,13 @@ CHANNEL_MENTION_REGEX = re.compile(r"<#([0-9]+)>")
 
 async def get_channel(bot, argument):
     argument = normalize_caseless(argument)
+
+    # Checking if it's a dual ID
+    match = DUAL_ID_REGEX.match(argument)
+    if match is not None:
+        chan = bot.get_channel(int(match[1]))
+        if chan is not None:
+            return chan
 
     # Checking if it's a channel id
     match = ID_REGEX.match(argument)
