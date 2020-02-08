@@ -53,10 +53,11 @@ When you need to store information persistently, a database model should be crea
 If you want to set up a delayed task, use Navi, Futaba's internal job scheduler. If your function cannot fit into one of the existing `Task` objects, create a new one and provide a way to serialize/deserialize it into JSON for persistent storage in the database. In rare cases where the delay is very short, an `asyncio.sleep()` may be acceptable. Never use `time.sleep()`, that chokes up the event loop.
 
 ### Development and Testing
-It is important to ensure no issues come up with pylint. When in the root, simply:
+It is important to address issues that come up with pylint. When in the root, simply:
 ```
 $ pylint futaba
 ```
+Some lints are currently violated, and have issues for fixing them. New code should work to not grow the number of violations.
 
 When running the bot, it is often a good idea to include the `-d` flag to see debug-level logging messages.
 ```
