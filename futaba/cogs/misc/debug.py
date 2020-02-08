@@ -14,6 +14,7 @@
 
 import asyncio
 import logging
+import sys
 
 import aiohttp
 import discord
@@ -91,4 +92,4 @@ class Debugging(AbstractCog):
             "admin/shutdown", ctx.guild, "Shutting down bot", icon="shutdown"
         )
         await Reactions.SUCCESS.add(ctx.message)
-        exit()
+        sys.exit()
