@@ -15,3 +15,4 @@ import re
 __all__ = ["ID_REGEX"]
 
 ID_REGEX = re.compile(r"([0-9]{15,21})$")
+DUAL_ID_REGEX = re.compile(r"([0-9]{15,21})-([0-9]{15,21})$")
