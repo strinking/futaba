@@ -309,7 +309,7 @@ class Bot(commands.AutoShardedBot):
                 ctx.send(embed=embed), Reactions.MISSING.add(ctx.message)
             )
 
-        elif isinstance(error, commands.errors.BadArgument):
+        elif isinstance(error, (commands.errors.BadArgument, commands.errors.BadUnionArgument)):
             # Tell the user they couldn't find what they were looking for
             logger.info("User specified argument that does not compute")
 
