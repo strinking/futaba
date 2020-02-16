@@ -243,14 +243,8 @@ class Alias(AbstractCog):
     @alts.command(name="delchain")
     @commands.guild_only()
     @permissions.check_mod()
-    async def del_alt_chain(self, ctx, name: str):
+    async def del_alt_chain(self, ctx, user: UserConv):
         """ Removes all suspected alternate accounts for a user. """
-
-        user = await self.bot.find_user(name, ctx.guild)
-        if user is None:
-            embed = discord.Embed(colour=discord.Colour.red())
-            embed.description = f"No user information found for `{name}`"
-            raise CommandFailed(embed=embed)
 
         with self.bot.sql.transaction():
             self.bot.sql.alias.all_delete_possible_alts(ctx.guild, user)
