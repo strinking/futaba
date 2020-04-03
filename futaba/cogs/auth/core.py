@@ -43,12 +43,14 @@ class Authentication(AbstractCog):
     async def jwt(self, ctx):
         """ Generates a Javascript Web Token for a user """
 
+        epoch = datetime.utcfromtimestamp(0)
+        
         token = jwt.encode(
             {
                 "iss": f"futaba-{ctx.guild.id}",
                 "did": ctx.author.id,
                 "dnn": ctx.author.display_name,
-                "jdt": int(ctx.author.joined_at.time()),
+                "jdt": int((ctx.author.joined_at - epoch).total_seconds() * 1000),
                 "iat": int(time.time()),
             },
             self.jwt_secret,
