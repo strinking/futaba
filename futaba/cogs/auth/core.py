@@ -21,11 +21,6 @@ from jose import jwt
 import discord
 from discord.ext import commands
 
-from futaba.download import download_links
-from futaba.exceptions import CommandFailed
-from futaba.str_builder import StringBuilder
-from futaba.unicode import unicode_repr
-from futaba.utils import URL_REGEX
 from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
