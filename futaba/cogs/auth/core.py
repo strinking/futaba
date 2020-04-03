@@ -50,7 +50,7 @@ class Authentication(AbstractCog):
                 "iss": f"futaba-{ctx.guild.id}",
                 "did": ctx.author.id,
                 "dnn": ctx.author.display_name,
-                "jdt": int((ctx.author.joined_at - epoch).total_seconds()),
+                "jdt": int((ctx.author.joined_at - epoch).total_seconds() * 1000),
                 "iat": int(time.time()),
             },
             self.jwt_secret,
