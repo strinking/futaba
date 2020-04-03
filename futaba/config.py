@@ -74,7 +74,7 @@ Configuration = namedtuple(
         "python_emoji_id",
         "discord_py_emoji_id",
         "database_url",
-        "jwt_secret"
+        "jwt_secret",
     ),
 )
 
