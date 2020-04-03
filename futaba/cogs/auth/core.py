@@ -60,4 +60,4 @@ class Authentication(AbstractCog):
             f"Generated authentication token: ```{token}```"
         )
 
-        ctx.author.send(content=response)
+        await ctx.author.send(content=response)
