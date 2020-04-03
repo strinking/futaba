@@ -15,7 +15,7 @@ Cog for authentication schemes and token generation
 """
 
 import logging
-from jwcrypto import jwt
+from jose import jwt
 
 import discord
 from discord.ext import commands
@@ -46,12 +46,9 @@ class Authentication(AbstractCog):
     async def jwt(self, ctx):
         """ Generates a Javascript Web Token for a user """
 
-        token = jwt.JWT(header={"alg": "HS256", "typ": "JWT"},
-                        claims={"iss": "futaba", "sub": "lilim-mc", "did": ctx.author.id, "dnn": ctx.author.display_name},
-                        default_claims={"iat": None})
-        
-        token.make_signed_token(self.jwt_secret)
-        serialized = token.serialize()
+        token = jwt.encode({"iss": f"futaba-{ctx.guild.id}", "did": ctx.author.id, "dnn": ctx.author.display_name},
+                           self.jwt_secret,
+                           algorithm="HS256")
 
         logger.info(
             "User '%s' (%d) generated a JWT",
@@ -60,7 +57,7 @@ class Authentication(AbstractCog):
         )
 
         response = (
-            f"Generated authentication token: ```{serialized}```"
+            f"Generated authentication token: ```{token}```"
         )
 
         ctx.author.send(content=response)
