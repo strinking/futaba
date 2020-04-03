@@ -1,5 +1,5 @@
 #
-# cogs/settings/__init__.py
+# cogs/auth/__init__.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2019 Jake Richardson, Ammon Smith, jackylam5
