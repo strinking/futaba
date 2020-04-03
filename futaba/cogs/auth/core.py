@@ -15,6 +15,7 @@ Cog for authentication schemes and token generation
 """
 
 import logging
+import time
 from jose import jwt
 
 import discord
@@ -46,7 +47,7 @@ class Authentication(AbstractCog):
     async def jwt(self, ctx):
         """ Generates a Javascript Web Token for a user """
 
-        token = jwt.encode({"iss": f"futaba-{ctx.guild.id}", "did": ctx.author.id, "dnn": ctx.author.display_name},
+        token = jwt.encode({"iss": f"futaba-{ctx.guild.id}", "did": ctx.author.id, "dnn": ctx.author.display_name, "iat": int(time.time())},
                            self.jwt_secret,
                            algorithm="HS256")
 
