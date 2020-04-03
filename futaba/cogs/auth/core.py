@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["Authentication"]
 
+
 class Authentication(AbstractCog):
     __slots__ = ("journal",)
 
@@ -42,18 +43,19 @@ class Authentication(AbstractCog):
     async def jwt(self, ctx):
         """ Generates a Javascript Web Token for a user """
 
-        token = jwt.encode({"iss": f"futaba-{ctx.guild.id}", "did": ctx.author.id, "dnn": ctx.author.display_name, "iat": int(time.time())},
-                           self.jwt_secret,
-                           algorithm="HS256")
-
-        logger.info(
-            "User '%s' (%d) generated a JWT",
-            ctx.author.name,
-            ctx.author.id
+        token = jwt.encode(
+            {
+                "iss": f"futaba-{ctx.guild.id}",
+                "did": ctx.author.id,
+                "dnn": ctx.author.display_name,
+                "iat": int(time.time()),
+            },
+            self.jwt_secret,
+            algorithm="HS256",
         )
 
-        response = (
-            f"Generated authentication token: ```{token}```"
-        )
+        logger.info("User '%s' (%d) generated a JWT", ctx.author.name, ctx.author.id)
+
+        response = f"Generated authentication token: ```{token}```"
 
         await ctx.author.send(content=response)
