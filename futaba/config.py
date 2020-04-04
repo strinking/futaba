@@ -55,6 +55,7 @@ ConfigurationSchema = Schema(
             "discordpy": Or(And(str, ID_REGEX.match), "0"),
         },
         "database": {"url": And(str, len)},
+        "jwt": {"secret": And(str, len)},
     }
 )
 
@@ -73,6 +74,7 @@ Configuration = namedtuple(
         "python_emoji_id",
         "discord_py_emoji_id",
         "database_url",
+        "jwt_secret",
     ),
 )
 
@@ -96,4 +98,5 @@ def load_config(path):
         python_emoji_id=int(config["emojis"]["python"]),
         discord_py_emoji_id=int(config["emojis"]["discordpy"]),
         database_url=config["database"]["url"],
+        jwt_secret=config["jwt"]["secret"],
     )
