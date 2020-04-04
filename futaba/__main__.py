@@ -61,31 +61,31 @@ if __name__ == "__main__":
 
     # Set up logging
     log_fmtr = logging.Formatter(LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
-    log_hndl = logging.FileHandler(
-        filename=LOG_FILE, encoding="utf-8", mode=LOG_FILE_MODE
+    log_handle = logging.FileHandler(
+        filename=LOG_FILE, encoding="utf-8", mode=LOG_FILE_MODE,
     )
-    log_hndl.setFormatter(log_fmtr)
+    log_handle.setFormatter(log_fmtr)
 
     log_level = logging.DEBUG if args.debug else logging.INFO
     logger = logging.getLogger(__name__)
     logger.setLevel(level=log_level)
-    logger.addHandler(log_hndl)
+    logger.addHandler(log_handle)
 
     if args.discord_log:
         discord_logger = logging.getLogger("discord")
         discord_logger.setLevel(level=logging.INFO)
-        discord_logger.addHandler(log_hndl)
+        discord_logger.addHandler(log_handle)
 
     if args.stdout:
         full_logger = logging.getLogger(__package__)
         full_logger.setLevel(level=logging.DEBUG)
-        full_logger.addHandler(log_hndl)
+        full_logger.addHandler(log_handle)
 
-        log_hndl = logging.StreamHandler(sys.stdout)
-        log_hndl.setFormatter(log_fmtr)
-        full_logger.addHandler(log_hndl)
+        log_stdout = logging.StreamHandler(sys.stdout)
+        log_stdout.setFormatter(log_fmtr)
+        full_logger.addHandler(log_stdout)
         if args.discord_log:
-            discord_logger.addHandler(log_hndl)
+            discord_logger.addHandler(log_stdout)
 
     try:
         config = load_config(args.config_file)
