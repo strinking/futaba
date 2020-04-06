@@ -114,8 +114,6 @@ class ModerationModel:
             kept_roles = [
                 discord.utils.get(member.guild.roles, id=id) for id in kept_role_ids
             ]
-            # Append managed roles to kept roles as bot cannot remove them
-            kept_roles.extend([discord.utils.get(member.guild.roles, managed=True)])
 
             upd = (
                 self.tb_removed_other_roles.update()
@@ -131,8 +129,6 @@ class ModerationModel:
         else:
             # Add new removed_other_roles row
             kept_roles = [kept_role]
-            # Append managed roles to kept roles as bot cannot remove them
-            kept_roles.extend([discord.utils.get(member.guild.roles, managed=True)])
             other_role_ids = [role.id for role in member.roles if role != kept_role]
             ins = self.tb_removed_other_roles.insert().values(
                 guild_id=member.guild.id,
