@@ -57,6 +57,5 @@ class Authentication(AbstractCog):
 
         logger.info("User '%s' (%d) generated a JWT", ctx.author.name, ctx.author.id)
 
-        response = f"Generated authentication token: ```{token}```"
-
+        response = f"Generated authentication token:\n```{token}```"
         await ctx.author.send(content=response)
