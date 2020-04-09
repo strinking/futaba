@@ -222,22 +222,7 @@ class Moderation(AbstractCog):
 
         await self.perform_jail(ctx, member, minutes, reason)
 
-    @commands.command(name="unjail", aliases=["undunce"])
-    @commands.guild_only()
-    @permissions.check_perm("manage_roles")
-    async def unjail(
-        self, ctx, member: MemberConv, minutes: int = 0, *, reason: str = None
-    ):
-        """
-        Removes a user from the jail.
-        Requires a jail role to be configured.
-        Set 'minutes' to 0 to release immediately.
-        """
-
-        logger.info(
-            "Un-jailing user '%s' (%d) in %d minutes", member.name, member.id, minutes
-        )
-
+    async def perform_unjail(self, ctx, member, minutes, reason):
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)
         if roles.jail is None:
             raise CommandFailed(content="No configured jail role")
@@ -256,6 +241,37 @@ class Moderation(AbstractCog):
             )
         else:
             await self.bot.punish.unjail(ctx.guild, member, reason)
+
+    @commands.command(name="unjail", aliases=["undunce", "release"])
+    @commands.guild_only()
+    @permissions.check_perm("manage_roles")
+    async def unjail(self, ctx, member: MemberConv, *, reason: str = None):
+        """
+        Removes a user from the jail.
+        Requires a jail role to be configured.
+        """
+
+        logger.info("Un-jailing user '%s' (%d)", member.name, member.id)
+        await self.perform_unjail(ctx, member, 0, reason)
+
+    @commands.command(name="dunjail", aliases=["dundunce", "timeunjail", "timeundunce", "drelease"])
+    @commands.guild_only()
+    @permissions.check_perm("manage_roles")
+    async def dunjail(
+        self, ctx, member: MemberConv, minutes: int = 0, *, reason: str = None,
+    ):
+        """
+        Removes a user from the jail in the given number of minutes.
+        Requires a jail role to be configured.
+        Set 'minutes' to 0 to release immediately.
+        """
+
+        logger.info(
+            "Un-jailing user '%s' (%d) in %d minutes", member.name, member.id, minutes,
+        )
+
+        await self.perform_unjail(ctx, member, minutes, reason)
+
 
     @commands.command(name="kick")
     @commands.guild_only()
