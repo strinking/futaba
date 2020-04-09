@@ -265,15 +265,7 @@ class Moderation(AbstractCog):
                 content="I don't have permission to kick this user"
             )
 
-    @commands.command(name="ban")
-    @commands.guild_only()
-    @permissions.check_perm("ban_members")
-    async def ban(self, ctx, user: UserConv, delete_days: int, *, reason: str):
-        """
-        Bans the user from the guild with a reason
-        If guild has moderation logging enabled, it is logged
-        """
-
+    async def perform_ban(self, ctx, user, delete_days, reason):
         if delete_days < 0 or delete_days > 7:
             embed = discord.Embed(colour=discord.Colour.red())
             embed.description = (
@@ -302,6 +294,28 @@ class Moderation(AbstractCog):
 
         except discord.errors.Forbidden:
             raise ManualCheckFailure(content="I don't have permission to ban this user")
+
+    @commands.command(name="ban")
+    @commands.guild_only()
+    @permissions.check_perm("ban_members")
+    async def ban(self, ctx, user: UserConv, *, reason: str):
+        """
+        Bans the user from the guild with a reason
+        If guild has moderation logging enabled, it is logged
+        """
+
+        await self.perform_ban(ctx, user, 0, reason)
+
+    @commands.command(name="dban", aliases=["deleteban"])
+    @commands.guild_only()
+    @permissions.check_perm("ban_members")
+    async def dban(self, ctx, user: UserConv, delete_days: int, *, reason: str):
+        """
+        Bans the user from the guild with a reason, deleting the last X days of messages
+        If guild has moderation logging enabled, it is logged
+        """
+
+        await self.perform_ban(ctx, user, delete_days, reason)
 
     @commands.command(name="softban", aliases=["soft", "sban"])
     @commands.guild_only()
