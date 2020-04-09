@@ -173,20 +173,7 @@ class Moderation(AbstractCog):
         else:
             await self.bot.punish.unjail(ctx.guild, member, reason)
 
-    @commands.command(name="jail", aliases=["dunce"])
-    @commands.guild_only()
-    @permissions.check_perm("manage_roles")
-    async def jail(self, ctx, member: MemberConv, minutes: int, *, reason: str = None):
-        """
-        Jails the user.
-        Requires a jail role to be configured.
-        The minutes parameter must be set to a positive number.
-        """
-
-        logger.info(
-            "Jailing user '%s' (%d) for %d minutes", member.name, member.id, minutes
-        )
-
+    async def perform_jail(self, ctx, member, minutes, reason):
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)
         if roles.jail is None:
             raise CommandFailed(content="No configured jail role")
@@ -206,6 +193,34 @@ class Moderation(AbstractCog):
             await self.remove_roles(
                 ctx, member, minutes, PunishAction.RELIEVE_JAIL, reason
             )
+
+    @commands.command(name="jail", aliases=["dunce"])
+    @commands.guild_only()
+    @permissions.check_perm("manage_roles")
+    async def jail(self, ctx, member: MemberConv, *, reason: str = None):
+        """
+        Jails the user.
+        Requires a jail role to be configured.
+        """
+
+        logger.info("Jailing user '%s' (%d)", member.name, member.id)
+
+        await self.perform_jail(ctx, member, 0, reason)
+
+    @commands.command(name="djail", aliases=["ddunce", "timejail", "timedunce"])
+    @commands.guild_only()
+    @permissions.check_perm("manage_roles")
+    async def djail(self, ctx, member: MemberConv, minutes: int, *, reason: str = None):
+        """
+        Jails the user for a period of time.
+        Requires a jail role to be configured.
+        """
+
+        logger.info(
+            "Jailing user '%s' (%d) for %d minutes", member.name, member.id, minutes,
+        )
+
+        await self.perform_jail(ctx, member, minutes, reason)
 
     @commands.command(name="unjail", aliases=["undunce"])
     @commands.guild_only()
