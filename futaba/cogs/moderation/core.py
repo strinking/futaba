@@ -254,7 +254,9 @@ class Moderation(AbstractCog):
         logger.info("Un-jailing user '%s' (%d)", member.name, member.id)
         await self.perform_unjail(ctx, member, 0, reason)
 
-    @commands.command(name="dunjail", aliases=["dundunce", "timeunjail", "timeundunce", "drelease"])
+    @commands.command(
+        name="dunjail", aliases=["dundunce", "timeunjail", "timeundunce", "drelease"],
+    )
     @commands.guild_only()
     @permissions.check_perm("manage_roles")
     async def dunjail(
@@ -271,7 +273,6 @@ class Moderation(AbstractCog):
         )
 
         await self.perform_unjail(ctx, member, minutes, reason)
-
 
     @commands.command(name="kick")
     @commands.guild_only()

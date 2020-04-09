@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["Authentication"]
 
+
 class Authentication(AbstractCog):
     __slots__ = ("journal",)
 
