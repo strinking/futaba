@@ -173,20 +173,7 @@ class Moderation(AbstractCog):
         else:
             await self.bot.punish.unjail(ctx.guild, member, reason)
 
-    @commands.command(name="jail", aliases=["dunce"])
-    @commands.guild_only()
-    @permissions.check_perm("manage_roles")
-    async def jail(self, ctx, member: MemberConv, minutes: int, *, reason: str = None):
-        """
-        Jails the user.
-        Requires a jail role to be configured.
-        The minutes parameter must be set to a positive number.
-        """
-
-        logger.info(
-            "Jailing user '%s' (%d) for %d minutes", member.name, member.id, minutes
-        )
-
+    async def perform_jail(self, ctx, member, minutes, reason):
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)
         if roles.jail is None:
             raise CommandFailed(content="No configured jail role")
@@ -207,22 +194,35 @@ class Moderation(AbstractCog):
                 ctx, member, minutes, PunishAction.RELIEVE_JAIL, reason
             )
 
-    @commands.command(name="unjail", aliases=["undunce"])
+    @commands.command(name="jail", aliases=["dunce"])
     @commands.guild_only()
     @permissions.check_perm("manage_roles")
-    async def unjail(
-        self, ctx, member: MemberConv, minutes: int = 0, *, reason: str = None
-    ):
+    async def jail(self, ctx, member: MemberConv, *, reason: str = None):
         """
-        Removes a user from the jail.
+        Jails the user.
         Requires a jail role to be configured.
-        Set 'minutes' to 0 to release immediately.
+        """
+
+        logger.info("Jailing user '%s' (%d)", member.name, member.id)
+
+        await self.perform_jail(ctx, member, 0, reason)
+
+    @commands.command(name="djail", aliases=["ddunce", "timejail", "timedunce"])
+    @commands.guild_only()
+    @permissions.check_perm("manage_roles")
+    async def djail(self, ctx, member: MemberConv, minutes: int, *, reason: str = None):
+        """
+        Jails the user for a period of time.
+        Requires a jail role to be configured.
         """
 
         logger.info(
-            "Un-jailing user '%s' (%d) in %d minutes", member.name, member.id, minutes
+            "Jailing user '%s' (%d) for %d minutes", member.name, member.id, minutes,
         )
 
+        await self.perform_jail(ctx, member, minutes, reason)
+
+    async def perform_unjail(self, ctx, member, minutes, reason):
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)
         if roles.jail is None:
             raise CommandFailed(content="No configured jail role")
@@ -241,6 +241,38 @@ class Moderation(AbstractCog):
             )
         else:
             await self.bot.punish.unjail(ctx.guild, member, reason)
+
+    @commands.command(name="unjail", aliases=["undunce", "release"])
+    @commands.guild_only()
+    @permissions.check_perm("manage_roles")
+    async def unjail(self, ctx, member: MemberConv, *, reason: str = None):
+        """
+        Removes a user from the jail.
+        Requires a jail role to be configured.
+        """
+
+        logger.info("Un-jailing user '%s' (%d)", member.name, member.id)
+        await self.perform_unjail(ctx, member, 0, reason)
+
+    @commands.command(
+        name="dunjail", aliases=["dundunce", "timeunjail", "timeundunce", "drelease"],
+    )
+    @commands.guild_only()
+    @permissions.check_perm("manage_roles")
+    async def dunjail(
+        self, ctx, member: MemberConv, minutes: int = 0, *, reason: str = None,
+    ):
+        """
+        Removes a user from the jail in the given number of minutes.
+        Requires a jail role to be configured.
+        Set 'minutes' to 0 to release immediately.
+        """
+
+        logger.info(
+            "Un-jailing user '%s' (%d) in %d minutes", member.name, member.id, minutes,
+        )
+
+        await self.perform_unjail(ctx, member, minutes, reason)
 
     @commands.command(name="kick")
     @commands.guild_only()
@@ -265,15 +297,7 @@ class Moderation(AbstractCog):
                 content="I don't have permission to kick this user"
             )
 
-    @commands.command(name="ban")
-    @commands.guild_only()
-    @permissions.check_perm("ban_members")
-    async def ban(self, ctx, user: UserConv, delete_days: int, *, reason: str):
-        """
-        Bans the user from the guild with a reason
-        If guild has moderation logging enabled, it is logged
-        """
-
+    async def perform_ban(self, ctx, user, delete_days, reason):
         if delete_days < 0 or delete_days > 7:
             embed = discord.Embed(colour=discord.Colour.red())
             embed.description = (
@@ -302,6 +326,28 @@ class Moderation(AbstractCog):
 
         except discord.errors.Forbidden:
             raise ManualCheckFailure(content="I don't have permission to ban this user")
+
+    @commands.command(name="ban")
+    @commands.guild_only()
+    @permissions.check_perm("ban_members")
+    async def ban(self, ctx, user: UserConv, *, reason: str):
+        """
+        Bans the user from the guild with a reason
+        If guild has moderation logging enabled, it is logged
+        """
+
+        await self.perform_ban(ctx, user, 0, reason)
+
+    @commands.command(name="dban", aliases=["deleteban"])
+    @commands.guild_only()
+    @permissions.check_perm("ban_members")
+    async def dban(self, ctx, user: UserConv, delete_days: int, *, reason: str):
+        """
+        Bans the user from the guild with a reason, deleting the last X days of messages
+        If guild has moderation logging enabled, it is logged
+        """
+
+        await self.perform_ban(ctx, user, delete_days, reason)
 
     @commands.command(name="softban", aliases=["soft", "sban"])
     @commands.guild_only()

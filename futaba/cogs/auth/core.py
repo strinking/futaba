@@ -15,11 +15,9 @@ Cog for authentication schemes and token generation
 """
 
 import logging
-import time
 from datetime import datetime
 from jose import jwt
 
-import discord
 from discord.ext import commands
 
 from ..abc import AbstractCog
@@ -27,6 +25,7 @@ from ..abc import AbstractCog
 logger = logging.getLogger(__name__)
 
 __all__ = ["Authentication"]
+
 
 class Authentication(AbstractCog):
     __slots__ = ("journal",)
@@ -43,15 +42,15 @@ class Authentication(AbstractCog):
     async def jwt(self, ctx):
         """ Generates a Javascript Web Token for a user """
 
-        epoch = datetime.utcfromtimestamp(0)
-        
+        time_since_join = ctx.author.joined_at - datetime.utcfromtimestamp(0)
+
         token = jwt.encode(
             {
                 "iss": f"futaba-{ctx.guild.id}",
                 "did": ctx.author.id,
                 "dnn": ctx.author.display_name,
-                "jdt": int((ctx.author.joined_at - epoch).total_seconds() * 1000),
-                "iat": int(time.time()),
+                "jdt": int(time_since_join.total_seconds() * 1000),
+                "iat": int(datetime.now().timestamp()),
             },
             self.jwt_secret,
             algorithm="HS256",
@@ -59,6 +58,5 @@ class Authentication(AbstractCog):
 
         logger.info("User '%s' (%d) generated a JWT", ctx.author.name, ctx.author.id)
 
-        response = f"Generated authentication token: ```{token}```"
-
+        response = f"Generated authentication token:\n```{token}```"
         await ctx.author.send(content=response)
