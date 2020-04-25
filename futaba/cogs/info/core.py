@@ -139,11 +139,19 @@ class Info(AbstractCog):
             def category(ch):
                 return UNICODE_CATEGORY_NAME[unicodedata.category(ch)]
 
+            try:
+                emoji_name = ", ".join(map(unicodedata.name, emoji))
+            except ValueError:
+                embed = discord.Embed(colour=discord.Colour.red())
+                embed.set_author(name=emoji)
+                embed.description = f"Unable to retrieve unicode name for `{emoji}`"
+                raise CommandFailed(embed=embed)
+
             embed = discord.Embed(colour=discord.Colour.dark_gold())
             embed.description = emoji
             embed.set_author(name=name)
             embed.set_thumbnail(url=get_unicode_url(emoji))
-            embed.add_field(name="Name", value=", ".join(map(unicodedata.name, emoji)))
+            embed.add_field(name="Name", value=emoji_name)
             embed.add_field(
                 name="Codepoint", value=", ".join(map(lambda c: str(ord(c)), emoji))
             )
