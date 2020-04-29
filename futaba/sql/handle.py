@@ -92,6 +92,7 @@ class SqlHandler:
         # Create tables for optional cogs that need them
 
         meta = MetaData(self.db)
-        table = cogsql(self, meta)
-        table.create(self.db)
-        self.optional[name] = table
+        model = cogsql(self, meta)
+        meta.create_all(self.db)
+        self.optional[name] = model
+        logger.info("Created model/tables for '%s'.", name)
