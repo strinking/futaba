@@ -51,6 +51,7 @@ class SqlHandler:
         "roles",
         "settings",
         "welcome",
+        "optional"
     )
 
     def __init__(self, db_path: str, max_delete_messages=500):
@@ -70,6 +71,7 @@ class SqlHandler:
         self.roles = RolesModel(self, meta)
         self.settings = SettingsModel(self, meta)
         self.welcome = WelcomeModel(self, meta)
+        self.optional = {}
 
         meta.create_all(self.db)
         logger.info("Created all tables.")
@@ -85,3 +87,11 @@ class SqlHandler:
             self.trans = Transaction(self, self.conn, trans_logger)
 
         return self.trans
+
+    def create_optional(self, name, cogsql):
+        # Create tables for optional cogs that need them
+
+        meta = MetaData(self.db)
+        table = cogsql(self, meta)
+        table.create(self.db)
+        self.optional[name] = table
