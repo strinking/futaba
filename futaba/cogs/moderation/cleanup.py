@@ -137,11 +137,25 @@ class Cleanup(AbstractCog):
         if channel is None:
             channel = ctx.channel
 
+        # Make sure it's an ID
         if not is_discord_id(message_id):
             embed = discord.Embed(colour=discord.Colour.red())
             embed.set_author(name="Won't delete to message ID")
             embed.description = (
                 f"The given number `{message_id}` doesn't look like a Discord ID."
+            )
+            raise CommandFailed(embed=embed)
+
+        # Make sure it's not actually a user ID
+        try:
+            user = await self.bot.fetch_user(message_id)
+        except discord.NotFound:
+            pass
+        else:
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.description = (
+                f"The passed ID is for user {user.mention}. Did you copy the message ID or the user ID?\n\n"
+                f"Not deleting. If you'd like to delete this far, specify the message count directly instead."
             )
             raise CommandFailed(embed=embed)
 
