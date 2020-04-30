@@ -354,7 +354,6 @@ class Bot(commands.AutoShardedBot):
 
         elif isinstance(error, SendHelp):
             logger.info("Manually sending help for command")
-            # FIXME no help provider set up
             await Reactions.HELP.add(ctx.message)
 
         elif isinstance(error, commands.errors.CommandInvokeError):
