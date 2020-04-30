@@ -125,8 +125,6 @@ class Moderation(AbstractCog):
         if member.top_role >= ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to mute this user")
 
-        # TODO store punishment in table with task ID
-
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Muted", minutes, reason, past=True)
 
@@ -161,8 +159,6 @@ class Moderation(AbstractCog):
         if member.top_role >= ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to unmute this user")
 
-        # TODO store punishment in table with task ID
-
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Unmuted", minutes, reason, past=True)
 
@@ -180,8 +176,6 @@ class Moderation(AbstractCog):
 
         if member.top_role >= ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to jail this user")
-
-        # TODO store punishment in table with task ID
 
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Jailed", minutes, reason)
@@ -229,8 +223,6 @@ class Moderation(AbstractCog):
 
         if member.top_role >= ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to unjail this user")
-
-        # TODO store punishment in table with task ID
 
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Released", minutes, reason, past=True)
@@ -369,7 +361,6 @@ class Moderation(AbstractCog):
             clean_reason = escape_backticks(reason)
             content = f"{mod} soft-banned {user.mention} ({banned}) with reason: `{clean_reason}`"
 
-            # TODO add to tracker and add handler to journal event to prevent ban/softban event
             await ctx.guild.ban(user, reason=f"{reason} - {mod}", delete_message_days=1)
             await asyncio.sleep(0.1)
             await ctx.guild.unban(user, reason=f"{reason} - {mod}")
@@ -403,7 +394,6 @@ class Moderation(AbstractCog):
             embed = discord.Embed(description="Done! User Unbanned")
             embed.add_field(name="Reason", value=reason)
 
-            # TODO add tracker unban event and move this to journal/impl/moderation.py
             mod = user_discrim(ctx.author)
             unbanned = user_discrim(user)
             clean_reason = escape_backticks(reason)
