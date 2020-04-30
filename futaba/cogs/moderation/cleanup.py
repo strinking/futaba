@@ -94,7 +94,7 @@ class Cleanup(AbstractCog):
 
     @commands.command(name="cleanup", aliases=["clean"])
     @commands.guild_only()
-    @permissions.check_mod()
+    @permissions.has_perm("manage_messages")
     async def cleanup(self, ctx, count: int, channel: discord.TextChannel = None):
         """ Deletes the last <count> messages, not including this command. """
 
@@ -128,7 +128,7 @@ class Cleanup(AbstractCog):
 
     @commands.command(name="cleanupid", aliases=["cleanid"])
     @commands.guild_only()
-    @permissions.check_mod()
+    @permissions.has_perm("manage_messages")
     async def cleanup_id(
         self, ctx, message_id: int, channel: discord.TextChannel = None
     ):
@@ -187,7 +187,7 @@ class Cleanup(AbstractCog):
 
     @commands.command(name="cleanupuser", aliases=["cleanuser"])
     @commands.guild_only()
-    @permissions.check_mod()
+    @permissions.has_perm("manage_messages")
     async def cleanup_user(
         self, ctx, user: discord.User, count: int, channel: discord.TextChannel = None
     ):
@@ -235,7 +235,7 @@ class Cleanup(AbstractCog):
 
     @commands.command(name="cleanuptext", aliases=["cleantext"])
     @commands.guild_only()
-    @permissions.check_mod()
+    @permissions.has_perm("manage_messages")
     async def cleanup_text(
         self, ctx, text: str, count: int, channel: discord.TextChannel = None
     ):
