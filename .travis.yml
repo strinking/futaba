@@ -16,7 +16,7 @@ python:
 jobs:
   include:
     - stage: black
-      python: '3.6'
+      python: '3.8'
       script:
         - black --check futaba
 
