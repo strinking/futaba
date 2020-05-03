@@ -4,22 +4,19 @@ stages:
   - black
   - test
 
+python:
+  - '3.6'
+  - '3.7'
+  - '3.8'
+  - '3.8-dev'
+  - 'nightly'
+
 jobs:
   include:
     - stage: black
       python: '3.8'
       script:
         - black --check futaba
-    - stage: lint
-      python:
-        - '3.6'
-        - '3.7'
-        - '3.8'
-        - '3.8-dev'
-        - 'nightly'
-      script:
-        # Display all lints and a report
-        - pylint --reports=yes futaba
 
 matrix:
   allow_failures:
@@ -29,6 +26,10 @@ matrix:
 install:
   - pip install -r requirements.txt
   - pip install -r requirements-dev.txt
+
+script:
+  # Display all lints and a report
+  - pylint --reports=yes futaba
 
 notifications:
   email:
