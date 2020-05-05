@@ -216,6 +216,32 @@ class Moderation(AbstractCog):
 
         await self.perform_jail(ctx, member, minutes, reason)
 
+    @commands.command(name="selfjail", aliases=["selfdunce", "focus"])
+    @commands.guild_only()
+    async def self_jail(self, ctx, minutes: int = 60):
+        """
+        Jails the user that uses the command
+        Mainly used to restrict access so the user can focus without distractions
+        Requires a jail role to be configured.
+        """
+
+        # Check if user has supplied a time between 1 and 720 mins
+        if minutes <= 0 or minutes > 720:
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.description = (
+                "You need to supply a length of time between 1 and 720 mins (12 hours)"
+            )
+
+            await ctx.send(embed=embed)
+
+        else:
+            member = ctx.author
+            logger.info(
+                "Jailing user '%s' (%d) for %d minutes", member.name, member.id, minutes
+            )
+
+            await self.perform_jail(ctx, member, minutes, "Self jail")
+    
     async def perform_unjail(self, ctx, member, minutes, reason):
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)
         if roles.jail is None:
