@@ -52,6 +52,14 @@ from .utils import plural, user_discrim
 logger = logging.getLogger(__name__)
 
 
+def ignore_command_hooks(ctx):
+    if ctx.command.module == "discord.ext.commands.help":
+        logger.debug("Ignoring normal command hooks for %r", ctx.command)
+        return True
+
+    return False
+
+
 class Bot(commands.AutoShardedBot):
     __slots__ = (
         "config",
@@ -244,6 +252,9 @@ class Bot(commands.AutoShardedBot):
         Handles pre-command instructions, such as adding the "wait" reaction.
         """
 
+        if ignore_command_hooks(ctx):
+            return
+
         self.loop.create_task(self._add_waiting(ctx.message))
 
     async def _add_waiting(self, message):
@@ -277,6 +288,9 @@ class Bot(commands.AutoShardedBot):
 
         # Complains about "context" vs "ctx"
         # pylint: disable=arguments-differ
+
+        if ignore_command_hooks(ctx):
+            return
 
         async with self.message_lock(ctx.message):
             try:
