@@ -494,7 +494,7 @@ class Bot(commands.AutoShardedBot):
                     raise ValueError(f"Invalid permission value: {value!r}")
                 full_tb.writeln(f"  {setting} {perm}")
 
-            full_tb.writeln(f"Roles:")
+            full_tb.writeln("Roles:")
             for role in ctx.author.roles:
                 perms = role.permissions.value
                 full_tb.writeln(f"  {role.name} ({role.id}):")

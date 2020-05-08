@@ -159,7 +159,7 @@ async def add_content_filter(bot, guild, filters, level, hexsum, description):
 
 
 async def delete_content_filter(bot, guild, filters, hexsums):
-    logger.info("Removing SHA1s from guild content filter: %s", f'[", ".join(hexsums)]')
+    logger.info("Removing SHA1s from guild content filter: %s", ", ".join(hexsums))
 
     try:
         hashsums = [bytes.fromhex(hexsum) for hexsum in hexsums]

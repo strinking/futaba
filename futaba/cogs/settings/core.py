@@ -250,7 +250,7 @@ class Settings(AbstractCog):
 
         special_roles = self.bot.sql.settings.get_special_roles(ctx.guild)
         if role in special_roles:
-            embed.description = f"Cannot assign the same role for multiple purposes"
+            embed.description = "Cannot assign the same role for multiple purposes"
             raise CommandFailed(embed=embed)
 
         embed = permissions.elevated_role_embed(ctx.guild, role, "warning")

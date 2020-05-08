@@ -98,7 +98,7 @@ class JoinAlertKey(Enum):
                 # Raise with different message
                 raise ValueError(f"Invalid discord status: {arg}")
         else:
-            raise ValueError(f"Not an enum instance of JoinAlertKey")
+            raise ValueError("Not an enum instance of JoinAlertKey")
 
     @property
     def display_name(self):
@@ -115,7 +115,7 @@ class JoinAlertKey(Enum):
         elif self == JoinAlertKey.STATUS:
             return "status"
         else:
-            raise ValueError(f"Not an enum instance of JoinAlertKey")
+            raise ValueError("Not an enum instance of JoinAlertKey")
 
 
 @unique
