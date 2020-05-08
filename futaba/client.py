@@ -85,10 +85,7 @@ class Bot(commands.AutoShardedBot):
         )
 
         self.help_command = commands.DefaultHelpCommand(
-            width=90,
-            sort_commands=True,
-            dm_help=True,
-            indent=4,
+            width=90, sort_commands=True, dm_help=True, indent=4,
         )
 
     @staticmethod
@@ -315,7 +312,7 @@ class Bot(commands.AutoShardedBot):
             )
 
         elif isinstance(
-            error, (commands.errors.BadArgument, commands.errors.BadUnionArgument)
+            error, (commands.errors.BadArgument, commands.errors.BadUnionArgument),
         ):
             # Tell the user they couldn't find what they were looking for
             logger.info("User specified argument that does not compute")
@@ -329,7 +326,7 @@ class Bot(commands.AutoShardedBot):
                 ctx.send(embed=embed), Reactions.MISSING.add(ctx.message)
             )
 
-        elif isinstance(error, commands.errors.CheckFailure):
+        elif isinstance(error, (commands.errors.CheckFailure, discord.Forbidden)):
             # Tell the user they don't have the permission to tun the command
             logger.info("Permission check for command failed")
             await Reactions.DENY.add(ctx.message)

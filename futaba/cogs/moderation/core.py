@@ -241,7 +241,7 @@ class Moderation(AbstractCog):
             )
 
             await self.perform_jail(ctx, member, minutes, "Self jail")
-    
+
     async def perform_unjail(self, ctx, member, minutes, reason):
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)
         if roles.jail is None:
