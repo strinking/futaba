@@ -172,7 +172,6 @@ class Bot(commands.AutoShardedBot):
                 # Something made the loading fail
                 # So log it with reason and tell user to check it
                 logger.error("Load failed: %s", file, exc_info=error)
-                raise
                 sys.exit(1)
             else:
                 logger.info("Loaded cog: %s", file)
@@ -495,7 +494,7 @@ class Bot(commands.AutoShardedBot):
                     raise ValueError(f"Invalid permission value: {value!r}")
                 full_tb.writeln(f"  {setting} {perm}")
 
-            full_tb.writeln(f"Roles:")
+            full_tb.writeln("Roles:")
             for role in ctx.author.roles:
                 perms = role.permissions.value
                 full_tb.writeln(f"  {role.name} ({role.id}):")

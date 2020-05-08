@@ -112,7 +112,7 @@ class Journal(AbstractCog):
             embed.set_author(name="Current journal outputs")
         else:
             embed = discord.Embed(colour=discord.Colour.dark_purple())
-            embed.set_author(name=f"No journal outputs!")
+            embed.set_author(name="No journal outputs!")
 
         await ctx.send(embed=embed)
 
@@ -354,7 +354,7 @@ class Journal(AbstractCog):
             embed.set_author(name="Current journal outputs")
         else:
             embed = discord.Embed(colour=discord.Colour.dark_purple())
-            embed.set_author(name=f"No journal outputs!")
+            embed.set_author(name="No journal outputs!")
 
         await ctx.send(embed=embed)
 
