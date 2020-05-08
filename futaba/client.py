@@ -381,13 +381,13 @@ class Bot(commands.AutoShardedBot):
             else:
                 # Other exception, probably not meant to happen. Send it as an embed.
                 await self.report_other_exception(
-                    ctx, error, "Unexpected error occurred!"
+                    ctx, error, "Unexpected error occurred!",
                 )
 
         else:
             logger.error("Unknown discord command error raised", exc_info=error)
             await self.report_other_exception(
-                ctx, error, "Unwrapped exception was raised from command!"
+                ctx, error, "Unwrapped exception was raised from command!",
             )
 
     async def report_other_exception(self, ctx, error, title):

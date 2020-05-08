@@ -14,7 +14,6 @@
 Implements modifications to the discord.py help provider class.
 """
 
-import asyncio
 import logging
 
 import discord
