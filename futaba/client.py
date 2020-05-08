@@ -84,7 +84,7 @@ class Bot(commands.AutoShardedBot):
             fetch_offline_members=True,
         )
 
-        self.help_command = commands.MinimalHelpCommand(width=90, dm_help=True)
+        self.help_command = commands.DefaultHelpCommand(width=90, dm_help=True)
 
     @staticmethod
     def my_command_prefix(bot, message):
