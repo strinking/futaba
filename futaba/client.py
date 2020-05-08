@@ -40,6 +40,7 @@ from .exceptions import (
     ManualCheckFailure,
     SendHelp,
 )
+from .help import HelpCommand
 from .journal import Broadcaster, LoggingOutputListener
 from .lru import LruCache
 from .punishment import PunishmentHandler
@@ -84,9 +85,7 @@ class Bot(commands.AutoShardedBot):
             fetch_offline_members=True,
         )
 
-        self.help_command = commands.DefaultHelpCommand(
-            width=90, sort_commands=True, dm_help=True, indent=4,
-        )
+        self.help_command = HelpCommand(self)
 
     @staticmethod
     def my_command_prefix(bot, message):
