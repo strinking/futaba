@@ -40,6 +40,7 @@ from .exceptions import (
     ManualCheckFailure,
     SendHelp,
 )
+from .help import HelpCommand
 from .journal import Broadcaster, LoggingOutputListener
 from .lru import LruCache
 from .punishment import PunishmentHandler
@@ -49,6 +50,14 @@ from .unicode import unicode_repr
 from .utils import plural, user_discrim
 
 logger = logging.getLogger(__name__)
+
+
+def ignore_command_hooks(ctx):
+    if ctx.command.module == "discord.ext.commands.help":
+        logger.debug("Ignoring normal command hooks for %r", ctx.command)
+        return True
+
+    return False
 
 
 class Bot(commands.AutoShardedBot):
@@ -84,7 +93,7 @@ class Bot(commands.AutoShardedBot):
             fetch_offline_members=True,
         )
 
-        self.help_command = commands.MinimalHelpCommand(width=90, dm_help=True)
+        self.help_command = HelpCommand()
 
     @staticmethod
     def my_command_prefix(bot, message):
@@ -244,6 +253,9 @@ class Bot(commands.AutoShardedBot):
         Handles pre-command instructions, such as adding the "wait" reaction.
         """
 
+        if ignore_command_hooks(ctx):
+            return
+
         self.loop.create_task(self._add_waiting(ctx.message))
 
     async def _add_waiting(self, message):
@@ -278,6 +290,9 @@ class Bot(commands.AutoShardedBot):
         # Complains about "context" vs "ctx"
         # pylint: disable=arguments-differ
 
+        if ignore_command_hooks(ctx):
+            return
+
         async with self.message_lock(ctx.message):
             try:
                 if isinstance(ctx.channel, discord.abc.GuildChannel):
@@ -311,7 +326,7 @@ class Bot(commands.AutoShardedBot):
             )
 
         elif isinstance(
-            error, (commands.errors.BadArgument, commands.errors.BadUnionArgument)
+            error, (commands.errors.BadArgument, commands.errors.BadUnionArgument),
         ):
             # Tell the user they couldn't find what they were looking for
             logger.info("User specified argument that does not compute")
@@ -325,7 +340,7 @@ class Bot(commands.AutoShardedBot):
                 ctx.send(embed=embed), Reactions.MISSING.add(ctx.message)
             )
 
-        elif isinstance(error, commands.errors.CheckFailure):
+        elif isinstance(error, (commands.errors.CheckFailure, discord.Forbidden)):
             # Tell the user they don't have the permission to tun the command
             logger.info("Permission check for command failed")
             await Reactions.DENY.add(ctx.message)
@@ -381,13 +396,13 @@ class Bot(commands.AutoShardedBot):
             else:
                 # Other exception, probably not meant to happen. Send it as an embed.
                 await self.report_other_exception(
-                    ctx, error, "Unexpected error occurred!"
+                    ctx, error, "Unexpected error occurred!",
                 )
 
         else:
             logger.error("Unknown discord command error raised", exc_info=error)
             await self.report_other_exception(
-                ctx, error, "Unwrapped exception was raised from command!"
+                ctx, error, "Unwrapped exception was raised from command!",
             )
 
     async def report_other_exception(self, ctx, error, title):
