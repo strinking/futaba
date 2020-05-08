@@ -40,26 +40,34 @@ class HelpCommand(commands.DefaultHelpCommand):
                 pass
 
     async def handle_error(self, ctx, error):
-        if isinstance(error, discord.Forbidden):
-            logger.debug(
-                "Lacks permissions to send help to %s (%d)",
-                user_discrim(ctx.author),
-                ctx.author.id,
-            )
+        reported = False
 
-            embed = discord.Embed(colour=discord.Colour.red())
-            embed.title = "Cannot send help command"
-            embed.description = (
-                "You do not allow DMs from this server. "
-                "Please enable them so help information can be sent."
-            )
+        if isinstance(error, commands.errors.CommandInvokeError):
+            error = error.__cause__
 
-            await asyncio.gather(
-                ctx.send(embed=embed), Reactions.DENY.add(ctx.message),
-            )
+            if isinstance(error, discord.Forbidden):
+                logger.debug(
+                    "Lacks permissions to send help to %s (%d)",
+                    user_discrim(ctx.author),
+                    ctx.author.id,
+                )
 
-        else:
-            logger.error("Unknown discord command error raised", exc_info=error)
-            await ctx.bot.report_other_exception(
-                ctx, error, "Unwrapped exception was raised from command!",
+                embed = discord.Embed(colour=discord.Colour.red())
+                embed.title = "Cannot send help command"
+                embed.description = (
+                    "You do not allow DMs from this server. "
+                    "Please enable them so help information can be sent."
+                )
+
+                reported = True
+                await asyncio.gather(
+                    ctx.send(embed=embed), Reactions.DENY.add(ctx.message),
+                )
+
+
+        # Default error handling
+        if not reported:
+            logger.error("Unexpected error raised during help command", exc_info=error)
+            await self.bot.report_other_exception(
+                ctx, error, "Unexpected error occurred during help command!",
             )
