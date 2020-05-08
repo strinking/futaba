@@ -57,7 +57,7 @@ It is important to address issues that come up with pylint. When in the root, si
 ```
 $ pylint futaba
 ```
-Some lints are currently violated, and have issues for fixing them. New code should work to not grow the number of violations.
+Please ensure that your code passes the linting before merging it to master.
 
 When running the bot, it is often a good idea to include the `-d` flag to see debug-level logging messages.
 ```

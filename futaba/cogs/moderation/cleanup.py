@@ -94,7 +94,7 @@ class Cleanup(AbstractCog):
 
     @commands.command(name="cleanup", aliases=["clean"])
     @commands.guild_only()
-    @permissions.check_mod()
+    @permissions.check_perm("manage_messages")
     async def cleanup(self, ctx, count: int, channel: discord.TextChannel = None):
         """ Deletes the last <count> messages, not including this command. """
 
@@ -128,7 +128,7 @@ class Cleanup(AbstractCog):
 
     @commands.command(name="cleanupid", aliases=["cleanid"])
     @commands.guild_only()
-    @permissions.check_mod()
+    @permissions.check_perm("manage_messages")
     async def cleanup_id(
         self, ctx, message_id: int, channel: discord.TextChannel = None
     ):
@@ -137,11 +137,25 @@ class Cleanup(AbstractCog):
         if channel is None:
             channel = ctx.channel
 
+        # Make sure it's an ID
         if not is_discord_id(message_id):
             embed = discord.Embed(colour=discord.Colour.red())
             embed.set_author(name="Won't delete to message ID")
             embed.description = (
                 f"The given number `{message_id}` doesn't look like a Discord ID."
+            )
+            raise CommandFailed(embed=embed)
+
+        # Make sure it's not actually a user ID
+        try:
+            user = await self.bot.fetch_user(message_id)
+        except discord.NotFound:
+            pass
+        else:
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.description = (
+                f"The passed ID is for user {user.mention}. Did you copy the message ID or the user ID?\n\n"
+                f"Not deleting. If you'd like to delete this far, specify the message count directly instead."
             )
             raise CommandFailed(embed=embed)
 
@@ -187,7 +201,7 @@ class Cleanup(AbstractCog):
 
     @commands.command(name="cleanupuser", aliases=["cleanuser"])
     @commands.guild_only()
-    @permissions.check_mod()
+    @permissions.check_perm("manage_messages")
     async def cleanup_user(
         self, ctx, user: discord.User, count: int, channel: discord.TextChannel = None
     ):
@@ -235,7 +249,7 @@ class Cleanup(AbstractCog):
 
     @commands.command(name="cleanuptext", aliases=["cleantext"])
     @commands.guild_only()
-    @permissions.check_mod()
+    @permissions.check_perm("manage_messages")
     async def cleanup_text(
         self, ctx, text: str, count: int, channel: discord.TextChannel = None
     ):

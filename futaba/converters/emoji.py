@@ -41,7 +41,7 @@ class EmojiConv(Converter):
         # Checking if it's an emoji id
         match = ID_REGEX.match(argument)
         if match is not None:
-            emoji = discord.utils.get(ctx.bot.emojis, id=int(match[1]))
+            emoji = ctx.bot.get_emoji(int(match[1]))
             if emoji is not None:
                 return emoji
 

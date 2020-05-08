@@ -125,8 +125,6 @@ class Moderation(AbstractCog):
         if member.top_role >= ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to mute this user")
 
-        # TODO store punishment in table with task ID
-
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Muted", minutes, reason, past=True)
 
@@ -161,8 +159,6 @@ class Moderation(AbstractCog):
         if member.top_role >= ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to unmute this user")
 
-        # TODO store punishment in table with task ID
-
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Unmuted", minutes, reason, past=True)
 
@@ -180,8 +176,6 @@ class Moderation(AbstractCog):
 
         if member.top_role >= ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to jail this user")
-
-        # TODO store punishment in table with task ID
 
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Jailed", minutes, reason)
@@ -222,6 +216,32 @@ class Moderation(AbstractCog):
 
         await self.perform_jail(ctx, member, minutes, reason)
 
+    @commands.command(name="selfjail", aliases=["selfdunce", "focus"])
+    @commands.guild_only()
+    async def self_jail(self, ctx, minutes: int = 60):
+        """
+        Jails the user that uses the command
+        Mainly used to restrict access so the user can focus without distractions
+        Requires a jail role to be configured.
+        """
+
+        # Check if user has supplied a time between 1 and 720 mins
+        if minutes <= 0 or minutes > 720:
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.description = (
+                "You need to supply a length of time between 1 and 720 mins (12 hours)"
+            )
+
+            await ctx.send(embed=embed)
+
+        else:
+            member = ctx.author
+            logger.info(
+                "Jailing user '%s' (%d) for %d minutes", member.name, member.id, minutes
+            )
+
+            await self.perform_jail(ctx, member, minutes, "Self jail")
+
     async def perform_unjail(self, ctx, member, minutes, reason):
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)
         if roles.jail is None:
@@ -229,8 +249,6 @@ class Moderation(AbstractCog):
 
         if member.top_role >= ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to unjail this user")
-
-        # TODO store punishment in table with task ID
 
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Released", minutes, reason, past=True)
@@ -369,7 +387,6 @@ class Moderation(AbstractCog):
             clean_reason = escape_backticks(reason)
             content = f"{mod} soft-banned {user.mention} ({banned}) with reason: `{clean_reason}`"
 
-            # TODO add to tracker and add handler to journal event to prevent ban/softban event
             await ctx.guild.ban(user, reason=f"{reason} - {mod}", delete_message_days=1)
             await asyncio.sleep(0.1)
             await ctx.guild.unban(user, reason=f"{reason} - {mod}")
@@ -403,7 +420,6 @@ class Moderation(AbstractCog):
             embed = discord.Embed(description="Done! User Unbanned")
             embed.add_field(name="Reason", value=reason)
 
-            # TODO add tracker unban event and move this to journal/impl/moderation.py
             mod = user_discrim(ctx.author)
             unbanned = user_discrim(user)
             clean_reason = escape_backticks(reason)

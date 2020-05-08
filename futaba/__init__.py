@@ -23,6 +23,7 @@ from . import (
     emojis,
     enums,
     exceptions,
+    help,
     journal,
     lru,
     navi,

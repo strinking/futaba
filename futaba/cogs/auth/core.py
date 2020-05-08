@@ -39,6 +39,7 @@ class Authentication(AbstractCog):
         pass
 
     @commands.command(name="jwt", aliases=["dauth", "mcauth"])
+    @commands.guild_only()
     async def jwt(self, ctx):
         """ Generates a Javascript Web Token for a user """
 
