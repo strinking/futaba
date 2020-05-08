@@ -497,3 +497,11 @@ class Bot(commands.AutoShardedBot):
         filename = f"futaba-extended-traceback-{unix_time}.log"
         file = discord.File(fp=full_tb.bytes_io(), filename=filename)
         await self.error_channel.send(file=file)
+
+    def __reduce__(self):
+        """
+        Empty serializer method so discord.commands doesn't try to serialize
+        this object with its live database connections and cogs and such.
+        """
+
+        return (lambda: None, ())
