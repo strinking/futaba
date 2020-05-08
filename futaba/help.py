@@ -27,15 +27,13 @@ logger = logging.getLogger(__name__)
 
 
 class HelpCommand(commands.DefaultHelpCommand):
-    def __init__(self, client):
+    def __init__(self):
         super().__init__(
             width=90, sort_commands=True, dm_help=True, indent=4,
         )
 
-        self.client = client
-
     async def on_help_command_error(self, ctx, error):
-        async with self.client.message_lock(ctx.message):
+        async with ctx.bot.message_lock(ctx.message):
             try:
                 await self.handle_error(ctx, error)
             except discord.NotFound:
@@ -62,6 +60,6 @@ class HelpCommand(commands.DefaultHelpCommand):
 
         else:
             logger.error("Unknown discord command error raised", exc_info=error)
-            await self.client.report_other_exception(
+            await ctx.bot.report_other_exception(
                 ctx, error, "Unwrapped exception was raised from command!",
             )
