@@ -40,6 +40,7 @@ class HelpCommand(commands.DefaultHelpCommand):
 
     async def handle_error(self, ctx, error):
         reported = False
+        await Reactions.DENY.add(ctx.message)
 
         if isinstance(error, commands.errors.CommandInvokeError):
             error = error.__cause__
@@ -59,14 +60,11 @@ class HelpCommand(commands.DefaultHelpCommand):
                 )
 
                 reported = True
-                await asyncio.gather(
-                    ctx.send(embed=embed), Reactions.DENY.add(ctx.message),
-                )
-
+                await ctx.send(embed=embed)
 
         # Default error handling
         if not reported:
             logger.error("Unexpected error raised during help command", exc_info=error)
-            await self.bot.report_other_exception(
+            await ctx.bot.report_other_exception(
                 ctx, error, "Unexpected error occurred during help command!",
             )
