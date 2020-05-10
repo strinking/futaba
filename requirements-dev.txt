@@ -1,2 +1,2 @@
 git+https://github.com/ambv/black@stable
-pylint>=2.4
+pylint>=2.5
