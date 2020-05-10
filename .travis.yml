@@ -21,6 +21,8 @@ jobs:
     - python: 'nightly'
   fast_finish: true
 
+cache: pip
+
 install:
   - pip install -r requirements.txt
   - pip install -r requirements-dev.txt
