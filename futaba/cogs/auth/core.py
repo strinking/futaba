@@ -18,6 +18,7 @@ import logging
 from datetime import datetime
 from jose import jwt
 
+import discord
 from discord.ext import commands
 
 from ..abc import AbstractCog
@@ -60,4 +61,15 @@ class Authentication(AbstractCog):
         logger.info("User '%s' (%d) generated a JWT", ctx.author.name, ctx.author.id)
 
         response = f"Generated authentication token:\n```{token}```"
-        await ctx.author.send(content=response)
+
+        try:
+            await ctx.author.send(content=response)
+        except discord.Forbidden:
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.title = "Cannot send help command"
+            embed.description = (
+                "You do not allow DMs from this server. "
+                "Please enable them so help information can be sent."
+            )
+
+            await ctx.send(embed=embed)
