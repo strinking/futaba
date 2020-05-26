@@ -46,7 +46,7 @@ class Moderation(AbstractCog):
         pass
 
     @staticmethod
-    def build_reason(message, action, minutes, reason, past=False):
+    def build_reason_internal(message, action, minutes, reason, past=False):
         full_reason = StringBuilder(f"{action} by {user_discrim(message.author)}")
         if minutes:
             full_reason.write(
@@ -56,7 +56,11 @@ class Moderation(AbstractCog):
             full_reason.write(f" with reason: {reason}")
         return str(full_reason)
 
-    async def remove_roles(self, message, member, minutes, action, reason):
+    @staticmethod
+    def build_reason(ctx, action, minutes, reason, past=False):
+        self.build_reason_internal(ctx.message, action, minutes, reason, past)
+
+    async def remove_roles_internal(self, message, member, minutes, action, reason):
         assert minutes
 
         logger.info(
@@ -79,6 +83,9 @@ class Moderation(AbstractCog):
             reason=reason,
         )
         self.bot.add_tasks(task)
+
+    async def remove_roles(self, ctx, member, minutes, action, reason):
+        self.remove_roles_internal(ctx.message, member, minutes, action, reason)
 
     @commands.command(name="nick", aliases=["nickname", "renick"])
     @commands.guild_only()
@@ -178,16 +185,16 @@ class Moderation(AbstractCog):
             raise ManualCheckFailure("I don't have permission to jail this user")
 
         minutes = max(minutes, 0)
-        reason = self.build_reason(message, "Jailed", minutes, reason)
+        reason = self.build_reason_internal(message, "Jailed", minutes, reason)
 
         await self.bot.punish.jail(message.guild, member, reason)
 
         # If a delayed event, schedule a Navi task
         if minutes:
-            await self.remove_roles(
+            await self.remove_roles_internal(
                 message, member, minutes, PunishAction.RELIEVE_JAIL, reason
             )
-    
+
     async def perform_jail(self, ctx, member, minutes, reason):
         await self.perform_jail_internal(self, ctx.message, member, minutes, reason)
 
@@ -211,7 +218,9 @@ class Moderation(AbstractCog):
         :return: Nothing.
         """
         if len(message.mentions) > 5:
-           await self.perform_jail_internal(message, message.author, 0, "Mention Bombing.")
+            await self.perform_jail_internal(
+                message, message.author, 0, "Mention Bombing."
+            )
 
     @commands.command(name="djail", aliases=["ddunce", "timejail", "timedunce"])
     @commands.guild_only()
