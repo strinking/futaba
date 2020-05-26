@@ -219,7 +219,7 @@ class Moderation(AbstractCog):
 
         await self.perform_jail(ctx, member, minutes, reason)
 
-    @commands.command(name="selfjail", aliases=["selfdunce", "focus"])
+    @commands.command(name="selfjail", aliases=["selfgaol", "selfdunce", "focus"])
     @commands.guild_only()
     async def self_jail(self, ctx, minutes: int = 60):
         """
