@@ -46,8 +46,8 @@ class Moderation(AbstractCog):
         pass
 
     @staticmethod
-    def build_reason(ctx, action, minutes, reason, past=False):
-        full_reason = StringBuilder(f"{action} by {user_discrim(ctx.author)}")
+    def build_reason(message, action, minutes, reason, past=False):
+        full_reason = StringBuilder(f"{action} by {user_discrim(message.author)}")
         if minutes:
             full_reason.write(
                 f" {'for' if past else 'in'} {minutes} minute{plural(minutes)}"
@@ -56,7 +56,7 @@ class Moderation(AbstractCog):
             full_reason.write(f" with reason: {reason}")
         return str(full_reason)
 
-    async def remove_roles(self, ctx, member, minutes, action, reason):
+    async def remove_roles(self, message, member, minutes, action, reason):
         assert minutes
 
         logger.info(
@@ -71,7 +71,7 @@ class Moderation(AbstractCog):
         task = PunishTask(
             self.bot,
             None,
-            ctx.author,
+            message.author,
             timestamp,
             None,
             member=member,
@@ -169,24 +169,27 @@ class Moderation(AbstractCog):
         else:
             await self.bot.punish.unjail(ctx.guild, member, reason)
 
-    async def perform_jail(self, ctx, member, minutes, reason):
-        roles = self.bot.sql.settings.get_special_roles(ctx.guild)
+    async def perform_jail_internal(self, message, member, minutes, reason):
+        roles = self.bot.sql.settings.get_special_roles(message.guild)
         if roles.jail is None:
             raise CommandFailed(content="No configured jail role")
 
-        if member.top_role >= ctx.me.top_role:
+        if member.top_role >= self.bot.user.top_role:
             raise ManualCheckFailure("I don't have permission to jail this user")
 
         minutes = max(minutes, 0)
-        reason = self.build_reason(ctx, "Jailed", minutes, reason)
+        reason = self.build_reason(message, "Jailed", minutes, reason)
 
-        await self.bot.punish.jail(ctx.guild, member, reason)
+        await self.bot.punish.jail(message.guild, member, reason)
 
         # If a delayed event, schedule a Navi task
         if minutes:
             await self.remove_roles(
-                ctx, member, minutes, PunishAction.RELIEVE_JAIL, reason
+                message, member, minutes, PunishAction.RELIEVE_JAIL, reason
             )
+    
+    async def perform_jail(self, ctx, member, minutes, reason):
+        await self.perform_jail_internal(self, ctx.message, member, minutes, reason)
 
     @commands.command(name="jail", aliases=["dunce"])
     @commands.guild_only()
@@ -200,6 +203,15 @@ class Moderation(AbstractCog):
         logger.info("Jailing user '%s' (%d)", member.name, member.id)
 
         await self.perform_jail(ctx, member, 0, reason)
+
+    async def on_message(self, message):
+        """
+        Bot Event.
+        :param message: Messages.
+        :return: Nothing.
+        """
+        if len(message.mentions) > 5:
+           await self.perform_jail_internal(message, message.author, 0, "Mention Bombing.")
 
     @commands.command(name="djail", aliases=["ddunce", "timejail", "timedunce"])
     @commands.guild_only()
