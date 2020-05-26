@@ -58,7 +58,7 @@ class Moderation(AbstractCog):
 
     @staticmethod
     def build_reason(ctx, action, minutes, reason, past=False):
-        self.build_reason_internal(ctx.message, action, minutes, reason, past)
+        Moderation.build_reason_internal(ctx.message, action, minutes, reason, past)
 
     async def remove_roles_internal(self, message, member, minutes, action, reason):
         assert minutes
@@ -196,7 +196,7 @@ class Moderation(AbstractCog):
             )
 
     async def perform_jail(self, ctx, member, minutes, reason):
-        await self.perform_jail_internal(self, ctx.message, member, minutes, reason)
+        await self.perform_jail_internal(ctx.message, member, minutes, reason)
 
     @commands.command(name="jail", aliases=["dunce"])
     @commands.guild_only()
