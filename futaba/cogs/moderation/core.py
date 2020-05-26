@@ -98,16 +98,7 @@ class Moderation(AbstractCog):
             nick=nick, reason=f"{mod} {'un' if nick is None else ''}set nickname"
         )
 
-    @commands.command(name="mute", aliases=["shitpost"])
-    @commands.guild_only()
-    @permissions.check_perm("manage_roles")
-    async def mute(self, ctx, member: MemberConv, minutes: int, *, reason: str = None):
-        """
-        Mutes the user for the given number of minutes.
-        Requires a mute role to be configured.
-        The minutes parameter must be set to a positive number.
-        """
-
+    async def perform_mute(self, ctx, member: MemberConv, minutes: int, *, reason: str = None):
         logger.info(
             "Muting user '%s' (%d) for %d minutes", member.name, member.id, minutes
         )
@@ -135,6 +126,18 @@ class Moderation(AbstractCog):
             await self.remove_roles(
                 ctx, member, minutes, PunishAction.RELIEVE_MUTE, reason
             )
+
+    @commands.command(name="mute", aliases=["shitpost"])
+    @commands.guild_only()
+    @permissions.check_perm("manage_roles")
+    async def mute(self, ctx, member: MemberConv, minutes: int, *, reason: str = None):
+        """
+        Mutes the user for the given number of minutes.
+        Requires a mute role to be configured.
+        The minutes parameter must be set to a positive number.
+        """
+
+        await self.perform_mute(ctx, member, minutes, reason)
 
     @commands.command(name="unmute", aliases=["unshitpost"])
     @commands.guild_only()
@@ -241,6 +244,7 @@ class Moderation(AbstractCog):
             )
 
             await self.perform_jail(ctx, member, minutes, "Self jail")
+            await self.perform_mute(ctx, member, minutes, "Self jail")
 
     async def perform_unjail(self, ctx, member, minutes, reason):
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)
