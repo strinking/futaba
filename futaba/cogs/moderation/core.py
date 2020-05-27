@@ -58,7 +58,7 @@ class Moderation(AbstractCog):
 
     @staticmethod
     def build_reason(ctx, action, minutes, reason, past=False):
-        Moderation.build_reason_internal(ctx.message, action, minutes, reason, past)
+        return Moderation.build_reason_internal(ctx.message, action, minutes, reason, past)
 
     async def remove_roles_internal(self, message, member, minutes, action, reason):
         assert minutes
@@ -85,7 +85,7 @@ class Moderation(AbstractCog):
         self.bot.add_tasks(task)
 
     async def remove_roles(self, ctx, member, minutes, action, reason):
-        self.remove_roles_internal(ctx.message, member, minutes, action, reason)
+        await self.remove_roles_internal(ctx.message, member, minutes, action, reason)
 
     @commands.command(name="nick", aliases=["nickname", "renick"])
     @commands.guild_only()
