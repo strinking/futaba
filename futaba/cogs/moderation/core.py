@@ -228,11 +228,11 @@ class Moderation(AbstractCog):
         Requires a jail role to be configured.
         """
 
-        # Check if user has supplied a time between 1 and 720 mins
-        if minutes <= 0 or minutes > 720:
+        # Check if user has supplied a time between 30 and 720 mins
+        if minutes < 30 or minutes > 720:
             embed = discord.Embed(
                 colour=discord.Colour.red(),
-                description="You need to supply a length of time between 1 and 720 mins (12 hours)",
+                description="You need to supply a length of time between 30 and 720 mins (12 hours)",
             )
             raise CommandFailed(embed=embed)
 
