@@ -199,14 +199,9 @@ class Cleanup(AbstractCog):
         )
         self.dump.send("id", ctx.guild, content, icon="delete", messages=obj, file=file)
 
-    @commands.command(name="cleanupuser", aliases=["cleanuser"])
-    @commands.guild_only()
-    @permissions.check_perm("manage_messages")
-    async def cleanup_user(
+    async def perform_cleanup_user(
         self, ctx, user: discord.User, count: int, channel: discord.TextChannel = None
     ):
-        """ Deletes the last <count> messages created by the given user. """
-
         await self.check_count(ctx, count)
 
         if channel is None:
@@ -246,6 +241,25 @@ class Cleanup(AbstractCog):
         self.dump.send(
             "user", ctx.guild, content, icon="delete", messages=obj, file=file
         )
+
+    @commands.command(name="cleanupself", aliases=["cleanself"])
+    @commands.guild_only()
+    async def cleanup_self(self, ctx, count: int, channel: discord.TextChannel = None):
+        """
+        Deletes the last <count> messages created by the causer.
+        """
+        await self.perform_cleanup_user(ctx, ctx.author, count, channel)
+
+    @commands.command(name="cleanupuser", aliases=["cleanuser"])
+    @commands.guild_only()
+    @permissions.check_perm("manage_messages")
+    async def cleanup_user(
+        self, ctx, user: discord.User, count: int, channel: discord.TextChannel = None
+    ):
+        """
+        Deletes the last <count> messages created by the given user.
+        """
+        await self.perform_cleanup_user(ctx, user, count, channel)
 
     @commands.command(name="cleanuptext", aliases=["cleantext"])
     @commands.guild_only()
