@@ -228,23 +228,20 @@ class Moderation(AbstractCog):
         Requires a jail role to be configured.
         """
 
-        # Check if user has supplied a time between 1 and 720 mins
-        if minutes <= 0 or minutes > 720:
-            embed = discord.Embed(colour=discord.Colour.red())
-            embed.description = (
-                "You need to supply a length of time between 1 and 720 mins (12 hours)"
+        # Check if user has supplied a time between 30 and 720 mins
+        if minutes < 30 or minutes > 720:
+            embed = discord.Embed(
+                colour=discord.Colour.red(),
+                description="You need to supply a length of time between 30 and 720 mins (12 hours)",
             )
+            raise CommandFailed(embed=embed)
 
-            await ctx.send(embed=embed)
-
-        else:
-            member = ctx.author
-            logger.info(
-                "Jailing user '%s' (%d) for %d minutes", member.name, member.id, minutes
-            )
-
-            await self.perform_jail(ctx, member, minutes, "Self jail")
-            await self.perform_mute(ctx, member, minutes, "Self jail")
+        member = ctx.author
+        logger.info(
+            "Jailing user '%s' (%d) for %d minutes", member.name, member.id, minutes
+        )
+        await self.perform_jail(ctx, member, minutes, "Self jail")
+        await self.perform_mute(ctx, member, minutes, "Self jail")
 
     async def perform_unjail(self, ctx, member, minutes, reason):
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)
