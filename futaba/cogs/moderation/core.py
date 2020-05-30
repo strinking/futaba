@@ -221,7 +221,7 @@ class Moderation(AbstractCog):
 
     @commands.command(name="selfjail", aliases=["selfgaol", "selfdunce", "focus"])
     @commands.guild_only()
-    async def self_jail(self, ctx, minutes: int = 60):
+    async def self_jail(self, ctx, minutes: int):
         """
         Jails the user that uses the command
         Mainly used to restrict access so the user can focus without distractions
