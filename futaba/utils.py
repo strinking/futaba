@@ -108,9 +108,9 @@ def fancy_timedelta(delta):
     seconds += delta.microseconds / 1e6
 
     if years:
-        result.write(f"{years}y")
+        result.write(f"{years}Y")
     if months:
-        result.write(f"{months}m")
+        result.write(f"{months}M")
     if weeks:
         result.write(f"{weeks}w")
     if days:
