@@ -98,7 +98,9 @@ class Moderation(AbstractCog):
             nick=nick, reason=f"{mod} {'un' if nick is None else ''}set nickname"
         )
 
-    async def perform_mute(self, ctx, member: MemberConv, minutes: int, reason: str = None):
+    async def perform_mute(
+        self, ctx, member: MemberConv, minutes: int, reason: str = None,
+    ):
         logger.info(
             "Muting user '%s' (%d) for %d minutes", member.name, member.id, minutes
         )
