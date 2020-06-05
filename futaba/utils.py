@@ -110,7 +110,7 @@ def fancy_timedelta(delta):
     if years:
         result.write(f"{years}y")
     if months:
-        result.write(f"{months}m")
+        result.write(f"{months}mo")
     if weeks:
         result.write(f"{weeks}w")
     if days:
