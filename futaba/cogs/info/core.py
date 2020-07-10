@@ -736,24 +736,29 @@ class Info(AbstractCog):
         embed = discord.Embed()
 
         total_len += len(text_channels)
-        embed.add_field(name="\N{MEMO} Text channels", value=text_channels)
-
-        if total_len >= 1800:
+        if total_len >= 900:
             embeds.append(embed)
             embed = discord.Embed()
             total_len = 0
 
+        embed.add_field(name="\N{MEMO} Text channels", value=text_channels)
+
         total_len += len(voice_channels)
+        if total_len >= 900:
+            embeds.append(embed)
+            embed = discord.Embed()
+            total_len = 0
+
         embed.add_field(
             name="\N{STUDIO MICROPHONE} Voice channels", value=voice_channels
         )
 
-        if total_len >= 1800:
+        total_len += len(channel_categories)
+        if total_len >= 900:
             embeds.append(embed)
             embed = discord.Embed()
             total_len = 0
 
-        total_len += len(channel_categories)
         embed.add_field(
             name="\N{BAR CHART} Channel categories", value=channel_categories
         )
@@ -762,7 +767,7 @@ class Info(AbstractCog):
 
         # Add all embeds
 
-        for embed in emebds:
+        for embed in embeds:
             await ctx.send(embed=embed)
 
     @commands.command(name="ginfo", aliases=["guildinfo"])
