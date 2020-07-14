@@ -44,7 +44,7 @@ discordpy = "490419059964510210"
 
 # Path to the RDBMS futaba will use
 [database]
-url = "sqlite:///futaba.db"
+url = "postgres://futaba:passwordhere@localhost"
 
 [jwt]
 secret = "thesecretstring"

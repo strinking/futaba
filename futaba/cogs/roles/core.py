@@ -265,6 +265,88 @@ class SelfAssignableRoles(AbstractCog):
             "joinable/remove", ctx.guild, content, icon="role", roles=roles
         )
 
+    @staticmethod
+    def str_channels(channels):
+        return " ".join(f"`{channel.name}`" for channel in channels)
+
+    @role.command(name="pingable")
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def role_pingable(self, ctx, role: RoleConv, *channels: TextChannelConv):
+        logger.info(
+             "Making role '%s' pingable in guild '%s' (%d), channel(s) [%s]",
+             role.name,
+             ctx.guild.name,
+             ctx.guild.id,
+             self.str_channels(channels)
+        )
+
+        if not role:
+            raise CommandFailed()
+
+        if not channels:
+            raise CommandFailed()
+
+        with self.bot.sql.transaction():
+            for channel in channels:
+                try:
+                    self.bot.sql.roles.add_pingable_role_channel(ctx.guild, channel, role)
+                except Exception as e:
+                    pass
+
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
+        embed.set_author(name="Made role pingable in channels")
+        descr = StringBuilder(sep=", ")
+        for channel in channels:
+            descr.write(channel.mention)
+        embed.description = str(descr)
+        await ctx.send(embed=embed)
+
+        # Send journal event
+        content = f"Role was set as pingable in channels: {self.str_channels(channels)}"
+        self.journal.send(
+            "pingable/add", ctx.guild, content, icon="role", role=role, channels=channels
+        )
+
+    @role.command(name="unpingable")
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def role_unpingable(self, ctx, role, *channels: TextChannelConv):
+        logger.info(
+             "Making role '%s' not pingable in guild '%s' (%d), channel(s) [%s]",
+             role.name,
+             ctx.guild.name,
+             ctx.guild.id,
+             self.str_channels(channels)
+        )
+
+        if not role:
+            raise CommandFailed()
+
+        if not channels:
+            raise CommandFailed()
+
+        with self.bot.sql.transaction():
+            for channel in channels:
+                try:
+                    self.bot.sql.roles.remove_pingable_role_channel(ctx.guild, channel, role)
+                except Exception as e:
+                    pass
+
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
+        embed.set_author(name="Made role not pingable in channels")
+        descr = StringBuilder(sep=", ")
+        for channel in channels:
+            descr.write(channel.mention)
+        embed.description = str(descr)
+        await ctx.send(embed=embed)
+
+        # Send journal event
+        content = f"Role was set as not pingable in channels: {self.str_channels(channels)}"
+        self.journal.send(
+            "pingable/remove", ctx.guild, content, icon="role", role=role, channels=channels
+        )
+
     def channel_journal(self, guild):
         all_channels = self.bot.sql.roles.get_role_command_channels(guild)
         str_channels = " ".join(chan.mention for chan in all_channels)
