@@ -41,7 +41,6 @@ class Moderation(AbstractCog):
     def __init__(self, bot):
         super().__init__(bot)
         self.journal = bot.get_broadcaster("/moderation")
-#        self.gist = gist("055caa46f16e6533d7895a909450866ad0dc4c92")
 
     def setup(self):
         pass
