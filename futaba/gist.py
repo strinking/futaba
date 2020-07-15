@@ -11,7 +11,6 @@
 #
 
 import logging
-import json
 import urllib.parse
 
 import aiohttp
@@ -19,12 +18,16 @@ import aiohttp
 logger = logging.getLogger(__name__)
 
 __all__ = ["create_single_gist"]
-        
+
 github_api_url = "https://api.github.com/"
 github_gist_endpoint = urllib.parse.urljoin(github_api_url, "/gists")
 
-async def create_single_gist(token, content, filename, description, public: bool):
- 
+async def create_single_gist(token, content, filename="message.md", description="", public: bool = True) -> str:
+    """
+    Creates a new gist as specified by the parameters
+    Returns the url that the new gist can be accessed by
+    """
+
     github_headers = {
             "Accept": "application/vnd.github.v3+json",
             "Authorization": f"token {token}"
@@ -41,11 +44,5 @@ async def create_single_gist(token, content, filename, description, public: bool
 
     async with aiohttp.ClientSession(headers=github_headers, raise_for_status=True) as session:
         async with session.post(github_gist_endpoint, json=request_data) as resp:
-            #if resp.status == 201: # 201 Created status
-            response_object = await resp.json() 
+            response_object = await resp.json()
             return response_object.get("html_url")
-            
-
-
-
-
