@@ -22,7 +22,7 @@ import discord
 from discord.ext import commands
 
 from futaba import permissions
-from futaba.converters import MemberConv, UserConv
+from futaba.converters import MemberConv, UserConv, MessageConv
 from futaba.enums import PunishAction
 from futaba.exceptions import CommandFailed, ManualCheckFailure
 from futaba.navi import PunishTask
@@ -439,3 +439,32 @@ class Moderation(AbstractCog):
             raise ManualCheckFailure(
                 content="I don't have permission to unban this user"
             )
+
+    @commands.command(name="msgcollapse", aliases=["gist"])
+    @commands.guild_only()
+    async def msgcollapse(self, ctx, *messages: MessageConv):
+        """
+        Concatenates the range of messages and uploads to a gist.
+        The original messages are deleted and a link to the gist is posted.
+        
+        Note: The messages specified should be by the same user
+        """
+
+        if (not permissions.has_perm(ctx, "manage_messages") and 
+            any(message.author.id != ctx.author.id for message in messages)):
+            # check if the messages were created by the same user
+            raise ManualCheckFailure(
+                    content="I can only collapse your messages"
+            )
+
+
+        logger.info("Collapsing %d messages into a gist", len(messages))
+
+        embed = discord.Embed(description="Done! Messages successfully collapsed!")
+        embed.add_field(name="Permalink", value="\n".join(str(message.content) for message in messages))
+
+        #TODO: concat the messages and upload them to a gist
+        for message in messages:
+            await message.delete()
+
+        await ctx.send(embed=embed)
