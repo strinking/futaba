@@ -34,6 +34,7 @@ from . import (
     str_builder,
     unicode,
     utils,
+    gist
 )
 
 __version__ = "0.6.2"

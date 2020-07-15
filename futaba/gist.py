@@ -11,49 +11,40 @@
 #
 
 import logging
-import aiohttp
 import json
 import urllib.parse
 
-#import requests
+import aiohttp
 
 logger = logging.getLogger(__name__)
 
-class gist(object):
-    def __init__(self, oauth_token):
+__all__ = ["create_single_gist"]
         
-        self.github_api_url = "https://api.github.com/"
-        self.github_gist_endpoint = urllib.parse.urljoin(self.github_api_url, "/gists")
-        
-        self.github_headers = {
-                "Accept": "application/vnd.github.v3+json",
-                "Authorization": f"token {oauth_token}"
-        }
+github_api_url = "https://api.github.com/"
+github_gist_endpoint = urllib.parse.urljoin(github_api_url, "/gists")
 
-        self.session = aiohttp.ClientSession(headers=self.github_headers, raise_for_status=True)
-    
-    async def __del__(self):
-        self.session.close()
-
-    async def create_single(self, content, filename, description, public: bool):
-        request_data = {
-                "description": description,
-                "public": public,
-                "files": {
-                    filename: {
-                        "content": content
-                    }
+async def create_single_gist(token, content, filename, description, public: bool):
+ 
+    github_headers = {
+            "Accept": "application/vnd.github.v3+json",
+            "Authorization": f"token {token}"
+    }
+    request_data = {
+            "description": description,
+            "public": public,
+            "files": {
+                filename: {
+                    "content": content
                 }
-        }
+            }
+    }
 
-        async with self.session.post(self.github_gist_endpoint, json=request_data) as resp:
+    async with aiohttp.ClientSession(headers=github_headers, raise_for_status=True) as session:
+        async with session.post(github_gist_endpoint, json=request_data) as resp:
             #if resp.status == 201: # 201 Created status
             response_object = await resp.json() 
             return response_object.get("html_url")
             
-            #else:
-            #    logger.error("Failed to create gist and aiohttp did not throw. Status: %d.", resp.status)
-            #    raise Exception()
 
 
 
