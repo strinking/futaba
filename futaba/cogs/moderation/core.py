@@ -446,16 +446,16 @@ class Moderation(AbstractCog):
         """
         Concatenates the range of messages and uploads to a gist.
         The original messages are deleted and a link to the gist is posted.
-        
+
         Note: The messages specified should be by the same user
         """
-        
+
         if not self.bot.config.gist_oauth_token:
             raise CommandFailed(
                     content="The gist oauth token is not configured."
             )
 
-        if (not permissions.has_perm(ctx, "manage_messages") and 
+        if (not permissions.has_perm(ctx, "manage_messages") and
             any(message.author.id != ctx.author.id for message in messages)):
             # check if the messages were created by the same user
             raise ManualCheckFailure(
@@ -465,8 +465,8 @@ class Moderation(AbstractCog):
 
         logger.info("Collapsing %d messages into a gist", len(messages))
 
-        gist_url = await gist.create_single_gist(token=self.bot.config.gist_oauth_token, 
-                                                    content="\n".join(str(message.content) for message in messages),
+        gist_url = await gist.create_single_gist(token=self.bot.config.gist_oauth_token,
+                                                    content="  \n".join(str(message.content) for message in messages),
                                                     filename="collapsed.md", description="Discord collapsed messages",
                                                     public=False)
 
