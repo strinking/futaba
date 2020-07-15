@@ -22,27 +22,28 @@ __all__ = ["create_single_gist"]
 github_api_url = "https://api.github.com/"
 github_gist_endpoint = urllib.parse.urljoin(github_api_url, "/gists")
 
-async def create_single_gist(token, content, filename="message.md", description="", public: bool = True) -> str:
+
+async def create_single_gist(
+    token, content, filename="message.md", description="", public: bool = True
+) -> str:
     """
     Creates a new gist as specified by the parameters
     Returns the url that the new gist can be accessed by
     """
 
     github_headers = {
-            "Accept": "application/vnd.github.v3+json",
-            "Authorization": f"token {token}"
+        "Accept": "application/vnd.github.v3+json",
+        "Authorization": f"token {token}",
     }
     request_data = {
-            "description": description,
-            "public": public,
-            "files": {
-                filename: {
-                    "content": content
-                }
-            }
+        "description": description,
+        "public": public,
+        "files": {filename: {"content": content}},
     }
 
-    async with aiohttp.ClientSession(headers=github_headers, raise_for_status=True) as session:
+    async with aiohttp.ClientSession(
+        headers=github_headers, raise_for_status=True
+    ) as session:
         async with session.post(github_gist_endpoint, json=request_data) as resp:
             response_object = await resp.json()
             return response_object.get("html_url")

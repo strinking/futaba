@@ -451,24 +451,23 @@ class Moderation(AbstractCog):
         """
 
         if not self.bot.config.gist_oauth_token:
-            raise CommandFailed(
-                    content="The gist oauth token is not configured."
-            )
+            raise CommandFailed(content="The gist oauth token is not configured.")
 
-        if (not permissions.has_perm(ctx, "manage_messages") and
-            any(message.author.id != ctx.author.id for message in messages)):
+        if not permissions.has_perm(ctx, "manage_messages") and any(
+            message.author.id != ctx.author.id for message in messages
+        ):
             # check if the messages were created by the same user
-            raise ManualCheckFailure(
-                    content="I can only collapse your messages"
-            )
-
+            raise ManualCheckFailure(content="I can only collapse your messages")
 
         logger.info("Collapsing %d messages into a gist", len(messages))
 
-        gist_url = await gist.create_single_gist(token=self.bot.config.gist_oauth_token,
-                                                    content="  \n".join(str(message.content) for message in messages),
-                                                    filename="collapsed.md", description="Discord collapsed messages",
-                                                    public=False)
+        gist_url = await gist.create_single_gist(
+            token=self.bot.config.gist_oauth_token,
+            content="  \n".join(str(message.content) for message in messages),
+            filename="collapsed.md",
+            description="Discord collapsed messages",
+            public=False,
+        )
 
         embed = discord.Embed(description="Done! Messages successfully collapsed!")
         embed.add_field(name="Permalink", value=gist_url)

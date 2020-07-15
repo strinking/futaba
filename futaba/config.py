@@ -47,7 +47,7 @@ ConfigurationSchema = Schema(
         "moderation": {
             "max-cleanup-messages": And(str, _check_gtz(int)),
             "gist-oauth-token": str,
-            },
+        },
         "delay": {
             "chunk-size": And(str, _check_gtz(int)),
             "sleep": And(str, _check_gtz(float)),
