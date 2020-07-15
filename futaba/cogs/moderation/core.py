@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 import discord
 from discord.ext import commands
 
-from futaba import permissions
+from futaba import permissions, gist
 from futaba.converters import MemberConv, UserConv, MessageConv
 from futaba.enums import PunishAction
 from futaba.exceptions import CommandFailed, ManualCheckFailure
@@ -41,6 +41,7 @@ class Moderation(AbstractCog):
     def __init__(self, bot):
         super().__init__(bot)
         self.journal = bot.get_broadcaster("/moderation")
+#        self.gist = gist("055caa46f16e6533d7895a909450866ad0dc4c92")
 
     def setup(self):
         pass
@@ -449,6 +450,11 @@ class Moderation(AbstractCog):
         
         Note: The messages specified should be by the same user
         """
+        
+        if not self.bot.config.gist_oauth_token:
+            raise CommandFailed(
+                    content="The gist oauth token is not configured."
+            )
 
         if (not permissions.has_perm(ctx, "manage_messages") and 
             any(message.author.id != ctx.author.id for message in messages)):
@@ -460,10 +466,15 @@ class Moderation(AbstractCog):
 
         logger.info("Collapsing %d messages into a gist", len(messages))
 
-        embed = discord.Embed(description="Done! Messages successfully collapsed!")
-        embed.add_field(name="Permalink", value="\n".join(str(message.content) for message in messages))
+        gist_url = await gist.create_single_gist(token=self.bot.config.gist_oauth_token, 
+                                                    content="\n".join(str(message.content) for message in messages),
+                                                    filename="collapsed.md", description="Discord collapsed messages",
+                                                    public=False)
 
-        #TODO: concat the messages and upload them to a gist
+        embed = discord.Embed(description="Done! Messages successfully collapsed!")
+        embed.add_field(name="Permalink", value=gist_url)
+        embed.colour = discord.Colour.dark_teal()
+
         for message in messages:
             await message.delete()
 
