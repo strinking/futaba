@@ -46,6 +46,31 @@ class Miscellaneous(AbstractCog):
     def setup(self):
         pass
 
+    @commands.command(name="pinghelpers", aliases=["helpme"])
+    async def pinghelpers(self, ctx):
+        """Pings helpers if used in the respective channel"""
+        logger.info(
+            "User '%s' (%d) is pinging the helper role in channel '%s' in guild '%s' (%d)",
+             ctx.author,
+             ctx.author.mention,
+             ctx.channel,
+             ctx.guild,
+             ctx.guild.id
+        )
+        pingable_channels = self.bot.sql.roles.get_pingable_role_channels(ctx.guild)
+        channel_role = None
+
+        for c_r in pingable_channels:
+            if ctx.channel == c_r[0]:
+                channel_role = c_r
+                break
+
+        if not channel_role:
+            raise CommandFailed("The relevant role is not pingable in this channel.")
+
+        await ctx.send(f"{c_r[1].mention}, {ctx.author.mention} needs help.")
+
+
     @commands.command(name="ping")
     async def ping(self, ctx):
         """ Determines the bot's current latency. """

@@ -287,12 +287,13 @@ class SelfAssignableRoles(AbstractCog):
         if not channels:
             raise CommandFailed()
 
+        pingable_channels = list(zip(*self.bot.sql.roles.get_pingable_role_channels(ctx.guild)))[0]
+
         with self.bot.sql.transaction():
             for channel in channels:
-                try:
+                #this makes a list of all channels and rows, currently it's a channel and row pair.
+                if channel not in pingable_channels:
                     self.bot.sql.roles.add_pingable_role_channel(ctx.guild, channel, role)
-                except Exception as e:
-                    pass
 
         embed = discord.Embed(colour=discord.Colour.dark_teal())
         embed.set_author(name="Made role pingable in channels")
@@ -311,7 +312,7 @@ class SelfAssignableRoles(AbstractCog):
     @role.command(name="unpingable")
     @commands.guild_only()
     @permissions.check_mod()
-    async def role_unpingable(self, ctx, role, *channels: TextChannelConv):
+    async def role_unpingable(self, ctx, role: RoleConv, *channels: TextChannelConv):
         logger.info(
              "Making role '%s' not pingable in guild '%s' (%d), channel(s) [%s]",
              role.name,
@@ -326,12 +327,13 @@ class SelfAssignableRoles(AbstractCog):
         if not channels:
             raise CommandFailed()
 
+        pingable_channels = list(zip(*self.bot.sql.roles.get_pingable_role_channels(ctx.guild)))[0]
+
         with self.bot.sql.transaction():
             for channel in channels:
-                try:
+                #this makes a list of all channels and rows, currently it's a channel and row pair.
+                if channel in pingable_channels:
                     self.bot.sql.roles.remove_pingable_role_channel(ctx.guild, channel, role)
-                except Exception as e:
-                    pass
 
         embed = discord.Embed(colour=discord.Colour.dark_teal())
         embed.set_author(name="Made role not pingable in channels")
