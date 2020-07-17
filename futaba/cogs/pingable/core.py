@@ -73,14 +73,25 @@ class Pingable(AbstractCog):
         channel_user = (ctx.channel.id, ctx.author.id)
         cooldown = self.cooldowns.get(channel_user)
 
-        if mod_perm(ctx) or not cooldown or cooldown <= datetime.now():
-            self.cooldowns[channel_user] = datetime.now() + timedelta(
+        if not cooldown:
+            cooldown = self.cooldowns[channel_user] = [
+                datetime.now() + timedelta(seconds=cooldown_time),
+                0,
+                datetime.now(),
+            ]
+
+        if cooldown <= datetime.now():
+            self.cooldowns[channel_user][0] = datetime.now() + timedelta(
                 seconds=cooldown_time
             )
+            if not mod_perm(ctx):
+                self.cooldowns[channel_user][1] += 1
+
+            self.cooldowns[channel_user][2] = datetime.now()
 
             await ctx.send(f"{c_r[1].mention}, {ctx.author.mention} needs help.")
 
-        elif cooldown > datetime.now():
+        else:
             # convert deltatime into string: Hh, Mm, Ss
             time_remaining = cooldown - datetime.now()
             hours, remainder = divmod(int(time_remaining.total_seconds()), 3600)

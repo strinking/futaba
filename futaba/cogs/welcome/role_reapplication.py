@@ -78,9 +78,11 @@ class RoleReapplication(AbstractCog):
         await self.save_roles(after)
 
     def get_reapply_roles(self, guild):
-        logger.debug("Getting possible reapplication roles for guild '%s' (%d)",
+        logger.debug(
+            "Getting possible reapplication roles for guild '%s' (%d)",
             guild.name,
-            guild.id,)
+            guild.id,
+        )
 
         reapply_roles = self.bot.sql.settings.get_reapply_roles(guild)
         can_reapply = list(reapply_roles)
@@ -107,7 +109,7 @@ class RoleReapplication(AbstractCog):
 
     @commands.guild_only()
     @commands.command(name="savedroles", aliases=["saveroles", "userroles", "uroles"])
-    async def saved_roles(self, ctx, user: UserConv=None):
+    async def saved_roles(self, ctx, user: UserConv = None):
         """ Returns all roles that would be reapplied when a given user rejoins. """
 
         if user is None:
@@ -136,24 +138,34 @@ class RoleReapplication(AbstractCog):
         if roles is None:
             return None
 
-        logger.info("Reapplying roles to member '%s' (%d): [%s]",
+        logger.info(
+            "Reapplying roles to member '%s' (%d): [%s]",
             member.name,
             member.id,
-            ", ".join(role.name for role in roles),)
-        await member.add_roles(*roles, reason="Automatically reapplying roles", atomic=True)
+            ", ".join(role.name for role in roles),
+        )
+        await member.add_roles(
+            *roles, reason="Automatically reapplying roles", atomic=True
+        )
 
-        content = (f"Reapplied roles to {member.mention}: {', '.join(f'`{role.name}`' for role in roles)}"
+        content = (
+            f"Reapplied roles to {member.mention}: {', '.join(f'`{role.name}`' for role in roles)}"
             if roles
-            else f"Reapplied no roles to {member.mention}")
-        self.journal.send("reapply", member.guild, content, member=member, roles=roles, icon="role")
+            else f"Reapplied no roles to {member.mention}"
+        )
+        self.journal.send(
+            "reapply", member.guild, content, member=member, roles=roles, icon="role"
+        )
         return roles
 
     async def save_roles(self, member):
-        logger.info("Member '%s' (%d) updated roles in '%s' (%d)",
+        logger.info(
+            "Member '%s' (%d) updated roles in '%s' (%d)",
             member.name,
             member.id,
             member.guild.name,
-            member.guild.id,)
+            member.guild.id,
+        )
 
         async with self.lock:
             with self.bot.sql.transaction():
