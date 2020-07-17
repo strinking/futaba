@@ -16,6 +16,7 @@ jobs:
     - stage: black
       python: '3.8'
       script:
+        - black --version
         - black --check futaba
   allow_failures:
     - python: 'nightly'
