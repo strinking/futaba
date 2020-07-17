@@ -54,6 +54,7 @@ ConfigurationSchema = Schema(
             "python": Or(And(str, ID_REGEX.match), "0"),
             "discordpy": Or(And(str, ID_REGEX.match), "0"),
         },
+        "pingcooldown": {"cooldown": And(str, _check_gtz(int))},
         "database": {"url": And(str, len)},
         "jwt": {"secret": And(str, len)},
     }
@@ -73,6 +74,7 @@ Configuration = namedtuple(
         "anger_emoji_id",
         "python_emoji_id",
         "discord_py_emoji_id",
+        "helper_ping_cooldown",
         "database_url",
         "jwt_secret",
     ),
@@ -97,6 +99,7 @@ def load_config(path):
         anger_emoji_id=int(config["emojis"]["anger"]),
         python_emoji_id=int(config["emojis"]["python"]),
         discord_py_emoji_id=int(config["emojis"]["discordpy"]),
+        helper_ping_cooldown=int(config["pingcooldown"]["cooldown"]),
         database_url=config["database"]["url"],
         jwt_secret=config["jwt"]["secret"],
     )

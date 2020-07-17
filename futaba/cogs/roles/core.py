@@ -287,7 +287,7 @@ class SelfAssignableRoles(AbstractCog):
         if not channels:
             raise CommandFailed()
 
-        pingable_channels = list(zip(*self.bot.sql.roles.get_pingable_role_channels(ctx.guild)))[0]
+        pingable_channels = next(zip(*self.bot.sql.roles.get_pingable_role_channels(ctx.guild)), [])
 
         with self.bot.sql.transaction():
             for channel in channels:
@@ -327,7 +327,7 @@ class SelfAssignableRoles(AbstractCog):
         if not channels:
             raise CommandFailed()
 
-        pingable_channels = list(zip(*self.bot.sql.roles.get_pingable_role_channels(ctx.guild)))[0]
+        pingable_channels = next(zip(*self.bot.sql.roles.get_pingable_role_channels(ctx.guild)), [])
 
         with self.bot.sql.transaction():
             for channel in channels:
