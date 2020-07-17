@@ -67,11 +67,12 @@ class Mentionable(AbstractCog):
 
             await member.send(
                 content=(
-                    f"Your name in __{member.guild.name}__ is not easily mentionable due to special "
-                    f"characters.\nModerators there have required that **at least {length} "
-                    f"character{plural(length)} at the beginning of your name are easily typeable**.\n"
-                    f"You that you have been given the random prefix `{prefix}` to make you "
-                    "mentionable in chat."
+                    f"Your name in __{member.guild.name}__ is not easily mentionable"
+                    " due to special characters.\nModerators there have required that"
+                    f" **at least {length} character{plural(length)} at the beginning"
+                    " of your name are easily typeable**.\nYou that you have been"
+                    f" given the random prefix `{prefix}` to make you mentionable in"
+                    " chat."
                 )
             )
         except discord.Forbidden:

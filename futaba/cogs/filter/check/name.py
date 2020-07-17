@@ -73,15 +73,16 @@ async def check_name_filter(cog, name, name_type, member, only_filter=None):
 
     async def message_violator(jailed):
         response = StringBuilder(
-            f"The {name_type.value} you just set violates a {filter_type.value} text filter "
-            f"disallowing `{escaped_filter_text}`.\n"
+            f"The {name_type.value} you just set violates a {filter_type.value} text"
+            f" filter disallowing `{escaped_filter_text}`.\n"
         )
 
         if jailed:
             if roles.jail is not None:
                 response.writeln(
-                    f"In the mean time, you have been assigned the `{roles.jail.name}` role, "
-                    "revoking your posting privileges until a moderator clears you."
+                    f"In the mean time, you have been assigned the `{roles.jail.name}`"
+                    " role, revoking your posting privileges until a moderator clears"
+                    " you."
                 )
         else:
             response.writeln(
@@ -111,12 +112,17 @@ async def check_name_filter(cog, name, name_type, member, only_filter=None):
             jail_anyways = True
             await member.edit(
                 nick=MASK_NICK,
-                reason="Hid username for violating {filter_type.value} level name filter",
+                reason=(
+                    "Hid username for violating {filter_type.value} level name filter"
+                ),
             )
         elif name_type == NameType.NICK:
             await member.edit(
                 nick=None,
-                reason=f"Removed nickname for violating {filter_type.value} level name filter",
+                reason=(
+                    f"Removed nickname for violating {filter_type.value} level name"
+                    " filter"
+                ),
             )
         else:
             raise ValueError(f"Unknown value for NameType: {name_type!r}")
@@ -124,9 +130,13 @@ async def check_name_filter(cog, name, name_type, member, only_filter=None):
     if severity >= FilterType.JAIL.level or jail_anyways:
         if roles.jail is None:
             logger.info(
-                "Jailing user for inappropriate name, except there is no jail role configured!"
+                "Jailing user for inappropriate name, except there is no jail role"
+                " configured!"
             )
-            content = f"Cannot jail {member.mention} for name violation because no jail role is set!"
+            content = (
+                f"Cannot jail {member.mention} for name violation because no jail role"
+                " is set!"
+            )
             cog.journal.send("name/jail", member.guild, content, icon="warning")
         else:
             logger.info("Jailing user for inappropriate name")

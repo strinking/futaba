@@ -53,7 +53,8 @@ class ModerationModel:
 
     def get_other_roles(self, member):
         logger.debug(
-            "Determining if there are other roles (in punishment) for member '%s' (%d) in guild '%s' (%d)",
+            "Determining if there are other roles (in punishment) for member '%s' (%d)"
+            " in guild '%s' (%d)",
             member.name,
             member.id,
             member.guild.name,

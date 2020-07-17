@@ -88,7 +88,8 @@ class Info(AbstractCog):
         embed.add_field(name="Source code", value="https://github.com/strinking/futaba")
         embed.description = "\n".join(
             (
-                f"{python_emoji} Powered by Python {pyver.major}.{pyver.minor}.{pyver.micro}",
+                f"{python_emoji} Powered by Python"
+                f" {pyver.major}.{pyver.minor}.{pyver.micro}",
                 f"{discord_py_emoji} Using discord.py {discord.__version__}",
                 f"\N{TIMER CLOCK} Latency: {self.bot.latency:.3} s",
             )
@@ -193,7 +194,8 @@ class Info(AbstractCog):
         for emoji in emojis:
             managed = "M" if emoji.managed else ""
             content.writeln(
-                f"- [{emoji}]({emoji.url}) id: `{emoji.id}`, name: `{emoji.name}` {managed}"
+                f"- [{emoji}]({emoji.url}) id: `{emoji.id}`, name: `{emoji.name}`"
+                f" {managed}"
             )
 
             if len(content) > 1900:
@@ -567,7 +569,7 @@ class Info(AbstractCog):
     async def raw_argument(self, ctx, argument):
         logger.info("Outputting raw form of the argument: '%s'", argument)
 
-        content = "You sent:\n" f"```\n{escape_backticks(argument)}\n```"
+        content = f"You sent:\n```\n{escape_backticks(argument)}\n```"
         await ctx.send(content=content)
 
     async def raw_message(self, ctx, messages):
@@ -788,10 +790,12 @@ class Info(AbstractCog):
         )
         descr.writeln(f"\N{MEMO} **Text Channels:** {len(ctx.guild.text_channels):,}")
         descr.writeln(
-            f"\N{STUDIO MICROPHONE} **Voice Channels:** {len(ctx.guild.voice_channels):,}"
+            f"\N{STUDIO MICROPHONE} **Voice Channels:**"
+            f" {len(ctx.guild.voice_channels):,}"
         )
         descr.writeln(
-            f"\N{CLOCK FACE TWO OCLOCK} **Age:** {fancy_timedelta(ctx.guild.created_at)}"
+            f"\N{CLOCK FACE TWO OCLOCK} **Age:**"
+            f" {fancy_timedelta(ctx.guild.created_at)}"
         )
         descr.writeln()
 

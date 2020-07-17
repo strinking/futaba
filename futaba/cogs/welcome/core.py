@@ -37,7 +37,10 @@ logger = logging.getLogger(__name__)
 __all__ = ["format_message", "Welcome"]
 
 AGREE_REASON = "User agreed to the server's rules and policies"
-AGREE_DELAY_MESSAGE = "Thank you for agreeing to the rules. Please wait while you are being transferred..."
+AGREE_DELAY_MESSAGE = (
+    "Thank you for agreeing to the rules. Please wait while you are being"
+    " transferred..."
+)
 FORMAT_HELP_LIST = """
 If you want to send a literal `{` or `}`, send `{{` / `}}`.
 Accepted parameters:
@@ -533,7 +536,10 @@ class Welcome(AbstractCog):
 
         embed = discord.Embed(colour=discord.Colour.dark_teal())
         if tasks:
-            embed.description = f"Added the {roles.guest.mention} role to `{len(tasks)}` member{plural(len(tasks))}."
+            embed.description = (
+                f"Added the {roles.guest.mention} role to `{len(tasks)}`"
+                f" member{plural(len(tasks))}."
+            )
         else:
             embed.description = "No roleless members found."
         await ctx.send(embed=embed)

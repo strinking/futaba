@@ -301,7 +301,8 @@ class SettingsModel:
 
     def set_remove_other_roles(self, guild, remove_other_roles):
         logger.info(
-            "Setting whether to remove other roles on punishment to %s for guild '%s' (%d)",
+            "Setting whether to remove other roles on punishment to %s for guild '%s'"
+            " (%d)",
             remove_other_roles,
             guild.name,
             guild.id,

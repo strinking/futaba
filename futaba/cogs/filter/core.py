@@ -310,7 +310,10 @@ class Filtering(AbstractCog):
                 self.bot.sql.filter.remove_filter_immune_user(ctx.guild, member)
 
         for member in members:
-            content = f"Removed {member.name}#{member.discriminator} from filter immunity list"
+            content = (
+                f"Removed {member.name}#{member.discriminator} from filter immunity"
+                " list"
+            )
             self.journal.send("immunity/remove", ctx.guild, content, icon="person")
 
     @filter_immunity.command(name="show", aliases=["display", "list"])
@@ -353,7 +356,10 @@ class Filtering(AbstractCog):
         elif not admin_perm(ctx):
             # Lacking authority to set warn manual mod action
             embed = discord.Embed(colour=discord.Colour.red())
-            embed.description = "You do not have permission to enable or disable manage messages filter immunity"
+            embed.description = (
+                "You do not have permission to enable or disable manage messages filter"
+                " immunity"
+            )
             raise ManualCheckFailure(embed=embed)
         else:
             with self.bot.sql.transaction():
@@ -495,7 +501,10 @@ class Filtering(AbstractCog):
         a single word to add to the filter.
         """
 
-        content = f"Added channel flag filter in {channel.mention} for `{escape_backticks(text)}`"
+        content = (
+            f"Added channel flag filter in {channel.mention} for"
+            f" `{escape_backticks(text)}`"
+        )
         self.journal.send(
             "channel/new/flag",
             ctx.guild,
@@ -521,7 +530,10 @@ class Filtering(AbstractCog):
         a single word to add to the filter.
         """
 
-        content = f"Added channel block filter in {channel.mention} for `{escape_backticks(text)}`"
+        content = (
+            f"Added channel block filter in {channel.mention} for"
+            f" `{escape_backticks(text)}`"
+        )
         self.journal.send(
             "channel/new/block",
             ctx.guild,
@@ -547,7 +559,10 @@ class Filtering(AbstractCog):
         a single word to add to the filter.
         """
 
-        content = f"Added channel jail filter in {channel.mention} for `{escape_backticks(text)}`"
+        content = (
+            f"Added channel jail filter in {channel.mention} for"
+            f" `{escape_backticks(text)}`"
+        )
         self.journal.send(
             "channel/new/jail",
             ctx.guild,
@@ -570,7 +585,10 @@ class Filtering(AbstractCog):
         tell it which filter level it was for.
         """
 
-        content = f"Removed channel filter in {channel.mention} for `{escape_backticks(text)}`"
+        content = (
+            f"Removed channel filter in {channel.mention} for"
+            f" `{escape_backticks(text)}`"
+        )
         self.journal.send(
             "channel/remove",
             ctx.guild,

@@ -22,6 +22,7 @@ import schema
 from toml import TomlDecodeError
 
 from futaba import client
+
 try:
     from .config import load_config
 except ImportError:

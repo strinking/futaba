@@ -105,7 +105,8 @@ async def found_file_violation(triggered, reupload):
         logger.debug("Sending message to user who violated the filter")
         response = StringBuilder()
         response.write(
-            f"The message you posted in {message.channel.mention} contains or links to a file "
+            f"The message you posted in {message.channel.mention} contains or links to"
+            " a file "
         )
         response.writeln(
             f"that violates a {filter_type.value} content filter: `{hashsum.hex()}`."
@@ -118,8 +119,9 @@ async def found_file_violation(triggered, reupload):
         if severity >= FilterType.JAIL.level:
             if roles.jail is not None:
                 response.writeln(
-                    "This offense is serious enough to warrant immediate revocation of posting privileges.\n"
-                    f"As such, you have been assigned the `{roles.jail.name}` role, until a moderator clears you."
+                    "This offense is serious enough to warrant immediate revocation of"
+                    " posting privileges.\nAs such, you have been assigned the"
+                    f" `{roles.jail.name}` role, until a moderator clears you."
                 )
 
         kwargs = {}
@@ -146,9 +148,13 @@ async def found_file_violation(triggered, reupload):
     if severity >= FilterType.JAIL.level:
         if roles.jail is None:
             logger.info(
-                "Jailing user for inappropriate file, except there is no jail role configured!"
+                "Jailing user for inappropriate file, except there is no jail role"
+                " configured!"
             )
-            content = f"Cannot jail {message.author.mention} for filter violation because no jail role is set!"
+            content = (
+                f"Cannot jail {message.author.mention} for filter violation because no"
+                " jail role is set!"
+            )
             journal.send("file/jail", message.guild, content, icon="warning")
         else:
             logger.info("Jailing user for inappropriate file")

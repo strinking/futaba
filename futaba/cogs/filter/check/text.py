@@ -116,15 +116,17 @@ async def found_text_violation(triggered, roles):
     async def message_violator():
         logger.debug("Sending message to user who violated the filter")
         response = StringBuilder(
-            f"The message you posted in {message.channel.mention} violates a {location_type.value} "
-            f"{filter_type.value} filter disallowing `{escaped_filter_text}`."
+            f"The message you posted in {message.channel.mention} violates a"
+            f" {location_type.value} {filter_type.value} filter disallowing"
+            f" `{escaped_filter_text}`."
         )
 
         if severity >= FilterType.JAIL.level:
             if roles.jail is not None:
                 response.writeln(
-                    "This offense is serious enough to warrant immediate revocation of posting privileges.\n"
-                    f"As such, you have been assigned the `{roles.jail.name}` role, until a moderator clears you."
+                    "This offense is serious enough to warrant immediate revocation of"
+                    " posting privileges.\nAs such, you have been assigned the"
+                    f" `{roles.jail.name}` role, until a moderator clears you."
                 )
 
         await message.author.send(content=str(response))
@@ -165,9 +167,13 @@ async def found_text_violation(triggered, roles):
     if severity >= FilterType.JAIL.level:
         if roles.jail is None:
             logger.info(
-                "Jailing user for inappropriate message, except there is no jail role configured!"
+                "Jailing user for inappropriate message, except there is no jail role"
+                " configured!"
             )
-            content = f"Cannot jail {message.author.mention} for filter violation because no jail role is set!"
+            content = (
+                f"Cannot jail {message.author.mention} for filter violation because no"
+                " jail role is set!"
+            )
             journal.send("text/jail", message.guild, content, icon="warning")
         else:
             logger.info("Jailing user for inappropriate message")

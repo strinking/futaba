@@ -98,7 +98,8 @@ async def show_filter(all_filters, author, location_name):
 
         for filter_type, filter_texts in filters.items():
             content.writeln(
-                f"{filter_type.emoji} {filter_type.description} strings {filter_type.emoji}"
+                f"{filter_type.emoji} {filter_type.description} strings"
+                f" {filter_type.emoji}"
             )
             content.writeln("```")
 
@@ -193,7 +194,8 @@ async def show_content_filter(all_filters, message):
             filter_list.sort()
 
             content.writeln(
-                f"{filter_type.emoji} {filter_type.description} hashes {filter_type.emoji}"
+                f"{filter_type.emoji} {filter_type.description} hashes"
+                f" {filter_type.emoji}"
             )
             content.writeln("```")
 

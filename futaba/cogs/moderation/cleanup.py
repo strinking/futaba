@@ -80,8 +80,7 @@ class Cleanup(AbstractCog):
 
         if count > max_count:
             embed.description = (
-                "Count too high. Maximum configured for this guild is "
-                f"`{max_count}`."
+                f"Count too high. Maximum configured for this guild is `{max_count}`."
             )
             raise CommandFailed(embed=embed)
 
@@ -154,8 +153,9 @@ class Cleanup(AbstractCog):
         else:
             embed = discord.Embed(colour=discord.Colour.red())
             embed.description = (
-                f"The passed ID is for user {user.mention}. Did you copy the message ID or the user ID?\n\n"
-                f"Not deleting. If you'd like to delete this far, specify the message count directly instead."
+                f"The passed ID is for user {user.mention}. Did you copy the message ID"
+                " or the user ID?\n\nNot deleting. If you'd like to delete this far,"
+                " specify the message count directly instead."
             )
             raise CommandFailed(embed=embed)
 
@@ -171,8 +171,9 @@ class Cleanup(AbstractCog):
         if len(messages) == max_count and messages[0].id != message_id:
             embed = discord.Embed(colour=discord.Colour.dark_teal())
             embed.description = (
-                f"This guild only allows `{max_count}` messages to be deleted at a time. "
-                f"Because of this limitation, message ID `{message_id}` was not actually deleted."
+                f"This guild only allows `{max_count}` messages to be deleted at a"
+                f" time. Because of this limitation, message ID `{message_id}` was not"
+                " actually deleted."
             )
             await ctx.send(embed=embed)
 
@@ -228,7 +229,10 @@ class Cleanup(AbstractCog):
 
         # Send journal events
         causer = user_discrim(ctx.author)
-        content = f"{causer} deleted {len(messages)} messages in {channel.mention} by {user.mention}"
+        content = (
+            f"{causer} deleted {len(messages)} messages in {channel.mention} by"
+            f" {user.mention}"
+        )
         self.journal.send(
             "user",
             ctx.guild,
@@ -242,7 +246,10 @@ class Cleanup(AbstractCog):
         )
 
         obj, file = self.dump_messages(messages)
-        content = f"Cleanup by {causer} of {user.mention} in {channel.mention} deleted these messages:"
+        content = (
+            f"Cleanup by {causer} of {user.mention} in {channel.mention} deleted these"
+            " messages:"
+        )
         self.dump.send(
             "user", ctx.guild, content, icon="delete", messages=obj, file=file
         )
@@ -278,7 +285,10 @@ class Cleanup(AbstractCog):
         # Send journal events
         text = escape_backticks(text)
         causer = user_discrim(ctx.author)
-        content = f"{causer} deleted {len(messages)} messages in {channel.mention} matching `{text}`"
+        content = (
+            f"{causer} deleted {len(messages)} messages in {channel.mention} matching"
+            f" `{text}`"
+        )
         self.journal.send(
             "text",
             ctx.guild,
@@ -292,7 +302,10 @@ class Cleanup(AbstractCog):
         )
 
         obj, file = self.dump_messages(messages)
-        content = f"Cleanup by {causer} in {channel.mention} of `{text}` deleted these messages:"
+        content = (
+            f"Cleanup by {causer} in {channel.mention} of `{text}` deleted these"
+            " messages:"
+        )
         self.dump.send(
             "text", ctx.guild, content, icon="delete", messages=obj, file=file
         )

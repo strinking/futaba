@@ -271,7 +271,10 @@ class Journal(AbstractCog):
             new_channel.send(content=self.log_updated_message(new_channel)),
         )
 
-        content = f"Moved journal logger from {old_channel.mention} to {new_channel.mention} for `{path}`"
+        content = (
+            f"Moved journal logger from {old_channel.mention} to {new_channel.mention}"
+            f" for `{path}`"
+        )
         self.journal.send(
             "channel/move",
             ctx.guild,
