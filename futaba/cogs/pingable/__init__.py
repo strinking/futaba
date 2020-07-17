@@ -16,11 +16,9 @@ from .core import Pingable
 def setup(bot):
     setup_pingable(bot)
 
-
 def setup_pingable(bot):
     cog = Pingable(bot)
     bot.add_cog(cog)
-
 
 def teardown(bot):
     teardown_pingable(bot)

@@ -100,8 +100,7 @@ class Reloader(AbstractCog):
                     teardown_function(self.bot)
             except (AttributeError, ModuleNotFoundError) as error:
                 raise KeyError(
-                    f"Failed to unload submodule {cogname} of module {ext_name}. (Is it"
-                    " already unloaded?)"
+                    f"Failed to unload submodule {cogname} of module {ext_name}. (Is it already unloaded?)"
                 )
             except Exception as error:
                 raise error

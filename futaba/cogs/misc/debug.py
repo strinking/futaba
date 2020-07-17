@@ -48,9 +48,9 @@ class Debugging(AbstractCog):
         qsize = len(self.bot.queue)
         embed = discord.Embed(colour=discord.Colour.teal())
         embed.description = (
-            f"There are currently `{qsize}` item{plural(qsize)} in the delayed"
-            f" queue.\nEvery `{self.bot.config.delay_chunk_size}` entries the loop will"
-            f" sleep for `{self.bot.config.delay_sleep:.3f}` seconds."
+            f"There are currently `{qsize}` item{plural(qsize)} in the delayed queue.\n"
+            f"Every `{self.bot.config.delay_chunk_size}` entries the loop will sleep for "
+            f"`{self.bot.config.delay_sleep:.3f}` seconds."
         )
         await ctx.send(embed=embed)
 

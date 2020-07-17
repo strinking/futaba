@@ -126,10 +126,7 @@ class Settings(AbstractCog):
                 ctx.guild
             )
             embed = discord.Embed(colour=discord.Colour.dark_teal())
-            embed.description = (
-                "Maximum number of messages that can be deleted in bulk is"
-                f" `{max_delete_messages}`"
-            )
+            embed.description = f"Maximum number of messages that can be deleted in bulk is `{max_delete_messages}`"
         elif not admin_perm(ctx):
             # Lacking authority to set max delete messages
             embed = discord.Embed(colour=discord.Colour.red())
@@ -173,27 +170,18 @@ class Settings(AbstractCog):
             )
             embed = discord.Embed(colour=discord.Colour.dark_teal())
             state = "enabled" if warn_manual_mod_action else "disabled"
-            embed.description = (
-                "Warning moderators about performing mod actions manually is"
-                f" **{state}**"
-            )
+            embed.description = f"Warning moderators about performing mod actions manually is **{state}**"
         elif not admin_perm(ctx):
             # Lacking authority to set warn manual mod action
             embed = discord.Embed(colour=discord.Colour.red())
-            embed.description = (
-                "You do not have permission to enable or disable manual mod action"
-                " warning"
-            )
+            embed.description = "You do not have permission to enable or disable manual mod action warning"
             raise ManualCheckFailure(embed=embed)
         else:
             with self.bot.sql.transaction():
                 self.bot.sql.settings.set_warn_manual_mod_action(ctx.guild, value)
 
             embed = discord.Embed(colour=discord.Colour.teal())
-            embed.description = (
-                "Set warning moderators about performing mod actions manually to"
-                f" `{value}`"
-            )
+            embed.description = f"Set warning moderators about performing mod actions manually to `{value}`"
 
         await ctx.send(embed=embed)
 
@@ -215,10 +203,7 @@ class Settings(AbstractCog):
         elif not admin_perm(ctx):
             # Lacking authority to set remove other roles
             embed = discord.Embed(colour=discord.Colour.red())
-            embed.description = (
-                "You do not have permissions to change the removal of non-punishment"
-                " roles"
-            )
+            embed.description = "You do not have permissions to change the removal of non-punishment roles"
             raise ManualCheckFailure(embed=embed)
         else:
             with self.bot.sql.transaction():
@@ -448,8 +433,7 @@ class Settings(AbstractCog):
         for role in roles:
             if role in assignable_roles:
                 warning.writeln(
-                    f"The {role.mention} is already reappliable since it is"
-                    " self-assignable."
+                    f"The {role.mention} is already reappliable since it is self-assignable."
                 )
 
         if warning:
@@ -589,8 +573,7 @@ class Settings(AbstractCog):
             value = self.bot.sql.settings.get_mentionable_name_prefix(ctx.guild)
             embed = discord.Embed(colour=discord.Colour.dark_teal())
             embed.description = (
-                f"Names must begin with at least {value} typeable"
-                f" character{plural(value)}"
+                f"Names must begin with at least {value} typeable character{plural(value)}"
                 if value
                 else "No guild requirement for mentionable names"
             )

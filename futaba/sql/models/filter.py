@@ -394,8 +394,7 @@ class FilterModel:
         )
 
         logger.info(
-            "Updating filter settings (bot_immune='%s', manage_messages_immune='%s')"
-            " for guild '%s' (%d)",
+            "Updating filter settings (bot_immune='%s', manage_messages_immune='%s') for guild '%s' (%d)",
             bot_immune,
             manage_messages_immune,
             guild.name,

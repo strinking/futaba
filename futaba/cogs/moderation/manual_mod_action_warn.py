@@ -49,8 +49,7 @@ class ManualModActionWarn(AbstractCog):
         """Dispatch a warning about invoking a moderation action manually."""
 
         logger.info(
-            "Moderator '%s' (%d) completed a moderation action (%s) manually on member:"
-            " '%s' (%d)",
+            "Moderator '%s' (%d) completed a moderation action (%s) manually on member: '%s' (%d)",
             moderator.name,
             moderator.id,
             action.name,

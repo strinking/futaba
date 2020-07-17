@@ -235,10 +235,7 @@ class Alias(AbstractCog):
         with self.bot.sql.transaction():
             self.bot.sql.alias.add_possible_alt(ctx.guild, first_user, second_user)
 
-        content = (
-            f"Added {first_user.mention} and {second_user.mention} as possible alt"
-            " accounts."
-        )
+        content = f"Added {first_user.mention} and {second_user.mention} as possible alt accounts."
         self.journal.send(
             "alt/add",
             ctx.guild,

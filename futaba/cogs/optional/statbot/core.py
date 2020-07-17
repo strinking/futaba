@@ -67,9 +67,7 @@ class Statbot(AbstractCog):
                 params["int_user_id"] = int_hash(item.id)
 
         await ctx.send(
-            content=(
-                f"https://ddd.raylu.net/guild/{ctx.guild.id}/{'?' if params else ''}{urlencode(params)}"
-            )
+            content=f"https://ddd.raylu.net/guild/{ctx.guild.id}/{'?' if params else ''}{urlencode(params)}"
         )
 
     @commands.command(
@@ -89,16 +87,13 @@ class Statbot(AbstractCog):
 
         descr = StringBuilder()
         descr.writeln(
-            f"Found `{message_count}` message{plural(message_count)} from"
-            f" {user.mention}."
+            f"Found `{message_count}` message{plural(message_count)} from {user.mention}."
         )
 
         if message_count:
             descr.writeln(
-                f"Of those, `{edited_count}` (or"
-                f" `{edited_count / message_count * 100:.2f}%`) are edited,\nand"
-                f" `{deleted_count}` (or `{deleted_count / message_count * 100:.2f}%`)"
-                " are deleted."
+                f"Of those, `{edited_count}` (or `{edited_count / message_count * 100:.2f}%`) are edited,\n"
+                f"and `{deleted_count}` (or `{deleted_count / message_count * 100:.2f}%`) are deleted."
             )
 
         if hasattr(user, "joined_at"):

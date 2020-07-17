@@ -217,8 +217,7 @@ class Alert(AbstractCog):
         descr = StringBuilder()
         descr.writeln(f"ID: #`{alert.id:05}`, Condition: `{alert}`")
         descr.writeln(
-            "To get these notifications in a channel, add a logger for path"
-            " `/welcome/alert`"
+            "To get these notifications in a channel, add a logger for path `/welcome/alert`"
         )
         embed.description = str(descr)
         await ctx.send(embed=embed)

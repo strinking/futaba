@@ -27,7 +27,6 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["Pingable"]
 
-
 class Pingable(AbstractCog):
     __slots__ = ("journal",)
 
@@ -46,13 +45,12 @@ class Pingable(AbstractCog):
         cooldown_time = self.bot.config.helper_ping_cooldown
 
         logger.info(
-            "User '%s' (%d) is pinging the helper role in channel '%s' in guild '%s'"
-            " (%d)",
+            "User '%s' (%d) is pinging the helper role in channel '%s' in guild '%s' (%d)",
             ctx.author,
             ctx.author.mention,
             ctx.channel,
             ctx.guild,
-            ctx.guild.id,
+            ctx.guild.id
         )
         pingable_channels = self.bot.sql.roles.get_pingable_role_channels(ctx.guild)
         channel_role = None
@@ -92,7 +90,7 @@ class Pingable(AbstractCog):
             await ctx.send(f"{c_r[1].mention}, {ctx.author.mention} needs help.")
 
         else:
-            # convert deltatime into string: Hh, Mm, Ss
+            #convert deltatime into string: Hh, Mm, Ss
             time_remaining = cooldown - datetime.now()
             hours, remainder = divmod(int(time_remaining.total_seconds()), 3600)
             minutes, seconds = divmod(remainder, 60)
@@ -108,10 +106,7 @@ class Pingable(AbstractCog):
 
             embed = discord.Embed(colour=discord.Colour.red())
             embed.set_author(name="Failed to ping helper role.")
-            embed.description = str(
-                "You can ping the helper role for this channel again in"
-                f" {', '.join(times)}"
-            )
+            embed.description = str(f"You can ping the helper role for this channel again in {', '.join(times)}")
             await ctx.send(embed=embed)
 
             raise CommandFailed()

@@ -140,12 +140,10 @@ class RolesModel:
             "Getting all pingable roles for guild '%s' (%d)", guild.name, guild.id
         )
 
-        sel = select(
-            [
-                self.tb_pingable_role_channel.c.channel_id,
-                self.tb_pingable_role_channel.c.role_id,
-            ]
-        ).where(self.tb_pingable_role_channel.c.guild_id == guild.id)
+        sel = select([self.tb_pingable_role_channel.c.channel_id,
+                      self.tb_pingable_role_channel.c.role_id]).where(
+            self.tb_pingable_role_channel.c.guild_id == guild.id
+        )
         result = self.sql.execute(sel)
 
         channelroles = set()
@@ -157,20 +155,23 @@ class RolesModel:
 
         return channelroles
 
+
     def add_pingable_role_channel(self, guild, channel, role):
         logger.info(
             "Adding pingable role '%s' in channel '%s' for guild '%s' (%d)",
             role.name,
             channel.name,
             guild.name,
-            guild.id,
+            guild.id
         )
 
         assert guild == role.guild
         assert guild == channel.guild
 
         ins = self.tb_pingable_role_channel.insert().values(
-            guild_id=guild.id, channel_id=channel.id, role_id=role.id
+            guild_id=guild.id,
+            channel_id=channel.id,
+            role_id=role.id
         )
 
         self.sql.execute(ins)
@@ -181,7 +182,7 @@ class RolesModel:
             role.name,
             channel.name,
             guild.name,
-            guild.id,
+            guild.id
         )
 
         assert guild == role.guild

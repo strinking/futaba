@@ -60,9 +60,9 @@ class ExampleCog(AbstractCog):
         embed = discord.Embed(colour=discord.Colour.teal())
         embed.set_author(name=f"Input: {number}, Previous: {previous}")
         embed.description = (
-            f"Square root: `{math.sqrt(abs(number + previous))}`\nNatural logarithm:"
-            f" `{math.log(abs(number + previous))}`\nSine / cosine:"
-            f" `{math.sin(number + previous)}` / `{math.cos(number + previous)}`"
+            f"Square root: `{math.sqrt(abs(number + previous))}`\n"
+            f"Natural logarithm: `{math.log(abs(number + previous))}`\n"
+            f"Sine / cosine: `{math.sin(number + previous)}` / `{math.cos(number + previous)}`"
         )
         await ctx.send(embed=embed)
 

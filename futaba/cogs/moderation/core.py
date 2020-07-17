@@ -60,8 +60,7 @@ class Moderation(AbstractCog):
         assert minutes
 
         logger.info(
-            "Creating delayed role removal for '%s' (%d) with reason %r for '%s' in %d"
-            " minutes",
+            "Creating delayed role removal for '%s' (%d) with reason %r for '%s' in %d minutes",
             member.name,
             member.id,
             reason,
@@ -235,10 +234,7 @@ class Moderation(AbstractCog):
         if minutes < 30 or minutes > 720:
             embed = discord.Embed(
                 colour=discord.Colour.red(),
-                description=(
-                    "You need to supply a length of time between 30 and 720 mins (12"
-                    " hours)"
-                ),
+                description="You need to supply a length of time between 30 and 720 mins (12 hours)",
             )
             raise CommandFailed(embed=embed)
 
@@ -392,10 +388,7 @@ class Moderation(AbstractCog):
             mod = user_discrim(ctx.author)
             banned = user_discrim(user)
             clean_reason = escape_backticks(reason)
-            content = (
-                f"{mod} soft-banned {user.mention} ({banned}) with reason:"
-                f" `{clean_reason}`"
-            )
+            content = f"{mod} soft-banned {user.mention} ({banned}) with reason: `{clean_reason}`"
 
             await ctx.guild.ban(user, reason=f"{reason} - {mod}", delete_message_days=1)
             await asyncio.sleep(0.1)
@@ -433,10 +426,7 @@ class Moderation(AbstractCog):
             mod = user_discrim(ctx.author)
             unbanned = user_discrim(user)
             clean_reason = escape_backticks(reason)
-            content = (
-                f"{mod} unbanned {user.mention} ({unbanned}) with reason:"
-                f" `{clean_reason}`"
-            )
+            content = f"{mod} unbanned {user.mention} ({unbanned}) with reason: `{clean_reason}`"
 
             await ctx.guild.unban(user, reason=f"{reason} - {mod}")
             await ctx.send(embed=embed)

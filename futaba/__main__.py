@@ -22,11 +22,7 @@ import schema
 from toml import TomlDecodeError
 
 from futaba import client
-
-try:
-    from .config import load_config
-except ImportError:
-    from config import load_config
+from futaba.config import load_config
 
 LOG_FILE = "futaba.log"
 LOG_FILE_MODE = "w"

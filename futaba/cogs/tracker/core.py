@@ -176,10 +176,7 @@ class Tracker(AbstractCog):
             message.channel.id,
         )
 
-        content = (
-            f"{user_discrim(message.author)} sent a message in"
-            f" {message.channel.mention}"
-        )
+        content = f"{user_discrim(message.author)} sent a message in {message.channel.mention}"
         self.journal.send(
             "message/new", message.guild, content, icon="message", message=message
         )
@@ -221,10 +218,7 @@ class Tracker(AbstractCog):
             after.channel.id,
         )
 
-        content = (
-            f"{user_discrim(after.author)} edited message {after.id} in"
-            f" {after.channel.mention}"
-        )
+        content = f"{user_discrim(after.author)} edited message {after.id} in {after.channel.mention}"
         self.journal.send(
             "message/edit",
             after.guild,
@@ -408,10 +402,7 @@ class Tracker(AbstractCog):
             user.name,
             user.id,
         )
-        content = (
-            f"{user_discrim(user)} removed reaction {emoji} from message {message.id}"
-            f" in {channel.mention}"
-        )
+        content = f"{user_discrim(user)} removed reaction {emoji} from message {message.id} in {channel.mention}"
         self.journal.send(
             "reaction/remove",
             message.guild,
@@ -435,17 +426,13 @@ class Tracker(AbstractCog):
         blacklist = self.bot.sql.settings.get_tracking_blacklist(message.guild)
         if blacklist.is_blocked(message.channel):
             logger.debug(
-                "Ignoring all reactions from message %d being removed due to the"
-                " channel being blacklisted",
+                "Ignoring all reactions from message %d being removed due to the channel being blacklisted",
                 message.id,
             )
             return
 
         logger.debug("All reactions from message %d were removed", message.id)
-        content = (
-            f"All reactions on message {message.id} in {message.channel.mention} were"
-            " removed"
-        )
+        content = f"All reactions on message {message.id} in {message.channel.mention} were removed"
         self.journal.send(
             "reaction/clear",
             message.guild,
@@ -485,8 +472,7 @@ class Tracker(AbstractCog):
         blacklist = self.bot.sql.settings.get_tracking_blacklist(member.guild)
         if blacklist.is_blocked(member):
             logger.debug(
-                "Ignoring member %s (%d) joining guild '%s' (%d) due to the user being"
-                " blacklisted",
+                "Ignoring member %s (%d) joining guild '%s' (%d) due to the user being blacklisted",
                 member.name,
                 member.id,
                 member.guild.name,
@@ -519,8 +505,7 @@ class Tracker(AbstractCog):
         blacklist = self.bot.sql.settings.get_tracking_blacklist(member.guild)
         if blacklist.is_blocked(member):
             logger.debug(
-                "Ignoring member %s (%d) leaving guild '%s' (%d) due to the user being"
-                " blacklisted",
+                "Ignoring member %s (%d) leaving guild '%s' (%d) due to the user being blacklisted",
                 member.name,
                 member.id,
                 member.guild.name,

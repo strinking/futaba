@@ -60,11 +60,10 @@ class SelfAssignableRoles(AbstractCog):
         embed = discord.Embed(colour=discord.Colour.red())
         embed.set_author(name="Cannot use role commands there!")
         embed.description = (
-            "You attempted to use the command"
-            f" `{escape_backticks(ctx.message.content)}` in {ctx.channel.mention}. The"
-            " moderators have set it so that role assignment commands can only be used"
-            " in the following"
-            f" channels:\n{', '.join(channel.mention for channel in ok_channels)}\n"
+            f"You attempted to use the command `{escape_backticks(ctx.message.content)}` "
+            f"in {ctx.channel.mention}. The moderators have set it so that role assignment "
+            "commands can only be used in the following channels:\n"
+            f"{', '.join(channel.mention for channel in ok_channels)}\n"
         )
 
         try:
@@ -149,10 +148,7 @@ class SelfAssignableRoles(AbstractCog):
             *roles, reason="Adding self-assignable roles", atomic=True
         )
 
-        content = (
-            f"{user_discrim(ctx.author)} added self-assignable roles:"
-            f" {self.str_roles(roles)}"
-        )
+        content = f"{user_discrim(ctx.author)} added self-assignable roles: {self.str_roles(roles)}"
         self.journal.send("self/add", ctx.guild, content, icon="role")
 
     @role.command(
@@ -171,10 +167,7 @@ class SelfAssignableRoles(AbstractCog):
             *roles, reason="Removing self-assignable roles", atomic=True
         )
 
-        content = (
-            f"{user_discrim(ctx.author)} removed self-assignable roles:"
-            f" {self.str_roles(roles)}"
-        )
+        content = f"{user_discrim(ctx.author)} removed self-assignable roles: {self.str_roles(roles)}"
         self.journal.send("self/remove", ctx.guild, content, icon="role")
 
     @role.command(name="joinable", aliases=["assignable", "canjoin"])
@@ -281,11 +274,11 @@ class SelfAssignableRoles(AbstractCog):
     @permissions.check_mod()
     async def role_pingable(self, ctx, role: RoleConv, *channels: TextChannelConv):
         logger.info(
-            "Making role '%s' pingable in guild '%s' (%d), channel(s) [%s]",
-            role.name,
-            ctx.guild.name,
-            ctx.guild.id,
-            self.str_channels(channels),
+             "Making role '%s' pingable in guild '%s' (%d), channel(s) [%s]",
+             role.name,
+             ctx.guild.name,
+             ctx.guild.id,
+             self.str_channels(channels)
         )
 
         if not role:
@@ -294,17 +287,13 @@ class SelfAssignableRoles(AbstractCog):
         if not channels:
             raise CommandFailed()
 
-        pingable_channels = next(
-            zip(*self.bot.sql.roles.get_pingable_role_channels(ctx.guild)), []
-        )
+        pingable_channels = next(zip(*self.bot.sql.roles.get_pingable_role_channels(ctx.guild)), [])
 
         with self.bot.sql.transaction():
             for channel in channels:
-                # this makes a list of all channels and rows, currently it's a channel and row pair.
+                #this makes a list of all channels and rows, currently it's a channel and row pair.
                 if channel not in pingable_channels:
-                    self.bot.sql.roles.add_pingable_role_channel(
-                        ctx.guild, channel, role
-                    )
+                    self.bot.sql.roles.add_pingable_role_channel(ctx.guild, channel, role)
 
         embed = discord.Embed(colour=discord.Colour.dark_teal())
         embed.set_author(name="Made role pingable in channels")
@@ -317,12 +306,7 @@ class SelfAssignableRoles(AbstractCog):
         # Send journal event
         content = f"Role was set as pingable in channels: {self.str_channels(channels)}"
         self.journal.send(
-            "pingable/add",
-            ctx.guild,
-            content,
-            icon="role",
-            role=role,
-            channels=channels,
+            "pingable/add", ctx.guild, content, icon="role", role=role, channels=channels
         )
 
     @role.command(name="unpingable")
@@ -330,11 +314,11 @@ class SelfAssignableRoles(AbstractCog):
     @permissions.check_mod()
     async def role_unpingable(self, ctx, role: RoleConv, *channels: TextChannelConv):
         logger.info(
-            "Making role '%s' not pingable in guild '%s' (%d), channel(s) [%s]",
-            role.name,
-            ctx.guild.name,
-            ctx.guild.id,
-            self.str_channels(channels),
+             "Making role '%s' not pingable in guild '%s' (%d), channel(s) [%s]",
+             role.name,
+             ctx.guild.name,
+             ctx.guild.id,
+             self.str_channels(channels)
         )
 
         if not role:
@@ -343,17 +327,13 @@ class SelfAssignableRoles(AbstractCog):
         if not channels:
             raise CommandFailed()
 
-        pingable_channels = next(
-            zip(*self.bot.sql.roles.get_pingable_role_channels(ctx.guild)), []
-        )
+        pingable_channels = next(zip(*self.bot.sql.roles.get_pingable_role_channels(ctx.guild)), [])
 
         with self.bot.sql.transaction():
             for channel in channels:
-                # this makes a list of all channels and rows, currently it's a channel and row pair.
+                #this makes a list of all channels and rows, currently it's a channel and row pair.
                 if channel in pingable_channels:
-                    self.bot.sql.roles.remove_pingable_role_channel(
-                        ctx.guild, channel, role
-                    )
+                    self.bot.sql.roles.remove_pingable_role_channel(ctx.guild, channel, role)
 
         embed = discord.Embed(colour=discord.Colour.dark_teal())
         embed.set_author(name="Made role not pingable in channels")
@@ -364,16 +344,9 @@ class SelfAssignableRoles(AbstractCog):
         await ctx.send(embed=embed)
 
         # Send journal event
-        content = (
-            f"Role was set as not pingable in channels: {self.str_channels(channels)}"
-        )
+        content = f"Role was set as not pingable in channels: {self.str_channels(channels)}"
         self.journal.send(
-            "pingable/remove",
-            ctx.guild,
-            content,
-            icon="role",
-            role=role,
-            channels=channels,
+            "pingable/remove", ctx.guild, content, icon="role", role=role, channels=channels
         )
 
     def channel_journal(self, guild):
@@ -548,8 +521,8 @@ class SelfAssignableRoles(AbstractCog):
             embed = discord.Embed(colour=discord.Colour.dark_purple())
             embed.set_author(name="All channels are permitted")
             embed.description = (
-                f"There are no restricted role channels set, so `{prefix}role"
-                " add/remove` commands can be used anywhere."
+                f"There are no restricted role channels set, so `{prefix}role add/remove` commands "
+                "can be used anywhere."
             )
 
         await ctx.send(embed=embed)
