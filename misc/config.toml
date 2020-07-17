@@ -44,7 +44,7 @@ discordpy = "490419059964510210"
 
 # Cooldown after pinging a role in a channel, in seconds
 [pingcooldown]
-cooldown = 3600
+cooldown = "3600"
 
 # Path to the RDBMS futaba will use
 [database]
