@@ -440,9 +440,46 @@ class Moderation(AbstractCog):
                 content="I don't have permission to unban this user"
             )
 
-    @commands.command(name="msgcollapse", aliases=["gist"])
+    @commands.command(name="gist", aliases=["msgupload"])
     @commands.guild_only()
-    async def msgcollapse(self, ctx, *messages: MessageConv):
+    async def upload_message(self, ctx, *messages: MessageConv):
+        """
+        Concatenates the range of messages and upload to a gist.
+        A link to the gist is posted after a successful upload.
+        """
+
+        if not self.bot.config.gist_oauth_token:
+            raise CommandFailed(content="The gist oauth token is not configured.")
+
+        messages_content = "\n".join(str(message.content) for message in messages)
+        messages_ids = ", ".join(str(message.id) for message in messages)
+
+        gist_url = await gist.create_single_gist(
+            token=self.bot.config.gist_oauth_token,
+            content=messages_content,
+            filename="collapsed.md",
+            description="Discord collapsed messages",
+            public=False,
+        )
+
+        logger.info(
+            "Successfully uploaded %d messages[%s] into a gist. Requested by user '%s' (id=%d, guild=%d)",
+            len(messages),
+            messages_ids,
+            ctx.author.name,
+            ctx.author.id,
+            ctx.guild.id,
+        )
+
+        embed = discord.Embed(description="Done! Messages successfully uploaded!")
+        embed.add_field(name="Permalink", value=gist_url)
+        embed.colour = discord.Colour.dark_teal()
+
+        await ctx.send(embed=embed)
+
+    @commands.command(name="mvgist", aliases=["msgcollapse"])
+    @commands.guild_only()
+    async def collapse_message(self, ctx, *messages: MessageConv):
         """
         Concatenates the range of messages and uploads to a gist.
         The original messages are deleted and a link to the gist is posted.
@@ -450,30 +487,21 @@ class Moderation(AbstractCog):
         Note: The messages specified should be by the same user
         """
 
-        if not self.bot.config.gist_oauth_token:
-            raise CommandFailed(content="The gist oauth token is not configured.")
-
         if not permissions.has_perm(ctx, "manage_messages") and any(
             message.author.id != ctx.author.id for message in messages
         ):
             # check if the messages were created by the same user
             raise ManualCheckFailure(content="I can only collapse your messages")
 
-        logger.info("Collapsing %d messages into a gist", len(messages))
-
-        gist_url = await gist.create_single_gist(
-            token=self.bot.config.gist_oauth_token,
-            content="  \n".join(str(message.content) for message in messages),
-            filename="collapsed.md",
-            description="Discord collapsed messages",
-            public=False,
-        )
-
-        embed = discord.Embed(description="Done! Messages successfully collapsed!")
-        embed.add_field(name="Permalink", value=gist_url)
-        embed.colour = discord.Colour.dark_teal()
+        await self.upload_message(ctx, *messages)
 
         for message in messages:
             await message.delete()
 
-        await ctx.send(embed=embed)
+        logger.info(
+            "Removed %d messages because of message collapse request by user '%s'(id=%d, guild=%d)",
+            len(messages),
+            ctx.author.name,
+            ctx.author.id,
+            ctx.guild.id,
+        )
