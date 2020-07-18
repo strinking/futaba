@@ -454,6 +454,9 @@ class Moderation(AbstractCog):
         messages_content = "\n".join(str(message.content) for message in messages)
         messages_ids = ", ".join(str(message.id) for message in messages)
 
+        # github markdown requires that 2 spaces are placed before a newline character
+        messages_content = messages_content.replace("\n", "  \n")
+
         gist_url = await gist.create_single_gist(
             token=self.bot.config.gist_oauth_token,
             content=messages_content,
