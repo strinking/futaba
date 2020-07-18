@@ -27,7 +27,7 @@ url = "postgres://statbot:passwordhere@localhost/statbot_ro"
 max-cleanup-messages = "500"
 
 # Cooldown after pinging a role in a channel, in seconds
-cooldown = "3600"
+ping-cooldown = "3600"
 
 [delay]
 # Configuration for the delayed event queue
