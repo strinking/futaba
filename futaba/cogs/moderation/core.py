@@ -457,9 +457,9 @@ class Moderation(AbstractCog):
         gist_url = await gist.create_single_gist(
             token=self.bot.config.gist_oauth_token,
             content=messages_content,
-            filename="collapsed.md",
-            description="Discord collapsed messages",
-            public=False,
+            filename=self.bot.config.gist_filename,
+            description=self.bot.config.gist_description,
+            public=self.bot.config.gist_public,
         )
 
         logger.info(
