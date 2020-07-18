@@ -26,6 +26,9 @@ url = "postgres://statbot:passwordhere@localhost/statbot_ro"
 # when doing a bulk message cleanup
 max-cleanup-messages = "500"
 
+# Cooldown after pinging a role in a channel, in seconds
+cooldown = "3600"
+
 [delay]
 # Configuration for the delayed event queue
 
@@ -41,10 +44,6 @@ sleep = "0.1"
 anger = "496085813881470986"
 python = "490419105699069952"
 discordpy = "490419059964510210"
-
-# Cooldown after pinging a role in a channel, in seconds
-[pingcooldown]
-cooldown = "3600"
 
 # Path to the RDBMS futaba will use
 [database]

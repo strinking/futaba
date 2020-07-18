@@ -287,8 +287,12 @@ class SelfAssignableRoles(AbstractCog):
         if not channels:
             raise CommandFailed()
 
+        # self.bot.sql.roles.get_pingable_role_channels(ctx.guild) gets a set of tuples (channel, role).
+        # Zip converts it into a set of channels and a set of roles.
+        # next gets the next item from the zip iterator which is the set of channels.
+        # if the iterator is exhausted i.e there's no pingable channels, the default value set() will be used.
         pingable_channels = next(
-            zip(*self.bot.sql.roles.get_pingable_role_channels(ctx.guild)), []
+            zip(*self.bot.sql.roles.get_pingable_role_channels(ctx.guild)), set()
         )
 
         with self.bot.sql.transaction():
@@ -336,8 +340,9 @@ class SelfAssignableRoles(AbstractCog):
         if not channels:
             raise CommandFailed()
 
+        # See role_pingable for an explanation
         pingable_channels = next(
-            zip(*self.bot.sql.roles.get_pingable_role_channels(ctx.guild)), []
+            zip(*self.bot.sql.roles.get_pingable_role_channels(ctx.guild)), set()
         )
 
         with self.bot.sql.transaction():

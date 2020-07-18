@@ -21,6 +21,7 @@ import discord
 from discord.ext import commands
 from futaba.permissions import mod_perm
 from futaba.exceptions import CommandFailed
+from futaba.utils import fancy_timedelta
 from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
@@ -39,7 +40,7 @@ class Pingable(AbstractCog):
     def setup(self):
         pass
 
-    @commands.command(name="pinghelpers", aliases=["helpme"])
+    @commands.command(name="pinghelpers", aliases=["helpme", "pinghelp"])
     async def pinghelpers(self, ctx):
         """Pings helpers if used in the respective channel"""
 
@@ -54,62 +55,40 @@ class Pingable(AbstractCog):
             ctx.guild.id,
         )
         pingable_channels = self.bot.sql.roles.get_pingable_role_channels(ctx.guild)
-        channel_role = None
-
-        for c_r in pingable_channels:
-            if ctx.channel == c_r[0]:
-                channel_role = c_r
-                break
+        # this will return an empty list if there is nothing.
+        channel_role = [
+            (channel, role)
+            for channel, role in pingable_channels
+            if channel == ctx.channel
+        ]
 
         if not channel_role:
             embed = discord.Embed(colour=discord.Colour.red())
             embed.set_author(name="Failed to ping helper role.")
             embed.description = str(f"There is no helper role set for this channel.")
-            await ctx.send(embed=embed)
-
-            raise CommandFailed()
+            raise CommandFailed(embed=embed)
 
         channel_user = (ctx.channel.id, ctx.author.id)
         cooldown = self.cooldowns.get(channel_user)
 
-        if not cooldown:
-            cooldown = self.cooldowns[channel_user] = [
-                datetime.now() + timedelta(seconds=cooldown_time),
-                0,
-                datetime.now(),
-            ]
-
-        if cooldown <= datetime.now():
-            self.cooldowns[channel_user][0] = datetime.now() + timedelta(
+        if mod_perm(ctx) or not cooldown or cooldown <= datetime.now():
+            self.cooldowns[channel_user] = datetime.now() + timedelta(
                 seconds=cooldown_time
             )
-            if not mod_perm(ctx):
-                self.cooldowns[channel_user][1] += 1
 
-            self.cooldowns[channel_user][2] = datetime.now()
+            # channel[0] will be the first tuple in the list. there will only be one, since there
+            # is a unique constraint on channel (tb_pingable_role_channel in roles.py). channel[0][1] is the role.
+            await ctx.send(
+                f"{channel_role[0][1].mention}, {ctx.author.mention} needs help."
+            )
 
-            await ctx.send(f"{c_r[1].mention}, {ctx.author.mention} needs help.")
-
-        else:
+        elif cooldown > datetime.now():
             # convert deltatime into string: Hh, Mm, Ss
             time_remaining = cooldown - datetime.now()
-            hours, remainder = divmod(int(time_remaining.total_seconds()), 3600)
-            minutes, seconds = divmod(remainder, 60)
-            seconds = round(seconds, 2)
-
-            times = []
-            if hours != 0:
-                times.append(f"{hours}h")
-            if minutes != 0:
-                times.append(f"{minutes}m")
-            if seconds != 0:
-                times.append(f"{seconds}s")
 
             embed = discord.Embed(colour=discord.Colour.red())
             embed.set_author(name="Failed to ping helper role.")
             embed.description = str(
-                f"You can ping the helper role for this channel again in {', '.join(times)}"
+                f"You can ping the helper role for this channel again in {fancy_timedelta(time_remaining)}"
             )
-            await ctx.send(embed=embed)
-
-            raise CommandFailed()
+            raise CommandFailed(embed=embed)
