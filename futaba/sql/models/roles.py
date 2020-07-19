@@ -148,7 +148,7 @@ class RolesModel:
         result = self.sql.execute(sel)
 
         channelroles = set()
-        for (channel_id, role_id,) in result.fetchall():
+        for (channel_id, role_id) in result.fetchall():
             channel = discord.utils.get(guild.channels, id=channel_id)
             role = discord.utils.get(guild.roles, id=role_id)
             if role is not None:

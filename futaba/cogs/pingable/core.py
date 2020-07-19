@@ -76,8 +76,14 @@ class Pingable(AbstractCog):
                 seconds=cooldown_time
             )
 
-            # channel[0] will be the first tuple in the list. there will only be one, since there
-            # is a unique constraint on channel (tb_pingable_role_channel in roles.py). channel[0][1] is the role.
+            # This will loop over the dictionary and remove expired entries.
+            key_list = list(self.cooldowns.keys())
+            for k in key_list:
+                if self.cooldowns[k] < datetime.now():
+                    del self.cooldowns[k]
+
+            # channel[0] will be the first tuple in the list. there will only be one, since the
+            # channel's id is a primary key (tb_pingable_role_channel in roles.py). channel[0][1] is the role.
             await ctx.send(
                 f"{channel_role[0][1].mention}, {ctx.author.mention} needs help."
             )

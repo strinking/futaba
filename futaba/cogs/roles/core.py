@@ -103,6 +103,36 @@ class SelfAssignableRoles(AbstractCog):
         embed.description = str(descr)
         await ctx.send(embed=embed)
 
+    @role.command(name="pshow", aliases=["pdisplay", "plist", "plsar", "pls"])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def pingable_show(self, ctx):
+        """ Shows all channels where a role is pingable. """
+        logger.info("Displaying pingable channels and roles in guild '%s' (%d)",
+            ctx.guild.name,
+            ctx.guild.id,)
+
+        # r[0] == current channel.
+        channel_role = sorted(self.bot.sql.roles.get_pingable_role_channels(ctx.guild), key=lambda r: r[0].name)
+
+        if not channel_role:
+            prefix = self.bot.prefix(ctx.guild)
+            embed = discord.Embed(colour=discord.Colour.dark_purple())
+            embed.set_author(name="No pingable roles in this guild")
+            embed.description = (f"Moderators can use the `{prefix}role pingable/unpingable` "
+                "commands to change this list!")
+            await ctx.send(embed=embed)
+            return
+
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
+        embed.set_author(name="Pingable roles (channel, role)")
+
+        descr = StringBuilder(sep="\n")
+        for channel, role in channel_role:
+            descr.write(f"{channel.mention}: {role.mention}")
+        embed.description = str(descr)
+        await ctx.send(embed=embed)
+
     def check_roles(self, ctx, roles):
         if not roles:
             raise CommandFailed()
@@ -264,12 +294,9 @@ class SelfAssignableRoles(AbstractCog):
         # of tuples (channel, role).
         # Zip converts it into a set of channels and a set of roles.
         channel_role = zip(*self.bot.sql.roles.get_pingable_role_channels(ctx.guild))
-        # this makes a list of all channels and rows, currently it's a channel
-        # and row pair.
-        # next gets the next item from the zip iterator which is the set of
-        # channels.
-        # if the iterator is exhausted i.e there's no pingable channels, the
-        # default value set() will be used.
+        # this makes a list of all channels and rows, currently it's a channel and row pair.
+        # next gets the next item from the zip iterator which is the set of channels.
+        # if the iterator is exhausted i.e there's no pingable channels, the default value set() will be used.
         pingable_channels = next(channel_role, set())
 
         #channels that were already in the database will not be added, user
@@ -359,36 +386,6 @@ class SelfAssignableRoles(AbstractCog):
         str_channels = " ".join(chan.mention for chan in all_channels)
         content = f"Allowed channels for bot commands set: {str_channels or '(any)'}"
         self.journal.send("channel/set", guild, content, icon="channel", channels=list(all_channels))
-
-    @role.command(name="pingablelist", aliases=["plist"])
-    @commands.guild_only()
-    @permissions.check_mod()
-    async def pingable_list(self, ctx):
-        """Shows all channels where a role is pingable."""
-        logger.info("Displaying pingable channels and roles in guild '%s' (%d)",
-            ctx.guild.name,
-            ctx.guild.id,)
-
-        # r[0] == current channel.
-        channel_role = sorted(self.bot.sql.roles.get_pingable_role_channels(ctx.guild), key=lambda r: r[0].name)
-
-        if not channel_role:
-            prefix = self.bot.prefix(ctx.guild)
-            embed = discord.Embed(colour=discord.Colour.dark_purple())
-            embed.set_author(name="No pingable roles in this guild")
-            embed.description = (f"Moderators can use the `{prefix}role pingable/unpingable` "
-                "commands to change this list!")
-            await ctx.send(embed=embed)
-            return
-
-        embed = discord.Embed(colour=discord.Colour.dark_teal())
-        embed.set_author(name="Pingable roles (channel, role)")
-
-        descr = StringBuilder(sep="\n")
-        for channel, role in channel_role:
-            descr.write(f"{channel.mention}: {role.mention}")
-        embed.description = str(descr)
-        await ctx.send(embed=embed)
 
     @role.command(name="addchan", aliases=["addchans", "addchannel", "addchannels"])
     @commands.guild_only()
