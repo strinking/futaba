@@ -65,7 +65,7 @@ class Pingable(AbstractCog):
         if not channel_role:
             embed = discord.Embed(colour=discord.Colour.red())
             embed.set_author(name="Failed to ping helper role.")
-            embed.description = str(f"There is no helper role set for this channel.")
+            embed.description = f"There is no helper role set for this channel."
             raise CommandFailed(embed=embed)
 
         channel_user = (ctx.channel.id, ctx.author.id)
@@ -88,7 +88,5 @@ class Pingable(AbstractCog):
 
             embed = discord.Embed(colour=discord.Colour.red())
             embed.set_author(name="Failed to ping helper role.")
-            embed.description = str(
-                f"You can ping the helper role for this channel again in {fancy_timedelta(time_remaining)}"
-            )
+            embed.description = f"You can ping the helper role for this channel again in {fancy_timedelta(time_remaining)}"
             raise CommandFailed(embed=embed)

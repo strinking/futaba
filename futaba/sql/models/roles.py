@@ -80,9 +80,8 @@ class RolesModel:
             "pingable_role_channel",
             meta,
             Column("guild_id", BigInteger, ForeignKey("guilds.guild_id")),
-            Column("channel_id", BigInteger),
+            Column("channel_id", BigInteger, primary_key=True),
             Column("role_id", BigInteger),
-            UniqueConstraint("channel_id", name="pingable_role_channel_uq"),
         )
         self.roles_cache = {}
         self.channels_cache = {}

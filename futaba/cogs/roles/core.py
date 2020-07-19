@@ -289,30 +289,38 @@ class SelfAssignableRoles(AbstractCog):
 
         # self.bot.sql.roles.get_pingable_role_channels(ctx.guild) gets a set of tuples (channel, role).
         # Zip converts it into a set of channels and a set of roles.
+        channel_role = zip(*self.bot.sql.roles.get_pingable_role_channels(ctx.guild))
+        # this makes a list of all channels and rows, currently it's a channel and row pair.
         # next gets the next item from the zip iterator which is the set of channels.
         # if the iterator is exhausted i.e there's no pingable channels, the default value set() will be used.
-        pingable_channels = next(
-            zip(*self.bot.sql.roles.get_pingable_role_channels(ctx.guild)), set()
-        )
+        pingable_channels = next(channel_role, set())
+
+        #channels that were already in the database will not be added, user will be informed.
+        exempt_channels = []
 
         with self.bot.sql.transaction():
             for channel in channels:
-                # this makes a list of all channels and rows, currently it's a channel and row pair.
                 if channel not in pingable_channels:
                     self.bot.sql.roles.add_pingable_role_channel(
                         ctx.guild, channel, role
                     )
+                else:
+                    exempt_channels.append(channel)
 
-        embed = discord.Embed(colour=discord.Colour.dark_teal())
-        embed.set_author(name="Made role pingable in channels")
-        descr = StringBuilder(sep=", ")
-        for channel in channels:
-            descr.write(channel.mention)
-        embed.description = str(descr)
-        await ctx.send(embed=embed)
+        if exempt_channels:
+            embed = discord.Embed(colour=discord.Colour.dark_grey())
+            embed.set_author(name="Failed to make role pingable in channels: ")
+            descr = StringBuilder(sep=", ")
+            for channel in exempt_channels:
+                descr.write(channel.mention)
+            embed.description = str(descr)
+            await ctx.send(embed=embed)
+            # Did not put the embed in CommandFailed. All channels must fail to be added for the entire command to 'fail', imo.
+            if set(exempt_channels) == set(channels):
+                raise CommandFailed()
 
         # Send journal event
-        content = f"Role was set as pingable in channels: {self.str_channels(channels)}"
+        content = f"Role was set as pingable in channels: {self.str_channels(channels)}, except {self.str_channels(exempt_channels)}"
         self.journal.send(
             "pingable/add",
             ctx.guild,
@@ -341,9 +349,10 @@ class SelfAssignableRoles(AbstractCog):
             raise CommandFailed()
 
         # See role_pingable for an explanation
-        pingable_channels = next(
-            zip(*self.bot.sql.roles.get_pingable_role_channels(ctx.guild)), set()
-        )
+        channel_role = zip(*self.bot.sql.roles.get_pingable_role_channels(ctx.guild))
+        pingable_channels = next(channel_role, set())
+
+        exempt_channels = []
 
         with self.bot.sql.transaction():
             for channel in channels:
@@ -352,18 +361,24 @@ class SelfAssignableRoles(AbstractCog):
                     self.bot.sql.roles.remove_pingable_role_channel(
                         ctx.guild, channel, role
                     )
+                else:
+                    exempt_channels.append(channel)
 
-        embed = discord.Embed(colour=discord.Colour.dark_teal())
-        embed.set_author(name="Made role not pingable in channels")
-        descr = StringBuilder(sep=", ")
-        for channel in channels:
-            descr.write(channel.mention)
-        embed.description = str(descr)
-        await ctx.send(embed=embed)
+        if exempt_channels:
+            embed = discord.Embed(colour=discord.Colour.dark_grey())
+            embed.set_author(name="Failed to make role unpingable in channels: ")
+            descr = StringBuilder(sep=", ")
+            for channel in exempt_channels:
+                descr.write(channel.mention)
+            embed.description = str(descr)
+            await ctx.send(embed=embed)
+            # see role_pingable for reasoning
+            if set(exempt_channels) == set(channels):
+                raise CommandFailed()
 
         # Send journal event
         content = (
-            f"Role was set as not pingable in channels: {self.str_channels(channels)}"
+            f"Role was set as not pingable in channels: {self.str_channels(channels)}, except {self.str_channels(exempt_channels)}"
         )
         self.journal.send(
             "pingable/remove",
