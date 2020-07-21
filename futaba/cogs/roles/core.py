@@ -317,9 +317,6 @@ class SelfAssignableRoles(AbstractCog):
             self.str_channels(channels),
         )
 
-        if not role:
-            raise CommandFailed()
-
         if not channels:
             raise CommandFailed()
 
@@ -380,9 +377,6 @@ class SelfAssignableRoles(AbstractCog):
             ctx.guild.id,
             self.str_channels(channels),
         )
-
-        if not role:
-            raise CommandFailed()
 
         if not channels:
             raise CommandFailed()
