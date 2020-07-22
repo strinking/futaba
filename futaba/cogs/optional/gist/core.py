@@ -1,5 +1,5 @@
 #
-# cogs/optional/example/core.py
+# cogs/optional/gist/core.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2020 Jake Richardson, Ammon Smith, jackylam5
@@ -98,9 +98,6 @@ class Gist(AbstractCog):
             self.format_message_contents(message) for message in messages
         )
         messages_ids = ", ".join(str(message.id) for message in messages)
-
-        # github markdown requires that 2 spaces are placed before a newline character
-        # messages_content = messages_content.replace("\n", "  \n")
 
         gist_url = await create_single_gist(
             token=oauth_token,

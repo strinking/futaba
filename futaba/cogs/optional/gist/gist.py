@@ -1,5 +1,5 @@
 #
-# gist.py
+# cogs/optional/gist/gist.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2020 Jake Richardson, Ammon Smith, jackylam5
