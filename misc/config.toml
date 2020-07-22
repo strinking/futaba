@@ -21,6 +21,12 @@ enabled = true
 enabled = false
 url = "postgres://statbot:passwordhere@localhost/statbot_ro"
 
+[cogs.gist]
+# Gist cog allows automatic pasting of messages into a gist
+# Note: In order for the cog to work correctly, each guild should
+# set a github token using the command "!gistconf set token yourtoken"
+enabled = true
+
 [moderation]
 # Maximum number of messages that may be specified
 # when doing a bulk message cleanup

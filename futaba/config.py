@@ -43,7 +43,7 @@ ConfigurationSchema = Schema(
             "prefix": str,
             "error-channel-id": Or(And(str, ID_REGEX.match), "0"),
         },
-        "cogs": {"example": object, "statbot": object},
+        "cogs": {"example": object, "statbot": object, "gist": object},
         "moderation": {"max-cleanup-messages": And(str, _check_gtz(int))},
         "delay": {
             "chunk-size": And(str, _check_gtz(int)),
