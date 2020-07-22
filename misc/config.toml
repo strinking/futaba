@@ -26,17 +26,6 @@ url = "postgres://statbot:passwordhere@localhost/statbot_ro"
 # when doing a bulk message cleanup
 max-cleanup-messages = "500"
 
-# Your github oauth token for creating gists with the
-# !gist command.
-gist-oauth-token = ""
-# Description of the created gist
-gist-description = "Messages uploaded by futaba"
-# Filename that will be used to upload messages
-gist-filename = "messages.md"
-# Sets whether uploaded gists will be listed publicly on github
-gist-public = false
-
-
 [delay]
 # Configuration for the delayed event queue
 
