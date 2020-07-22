@@ -29,6 +29,7 @@ from futaba.cogs.abc import AbstractCog
 from futaba.converters import MessageConv
 from futaba.exceptions import CommandFailed, ManualCheckFailure, SendHelp
 from futaba.permissions import mod_perm
+from futaba.utils import user_discrim
 
 from .gist import create_single_gist
 
@@ -68,6 +69,13 @@ class Gist(AbstractCog):
 
         self.set_settings(guild, settings)
 
+    @staticmethod
+    def format_message_contents(message):
+        contents = message.content.split("\n")
+        contents = "  \n".join(">" + content for content in contents)
+
+        return f"{user_discrim(message.author)}:  \n{contents}  \n  \n"
+
     @commands.command(name="gist", aliases=["msgupload"])
     @commands.guild_only()
     async def upload_message(self, ctx, *messages: MessageConv):
@@ -86,11 +94,13 @@ class Gist(AbstractCog):
         if not oauth_token:
             raise CommandFailed(content="The gist oauth token is not configured.")
 
-        messages_content = "\n".join(str(message.content) for message in messages)
+        messages_content = "\n".join(
+            self.format_message_contents(message) for message in messages
+        )
         messages_ids = ", ".join(str(message.id) for message in messages)
 
         # github markdown requires that 2 spaces are placed before a newline character
-        messages_content = messages_content.replace("\n", "  \n")
+        # messages_content = messages_content.replace("\n", "  \n")
 
         gist_url = await create_single_gist(
             token=oauth_token,
