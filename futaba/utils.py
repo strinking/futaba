@@ -106,6 +106,7 @@ def fancy_timedelta(delta):
     hours, seconds = divmod(delta.seconds, 3600)
     minutes, seconds = divmod(seconds, 60)
     seconds += delta.microseconds / 1e6
+    seconds = round(seconds, 2)
 
     if years:
         result.write(f"{years}y")
