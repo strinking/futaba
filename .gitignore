@@ -1,9 +1,14 @@
 # Ignore virtual environments
 venv/
+env/
 
 # Ignore editor files
 .vscode/
 .*.swp
+.vs/
+*.sln
+*.pyproj
+*.pyproj.user
 
 # Configuration
 /config*.toml
