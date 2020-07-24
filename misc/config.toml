@@ -32,6 +32,9 @@ enabled = true
 # when doing a bulk message cleanup
 max-cleanup-messages = "500"
 
+# Cooldown after pinging a role in a channel, in seconds
+ping-cooldown = "3600"
+
 [delay]
 # Configuration for the delayed event queue
 

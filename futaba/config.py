@@ -44,7 +44,10 @@ ConfigurationSchema = Schema(
             "error-channel-id": Or(And(str, ID_REGEX.match), "0"),
         },
         "cogs": {"example": object, "statbot": object, "gist": object},
-        "moderation": {"max-cleanup-messages": And(str, _check_gtz(int))},
+        "moderation": {
+            "max-cleanup-messages": And(str, _check_gtz(int)),
+            "ping-cooldown": And(str, _check_gtz(int)),
+        },
         "delay": {
             "chunk-size": And(str, _check_gtz(int)),
             "sleep": And(str, _check_gtz(float)),
@@ -68,6 +71,7 @@ Configuration = namedtuple(
         "error_channel_id",
         "optional_cogs",
         "max_cleanup_messages",
+        "helper_ping_cooldown",
         "delay_chunk_size",
         "delay_sleep",
         "anger_emoji_id",
@@ -92,6 +96,7 @@ def load_config(path):
         error_channel_id=int(config["bot"]["error-channel-id"]),
         optional_cogs=config["cogs"],
         max_cleanup_messages=int(config["moderation"]["max-cleanup-messages"]),
+        helper_ping_cooldown=int(config["moderation"]["ping-cooldown"]),
         delay_chunk_size=int(config["delay"]["chunk-size"]),
         delay_sleep=float(config["delay"]["sleep"]),
         anger_emoji_id=int(config["emojis"]["anger"]),
