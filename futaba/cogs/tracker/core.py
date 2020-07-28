@@ -44,6 +44,7 @@ LISTENERS = (
     "on_message",
     "on_message_edit",
     "on_message_delete",
+    "on_bulk_message_delete",
     "on_reaction_add",
     "on_reaction_remove",
     "on_reaction_clear",
@@ -322,6 +323,30 @@ class Tracker(AbstractCog):
             message=message,
             embed=self.build_embed(message),
         )
+
+    async def on_bulk_message_delete(self, messages):
+        if not messages:
+            return
+
+        guild = messages[0].guild
+        if guild is None:
+            return
+
+        channels = {message.channel for message in messages}
+        logger.debug(
+            "Bulk delete of %d messages across %d channels from guild '%s' (%d) performed",
+            len(messages),
+            len(channels),
+            guild.name,
+            guild.id,
+        )
+
+        content = f"{len(messages)} messages were bulk deleted"
+        self.journal.send(
+            "message/delete/bulk", guild, content, icon="delete", messages=messages,
+        )
+
+        # Don't send full contents, with bulk deletes there could be a huge amount of messages
 
     async def on_reaction_add(self, reaction, user):
         if (reaction, user) in self.reactions:

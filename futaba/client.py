@@ -53,6 +53,9 @@ logger = logging.getLogger(__name__)
 
 
 def ignore_command_hooks(ctx):
+    if ctx.command is None:
+        return False
+
     if ctx.command.module == "discord.ext.commands.help":
         logger.debug("Ignoring normal command hooks for %r", ctx.command)
         return True
