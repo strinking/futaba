@@ -60,6 +60,18 @@ class _Counter:
         self.value += 1
 
 
+class _Flag:
+    """ Mutable boolean value. See also _Counter. """
+
+    __slots__ = ("value",)
+
+    def __init__(self):
+        self.value = False
+
+    def set(self):
+        self.value = True
+
+
 class Cleanup(AbstractCog):
     __slots__ = ("journal", "dump", "delete_codes")
 
@@ -315,7 +327,7 @@ class Cleanup(AbstractCog):
         if code in self.delete_codes:
             return self.add_deletion_code(guild, user)
 
-        self.delete_codes[code] = guild, user
+        self.delete_codes[code] = guild, user, _Flag()
         return code
 
     @commands.command(name="cleanupalltime", aliases=["cleanupforever"])
@@ -353,7 +365,7 @@ class Cleanup(AbstractCog):
 
         # Get deletion information from code
         try:
-            guild, user = self.delete_codes[code]
+            guild, user, flag = self.delete_codes[code]
 
             # Check if the guilds match
             if guild != ctx.guild:
@@ -373,7 +385,15 @@ class Cleanup(AbstractCog):
         )
         await ctx.send(embed=embed)
 
-        # Start deletions
+        # Deletion condition function
+        def check(message):
+            if flag.value:
+                # If this is set, then the deletion has been cancelled.
+                return False
+
+            return ...
+
+        # Run deletions
         # ...
         messages = []
 
@@ -390,7 +410,7 @@ class Cleanup(AbstractCog):
         """ Cancels a deletion code. """
 
         try:
-            guild, user = self.delete_codes[code]
+            guild, user, flag = self.delete_codes[code]
 
             # Check if the guilds match
             if guild != ctx.guild:
@@ -402,6 +422,7 @@ class Cleanup(AbstractCog):
             raise CommandFailed(embed=embed)
 
         # Actually perform the deletion
+        flag.set()
         del self.delete_codes[code]
 
         # Send result
