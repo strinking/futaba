@@ -343,11 +343,7 @@ class Tracker(AbstractCog):
 
         content = f"{len(messages)} messages were bulk deleted"
         self.journal.send(
-            "message/delete/bulk",
-            guild,
-            content,
-            icon="delete",
-            messages=messages,
+            "message/delete/bulk", guild, content, icon="delete", messages=messages,
         )
 
         # Don't send full contents, with bulk deletes there could be a huge amount of messages

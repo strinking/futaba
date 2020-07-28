@@ -322,7 +322,7 @@ class Cleanup(AbstractCog):
     def add_deletion_code(self, guild, user):
         """ Adds a deletion code to the temporary mapping for use. """
 
-        code = ''.join(random.choice(DELETION_CHARACTERS) for _ in range(16))
+        code = "".join(random.choice(DELETION_CHARACTERS) for _ in range(16))
 
         # Escape hatch in the unlikely case where a duplicate code is generated
         if code in self.delete_codes:
@@ -374,7 +374,9 @@ class Cleanup(AbstractCog):
         except KeyError:
             embed = discord.Embed(colour=discord.Colour.red())
             embed.title = "Complete user message purge"
-            embed.description = "Invalid code provided, no deletion queue exists with that value."
+            embed.description = (
+                "Invalid code provided, no deletion queue exists with that value."
+            )
             raise CommandFailed(embed=embed)
 
         # Notify that deletion has begun
@@ -453,7 +455,9 @@ class Cleanup(AbstractCog):
         except KeyError:
             embed = discord.Embed(colour=discord.Colour.red())
             embed.title = "Complete user message purge"
-            embed.description = "Invalid code provided, no deletion queue exists with that value."
+            embed.description = (
+                "Invalid code provided, no deletion queue exists with that value."
+            )
             raise CommandFailed(embed=embed)
 
         # Actually perform the deletion
