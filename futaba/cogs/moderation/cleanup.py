@@ -393,12 +393,19 @@ class Cleanup(AbstractCog):
         def check(message):
             if flag.value:
                 # If this is set, then the deletion has been cancelled.
-                return False
+                raise KeyboardInterrupt
 
             return message.author == user
 
         # Run deletions
-        deleted = await self.purge_all_messages(guild, user, check)
+        try:
+            deleted = await self.purge_all_messages(guild, user, check)
+        except KeyboardInterrupt:
+            elapsed = datetime.now() - start
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.title = "Complete user message purge cancelled"
+            embed.description = f"Deletion was cancelled. Spent {fancy_timedelta(elapsed)} in deletion."
+            raise CommandFailed(embed=embed)
 
         # Notify that deletions are finished
         elapsed = datetime.now() - start
