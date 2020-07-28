@@ -324,12 +324,15 @@ class Cleanup(AbstractCog):
     async def cleanup_user_entirely(self, ctx, user: UserConv):
         """ Setup command to delete all of a user's messages in all channels forever. """
 
-        description = (
+        code = self.add_deletion_code(self, user)
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
+        embed.description = (
             f"You are about to delete **all** the messages ever sent by user {user.mention}.\n"
             "This is **irreversible**, will affect **all** channels and has **no limit** "
             "to the number of messages deleted.\n\n"
             "Are you __sure__ you would like to do this?\n"
-            f"If so, run \"{ctx.prefix}cleanuplltimeconfirm -force {user.mention}\""
+            f"If so, run `{ctx.prefix}cleanuplltimeconfirm -force {code}` "
+            f"(this code will expire in {EXPIRES_MINUTES} minutes)"
         )
         embed = discord.Embed(colour=discord.Colour.dark_teal(), description=description)
         await ctx.send(embed=embed)
