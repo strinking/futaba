@@ -16,6 +16,9 @@ Commands related to cleaning up messages in bulk.
 
 import json
 import logging
+import random
+import string
+from datetime import timedelta
 
 import discord
 from discord.ext import commands
@@ -24,12 +27,16 @@ from futaba import permissions
 from futaba.converters import UserConv
 from futaba.dict_convert import message_dict
 from futaba.exceptions import CommandFailed
+from futaba.expiry_dict import ExpiryDict
 from futaba.str_builder import StringBuilder
 from futaba.unicode import normalize_caseless
 from futaba.utils import escape_backticks, user_discrim
 from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
+
+DELETION_CHARACTERS = string.ascii_letters + string.digits
+EXPIRES_MINUTES = 10
 
 __all__ = ["Cleanup"]
 
@@ -54,12 +61,13 @@ class _Counter:
 
 
 class Cleanup(AbstractCog):
-    __slots__ = ("journal", "dump")
+    __slots__ = ("journal", "dump", "delete_codes")
 
     def __init__(self, bot):
         super().__init__(bot)
         self.journal = bot.get_broadcaster("/moderation/cleanup")
         self.dump = bot.get_broadcaster("/dump/moderation/cleanup")
+        self.delete_codes = ExpiryDict(timedelta(minutes=EXPIRES_MINUTES))
 
     def setup(self):
         pass
@@ -297,6 +305,18 @@ class Cleanup(AbstractCog):
         self.dump.send(
             "text", ctx.guild, content, icon="delete", messages=obj, file=file
         )
+
+    def add_deletion_code(self, user):
+        """ Adds a deletion code to the temporary mapping for use. """
+
+        code = ''.join(random.choice(DELETION_CHARACTERS) for _ in range(16))
+
+        # Escape hatch in the unlikely case where a duplicate code is generated
+        if code in self.delete_codes:
+            return self.add_deletion_code(user)
+
+        self.delete_codes[code] = user
+        return code
 
     @commands.command(name="cleanupalltime", aliases=["cleanupforever"])
     @commands.guild_only()
