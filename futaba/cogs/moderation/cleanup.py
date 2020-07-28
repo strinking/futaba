@@ -14,6 +14,7 @@
 Commands related to cleaning up messages in bulk.
 """
 
+import asyncio
 import json
 import logging
 import random
@@ -391,17 +392,51 @@ class Cleanup(AbstractCog):
                 # If this is set, then the deletion has been cancelled.
                 return False
 
-            return ...
+            return message.author == user
 
         # Run deletions
-        # ...
-        messages = []
+        deleted = await self.purge_all_messages(guild, user, check)
 
         # Notify that deletions are finished
         embed = discord.Embed(colour=discord.Colour.dark_teal())
         embed.title = "Deletion complete"
-        embed.description = f"Deleted all {len(messages)} sent by {user.mention}"
+        embed.description = f"Deleted all {len(deleted)} sent by {user.mention}"
         await ctx.send(embed=embed)
+
+    async def purge_all_messages(self, guild, user, check):
+        # Task for deleting all messages within a channel
+        async def purge_channel(channel):
+            logger.debug(
+                "Starting purge of user '%s' (%d) in channel '%s' (%d)",
+                user.name,
+                user.id,
+                channel.name,
+                channel.id,
+            )
+
+            deleted = await channel.purge(limit=None, check=check, bulk=True)
+
+            logger.debug(
+                "Finished purge of user '%s' (%d) in channel '%s' (%d)",
+                user.name,
+                user.id,
+                channel.name,
+                channel.id,
+            )
+
+            return deleted
+
+        # Create individual tasks
+        tasks = []
+
+        for channel in guild.text_channels:
+            tasks.append(purge_channel(channel))
+
+        # Run them in parallel
+        all_deleted = await asyncio.gather(*tasks)
+
+        # Flatten list of deleted messages
+        return [message for deleted in all_deleted for message in deleted]
 
     @commands.command(name="cleanupallcancel", aliases=["cleanupforevercancel"])
     @commands.guild_only()
