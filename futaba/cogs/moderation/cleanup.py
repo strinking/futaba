@@ -406,6 +406,11 @@ class Cleanup(AbstractCog):
         await ctx.send(embed=embed)
 
     async def purge_all_messages(self, guild, user, check):
+        """
+        Implementation function for actually removing all messages by a user.
+        Don't run this directly!
+        """
+
         # Task for deleting all messages within a channel
         async def purge_channel(channel):
             logger.debug(
