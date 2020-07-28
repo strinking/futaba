@@ -393,14 +393,14 @@ class Cleanup(AbstractCog):
         def check(message):
             if flag.value:
                 # If this is set, then the deletion has been cancelled.
-                raise KeyboardInterrupt
+                raise ValueError
 
             return message.author == user
 
         # Run deletions
         try:
             deleted = await self.purge_all_messages(guild, user, check)
-        except KeyboardInterrupt:
+        except ValueError:
             elapsed = datetime.now() - start
             embed = discord.Embed(colour=discord.Colour.red())
             embed.title = "Complete user message purge cancelled"
@@ -467,6 +467,7 @@ class Cleanup(AbstractCog):
         """ Cancels a deletion code. """
 
         try:
+            print(self.delete_codes, code)
             guild, user, flag = self.delete_codes[code]
 
             # Check if the guilds match
