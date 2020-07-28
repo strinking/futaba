@@ -19,7 +19,7 @@ import json
 import logging
 import random
 import string
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import discord
 from discord.ext import commands
@@ -31,7 +31,7 @@ from futaba.exceptions import CommandFailed
 from futaba.expiry_dict import ExpiryDict
 from futaba.str_builder import StringBuilder
 from futaba.unicode import normalize_caseless
-from futaba.utils import escape_backticks, user_discrim
+from futaba.utils import escape_backticks, fancy_timedelta, user_discrim
 from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
@@ -380,6 +380,7 @@ class Cleanup(AbstractCog):
             raise CommandFailed(embed=embed)
 
         # Notify that deletion has begun
+        start = datetime.now()
         embed = discord.Embed(colour=discord.Colour.dark_teal())
         embed.title = "Complete user message purge"
         embed.description = (
@@ -400,10 +401,17 @@ class Cleanup(AbstractCog):
         deleted = await self.purge_all_messages(guild, user, check)
 
         # Notify that deletions are finished
+        elapsed = datetime.now() - start
         embed = discord.Embed(colour=discord.Colour.dark_teal())
         embed.title = "Deletion complete"
-        embed.description = f"Deleted all {len(deleted)} sent by {user.mention}"
+        embed.description = (
+            f"Deleted all {len(deleted)} messages sent by {user.mention}. "
+            f"(took {fancy_timedelta(elapsed)})"
+        )
         await ctx.send(embed=embed)
+
+        # Remove code from map
+        del self.delete_codes[code]
 
     async def purge_all_messages(self, guild, user, check):
         """
