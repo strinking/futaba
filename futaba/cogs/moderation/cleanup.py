@@ -247,6 +247,49 @@ class Cleanup(AbstractCog):
             "user", ctx.guild, content, icon="delete", messages=obj, file=file
         )
 
+    @commands.command(name="purgeuser")
+    @commands.guild_only()
+    @permissions.check_admin()
+    async def cleanup_purge(self, ctx, user: discord.User):
+        """ Deletes full Discord message history of <user> from every channel in guild. """
+
+        # Deletes the messages by the user
+        def check(message):
+            if user == message.author:
+                return True
+            return False
+
+        channels = []
+        messages = []
+
+        for channel in ctx.guild.text_channels:
+            this_channel = await channel.purge(
+                limit=None, check=check, before=ctx.message, bulk=True
+            )
+            if len(this_channel) > 0:
+                channels.append(channel)
+                messages += this_channel
+
+        # Send journal events
+        causer = user_discrim(ctx.author)
+        content = f"{causer} deleted {len(messages)} messages by {user.mention} from {len(channels)} channels"
+        self.journal.send(
+            "user",
+            ctx.guild,
+            content,
+            icon="delete",
+            channels=channels,
+            messages=messages,
+            user=user,
+            cause=ctx.author,
+        )
+
+        obj, file = self.dump_messages(messages)
+        content = f"Purge by {causer} of {user.mention} from {len(channels)} channels deleted these messages:"
+        self.dump.send(
+            "user", ctx.guild, content, icon="delete", messages=obj, file=file
+        )
+
     @commands.command(name="cleanuptext", aliases=["cleantext"])
     @commands.guild_only()
     @permissions.check_perm("manage_messages")
