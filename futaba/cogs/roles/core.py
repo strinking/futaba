@@ -111,7 +111,6 @@ class SelfAssignableRoles(AbstractCog):
 
     @role.command(name="pshow", aliases=["pdisplay", "plist", "plsar", "pls"])
     @commands.guild_only()
-    @permissions.check_mod()
     async def pingable_show(self, ctx):
         """ Shows all channels where a role is pingable. """
         logger.info(
