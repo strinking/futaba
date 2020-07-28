@@ -343,6 +343,7 @@ class Tracker(AbstractCog):
         self.journal.send(
             "message/delete/bulk",
             guild,
+            content,
             icon="delete",
             messages=messages,
         )
