@@ -306,16 +306,16 @@ class Cleanup(AbstractCog):
             "text", ctx.guild, content, icon="delete", messages=obj, file=file
         )
 
-    def add_deletion_code(self, user):
+    def add_deletion_code(self, guild, user):
         """ Adds a deletion code to the temporary mapping for use. """
 
         code = ''.join(random.choice(DELETION_CHARACTERS) for _ in range(16))
 
         # Escape hatch in the unlikely case where a duplicate code is generated
         if code in self.delete_codes:
-            return self.add_deletion_code(user)
+            return self.add_deletion_code(guild, user)
 
-        self.delete_codes[code] = user
+        self.delete_codes[code] = guild, user
         return code
 
     @commands.command(name="cleanupalltime", aliases=["cleanupforever"])
@@ -324,15 +324,88 @@ class Cleanup(AbstractCog):
     async def cleanup_user_entirely(self, ctx, user: UserConv):
         """ Setup command to delete all of a user's messages in all channels forever. """
 
-        code = self.add_deletion_code(self, user)
+        code = self.add_deletion_code(ctx.guild, user)
         embed = discord.Embed(colour=discord.Colour.dark_teal())
+        embed.title = "Complete user message purge"
         embed.description = (
             f"You are about to delete **all** the messages ever sent by user {user.mention}.\n"
             "This is **irreversible**, will affect **all** channels and has **no limit** "
             "to the number of messages deleted.\n\n"
             "Are you __sure__ you would like to do this?\n"
             f"If so, run `{ctx.prefix}cleanuplltimeconfirm -force {code}` "
-            f"(this code will expire in {EXPIRES_MINUTES} minutes)"
+            f"(this code will expire in {EXPIRES_MINUTES} minutes, or you can cancel early with "
+            f"`{ctx.prefix}cleanupallcancel {code}`"
         )
-        embed = discord.Embed(colour=discord.Colour.dark_teal(), description=description)
+        await ctx.send(embed=embed)
+
+    @commands.command(name="cleanupalltimeconfirm")
+    @commands.guild_only()
+    @permissions.check_perm("manage_messages")
+    async def cleanup_user_entirely_run(self, ctx, confirm: str, code: str):
+        """ Use !cleanupalltime instead. """
+
+        # Validate it's for real
+        if confirm != "-force":
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.title = "Complete user message purge"
+            embed.description = "Command was not invoked properly. Refusing to delete."
+            raise CommandFailed(embed=embed)
+
+        # Get deletion information from code
+        try:
+            guild, user = self.delete_codes[code]
+
+            # Check if the guilds match
+            if guild != ctx.guild:
+                raise KeyError
+        except KeyError:
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.title = "Complete user message purge"
+            embed.description = "Invalid code provided, no deletion queue exists with that value."
+            raise CommandFailed(embed=embed)
+
+        # Notify that deletion has begun
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
+        embed.title = "Complete user message purge"
+        embed.description = (
+            f"Commencing deletion of **all** messages sent by {user.mention} across all channels.\n"
+            "This may take a while..."
+        )
+        await ctx.send(embed=embed)
+
+        # Start deletions
+        # ...
+        messages = []
+
+        # Notify that deletions are finished
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
+        embed.title = "Deletion complete"
+        embed.description = f"Deleted all {len(messages)} sent by {user.mention}"
+        await ctx.send(embed=embed)
+
+    @commands.command(name="cleanupallcancel", aliases=["cleanupforevercancel"])
+    @commands.guild_only()
+    @permissions.check_perm("manage_messages")
+    async def cleanup_user_cancel(self, ctx, code: str):
+        """ Cancels a deletion code. """
+
+        try:
+            guild, user = self.delete_codes[code]
+
+            # Check if the guilds match
+            if guild != ctx.guild:
+                raise KeyError
+        except KeyError:
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.title = "Complete user message purge"
+            embed.description = "Invalid code provided, no deletion queue exists with that value."
+            raise CommandFailed(embed=embed)
+
+        # Actually perform the deletion
+        del self.delete_codes[code]
+
+        # Send result
+        embed = discord.Embed(colour=discord.Colour.dark_teal())
+        embed.title = "Complete user message purge"
+        embed.description = f"Deletion associated with {user.mention} cancelled."
         await ctx.send(embed=embed)
