@@ -322,7 +322,7 @@ class Cleanup(AbstractCog):
     def add_deletion_code(self, guild, user):
         """ Adds a deletion code to the temporary mapping for use. """
 
-        code = "".join(random.choice(DELETION_CHARACTERS) for _ in range(16))
+        code = "".join(random.choice(DELETION_CHARACTERS) for _ in range(8))
 
         # Escape hatch in the unlikely case where a duplicate code is generated
         if code in self.delete_codes:
