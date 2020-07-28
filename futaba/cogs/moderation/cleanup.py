@@ -345,7 +345,7 @@ class Cleanup(AbstractCog):
             "This is **irreversible**, will affect **all** channels and has **no limit** "
             "to the number of messages deleted.\n\n"
             "Are you **sure** you would like to do this?\n\n"
-            f"If so, run `{ctx.prefix}cleanuplltimeconfirm -force {code}`.\n"
+            f"If so, run `{ctx.prefix}cleanuplltimeconfirm -force {code}`\n"
             f"This code will expire in {EXPIRES_MINUTES} minutes, or you can run "
             f"`{ctx.prefix}cleanupallcancel {code}`"
         )
