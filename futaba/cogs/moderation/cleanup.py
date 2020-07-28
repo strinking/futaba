@@ -21,6 +21,7 @@ import discord
 from discord.ext import commands
 
 from futaba import permissions
+from futaba.converters import UserConv
 from futaba.dict_convert import message_dict
 from futaba.exceptions import CommandFailed
 from futaba.str_builder import StringBuilder
@@ -296,3 +297,19 @@ class Cleanup(AbstractCog):
         self.dump.send(
             "text", ctx.guild, content, icon="delete", messages=obj, file=file
         )
+
+    @commands.command(name="cleanupalltime", aliases=["cleanupforever"])
+    @commands.guild_only()
+    @permissions.check_perm("manage_messages")
+    async def cleanup_user_entirely(self, ctx, user: UserConv):
+        """ Setup command to delete all of a user's messages in all channels forever. """
+
+        description = (
+            f"You are about to delete **all** the messages ever sent by user {user.mention}.\n"
+            "This is **irreversible**, will affect **all** channels and has **no limit** "
+            "to the number of messages deleted.\n\n"
+            "Are you __sure__ you would like to do this?\n"
+            f"If so, run \"{ctx.prefix}cleanuplltimeconfirm -force {user.mention}\""
+        )
+        embed = discord.Embed(colour=discord.Colour.dark_teal(), description=description)
+        await ctx.send(embed=embed)
