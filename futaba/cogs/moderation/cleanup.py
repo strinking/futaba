@@ -387,7 +387,7 @@ class Cleanup(AbstractCog):
             f"Commencing deletion of **all** messages sent by {user.mention} across all channels.\n"
             "This may take a while..."
         )
-        await ctx.send(embed=embed)
+        status_message = await ctx.send(embed=embed)
 
         # Deletion condition function
         def check(message):
@@ -399,12 +399,14 @@ class Cleanup(AbstractCog):
 
         # Run deletions
         try:
-            deleted = await self.purge_all_messages(guild, user, check)
+            deleted = await self.purge_all_messages(guild, user, check, status_message)
         except ValueError:
             elapsed = datetime.now() - start
             embed = discord.Embed(colour=discord.Colour.red())
             embed.title = "Complete user message purge cancelled"
-            embed.description = f"Deletion was cancelled. Spent {fancy_timedelta(elapsed)} in deletion."
+            embed.description = (
+                f"Deletion was cancelled. Spent {fancy_timedelta(elapsed)} in deletion."
+            )
             raise CommandFailed(embed=embed)
 
         # Notify that deletions are finished
@@ -420,7 +422,7 @@ class Cleanup(AbstractCog):
         # Remove code from map
         del self.delete_codes[code]
 
-    async def purge_all_messages(self, guild, user, check):
+    async def purge_all_messages(self, guild, user, check, status_message):
         """
         Implementation function for actually removing all messages by a user.
         Don't run this directly!
@@ -445,6 +447,15 @@ class Cleanup(AbstractCog):
                 channel.name,
                 channel.id,
             )
+
+            # Update status message
+            embed = discord.Embed(colour=discord.Colour.dark_teal())
+            embed.title = "Complete user message purge"
+            embed.description = (
+                f"Commencing deletion of **all** messages sent by {user.mention} across all channels.\n"
+                f"This may take a while... (finished channel {channel.mention})"
+            )
+            await status_message.edit(embed=embed)
 
             return deleted
 
