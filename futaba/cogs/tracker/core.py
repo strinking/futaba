@@ -333,7 +333,7 @@ class Tracker(AbstractCog):
             return
 
         logger.debug(
-            "Bulk delete of %d messages from guild '%s' (%d) performed"
+            "Bulk delete of %d messages from guild '%s' (%d) performed",
             len(messages),
             guild.name,
             guild.id,
