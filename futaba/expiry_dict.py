@@ -30,12 +30,13 @@ class ExpiryDict:
         for key in tuple(self.items.keys()):
             expires_at, _ = self.items[key]
 
-            if expires_at > now:
+            if now > expires_at:
                 del self.items[key]
 
     def __getitem__(self, key):
         self.prune()
-        return self.items[key]
+        _, value = self.items[key]
+        return value
 
     def __setitem__(self, key, value):
         self.prune()
