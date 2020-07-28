@@ -333,7 +333,7 @@ class Cleanup(AbstractCog):
 
     @commands.command(name="cleanupalltime", aliases=["cleanupforever"])
     @commands.guild_only()
-    @permissions.check_perm("manage_messages")
+    @permissions.check_admin()
     async def cleanup_user_entirely(self, ctx, user: UserConv):
         """ Setup command to delete all of a user's messages in all channels forever. """
 
@@ -353,7 +353,7 @@ class Cleanup(AbstractCog):
 
     @commands.command(name="cleanupalltimeconfirm")
     @commands.guild_only()
-    @permissions.check_perm("manage_messages")
+    @permissions.check_admin()
     async def cleanup_user_entirely_run(self, ctx, confirm: str, code: str):
         """ Use !cleanupalltime instead. """
 
@@ -442,7 +442,7 @@ class Cleanup(AbstractCog):
 
     @commands.command(name="cleanupallcancel", aliases=["cleanupforevercancel"])
     @commands.guild_only()
-    @permissions.check_perm("manage_messages")
+    @permissions.check_admin()
     async def cleanup_user_cancel(self, ctx, code: str):
         """ Cancels a deletion code. """
 
