@@ -332,9 +332,11 @@ class Tracker(AbstractCog):
         if guild is None:
             return
 
+        channels = {message.channel for message in messages}
         logger.debug(
-            "Bulk delete of %d messages from guild '%s' (%d) performed",
+            "Bulk delete of %d messages across %d channels from guild '%s' (%d) performed",
             len(messages),
+            len(channels),
             guild.name,
             guild.id,
         )
