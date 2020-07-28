@@ -344,9 +344,9 @@ class Cleanup(AbstractCog):
             f"You are about to delete **all** the messages ever sent by user {user.mention}.\n"
             "This is **irreversible**, will affect **all** channels and has **no limit** "
             "to the number of messages deleted.\n\n"
-            "Are you __sure__ you would like to do this?\n"
-            f"If so, run `{ctx.prefix}cleanuplltimeconfirm -force {code}` "
-            f"(this code will expire in {EXPIRES_MINUTES} minutes, or you can cancel early with "
+            "Are you **sure** you would like to do this?\n\n"
+            f"If so, run `{ctx.prefix}cleanuplltimeconfirm -force {code}`.\n"
+            f"This code will expire in {EXPIRES_MINUTES} minutes, or you can run "
             f"`{ctx.prefix}cleanupallcancel {code}`"
         )
         await ctx.send(embed=embed)
