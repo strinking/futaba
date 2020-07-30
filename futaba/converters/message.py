@@ -2,7 +2,7 @@
 # converters/message.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2017-2019 Jake Richardson, Ammon Smith, jackylam5
+# Copyright (c) 2017-2020 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -19,7 +19,7 @@ from discord.ext.commands import BadArgument, Converter
 
 from futaba.utils import first
 
-from .utils import ID_REGEX
+from .utils import DUAL_ID_REGEX, ID_REGEX
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,18 @@ JUMP_LINK_REGEX = re.compile(
 class MessageConv(Converter):
     @staticmethod
     def get_channels_and_id(ctx, argument):
+        # Checking if it's a dual ID
+        match = DUAL_ID_REGEX.match(argument)
+        if match is not None:
+            channel_id = int(match[1])
+            message_id = int(match[2])
+
+            channel = ctx.guild.get_channel(channel_id)
+            if channel is None:
+                return BadArgument(f"No channel found in guild with ID {channel_id}")
+
+            return [channel], message_id
+
         # Checking if it's an id
         match = ID_REGEX.match(argument)
         if match is not None:

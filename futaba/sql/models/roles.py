@@ -2,7 +2,7 @@
 # sql/models/roles.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2017-2019 Jake Richardson, Ammon Smith, jackylam5
+# Copyright (c) 2017-2020 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -39,6 +39,7 @@ class RolesModel:
         "tb_role_command_channels",
         "tb_saved_roles",
         "tb_can_reapply_roles",
+        "tb_pingable_role_channel",
         "roles_cache",
         "channels_cache",
     )
@@ -74,6 +75,13 @@ class RolesModel:
             Column("guild_id", BigInteger, ForeignKey("guilds.guild_id")),
             Column("role_id", BigInteger),
             UniqueConstraint("guild_id", "role_id", name="can_reapply_roles_uq"),
+        )
+        self.tb_pingable_role_channel = Table(
+            "pingable_role_channel",
+            meta,
+            Column("guild_id", BigInteger, ForeignKey("guilds.guild_id")),
+            Column("channel_id", BigInteger, primary_key=True),
+            Column("role_id", BigInteger),
         )
         self.roles_cache = {}
         self.channels_cache = {}
@@ -125,6 +133,67 @@ class RolesModel:
 
         if result.rowcount:
             self.roles_cache[guild].remove(role)
+
+    def get_pingable_role_channels(self, guild):
+        logger.info(
+            "Getting all pingable roles for guild '%s' (%d)", guild.name, guild.id
+        )
+
+        sel = select(
+            [
+                self.tb_pingable_role_channel.c.channel_id,
+                self.tb_pingable_role_channel.c.role_id,
+            ]
+        ).where(self.tb_pingable_role_channel.c.guild_id == guild.id)
+        result = self.sql.execute(sel)
+
+        channelroles = set()
+        for (channel_id, role_id) in result.fetchall():
+            channel = discord.utils.get(guild.channels, id=channel_id)
+            role = discord.utils.get(guild.roles, id=role_id)
+            if role is not None:
+                channelroles.add((channel, role))
+
+        return channelroles
+
+    def add_pingable_role_channel(self, guild, channel, role):
+        logger.info(
+            "Adding pingable role '%s' in channel '%s' for guild '%s' (%d)",
+            role.name,
+            channel.name,
+            guild.name,
+            guild.id,
+        )
+
+        assert guild == role.guild
+        assert guild == channel.guild
+
+        ins = self.tb_pingable_role_channel.insert().values(
+            guild_id=guild.id, channel_id=channel.id, role_id=role.id
+        )
+
+        self.sql.execute(ins)
+
+    def remove_pingable_role_channel(self, guild, channel, role):
+        logger.info(
+            "Removing pingable role '%s' in channel '%s' for guild '%s' (%d)",
+            role.name,
+            channel.name,
+            guild.name,
+            guild.id,
+        )
+
+        assert guild == role.guild
+        assert guild == channel.guild
+
+        delet = self.tb_pingable_role_channel.delete().where(
+            and_(
+                self.tb_pingable_role_channel.c.channel_id == channel.id,
+                self.tb_pingable_role_channel.c.role_id == role.id,
+            )
+        )
+
+        result = self.sql.execute(delet)
 
     def get_role_command_channels(self, guild):
         logger.info(

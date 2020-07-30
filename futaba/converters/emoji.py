@@ -2,7 +2,7 @@
 # converters/emoji.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2017-2019 Jake Richardson, Ammon Smith, jackylam5
+# Copyright (c) 2017-2020 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -41,7 +41,7 @@ class EmojiConv(Converter):
         # Checking if it's an emoji id
         match = ID_REGEX.match(argument)
         if match is not None:
-            emoji = discord.utils.get(ctx.bot.emojis, id=int(match[1]))
+            emoji = ctx.bot.get_emoji(int(match[1]))
             if emoji is not None:
                 return emoji
 

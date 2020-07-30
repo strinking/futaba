@@ -32,6 +32,9 @@ channel-id = "0"
 # when doing a bulk message cleanup
 max-cleanup-messages = "500"
 
+# Cooldown after pinging a role in a channel, in seconds
+ping-cooldown = "3600"
+
 [delay]
 # Configuration for the delayed event queue
 
@@ -50,4 +53,7 @@ discordpy = "490419059964510210"
 
 # Path to the RDBMS futaba will use
 [database]
-url = "sqlite:///futaba.db"
+url = "postgres://futaba:passwordhere@localhost"
+
+[jwt]
+secret = "thesecretstring"

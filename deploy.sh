@@ -6,7 +6,7 @@ if [[ $# -ne 1 ]]; then
 	exit 1
 fi
 
-python_ver=python3.7
+python_ver=python3.8
 repo_dir="$(dirname "$0")"
 dest_dir=~futaba/repo
 

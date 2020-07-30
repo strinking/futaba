@@ -1,5 +1,5 @@
 #
-# converters/__init__.py
+# cogs/auth/__init__.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2020 Jake Richardson, Ammon Smith, jackylam5
@@ -10,9 +10,22 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-from .channel import TextChannelConv, GuildChannelConv
-from .emoji import EmojiConv
-from .message import MessageConv
-from .role import RoleConv
-from .user import MemberConv, UserConv
-from .utils import ID_REGEX
+from .core import Authentication
+
+# Setup for when cog is loaded
+def setup(bot):
+    setup_auth(bot)
+
+
+def setup_auth(bot):
+    cog = Authentication(bot)
+    bot.add_cog(cog)
+
+
+# Remove all the cogs when cog is unloaded
+def teardown(bot):
+    teardown_auth(bot)
+
+
+def teardown_auth(bot):
+    bot.remove_cog(Authentication.__name__)

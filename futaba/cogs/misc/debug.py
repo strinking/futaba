@@ -2,7 +2,7 @@
 # cogs/misc/debug.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2017-2019 Jake Richardson, Ammon Smith, jackylam5
+# Copyright (c) 2017-2020 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -14,6 +14,7 @@
 
 import asyncio
 import logging
+import sys
 
 import aiohttp
 import discord
@@ -91,4 +92,4 @@ class Debugging(AbstractCog):
             "admin/shutdown", ctx.guild, "Shutting down bot", icon="shutdown"
         )
         await Reactions.SUCCESS.add(ctx.message)
-        exit()
+        sys.exit()

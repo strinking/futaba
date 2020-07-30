@@ -2,7 +2,7 @@
 # enums.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2017-2019 Jake Richardson, Ammon Smith, jackylam5
+# Copyright (c) 2017-2020 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -98,7 +98,7 @@ class JoinAlertKey(Enum):
                 # Raise with different message
                 raise ValueError(f"Invalid discord status: {arg}")
         else:
-            raise ValueError(f"Not an enum instance of JoinAlertKey")
+            raise ValueError("Not an enum instance of JoinAlertKey")
 
     @property
     def display_name(self):
@@ -115,7 +115,7 @@ class JoinAlertKey(Enum):
         elif self == JoinAlertKey.STATUS:
             return "status"
         else:
-            raise ValueError(f"Not an enum instance of JoinAlertKey")
+            raise ValueError("Not an enum instance of JoinAlertKey")
 
 
 @unique

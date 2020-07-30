@@ -1,7 +1,4 @@
 language: python
-dist: trusty
-sudo: false
-cache: pip
 
 stages:
   - black
@@ -9,20 +6,23 @@ stages:
 
 python:
   - '3.6'
-  - '3.7-dev'
+  - '3.7'
+  - '3.8'
+  - '3.8-dev'
   - 'nightly'
 
 jobs:
   include:
     - stage: black
-      python: '3.6'
+      python: '3.8'
       script:
+        - black --version
         - black --check futaba
-
-matrix:
   allow_failures:
     - python: 'nightly'
   fast_finish: true
+
+cache: pip
 
 install:
   - pip install -r requirements.txt
@@ -30,9 +30,7 @@ install:
 
 script:
   # Display all lints and a report
-  # Only fail on errors
-  - pylint --reports=yes futaba || true
-  - pylint --errors-only futaba
+  - pylint --reports=yes futaba
 
 notifications:
   email:

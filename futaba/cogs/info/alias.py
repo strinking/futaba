@@ -2,7 +2,7 @@
 # cogs/info/alias.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2017-2019 Jake Richardson, Ammon Smith, jackylam5
+# Copyright (c) 2017-2020 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -17,13 +17,13 @@ Tracking for aliases of members, storing previous usernames, nicknames, and avat
 import logging
 import re
 from datetime import datetime
+from io import BytesIO
 
 import discord
 from discord.ext import commands
 
 from futaba import permissions
 from futaba.converters import UserConv
-from futaba.download import download_link
 from futaba.exceptions import CommandFailed, SendHelp
 from futaba.str_builder import StringBuilder
 from futaba.utils import fancy_timedelta, user_discrim
@@ -102,18 +102,10 @@ class Alias(AbstractCog):
         if not changes:
             return
 
-        if changes.avatar_url is not None:
-            avatar = await download_link(changes.avatar_url)
-            match = EXTENSION_REGEX.findall(changes.avatar_url)
-            if not match:
-                raise ValueError(
-                    f"Avatar URL does not match extension regex: {changes.avatar_url}"
-                )
-            avatar_ext = match[0]
-
         attrs = StringBuilder(sep=", ")
         with self.bot.sql.transaction():
             if changes.avatar_url is not None:
+                avatar, avatar_ext = await self._download_avatar(changes.avatar_url)
                 self.bot.sql.alias.add_avatar(before, timestamp, avatar, avatar_ext)
                 attrs.write(f"avatar: {changes.avatar_url}")
             if changes.username is not None:
@@ -133,6 +125,18 @@ class Alias(AbstractCog):
             after=after,
             changes=changes,
         )
+
+    async def _download_avatar(self, asset):
+        avatar = BytesIO()
+        avatar_url = str(asset)
+        await asset.save(avatar)
+
+        match = EXTENSION_REGEX.findall(avatar_url)
+        if not match:
+            raise ValueError(f"Avatar URL does not match extension regex: {avatar_url}")
+
+        avatar_ext = match[0]
+        return avatar, avatar_ext
 
     @commands.command(name="aliases")
     async def aliases(self, ctx, *, user: UserConv):
@@ -243,14 +247,8 @@ class Alias(AbstractCog):
     @alts.command(name="delchain")
     @commands.guild_only()
     @permissions.check_mod()
-    async def del_alt_chain(self, ctx, name: str):
+    async def del_alt_chain(self, ctx, user: UserConv):
         """ Removes all suspected alternate accounts for a user. """
-
-        user = await self.bot.find_user(name, ctx.guild)
-        if user is None:
-            embed = discord.Embed(colour=discord.Colour.red())
-            embed.description = f"No user information found for `{name}`"
-            raise CommandFailed(embed=embed)
 
         with self.bot.sql.transaction():
             self.bot.sql.alias.all_delete_possible_alts(ctx.guild, user)

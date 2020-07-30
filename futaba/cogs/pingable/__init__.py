@@ -1,5 +1,5 @@
 #
-# converters/__init__.py
+# cogs/pingable/__init__.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2020 Jake Richardson, Ammon Smith, jackylam5
@@ -10,9 +10,21 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-from .channel import TextChannelConv, GuildChannelConv
-from .emoji import EmojiConv
-from .message import MessageConv
-from .role import RoleConv
-from .user import MemberConv, UserConv
-from .utils import ID_REGEX
+from .core import Pingable
+
+# Setup for when cog is loaded
+def setup(bot):
+    setup_pingable(bot)
+
+
+def setup_pingable(bot):
+    cog = Pingable(bot)
+    bot.add_cog(cog)
+
+
+def teardown(bot):
+    teardown_pingable(bot)
+
+
+def teardown_navi(bot):
+    bot.remove_cog(Pingable.__name__)

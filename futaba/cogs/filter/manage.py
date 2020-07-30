@@ -2,7 +2,7 @@
 # cogs/filter/manage.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2017-2019 Jake Richardson, Ammon Smith, jackylam5
+# Copyright (c) 2017-2020 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -159,7 +159,7 @@ async def add_content_filter(bot, guild, filters, level, hexsum, description):
 
 
 async def delete_content_filter(bot, guild, filters, hexsums):
-    logger.info("Removing SHA1s from guild content filter: %s", f'[", ".join(hexsums)]')
+    logger.info("Removing SHA1s from guild content filter: %s", ", ".join(hexsums))
 
     try:
         hashsums = [bytes.fromhex(hexsum) for hexsum in hexsums]

@@ -2,7 +2,7 @@
 # config.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2017-2019 Jake Richardson, Ammon Smith, jackylam5
+# Copyright (c) 2017-2020 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -44,7 +44,10 @@ ConfigurationSchema = Schema(
             "error-channel-id": Or(And(str, ID_REGEX.match), "0"),
         },
         "cogs": {"example": object, "statbot": object, "simplewriter": object},
-        "moderation": {"max-cleanup-messages": And(str, _check_gtz(int))},
+        "moderation": {
+            "max-cleanup-messages": And(str, _check_gtz(int)),
+            "ping-cooldown": And(str, _check_gtz(int)),
+        },
         "delay": {
             "chunk-size": And(str, _check_gtz(int)),
             "sleep": And(str, _check_gtz(float)),
@@ -55,6 +58,7 @@ ConfigurationSchema = Schema(
             "discordpy": Or(And(str, ID_REGEX.match), "0"),
         },
         "database": {"url": And(str, len)},
+        "jwt": {"secret": And(str, len)},
     }
 )
 
@@ -67,12 +71,14 @@ Configuration = namedtuple(
         "error_channel_id",
         "optional_cogs",
         "max_cleanup_messages",
+        "helper_ping_cooldown",
         "delay_chunk_size",
         "delay_sleep",
         "anger_emoji_id",
         "python_emoji_id",
         "discord_py_emoji_id",
         "database_url",
+        "jwt_secret",
     ),
 )
 
@@ -90,10 +96,12 @@ def load_config(path):
         error_channel_id=int(config["bot"]["error-channel-id"]),
         optional_cogs=config["cogs"],
         max_cleanup_messages=int(config["moderation"]["max-cleanup-messages"]),
+        helper_ping_cooldown=int(config["moderation"]["ping-cooldown"]),
         delay_chunk_size=int(config["delay"]["chunk-size"]),
         delay_sleep=float(config["delay"]["sleep"]),
         anger_emoji_id=int(config["emojis"]["anger"]),
         python_emoji_id=int(config["emojis"]["python"]),
         discord_py_emoji_id=int(config["emojis"]["discordpy"]),
         database_url=config["database"]["url"],
+        jwt_secret=config["jwt"]["secret"],
     )

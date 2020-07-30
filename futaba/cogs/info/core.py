@@ -2,7 +2,7 @@
 # cogs/info/core.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2017-2019 Jake Richardson, Ammon Smith, jackylam5
+# Copyright (c) 2017-2020 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -130,7 +130,9 @@ class Info(AbstractCog):
             embed.set_author(name=name)
             embed.set_thumbnail(url=emoji.url)
             embed.add_field(name="Name", value=f"`{emoji.name}`")
-            embed.add_field(name="Guild", value=emoji.guild.name)
+            embed.add_field(
+                name="Guild", value=f"{emoji.guild.name} (`{emoji.guild.id}`)",
+            )
             embed.add_field(name="ID", value=str(emoji.id))
             embed.add_field(name="Managed", value=lowerbool(emoji.managed))
             embed.timestamp = emoji.created_at
@@ -139,11 +141,19 @@ class Info(AbstractCog):
             def category(ch):
                 return UNICODE_CATEGORY_NAME[unicodedata.category(ch)]
 
+            try:
+                emoji_name = ", ".join(map(unicodedata.name, emoji))
+            except ValueError:
+                embed = discord.Embed(colour=discord.Colour.red())
+                embed.set_author(name=emoji)
+                embed.description = f"Unable to retrieve unicode name for `{emoji}`"
+                raise CommandFailed(embed=embed)
+
             embed = discord.Embed(colour=discord.Colour.dark_gold())
             embed.description = emoji
             embed.set_author(name=name)
             embed.set_thumbnail(url=get_unicode_url(emoji))
-            embed.add_field(name="Name", value=", ".join(map(unicodedata.name, emoji)))
+            embed.add_field(name="Name", value=emoji_name)
             embed.add_field(
                 name="Codepoint", value=", ".join(map(lambda c: str(ord(c)), emoji))
             )
@@ -719,16 +729,46 @@ class Info(AbstractCog):
         else:
             channel_categories = "(none)"
 
+        # Create a list of embeds if any are too long
+
+        total_len = 0
+        embeds = []
         embed = discord.Embed()
+
+        total_len += len(text_channels)
+        if total_len >= 900:
+            embeds.append(embed)
+            embed = discord.Embed()
+            total_len = 0
+
         embed.add_field(name="\N{MEMO} Text channels", value=text_channels)
+
+        total_len += len(voice_channels)
+        if total_len >= 900:
+            embeds.append(embed)
+            embed = discord.Embed()
+            total_len = 0
+
         embed.add_field(
             name="\N{STUDIO MICROPHONE} Voice channels", value=voice_channels
         )
+
+        total_len += len(channel_categories)
+        if total_len >= 900:
+            embeds.append(embed)
+            embed = discord.Embed()
+            total_len = 0
+
         embed.add_field(
             name="\N{BAR CHART} Channel categories", value=channel_categories
         )
 
-        await ctx.send(embed=embed)
+        embeds.append(embed)
+
+        # Add all embeds
+
+        for embed in embeds:
+            await ctx.send(embed=embed)
 
     @commands.command(name="ginfo", aliases=["guildinfo"])
     @commands.guild_only()

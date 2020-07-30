@@ -2,7 +2,7 @@
 # sql/models/moderation.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2017-2019 Jake Richardson, Ammon Smith, jackylam5
+# Copyright (c) 2017-2020 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -95,6 +95,10 @@ class ModerationModel:
             kept_role.id,
         )
 
+        # Create list of roles to keep, excluding unremovable roles like nitro boost
+        kept_roles = [role for role in member.roles if role.managed]
+        kept_roles.append(kept_role)
+
         sel = select(
             [
                 self.tb_removed_other_roles.c.kept_roles,
@@ -110,7 +114,9 @@ class ModerationModel:
         if result.rowcount == 1:
             # Append the new kept role
             kept_role_ids, _ = result.fetchone()
-            kept_role_ids.append(kept_role.id)
+            kept_role_ids.extend(role.id for role in kept_roles)
+
+            # Re-fetch role objects, IDs may be greater than existing kept_roles
             kept_roles = [
                 discord.utils.get(member.guild.roles, id=id) for id in kept_role_ids
             ]
@@ -128,7 +134,6 @@ class ModerationModel:
             self.sql.execute(upd)
         else:
             # Add new removed_other_roles row
-            kept_roles = [kept_role]
             other_role_ids = [role.id for role in member.roles if role != kept_role]
             ins = self.tb_removed_other_roles.insert().values(
                 guild_id=member.guild.id,

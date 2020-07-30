@@ -2,7 +2,7 @@
 # cogs/settings/core.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2017-2019 Jake Richardson, Ammon Smith, jackylam5
+# Copyright (c) 2017-2020 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -250,7 +250,7 @@ class Settings(AbstractCog):
 
         special_roles = self.bot.sql.settings.get_special_roles(ctx.guild)
         if role in special_roles:
-            embed.description = f"Cannot assign the same role for multiple purposes"
+            embed.description = "Cannot assign the same role for multiple purposes"
             raise CommandFailed(embed=embed)
 
         embed = permissions.elevated_role_embed(ctx.guild, role, "warning")

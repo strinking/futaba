@@ -2,7 +2,7 @@
 # cogs/moderation/core.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2017-2019 Jake Richardson, Ammon Smith, jackylam5
+# Copyright (c) 2017-2020 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -98,16 +98,9 @@ class Moderation(AbstractCog):
             nick=nick, reason=f"{mod} {'un' if nick is None else ''}set nickname"
         )
 
-    @commands.command(name="mute", aliases=["shitpost"])
-    @commands.guild_only()
-    @permissions.check_perm("manage_roles")
-    async def mute(self, ctx, member: MemberConv, minutes: int, *, reason: str = None):
-        """
-        Mutes the user for the given number of minutes.
-        Requires a mute role to be configured.
-        The minutes parameter must be set to a positive number.
-        """
-
+    async def perform_mute(
+        self, ctx, member: MemberConv, minutes: int, reason: str = None,
+    ):
         logger.info(
             "Muting user '%s' (%d) for %d minutes", member.name, member.id, minutes
         )
@@ -125,8 +118,6 @@ class Moderation(AbstractCog):
         if member.top_role >= ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to mute this user")
 
-        # TODO store punishment in table with task ID
-
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Muted", minutes, reason, past=True)
 
@@ -137,6 +128,18 @@ class Moderation(AbstractCog):
             await self.remove_roles(
                 ctx, member, minutes, PunishAction.RELIEVE_MUTE, reason
             )
+
+    @commands.command(name="mute", aliases=["shitpost"])
+    @commands.guild_only()
+    @permissions.check_perm("manage_roles")
+    async def mute(self, ctx, member: MemberConv, minutes: int, *, reason: str = None):
+        """
+        Mutes the user for the given number of minutes.
+        Requires a mute role to be configured.
+        The minutes parameter must be set to a positive number.
+        """
+
+        await self.perform_mute(ctx, member, minutes, reason)
 
     @commands.command(name="unmute", aliases=["unshitpost"])
     @commands.guild_only()
@@ -161,8 +164,6 @@ class Moderation(AbstractCog):
         if member.top_role >= ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to unmute this user")
 
-        # TODO store punishment in table with task ID
-
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Unmuted", minutes, reason, past=True)
 
@@ -173,28 +174,13 @@ class Moderation(AbstractCog):
         else:
             await self.bot.punish.unjail(ctx.guild, member, reason)
 
-    @commands.command(name="jail", aliases=["dunce"])
-    @commands.guild_only()
-    @permissions.check_perm("manage_roles")
-    async def jail(self, ctx, member: MemberConv, minutes: int, *, reason: str = None):
-        """
-        Jails the user.
-        Requires a jail role to be configured.
-        The minutes parameter must be set to a positive number.
-        """
-
-        logger.info(
-            "Jailing user '%s' (%d) for %d minutes", member.name, member.id, minutes
-        )
-
+    async def perform_jail(self, ctx, member, minutes, reason):
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)
         if roles.jail is None:
             raise CommandFailed(content="No configured jail role")
 
         if member.top_role >= ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to jail this user")
-
-        # TODO store punishment in table with task ID
 
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Jailed", minutes, reason)
@@ -207,30 +193,65 @@ class Moderation(AbstractCog):
                 ctx, member, minutes, PunishAction.RELIEVE_JAIL, reason
             )
 
-    @commands.command(name="unjail", aliases=["undunce"])
+    @commands.command(name="jail", aliases=["dunce"])
     @commands.guild_only()
     @permissions.check_perm("manage_roles")
-    async def unjail(
-        self, ctx, member: MemberConv, minutes: int = 0, *, reason: str = None
-    ):
+    async def jail(self, ctx, member: MemberConv, *, reason: str = None):
         """
-        Removes a user from the jail.
+        Jails the user.
         Requires a jail role to be configured.
-        Set 'minutes' to 0 to release immediately.
+        """
+
+        logger.info("Jailing user '%s' (%d)", member.name, member.id)
+
+        await self.perform_jail(ctx, member, 0, reason)
+
+    @commands.command(name="djail", aliases=["ddunce", "timejail", "timedunce"])
+    @commands.guild_only()
+    @permissions.check_perm("manage_roles")
+    async def djail(self, ctx, member: MemberConv, minutes: int, *, reason: str = None):
+        """
+        Jails the user for a period of time.
+        Requires a jail role to be configured.
         """
 
         logger.info(
-            "Un-jailing user '%s' (%d) in %d minutes", member.name, member.id, minutes
+            "Jailing user '%s' (%d) for %d minutes", member.name, member.id, minutes,
         )
 
+        await self.perform_jail(ctx, member, minutes, reason)
+
+    @commands.command(name="selfjail", aliases=["selfgaol", "selfdunce", "focus"])
+    @commands.guild_only()
+    async def self_jail(self, ctx, minutes: int):
+        """
+        Jails the user that uses the command
+        Mainly used to restrict access so the user can focus without distractions
+        Requires a jail role to be configured.
+        """
+
+        # Check if user has supplied a time between 30 and 720 mins
+        if minutes < 30 or minutes > 720:
+            embed = discord.Embed(
+                colour=discord.Colour.red(),
+                description="You need to supply a length of time between 30 and 720 mins (12 hours)",
+            )
+            raise CommandFailed(embed=embed)
+
+        member = ctx.author
+        logger.info(
+            "Jailing user '%s' (%d) for %d minutes", member.name, member.id, minutes
+        )
+        await self.perform_jail(ctx, member, minutes, "Self jail")
+        await self.perform_mute(ctx, member, minutes, "Self jail")
+
+    async def perform_unjail(self, ctx, member, minutes, reason):
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)
         if roles.jail is None:
             raise CommandFailed(content="No configured jail role")
 
         if member.top_role >= ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to unjail this user")
-
-        # TODO store punishment in table with task ID
 
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Released", minutes, reason, past=True)
@@ -241,6 +262,38 @@ class Moderation(AbstractCog):
             )
         else:
             await self.bot.punish.unjail(ctx.guild, member, reason)
+
+    @commands.command(name="unjail", aliases=["undunce", "release"])
+    @commands.guild_only()
+    @permissions.check_perm("manage_roles")
+    async def unjail(self, ctx, member: MemberConv, *, reason: str = None):
+        """
+        Removes a user from the jail.
+        Requires a jail role to be configured.
+        """
+
+        logger.info("Un-jailing user '%s' (%d)", member.name, member.id)
+        await self.perform_unjail(ctx, member, 0, reason)
+
+    @commands.command(
+        name="dunjail", aliases=["dundunce", "timeunjail", "timeundunce", "drelease"],
+    )
+    @commands.guild_only()
+    @permissions.check_perm("manage_roles")
+    async def dunjail(
+        self, ctx, member: MemberConv, minutes: int = 0, *, reason: str = None,
+    ):
+        """
+        Removes a user from the jail in the given number of minutes.
+        Requires a jail role to be configured.
+        Set 'minutes' to 0 to release immediately.
+        """
+
+        logger.info(
+            "Un-jailing user '%s' (%d) in %d minutes", member.name, member.id, minutes,
+        )
+
+        await self.perform_unjail(ctx, member, minutes, reason)
 
     @commands.command(name="kick")
     @commands.guild_only()
@@ -265,15 +318,7 @@ class Moderation(AbstractCog):
                 content="I don't have permission to kick this user"
             )
 
-    @commands.command(name="ban")
-    @commands.guild_only()
-    @permissions.check_perm("ban_members")
-    async def ban(self, ctx, user: UserConv, delete_days: int, *, reason: str):
-        """
-        Bans the user from the guild with a reason
-        If guild has moderation logging enabled, it is logged
-        """
-
+    async def perform_ban(self, ctx, user, delete_days, reason):
         if delete_days < 0 or delete_days > 7:
             embed = discord.Embed(colour=discord.Colour.red())
             embed.description = (
@@ -303,6 +348,28 @@ class Moderation(AbstractCog):
         except discord.errors.Forbidden:
             raise ManualCheckFailure(content="I don't have permission to ban this user")
 
+    @commands.command(name="ban")
+    @commands.guild_only()
+    @permissions.check_perm("ban_members")
+    async def ban(self, ctx, user: UserConv, *, reason: str):
+        """
+        Bans the user from the guild with a reason
+        If guild has moderation logging enabled, it is logged
+        """
+
+        await self.perform_ban(ctx, user, 0, reason)
+
+    @commands.command(name="dban", aliases=["deleteban"])
+    @commands.guild_only()
+    @permissions.check_perm("ban_members")
+    async def dban(self, ctx, user: UserConv, delete_days: int, *, reason: str):
+        """
+        Bans the user from the guild with a reason, deleting the last X days of messages
+        If guild has moderation logging enabled, it is logged
+        """
+
+        await self.perform_ban(ctx, user, delete_days, reason)
+
     @commands.command(name="softban", aliases=["soft", "sban"])
     @commands.guild_only()
     @permissions.check_perm("ban_members")
@@ -323,7 +390,6 @@ class Moderation(AbstractCog):
             clean_reason = escape_backticks(reason)
             content = f"{mod} soft-banned {user.mention} ({banned}) with reason: `{clean_reason}`"
 
-            # TODO add to tracker and add handler to journal event to prevent ban/softban event
             await ctx.guild.ban(user, reason=f"{reason} - {mod}", delete_message_days=1)
             await asyncio.sleep(0.1)
             await ctx.guild.unban(user, reason=f"{reason} - {mod}")
@@ -357,7 +423,6 @@ class Moderation(AbstractCog):
             embed = discord.Embed(description="Done! User Unbanned")
             embed.add_field(name="Reason", value=reason)
 
-            # TODO add tracker unban event and move this to journal/impl/moderation.py
             mod = user_discrim(ctx.author)
             unbanned = user_discrim(user)
             clean_reason = escape_backticks(reason)
