@@ -14,7 +14,17 @@ from .core import SimplewriterCog
 
 
 def setup(bot):
+    setup_simplewriter(bot)
+
+
+def setup_simplewriter(bot):
     cog = SimplewriterCog(bot)
-    bot.add_listener(cog.check_message, "on_message")
-    bot.add_listener(cog.check_message_edit, "on_message_edit")
     bot.add_cog(cog)
+
+
+def teardown(bot):
+    teardown_simplewriter(bot)
+
+
+def teardown_simplewriter(bot):
+    bot.remove_cog(SimplewriterCog.__name__)

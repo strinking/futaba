@@ -35,20 +35,21 @@ class SimplewriterCog(AbstractCog):
 
     def __init__(self, bot):
         super().__init__(bot)
+        self.bot.add_listener(self.on_message, "on_message")
+        self.bot.add_listener(self.on_message_edit, "on_message_edit")
         self.journal = bot.get_broadcaster("/simplewriter")
 
     def setup(self):
         pass
 
     def __unload(self):
-        self.bot.remove_listener(self.check_message, "on_message")
-        self.bot.remove_listener(self.check_message_edit, "on_message_edit")
+        self.bot.remove_listener(self.on_message, "on_message")
+        self.bot.remove_listener(self.on_message_edit, "on_message_edit")
 
-    # TODO: move check_message and check_message_edit to own hook files
-    async def check_message(cog, message):
+    async def on_message(cog, message):
         if message.author.id == cog.bot.user.id:
             return
         await message.channel.send(message.id)
 
-    async def check_message_edit(cog, before, after):
+    async def on_message_edit(cog, before, after):
         pass
