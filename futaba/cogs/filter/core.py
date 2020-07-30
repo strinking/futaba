@@ -233,7 +233,7 @@ class Filtering(AbstractCog):
         Maintaining the list of special user immunities to the filter.
         """
 
-        if ctx.subcommand_passed in ("immune", "imm", "ignore", "ign"):
+        if ctx.invoked_subcommand is None:
             raise SendHelp()
 
     @filter_immunity.command(name="add", aliases=["append", "extend", "new"])
@@ -375,7 +375,7 @@ class Filtering(AbstractCog):
         Allows managing the server-wide filter.
         """
 
-        if ctx.subcommand_passed in ("server", "srv", "s", "guild", "g"):
+        if ctx.invoked_subcommand is None:
             raise SendHelp()
 
     @filter_guild.command(name="show", aliases=["display", "list"])
@@ -469,7 +469,7 @@ class Filtering(AbstractCog):
         Allows managing the local channel filter.
         """
 
-        if ctx.subcommand_passed in ("chan", "ch", "c"):
+        if ctx.invoked_subcommand is None:
             raise SendHelp()
 
     @filter_channel.command(name="show", aliases=["display", "list"])
