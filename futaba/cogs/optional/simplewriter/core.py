@@ -2,7 +2,7 @@
 # cogs/optional/simplewriter/core.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2017-2020 Jake Richardson, Ammon Smith, jackylam5, Joshua 'joshuas3' Stockin
+# Copyright (c) 2017-2020 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -11,45 +11,32 @@
 #
 
 """
-A thing that only lets you write stuff in a certain word box, but only if it's made up of the first ten hundred most-used words of the language.
+A thing that lets you write stuff in one word box, but only if it's made up of
+the first ten hundred most used words of the language.
 """
 
-# REMOVE THIS IN REGULAR COGS:
-# pylint: disable=unused-import
-
-import asyncio
 import logging
-import math
 
-import discord
-
-from futaba import permissions
+from futaba.utils import async_partial
 from futaba.cogs.abc import AbstractCog
-from futaba.exceptions import CommandFailed
+
+from .listeners import on_message, on_message_edit
 
 logger = logging.getLogger(__name__)
 
 
 class SimplewriterCog(AbstractCog):
-    __slots__ = ("journal",)
+    __slots__ = ("journal", "on_message", "on_message_edit")
 
     def __init__(self, bot):
         super().__init__(bot)
-        self.bot.add_listener(self.on_message, "on_message")
-        self.bot.add_listener(self.on_message_edit, "on_message_edit")
+        self.on_message = async_partial(on_message, self)
+        self.on_message_edit = async_partial(on_message_edit, self)
         self.journal = bot.get_broadcaster("/simplewriter")
 
     def setup(self):
         pass
 
-    def __unload(self):
+    def cog_unload(self):
         self.bot.remove_listener(self.on_message, "on_message")
         self.bot.remove_listener(self.on_message_edit, "on_message_edit")
-
-    async def on_message(cog, message):
-        if message.author.id == cog.bot.user.id:
-            return
-        await message.channel.send(message.id)
-
-    async def on_message_edit(cog, before, after):
-        pass

@@ -2,7 +2,7 @@
 # cogs/optional/simplewriter/__init__.py
 #
 # futaba - A Discord Mod bot for the Programming server
-# Copyright (c) 2017-2020 Jake Richardson, Ammon Smith, jackylam5, Joshua 'joshuas3' Stockin
+# Copyright (c) 2017-2020 Jake Richardson, Ammon Smith, jackylam5
 #
 # futaba is available free of charge under the terms of the MIT
 # License. You are free to redistribute and/or modify it under those
@@ -19,6 +19,8 @@ def setup(bot):
 
 def setup_simplewriter(bot):
     cog = SimplewriterCog(bot)
+    bot.add_listener(cog.on_message, "on_message")
+    bot.add_listener(cog.on_message_edit, "on_message_edit")
     bot.add_cog(cog)
 
 

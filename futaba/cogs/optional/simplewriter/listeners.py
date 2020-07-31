@@ -1,5 +1,5 @@
 #
-# cogs/optional/simplewriter/words/__init__.py
+# cogs/optional/simplewriter/listeners.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2020 Jake Richardson, Ammon Smith, jackylam5
@@ -10,8 +10,19 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-__all__ = [
-    "core_words_list",
-]
+"""
+discord.py listeners for simplewriter
+"""
 
-from .core_words_list import core_words_list
+from .simple_filter import simple_filter
+
+__all__ = ["on_message", "on_message_edit"]
+
+
+async def on_message(cog, message):
+    await simple_filter(cog, message)
+
+
+async def on_message_edit(cog, before, after):
+    if after:
+        await simple_filter(cog, after)
