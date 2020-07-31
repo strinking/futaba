@@ -12,6 +12,8 @@
 
 __all__ = ["core_words_list"]
 
+# pylint: disable=too-many-lines
+
 # The list of the most frequently used English words, plus their directly related derivatives.
 core_words_list = [
     "a",

@@ -13,16 +13,14 @@
 """
 A thing that lets you write stuff in one word box, but only if it's made up of
 the first ten hundred most used words of the language.
-"""
 
-import logging
+(https://xkcd.com/simplewriter)
+"""
 
 from futaba.utils import async_partial
 from futaba.cogs.abc import AbstractCog
 
 from .listeners import on_message, on_message_edit
-
-logger = logging.getLogger(__name__)
 
 
 class SimplewriterCog(AbstractCog):

@@ -10,8 +10,6 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-__all__ = [
-    "core_words_list",
-]
+__all__ = ["core_words_list"]
 
 from .core_words_list import core_words_list
