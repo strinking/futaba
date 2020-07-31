@@ -24,13 +24,14 @@ from .listeners import on_message, on_message_edit
 
 
 class SimplewriterCog(AbstractCog):
-    __slots__ = ("journal", "on_message", "on_message_edit")
+    __slots__ = ("journal", "on_message", "on_message_edit", "channel_id")
 
     def __init__(self, bot):
         super().__init__(bot)
         self.on_message = async_partial(on_message, self)
         self.on_message_edit = async_partial(on_message_edit, self)
         self.journal = bot.get_broadcaster("/simplewriter")
+        self.channel_id = int(bot.config.optional_cogs["simplewriter"]["channel-id"])
 
     def setup(self):
         pass

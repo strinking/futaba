@@ -51,9 +51,7 @@ async def simple_filter(cog, message):
     if message.author.id == cog.bot.user.id:
         return
 
-    if message.channel.id != int(
-        cog.bot.config.optional_cogs["simplewriter"]["channel-id"]
-    ):
+    if message.channel.id != cog.channel_id:
         return
 
     logger.debug(
