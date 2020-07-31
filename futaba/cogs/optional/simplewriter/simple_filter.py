@@ -67,7 +67,8 @@ async def simple_filter(cog, message):
     bad_words = []
     for word in split:
         cleaned = word.strip()
-        if not cleaned: continue
+        if not cleaned:
+            continue
         if not cleaned.lower() in core_words_list:
             if not cleaned in bad_words:
                 try:  # test to see if input is a number

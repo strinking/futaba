@@ -15,10 +15,7 @@ import os
 __all__ = ["core_words_list"]
 
 core_words_list = None
-core_words_list_path = os.path.join(
-    os.path.dirname(__file__),
-    "core_words_list.txt"
-)
+core_words_list_path = os.path.join(os.path.dirname(__file__), "core_words_list.txt")
 
 with open(core_words_list_path, "r") as f:
     core_words_list = f.read().split(",")
