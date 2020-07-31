@@ -28,9 +28,9 @@ class SimplewriterCog(AbstractCog):
 
     def __init__(self, bot):
         super().__init__(bot)
+        self.journal = bot.get_broadcaster("/simplewriter")
         self.on_message = async_partial(on_message, self)
         self.on_message_edit = async_partial(on_message_edit, self)
-        self.journal = bot.get_broadcaster("/simplewriter")
         self.channel_id = int(bot.config.optional_cogs["simplewriter"]["channel-id"])
 
     def setup(self):

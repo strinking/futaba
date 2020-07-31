@@ -36,8 +36,12 @@ async def simple_filter(cog, message):
     Filter Discord messages for the simplewriter channel
     """
 
-    # Not DMs
-    if message.guild is None:
+    # Message is in designated channel
+    if message.channel.id != cog.channel_id:
+        return
+
+    # Don't filter bot messages
+    if message.author.id == cog.bot.user.id:
         return
 
     # Not a special message type
@@ -48,15 +52,8 @@ async def simple_filter(cog, message):
     if not message.channel.permissions_for(message.guild.me).manage_messages:
         return
 
-    # Don't filter bot messages
-    if message.author.id == cog.bot.user.id:
-        return
-
-    if message.channel.id != cog.channel_id:
-        return
-
     logger.debug(
-        "Message in simplewriter channel. Checking message id %d (by '%s' (%d)) against simplewriter core words list",
+        "Checking message id %d (by '%s' (%d)) against simplewriter core words list",
         message.id,
         message.author.name,
         message.author.id,
@@ -82,7 +79,14 @@ async def simple_filter(cog, message):
             f"Message id {message.id} (by '{message.author.name}' ({message.author.id})) filtered from "
             "simplewriter channel"
         )
-        cog.journal.send("message/delete", message.guild, content)
+        cog.journal.send(
+            "message/delete",
+            message.guild,
+            content,
+            icon="delete",
+            channel=message.channel,
+            message=message,
+        )
 
         bad_words_plural = plural(len(bad_words))
         article = "some" if len(bad_words) > 1 else "a"
