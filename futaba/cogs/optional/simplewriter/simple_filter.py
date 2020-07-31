@@ -26,6 +26,7 @@ from futaba.utils import plural
 from .words import core_words_list
 
 logger = logging.getLogger(__name__)
+REGEX_SPLIT = r"[^a-zA-Z0-9_']"
 
 __all__ = ["simple_filter"]
 
@@ -61,7 +62,7 @@ async def simple_filter(cog, message):
         message.author.id,
     )
 
-    split = re.split(r"\W+", message.content)
+    split = re.split(REGEX_SPLIT, message.content)
     bad_words = []
     for word in split:
         cleaned = word.strip()
