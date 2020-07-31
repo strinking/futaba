@@ -1,5 +1,5 @@
 #
-# cogs/optional/simplewriter/words/__init__.py
+# cogs/optional/simplewriter/words/words.py
 #
 # futaba - A Discord Mod bot for the Programming server
 # Copyright (c) 2017-2020 Jake Richardson, Ammon Smith, jackylam5
@@ -10,6 +10,15 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+import os
+
 __all__ = ["core_words_list"]
 
-from .words import core_words_list
+core_words_list = None
+core_words_list_path = os.path.join(
+    os.path.dirname(__file__),
+    "core_words_list.txt"
+)
+
+with open(core_words_list_path, "r") as f:
+    core_words_list = f.read().split(",")
