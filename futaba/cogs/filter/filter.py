@@ -42,6 +42,17 @@ UNICODE_SPACES_REGEX = re.compile(
 )
 
 
+class SyntheticPattern:
+    __slots__ = ("compiled", "pattern")
+
+    def __init__(self, compiled, pattern):
+        self.compiled = compiled
+        self.pattern = pattern
+
+    def __getattr__(self, item):
+        return getattr(self.compiled, item)
+
+
 class Filter:
     __slots__ = ("text", "regex")
 
@@ -53,6 +64,10 @@ class Filter:
             regex_ast = sre_parse.parse(pattern)
             regex_ast = Filter.convert_raw_regex_ast(regex_ast)
             compiled = sre_compile.compile(regex_ast, re.IGNORECASE)
+            compiled = SyntheticPattern(compiled, "<synthetic regular expression>")
+        elif text.startswith("raw-regex:") and len(text) > 10:
+            pattern = text[10:].encode()
+            compiled = re.compile(pattern, re.IGNORECASE)
         else:
             groups = confusables.is_confusable(text, greedy=True)
             if groups:
@@ -61,7 +76,7 @@ class Filter:
                 pattern = re.escape(text)
             compiled = re.compile(pattern, re.IGNORECASE)
 
-        logger.debug("Generated pattern: %r", pattern)
+        logger.debug("Generated pattern: %r", compiled.pattern)
 
         self.text = text
         self.regex = compiled
@@ -88,12 +103,12 @@ class Filter:
         return str(pattern)
 
     @staticmethod
-    def convert_raw_regex_ast(regex_ast: list):
+    def convert_raw_regex_ast(regex_ast: Iterable):
         for index, value in enumerate(regex_ast):
             # Parse lexemes for LITERALs
             if isinstance(value, tuple):
                 lexeme_tuple = value
-                if value[0] == sre_parse.LITERAL:
+                if lexeme_tuple[0] == sre_parse.LITERAL:
                     # LITERAL found, check if it's a confusable homoglyph...
                     groups = confusables.is_confusable(
                         chr(lexeme_tuple[1]), greedy=True
