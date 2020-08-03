@@ -119,20 +119,14 @@ class Filter:
                     group = groups[0]  # one char, so only one group
                     confusable_literals = [lexeme_tuple]
                     for homoglyph in group["homoglyphs"]:
-                        if len(homoglyph["c"]) > 1:
-                            confusable_literals += [
-                                (sre_parse.LITERAL, ord(char))
-                                for char in homoglyph["c"]
-                            ]
-                        else:
-                            confusable_literals.append(
-                                (sre_parse.LITERAL, ord(homoglyph["c"]))
-                            )
+                        confusable_literals += [
+                            (sre_parse.LITERAL, ord(char)) for char in homoglyph["c"]
+                        ]
                     in_lexeme_tuple = (sre_parse.IN, confusable_literals)
 
                     # Overwrite this lexeme
                     regex_ast[index] = in_lexeme_tuple
-            elif isinstance(value, Iterable):  # list or set
+            elif isinstance(value, Iterable):
                 # More possible lexemes, recurse and overwrite...
                 regex_ast[index] = Filter.convert_raw_regex_ast(value)
 
