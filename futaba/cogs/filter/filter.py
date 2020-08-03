@@ -12,6 +12,10 @@
 
 import logging
 import re
+import sre_parse
+import sre_compile
+
+from collections.abc import Iterable
 
 from confusable_homoglyphs import confusables
 
@@ -43,16 +47,24 @@ class Filter:
 
     def __init__(self, text):
         logger.info("Creating filter regular expression from %r", text)
-        groups = confusables.is_confusable(text, greedy=True)
-        if groups:
-            pattern = Filter.build_regex(text, groups)
+        if text.startswith("regex:") and len(text) > 6:
+            # Build a general regular expression, de-confusifying LITERALs
+            pattern = text[6:].encode()
+            regex_ast = sre_parse.parse(pattern)
+            regex_ast = Filter.convert_raw_regex_ast(regex_ast)
+            compiled = sre_compile.compile(regex_ast, re.IGNORECASE)
         else:
-            pattern = re.escape(text)
+            groups = confusables.is_confusable(text, greedy=True)
+            if groups:
+                pattern = Filter.build_regex(text, groups)
+            else:
+                pattern = re.escape(text)
+            compiled = re.compile(pattern, re.IGNORECASE)
 
         logger.debug("Generated pattern: %r", pattern)
 
         self.text = text
-        self.regex = re.compile(pattern, re.IGNORECASE)
+        self.regex = compiled
 
     @staticmethod
     def build_regex(text, groups):
@@ -74,6 +86,42 @@ class Filter:
             pattern.write(chars.get(char, char))
 
         return str(pattern)
+
+    @staticmethod
+    def convert_raw_regex_ast(regex_ast: list):
+        for index, value in enumerate(regex_ast):
+            # Parse lexemes for LITERALs
+            if isinstance(value, tuple):
+                lexeme_tuple = value
+                if value[0] == sre_parse.LITERAL:
+                    # LITERAL found, check if it's a confusable homoglyph...
+                    groups = confusables.is_confusable(
+                        chr(lexeme_tuple[1]), greedy=True
+                    )
+                    if not groups:
+                        continue
+                    # Convert group into list of confusable LITERALs
+                    group = groups[0]  # one char, so only one group
+                    confusable_literals = [lexeme_tuple]
+                    for homoglyph in group["homoglyphs"]:
+                        if len(homoglyph["c"]) > 1:
+                            confusable_literals += [
+                                (sre_parse.LITERAL, ord(char))
+                                for char in homoglyph["c"]
+                            ]
+                        else:
+                            confusable_literals.append(
+                                (sre_parse.LITERAL, ord(homoglyph["c"]))
+                            )
+                    in_lexeme_tuple = (sre_parse.IN, confusable_literals)
+
+                    # Overwrite this lexeme
+                    regex_ast[index] = in_lexeme_tuple
+            elif isinstance(value, Iterable):  # list or set
+                # More possible lexemes, recurse and overwrite...
+                regex_ast[index] = Filter.convert_raw_regex_ast(value)
+
+        return regex_ast
 
     def matches(self, content):
         contents = (content, UNICODE_SPACES_REGEX.sub("", content))
