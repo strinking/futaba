@@ -12,6 +12,7 @@
 
 import logging
 import re
+# pylint: disable=no-member
 import sre_parse
 import sre_compile
 
