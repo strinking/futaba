@@ -182,6 +182,9 @@ class Moderation(AbstractCog):
         if member.top_role >= ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to jail this user")
 
+        if roles.jail_role in member.roles:
+            raise CommandFailed(content="User is already jailed")
+
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Jailed", minutes, reason)
 
