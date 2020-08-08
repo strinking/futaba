@@ -127,8 +127,10 @@ class Filter:
 
                     # Overwrite this lexeme
                     regex_ast[index] = in_lexeme_tuple
-            elif isinstance(value, Iterable):
-                # More possible lexemes, recurse and overwrite...
+                else:
+                    # More possible lexemes, recurse and overwrite...
+                    regex_ast[index] = tuple(Filter.convert_raw_regex_ast(list(value)))
+            elif isinstance(value, sre_parse.SubPattern):
                 regex_ast[index] = Filter.convert_raw_regex_ast(value)
 
         return regex_ast
