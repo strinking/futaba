@@ -164,6 +164,9 @@ class Moderation(AbstractCog):
         if member.top_role >= ctx.me.top_role:
             raise ManualCheckFailure("I don't have permission to unmute this user")
 
+        if roles.mute_role in member.roles:
+            raise CommandFailed(content="User is already muted")
+
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Unmuted", minutes, reason, past=True)
 
