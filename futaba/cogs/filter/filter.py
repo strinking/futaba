@@ -10,9 +10,9 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+# pylint: disable=no-member
 import logging
 import re
-# pylint: disable=no-member
 import sre_parse
 import sre_compile
 
