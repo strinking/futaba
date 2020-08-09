@@ -215,6 +215,7 @@ class SelfAssignableRoles(AbstractCog):
 
     @role.command(name="createhelperrole", aliases=["chr"])
     @commands.guild_only()
+    @permissions.check_mod()
     async def helper_role_add(self, ctx, role: RoleConv, *channels: TextChannelConv):
         helper_role = discord.utils.get(ctx.guild.roles, name=role.name + " (helper)")
         if not helper_role:
@@ -230,6 +231,7 @@ class SelfAssignableRoles(AbstractCog):
 
     @role.command(name="removehelperrole", aliases=["deletehelperrole", "rmhr", "dhr"])
     @commands.guild_only()
+    @permissions.check_mod()
     async def helper_role_remove(self, ctx, role: RoleConv, *args):
         if args[0] == "-h":
             role = discord.utils.get(ctx.guild.roles, name=role.name + " (helper)")
