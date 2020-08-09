@@ -233,8 +233,11 @@ class SelfAssignableRoles(AbstractCog):
     @commands.guild_only()
     @permissions.check_mod()
     async def helper_role_remove(self, ctx, role: RoleConv, *args):
-        if args[0] == "-h":
-            role = discord.utils.get(ctx.guild.roles, name=role.name + " (helper)")
+        if len(args) == 1:
+            if args[0] == "-h":
+                role = discord.utils.get(ctx.guild.roles, name=role.name + " (helper)")
+            else:
+                raise CommandFailed("Unknown argument")
         channels = self.get_channels_from_role(ctx.guild, role)
         if not channels or not role:
             raise CommandFailed("Role was not pingable or did not exist to begin with")
