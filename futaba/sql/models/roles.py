@@ -154,7 +154,7 @@ class RolesModel:
             # delete orphaned role-channel pairs
             if not role:
                 self.remove_orphaned_role_channel(guild, channel_id, role_id)
-            else:   
+            else:
                 channelroles.add((channel, role))
 
         return channelroles
@@ -179,13 +179,13 @@ class RolesModel:
 
     def remove_orphaned_role_channel(self, guild, channel_id, role_id):
         logger.info(
-                "Removing orphaned pingable role-channel pair (%d, %d) for guild '%s' (%d)",
-                role_id,
-                channel_id,
-                guild.name,
-                guild.id,
-            )
-        
+            "Removing orphaned pingable role-channel pair (%d, %d) for guild '%s' (%d)",
+            role_id,
+            channel_id,
+            guild.name,
+            guild.id,
+        )
+
         delet = self.tb_pingable_role_channel.delete().where(
             and_(
                 self.tb_pingable_role_channel.c.channel_id == channel_id,
@@ -194,7 +194,6 @@ class RolesModel:
         )
 
         result = self.sql.execute(delet)
-
 
     def remove_pingable_role_channel(self, guild, channel, role):
         logger.info(
