@@ -230,7 +230,7 @@ class SelfAssignableRoles(AbstractCog):
         if args[0] == "-h":
             role = discord.utils.get(ctx.guild.roles, name=role.name+" (helper)")
         channels = self.get_channels_from_role(ctx.guild, role)
-        if not channels or role == None:
+        if not channels or not role:
             raise CommandFailed("Role was not pingable or did not exist to begin with")
         await self.role_unpingable(ctx, role, *channels)
         await role.delete()

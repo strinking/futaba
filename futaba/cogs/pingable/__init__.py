@@ -26,5 +26,5 @@ def teardown(bot):
     teardown_pingable(bot)
 
 
-def teardown_navi(bot):
+def teardown_pingable(bot):
     bot.remove_cog(Pingable.__name__)

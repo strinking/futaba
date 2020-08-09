@@ -165,7 +165,7 @@ class RolesModel:
             role.name,
             channel.name,
             guild.name,
-            guild.id,all
+            guild.id,
         )
 
         assert guild == role.guild
