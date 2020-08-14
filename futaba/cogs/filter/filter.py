@@ -10,8 +10,13 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+# pylint: disable=no-member
 import logging
 import re
+import sre_parse
+import sre_compile
+
+from collections.abc import Iterable
 
 from confusable_homoglyphs import confusables
 
@@ -38,21 +43,44 @@ UNICODE_SPACES_REGEX = re.compile(
 )
 
 
+class SyntheticPattern:
+    __slots__ = ("compiled", "pattern")
+
+    def __init__(self, compiled, pattern):
+        self.compiled = compiled
+        self.pattern = pattern
+
+    def __getattr__(self, item):
+        return getattr(self.compiled, item)
+
+
 class Filter:
     __slots__ = ("text", "regex")
 
     def __init__(self, text):
         logger.info("Creating filter regular expression from %r", text)
-        groups = confusables.is_confusable(text, greedy=True)
-        if groups:
-            pattern = Filter.build_regex(text, groups)
+        if text.startswith("regex:") and len(text) > 6:
+            # Build a general regular expression, de-confusifying LITERALs
+            pattern = text[6:].encode()
+            regex_ast = sre_parse.parse(pattern)
+            regex_ast = Filter.convert_raw_regex_ast(regex_ast)
+            compiled = sre_compile.compile(regex_ast, re.IGNORECASE)
+            compiled = SyntheticPattern(compiled, "<synthetic regular expression>")
+        elif text.startswith("raw-regex:") and len(text) > 10:
+            pattern = text[10:].encode()
+            compiled = re.compile(pattern, re.IGNORECASE)
         else:
-            pattern = re.escape(text)
+            groups = confusables.is_confusable(text, greedy=True)
+            if groups:
+                pattern = Filter.build_regex(text, groups)
+            else:
+                pattern = re.escape(text)
+            compiled = re.compile(pattern, re.IGNORECASE)
 
-        logger.debug("Generated pattern: %r", pattern)
+        logger.debug("Generated pattern: %r", compiled.pattern)
 
         self.text = text
-        self.regex = re.compile(pattern, re.IGNORECASE)
+        self.regex = compiled
 
     @staticmethod
     def build_regex(text, groups):
@@ -74,6 +102,38 @@ class Filter:
             pattern.write(chars.get(char, char))
 
         return str(pattern)
+
+    @staticmethod
+    def convert_raw_regex_ast(regex_ast: Iterable):
+        for index, value in enumerate(regex_ast):
+            # Parse lexemes for LITERALs
+            if isinstance(value, tuple):
+                lexeme_tuple = value
+                if lexeme_tuple[0] == sre_parse.LITERAL:
+                    # LITERAL found, check if it's a confusable homoglyph...
+                    groups = confusables.is_confusable(
+                        chr(lexeme_tuple[1]), greedy=True
+                    )
+                    if not groups:
+                        continue
+                    # Convert group into list of confusable LITERALs
+                    group = groups[0]  # one char, so only one group
+                    confusable_literals = [lexeme_tuple]
+                    for homoglyph in group["homoglyphs"]:
+                        confusable_literals += [
+                            (sre_parse.LITERAL, ord(char)) for char in homoglyph["c"]
+                        ]
+                    in_lexeme_tuple = (sre_parse.IN, confusable_literals)
+
+                    # Overwrite this lexeme
+                    regex_ast[index] = in_lexeme_tuple
+                else:
+                    # More possible lexemes, recurse and overwrite...
+                    regex_ast[index] = tuple(Filter.convert_raw_regex_ast(list(value)))
+            elif isinstance(value, sre_parse.SubPattern):
+                regex_ast[index] = Filter.convert_raw_regex_ast(value)
+
+        return regex_ast
 
     def matches(self, content):
         contents = (content, UNICODE_SPACES_REGEX.sub("", content))
