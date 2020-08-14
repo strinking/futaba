@@ -205,10 +205,13 @@ class RolesModel:
 
     def get_channels_from_role(self, guild, role):
         if role == None:
+            # need to return an iterable, not None.
+            # this will get converted to an iterable later on
+            # which errors on None
             return []
         res = []
-        channel_role = self.get_pingable_role_channels(guild)
-        for channel, role_ in channel_role:
+        crole = self.get_pingable_role_channels(guild)
+        for channel, role_ in crole:
             if role_ == role:
                 res.append(channel)
         return res
