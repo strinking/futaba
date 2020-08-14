@@ -206,6 +206,8 @@ class SelfAssignableRoles(AbstractCog):
         self.journal.send("self/remove", ctx.guild, content, icon="role")
 
     def get_channels_from_role(self, guild, role: RoleConv):
+        if role == None:
+            return []
         res = []
         channel_role = self.bot.sql.roles.get_pingable_role_channels(guild)
         for channel, role_ in channel_role:
@@ -217,15 +219,15 @@ class SelfAssignableRoles(AbstractCog):
     @commands.guild_only()
     @permissions.check_mod()
     async def helper_role_add(self, ctx, role: RoleConv, *channels: TextChannelConv):
-        original = self.bot.sql.roles.get_pingable_role_from_original(role)
-        if not original:
-            original = await ctx.guild.create_role(
-                name=role.name + " (helper)", colour=role.colour
-            )
-        unadded_channels = frozenset(channels) - frozenset(self.get_channels_from_role(ctx.guild, original))
+        helper_role = self.bot.sql.roles.get_pingable_role_from_original(ctx.guild, role)
+        unadded_channels = frozenset(channels) - frozenset(self.get_channels_from_role(ctx.guild, helper_role))
         if not unadded_channels:
             raise CommandFailed("No channels were affected")
-        await self.role_pingable(ctx, original, *unadded_channels)
+        if not helper_role:
+            helper_role = await ctx.guild.create_role(
+                name=f"{role.name} (helper)", colour=role.colour
+            )
+        await self.role_pingable(ctx, helper_role, *unadded_channels, original=role)
 
     @role.command(name="removehelperrole", aliases=["deletehelperrole", "rmhr", "dhr"])
     @commands.guild_only()
@@ -233,7 +235,7 @@ class SelfAssignableRoles(AbstractCog):
     async def helper_role_remove(self, ctx, role: RoleConv, *args):
         if len(args) == 1:
             if args[0] == "-h":
-                helper_role = self.bot.sql.roles.get_original_from_pingable_role(role)
+                helper_role = self.bot.sql.roles.get_pingable_role_from_original(ctx.guild, role)
                 if not helper_role:
                     role = None
                 else:
@@ -348,7 +350,7 @@ class SelfAssignableRoles(AbstractCog):
     @role.command(name="pingable")
     @commands.guild_only()
     @permissions.check_mod()
-    async def role_pingable(self, ctx, role: RoleConv, *channels: TextChannelConv):
+    async def role_pingable(self, ctx, role: RoleConv, *channels: TextChannelConv, original=None):
         logger.info(
             "Making role '%s' pingable in guild '%s' (%d), channel(s) [%s]",
             role.name,
@@ -377,7 +379,7 @@ class SelfAssignableRoles(AbstractCog):
             for channel in channels:
                 if channel not in pingable_channels:
                     self.bot.sql.roles.add_pingable_role_channel(
-                        ctx.guild, channel, role
+                        ctx.guild, channel, role, original
                     )
                 else:
                     exempt_channels.append(channel)

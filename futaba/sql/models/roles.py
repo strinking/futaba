@@ -172,18 +172,19 @@ class RolesModel:
         assert guild == channel.guild
 
         ins = self.tb_pingable_role_channel.insert().values(
-            guild_id=guild.id, channel_id=channel.id, role_id=role.id, original_role=original
+            guild_id=guild.id, channel_id=channel.id, role_id=role.id, original_role_id=original.id
         )
 
         self.sql.execute(ins)
 
-    def get_pingable_role_from_original(self, original_role):
+    def get_pingable_role_from_original(self, guild, original_role):
         sel = select(
             [
                 self.tb_pingable_role_channel.c.role_id
             ]
         ).where(self.tb_pingable_role_channel.c.original_role_id == original_role.id)
-        result = self.sql.execute(sel).fetchall()
+        # we get [0] because the first role_id is wrapped in a list
+        result = self.sql.execute(sel).fetchall()[0]
         if len(result) == 0:
             return None
         
