@@ -82,6 +82,7 @@ class RolesModel:
             Column("guild_id", BigInteger, ForeignKey("guilds.guild_id")),
             Column("channel_id", BigInteger, primary_key=True),
             Column("role_id", BigInteger),
+            Column("original_role_id", BigInteger, nullable=True)
         )
         self.roles_cache = {}
         self.channels_cache = {}
@@ -151,15 +152,14 @@ class RolesModel:
         for (channel_id, role_id) in result.fetchall():
             channel = discord.utils.get(guild.channels, id=channel_id)
             role = discord.utils.get(guild.roles, id=role_id)
-            # delete orphaned role-channel pairs
             if not role:
-                self.remove_orphaned_role_channel(guild, channel_id, role_id)
+                self.remove_nonexistent_role_channel(guild, channel_id, role_id)
             else:
                 channelroles.add((channel, role))
 
         return channelroles
 
-    def add_pingable_role_channel(self, guild, channel, role):
+    def add_pingable_role_channel(self, guild, channel, role, original=None):
         logger.info(
             "Adding pingable role '%s' in channel '%s' for guild '%s' (%d)",
             role.name,
@@ -172,14 +172,38 @@ class RolesModel:
         assert guild == channel.guild
 
         ins = self.tb_pingable_role_channel.insert().values(
-            guild_id=guild.id, channel_id=channel.id, role_id=role.id
+            guild_id=guild.id, channel_id=channel.id, role_id=role.id, original_role=original
         )
 
         self.sql.execute(ins)
 
-    def remove_orphaned_role_channel(self, guild, channel_id, role_id):
+    def get_pingable_role_from_original(self, original_role):
+        sel = select(
+            [
+                self.tb_pingable_role_channel.c.role_id
+            ]
+        ).where(self.tb_pingable_role_channel.c.original_role_id == original_role.id)
+        result = self.sql.execute(sel).fetchall()
+        if len(result) == 0:
+            return None
+        
+        return discord.utils.get(guild.roles, id=result[0])
+    
+    def get_original_from_pingable_role(self, role):
+        sel = select(
+            [
+                self.tb_pingable_role_channel.c.original_role_id
+            ]
+        ).where(self.tb_pingable_role_channel.c.role_id == role.id)
+        result = self.sql.execute(sel).fetchall()
+        if len(result) == 0:
+            return None
+        
+        return discord.utils.get(guild.roles, id=result[0])
+
+    def remove_nonexistent_role_channel(self, guild, channel_id, role_id):
         logger.info(
-            "Removing orphaned pingable role-channel pair (%d, %d) for guild '%s' (%d)",
+            "Removing nonexistent pingable role-channel pair (%d, %d) for guild '%s' (%d)",
             role_id,
             channel_id,
             guild.name,

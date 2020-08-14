@@ -217,17 +217,15 @@ class SelfAssignableRoles(AbstractCog):
     @commands.guild_only()
     @permissions.check_mod()
     async def helper_role_add(self, ctx, role: RoleConv, *channels: TextChannelConv):
-        helper_role = discord.utils.get(ctx.guild.roles, name=role.name + " (helper)")
-        if not helper_role:
-            helper_role = await ctx.guild.create_role(
+        original = self.bot.sql.roles.get_pingable_role_from_original(role)
+        if not original:
+            original = await ctx.guild.create_role(
                 name=role.name + " (helper)", colour=role.colour
             )
-        unadded_channels = list(
-            set(channels) - set(self.get_channels_from_role(ctx.guild, helper_role))
-        )
+        unadded_channels = frozenset(channels) - frozenset(self.get_channels_from_role(ctx.guild, original))
         if not unadded_channels:
             raise CommandFailed("No channels were affected")
-        await self.role_pingable(ctx, helper_role, *unadded_channels)
+        await self.role_pingable(ctx, original, *unadded_channels)
 
     @role.command(name="removehelperrole", aliases=["deletehelperrole", "rmhr", "dhr"])
     @commands.guild_only()
@@ -235,7 +233,11 @@ class SelfAssignableRoles(AbstractCog):
     async def helper_role_remove(self, ctx, role: RoleConv, *args):
         if len(args) == 1:
             if args[0] == "-h":
-                role = discord.utils.get(ctx.guild.roles, name=role.name + " (helper)")
+                helper_role = self.bot.sql.roles.get_original_from_pingable_role(role)
+                if not helper_role:
+                    role = None
+                else:
+                    role = discord.utils.get(ctx.guild.roles, id=helper_role.id)
             else:
                 raise CommandFailed("Unknown argument")
         channels = self.get_channels_from_role(ctx.guild, role)
