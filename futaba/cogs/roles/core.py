@@ -205,22 +205,12 @@ class SelfAssignableRoles(AbstractCog):
         content = f"{user_discrim(ctx.author)} removed self-assignable roles: {self.str_roles(roles)}"
         self.journal.send("self/remove", ctx.guild, content, icon="role")
 
-    def get_channels_from_role(self, guild, role: RoleConv):
-        if role == None:
-            return []
-        res = []
-        channel_role = self.bot.sql.roles.get_pingable_role_channels(guild)
-        for channel, role_ in channel_role:
-            if role_ == role:
-                res.append(channel)
-        return res
-
     @role.command(name="createhelperrole", aliases=["chr"])
     @commands.guild_only()
     @permissions.check_mod()
     async def helper_role_add(self, ctx, role: RoleConv, *channels: TextChannelConv):
         helper_role = self.bot.sql.roles.get_pingable_role_from_original(ctx.guild, role)
-        unadded_channels = frozenset(channels) - frozenset(self.get_channels_from_role(ctx.guild, helper_role))
+        unadded_channels = frozenset(channels) - frozenset(self.bot.sql.roles.get_channels_from_role(ctx.guild, helper_role))
         if not unadded_channels:
             raise CommandFailed("No channels were affected")
         if not helper_role:
@@ -242,7 +232,7 @@ class SelfAssignableRoles(AbstractCog):
                     role = discord.utils.get(ctx.guild.roles, id=helper_role.id)
             else:
                 raise CommandFailed("Unknown argument")
-        channels = self.get_channels_from_role(ctx.guild, role)
+        channels = self.bot.sql.roles.get_channels_from_role(ctx.guild, role)
         if not channels or not role:
             raise CommandFailed("Role was not pingable or did not exist to begin with")
         await self.role_unpingable(ctx, role, *channels)

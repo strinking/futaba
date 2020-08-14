@@ -183,12 +183,12 @@ class RolesModel:
                 self.tb_pingable_role_channel.c.role_id
             ]
         ).where(self.tb_pingable_role_channel.c.original_role_id == original_role.id)
-        # we get [0] because the first role_id is wrapped in a list
-        result = self.sql.execute(sel).fetchall()[0]
+        result = self.sql.execute(sel).fetchall()
         if len(result) == 0:
             return None
-        
-        return discord.utils.get(guild.roles, id=result[0])
+
+        # we get [0][0] because it's a tuple in a list and we only need the first one from each
+        return discord.utils.get(guild.roles, id=result[0][0])
     
     def get_original_from_pingable_role(self, role):
         sel = select(
@@ -200,7 +200,18 @@ class RolesModel:
         if len(result) == 0:
             return None
         
-        return discord.utils.get(guild.roles, id=result[0])
+        return discord.utils.get(guild.roles, id=result[0][0])
+
+
+    def get_channels_from_role(self, guild, role):
+        if role == None:
+            return []
+        res = []
+        channel_role = self.get_pingable_role_channels(guild)
+        for channel, role_ in channel_role:
+            if role_ == role:
+                res.append(channel)
+        return res
 
     def remove_nonexistent_role_channel(self, guild, channel_id, role_id):
         logger.info(
