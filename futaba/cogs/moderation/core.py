@@ -124,7 +124,9 @@ class Moderation(AbstractCog):
         # Check that users top role is not the same as the requesters top role.
         if member != ctx.author:
             if member.top_role == ctx.author.top_role:
-                raise CommandFailed(content="You can not mute a user with the same role as you")
+                raise CommandFailed(
+                    content="You can not mute a user with the same role as you"
+                )
 
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Muted", minutes, reason, past=True)
@@ -178,7 +180,9 @@ class Moderation(AbstractCog):
         # Check that users top role is not the same as the requesters top role.
         if member != ctx.author:
             if member.top_role == ctx.author.top_role:
-                raise CommandFailed(content="You can not unmute a user with the same role as you")
+                raise CommandFailed(
+                    content="You can not unmute a user with the same role as you"
+                )
 
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Unmuted", minutes, reason, past=True)
@@ -204,7 +208,9 @@ class Moderation(AbstractCog):
         # Check that users top role is not the same as the requesters top role.
         if member != ctx.author:
             if member.top_role == ctx.author.top_role:
-                raise CommandFailed(content="You can not jail a user with the same role as you")
+                raise CommandFailed(
+                    content="You can not jail a user with the same role as you"
+                )
 
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Jailed", minutes, reason)
@@ -282,7 +288,9 @@ class Moderation(AbstractCog):
 
         if member != ctx.author:
             if member.top_role == ctx.author.top_role:
-                raise CommandFailed(content="You can not unjail a user with the same role as you")
+                raise CommandFailed(
+                    content="You can not unjail a user with the same role as you"
+                )
 
         minutes = max(minutes, 0)
         reason = self.build_reason(ctx, "Released", minutes, reason, past=True)
