@@ -16,7 +16,7 @@ persistently storing and managing scheduled tasks.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import dateparser
 import discord
@@ -29,6 +29,8 @@ from futaba.utils import escape_backticks, fancy_timedelta
 from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
+
+MAX_REMINDER_DURATION = timedelta(days=365)
 
 
 class Navi(AbstractCog):
@@ -74,6 +76,15 @@ class Navi(AbstractCog):
             # Was successful, replace it
             timestamp = new_timestamp
 
+        # Check time
+        assert timestamp > now
+        duration = timestamp - now
+        time_since = fancy_timedelta(duration)
+        if duration > MAX_REMINDER_DURATION:
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.description = f"Specified date is too far away: {time_since}"
+            raise CommandFailed(embed=embed)
+
         logger.info(
             "Creating self-reminder SendMessageTask for '%s' (%d): %r",
             ctx.author.name,
@@ -82,8 +93,6 @@ class Navi(AbstractCog):
         )
 
         # Create navi task
-        assert timestamp > now
-        time_since = fancy_timedelta(timestamp - now)
         embed = discord.Embed(colour=discord.Colour.dark_teal())
         embed.set_author(name=f"Reminder made {time_since} ago")
         embed.description = f"You asked to be reminded of:\n\n{message}"
