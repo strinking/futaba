@@ -401,6 +401,17 @@ class Bot(commands.AutoShardedBot):
                     ctx, error, "Unexpected error occurred!",
                 )
 
+        elif isinstance(error, commands.errors.ExpectedClosingQuoteError):
+            logger.info("User is missing closing quote for command")
+
+            # Create the embed to tell the user that they are missing a closing quote
+            embed = discord.Embed(colour=discord.Colour.red())
+            embed.title = "Closing quote missing"
+
+            await asyncio.gather(
+                ctx.send(embed=embed), Reactions.MISSING.add(ctx.message)
+            )
+
         else:
             logger.error("Unknown discord command error raised", exc_info=error)
             await self.report_other_exception(
