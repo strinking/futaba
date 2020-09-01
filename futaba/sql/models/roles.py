@@ -152,11 +152,11 @@ class RolesModel:
         for (channel_id, role_id) in result.fetchall():
             channel = discord.utils.get(guild.channels, id=channel_id)
             role = discord.utils.get(guild.roles, id=role_id)
-            if not role:
-                self.remove_nonexistent_role_channel(guild, channel_id, role_id)
+            if role:
+                channelroles.add((channel, role))        
             else:
-                channelroles.add((channel, role))
-
+                self.remove_nonexistent_role_channel(guild, channel_id, role_id)
+                
         return channelroles
 
     def add_pingable_role_channel(self, guild, channel, role, original=None):
