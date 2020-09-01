@@ -217,6 +217,7 @@ class SelfAssignableRoles(AbstractCog):
             helper_role = await ctx.guild.create_role(
                 name=f"{role.name} (helper)", colour=role.colour
             )
+        await self.role_joinable(ctx, helper_role)
         await self.role_pingable(ctx, helper_role, *unadded_channels, original=role)
 
     @role.command(name="removehelperrole", aliases=["deletehelperrole", "rmhr", "dhr"])
@@ -236,6 +237,7 @@ class SelfAssignableRoles(AbstractCog):
         if not channels or not role:
             raise CommandFailed("Role was not pingable or did not exist to begin with")
         await self.role_unpingable(ctx, role, *channels)
+        await self.role_unjoinable(ctx, role)
         await role.delete()
 
     @role.command(name="joinable", aliases=["assignable", "canjoin"])
