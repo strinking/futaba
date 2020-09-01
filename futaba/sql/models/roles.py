@@ -204,7 +204,7 @@ class RolesModel:
 
 
     def get_channels_from_role(self, guild, role):
-        if role == None:
+        if role is None:
             # need to return an iterable, not None.
             # this will get converted to an iterable later on
             # which errors on None
