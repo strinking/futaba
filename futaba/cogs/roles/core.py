@@ -205,6 +205,60 @@ class SelfAssignableRoles(AbstractCog):
         content = f"{user_discrim(ctx.author)} removed self-assignable roles: {self.str_roles(roles)}"
         self.journal.send("self/remove", ctx.guild, content, icon="role")
 
+    @staticmethod
+    def str_channels(channels):
+        return " ".join(f"`{channel.name}`" for channel in channels)
+
+    @role.command(name="createhelperrole", aliases=["chr"])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def helper_role_add(self, ctx, role: RoleConv, *channels: TextChannelConv):
+        logger.info(
+            "Adding automatically managed helper role (base '%s') for guild '%s' (%d) in channels [%s]",
+            role.name,
+            ctx.guild.name,
+            ctx.guild.id,
+            self.str_channels(channels)
+        )
+
+        helper_role = self.bot.sql.roles.get_pingable_role_from_original(ctx.guild, role)
+        unadded_channels = frozenset(channels) - frozenset(self.bot.sql.roles.get_channels_from_role(ctx.guild, helper_role))
+        if not unadded_channels:
+            raise CommandFailed("No channels were affected")
+        if not helper_role:
+            helper_role = await ctx.guild.create_role(
+                name=f"{role.name} (helper)", colour=role.colour
+            )
+        await self.role_joinable(ctx, helper_role)
+        await self.role_pingable(ctx, helper_role, *unadded_channels, original=role)
+
+    @role.command(name="removehelperrole", aliases=["deletehelperrole", "rmhr", "dhr"])
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def helper_role_remove(self, ctx, role: RoleConv, *args):
+        logger.info(
+            "Removing automatically managed helper role '%s' for guild '%s' (%d)",
+            role.name,
+            ctx.guild.name,
+            ctx.guild.id,
+        )
+
+        if len(args) == 1:
+            if args[0] == "-h":
+                helper_role = self.bot.sql.roles.get_pingable_role_from_original(ctx.guild, role)
+                if not helper_role:
+                    role = None
+                else:
+                    role = discord.utils.get(ctx.guild.roles, id=helper_role.id)
+            else:
+                raise CommandFailed("Unknown argument")
+        channels = self.bot.sql.roles.get_channels_from_role(ctx.guild, role)
+        if not channels or not role:
+            raise CommandFailed("Role was not pingable or did not exist to begin with")
+        await self.role_unpingable(ctx, role, *channels)
+        await self.role_unjoinable(ctx, role)
+        await role.delete()
+
     @role.command(name="joinable", aliases=["assignable", "canjoin"])
     @commands.guild_only()
     @permissions.check_mod()
@@ -300,14 +354,10 @@ class SelfAssignableRoles(AbstractCog):
             "joinable/remove", ctx.guild, content, icon="role", roles=roles
         )
 
-    @staticmethod
-    def str_channels(channels):
-        return " ".join(f"`{channel.name}`" for channel in channels)
-
     @role.command(name="pingable")
     @commands.guild_only()
     @permissions.check_mod()
-    async def role_pingable(self, ctx, role: RoleConv, *channels: TextChannelConv):
+    async def role_pingable(self, ctx, role: RoleConv, *channels: TextChannelConv, original=None):
         logger.info(
             "Making role '%s' pingable in guild '%s' (%d), channel(s) [%s]",
             role.name,
@@ -336,7 +386,7 @@ class SelfAssignableRoles(AbstractCog):
             for channel in channels:
                 if channel not in pingable_channels:
                     self.bot.sql.roles.add_pingable_role_channel(
-                        ctx.guild, channel, role
+                        ctx.guild, channel, role, original
                     )
                 else:
                     exempt_channels.append(channel)
