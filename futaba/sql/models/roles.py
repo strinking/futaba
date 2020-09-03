@@ -172,7 +172,7 @@ class RolesModel:
         assert guild == channel.guild
 
         ins = self.tb_pingable_role_channel.insert().values(
-            guild_id=guild.id, channel_id=channel.id, role_id=role.id, original_role_id=original.id
+            guild_id=guild.id, channel_id=channel.id, role_id=role.id, original_role_id=getattr(original, "id", None)
         )
 
         self.sql.execute(ins)
