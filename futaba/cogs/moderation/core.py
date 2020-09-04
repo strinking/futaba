@@ -251,13 +251,29 @@ class Moderation(AbstractCog):
 
         await self.perform_jail(ctx, member, minutes, reason)
 
-    @commands.command(name="selfjail", aliases=["selfgaol", "selfdunce", "focus"])
+    async def perform_focus(self, ctx, member, minutes, reason):
+        roles = self.bot.sql.settings.get_special_roles(ctx.guild)
+        if roles.focus is None:
+            raise CommandFailed(content="No configured focus role")
+
+        if member.top_role >= ctx.me.top_role:
+            raise ManualCheckFailure("I don't have permission to focus this user")
+
+        if roles.focus_role in member.roles:
+            raise CommandFailed(content="User is already focused")
+
+        minutes = max(minutes, 0)
+        reason = self.build_reason(ctx, "Focus", minutes, reason)
+
+        await self.bot.punish.focus(ctx.guild, member, reason)
+
+    @commands.command(name="focus", aliases=["selfgaol", "selfdunce", "selfjail"])
     @commands.guild_only()
-    async def self_jail(self, ctx, minutes: int):
+    async def focus(self, ctx, minutes: int):
         """
-        Jails the user that uses the command
+        Applies the focus role to the user
         Mainly used to restrict access so the user can focus without distractions
-        Requires a jail role to be configured.
+        Requires a focus role to be configured.
         """
 
         # Check if user has supplied a time between 30 and 720 mins
@@ -270,10 +286,9 @@ class Moderation(AbstractCog):
 
         member = ctx.author
         logger.info(
-            "Jailing user '%s' (%d) for %d minutes", member.name, member.id, minutes
+            "Focusing user '%s' (%d) for %d minutes", member.name, member.id, minutes
         )
-        await self.perform_jail(ctx, member, minutes, "Self jail")
-        await self.perform_mute(ctx, member, minutes, "Self jail")
+        await self.perform_focus(ctx, member, minutes, "Focus")
 
     async def perform_unjail(self, ctx, member, minutes, reason):
         roles = self.bot.sql.settings.get_special_roles(ctx.guild)

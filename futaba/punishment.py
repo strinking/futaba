@@ -99,6 +99,12 @@ class PunishmentHandler:
             "Jailing user '%s' (%d) for reason: %s", member.name, member.id, reason
         )
         await self.apply("jail", guild, member, reason)
+    
+    async def focus(self, guild, member, reason=None):
+        logger.info(
+            "Focusing user '%s' (%d) for reason: %s", member.name, member.id, reason
+        )
+        await self.apply("focus", guild, member, reason)
 
     async def unmute(self, guild, member, reason=None):
         logger.info(

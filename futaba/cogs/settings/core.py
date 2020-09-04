@@ -238,6 +238,7 @@ class Settings(AbstractCog):
                 f'{ICONS["guest"]} Guest: {mention(roles.guest)}',
                 f'{ICONS["mute"]} Mute: {mention(roles.mute)}',
                 f'{ICONS["jail"]} Jail: {mention(roles.jail)}',
+                f'{ICONS["focus"]} Focus: {mention(roles.focus)}',
             )
         )
         await ctx.send(embed=embed)
@@ -378,6 +379,36 @@ class Settings(AbstractCog):
 
         await ctx.send(embed=embed)
         self.journal.send("roles/jail", ctx.guild, content, icon="settings", role=role)
+    
+    @commands.command(name="setfocus")
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def set_focus_role(self, ctx, *, role: RoleConv = None):
+        """ Set the focus role for this guild. No argument to unset. """
+
+        logger.info(
+            "Setting focus role for guild '%s' (%d) to '%s'",
+            ctx.guild.name,
+            ctx.guild.id,
+            role,
+        )
+
+        if role is not None:
+            await self.check_role(ctx, role)
+
+        with self.bot.sql.transaction():
+            self.bot.sql.settings.set_special_roles(ctx.guild, focus=role)
+
+        embed = discord.Embed(colour=discord.Colour.green())
+        if role:
+            embed.description = f"Set focus role to {role.mention}"
+            content = f"Set the focus role to {role.mention}"
+        else:
+            embed.description = "Unset focus role"
+            content = "Unset the focus role"
+
+        await ctx.send(embed=embed)
+        self.journal.send("roles/focus", ctx.guild, content, icon="settings", role=role)
 
     @commands.group(name="reapply", aliases=["reapp"])
     @commands.guild_only()
