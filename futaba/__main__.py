@@ -45,7 +45,7 @@ if __name__ == "__main__":
         "--debug",
         dest="debug",
         action="store_true",
-        help="Set logging level to debug for the selfbot.",
+        help="Set logging level to debug for the bot.",
     )
     argparser.add_argument(
         "-D",
