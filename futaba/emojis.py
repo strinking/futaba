@@ -36,6 +36,7 @@ ICONS = {
     "muffled": "\N{FACE WITH MEDICAL MASK}",
     "mute": "\N{ZIPPER-MOUTH FACE}",
     "jail": "\N{POLICE OFFICER}",
+    "focus": "\N{BELL WITH CANCELLATION STROKE}",
     "shutdown": "\N{SKULL}",
     # Welcome / Roles
     "welcome": "\N{WAVING HAND SIGN}",
