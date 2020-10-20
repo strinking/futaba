@@ -267,6 +267,12 @@ class Moderation(AbstractCog):
 
         await self.bot.punish.focus(ctx.guild, member, reason)
 
+        # Schedule a Navi task, to undo focus
+        if minutes:
+            await self.remove_roles(
+                ctx, member, minutes, PunishAction.RELIEVE_FOCUS, reason
+            )
+
     @commands.command(name="focus", aliases=["selfgaol", "selfdunce", "selfjail"])
     @commands.guild_only()
     async def focus(self, ctx, minutes: int):
