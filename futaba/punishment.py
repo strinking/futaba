@@ -117,3 +117,9 @@ class PunishmentHandler:
             "Unjailing user '%s' (%d) for reason: %s", member.name, member.id, reason
         )
         await self.relieve("jail", guild, member, reason)
+
+    async def unfocus(self, guild, member, reason=None):
+        logger.info(
+            "Unfocusing user '%s' (%d) for reason: %s", member.name, member.id, reason
+        )
+        await self.relieve("focus", guild, member, reason)

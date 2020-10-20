@@ -243,6 +243,7 @@ class PunishAction(Enum):
     APPLY_JAIL = "apply_jail"
     RELIEVE_MUTE = "relieve_mute"
     RELIEVE_JAIL = "relieve_jail"
+    RELIEVE_FOCUS = "relieve_focus"
 
 
 @unique
@@ -251,5 +252,6 @@ class ManualModActionType(Enum):
     SPECIAL_ROLE_GUEST = "guest"
     SPECIAL_ROLE_MUTE = "mute"
     SPECIAL_ROLE_JAIL = "jail"
+    SPECIAL_ROLE_FOCUS = "focus"
     KICK_MEMBER = "kick"
     BAN_MEMBER = "ban"

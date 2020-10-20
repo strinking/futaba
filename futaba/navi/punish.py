@@ -67,6 +67,14 @@ class PunishTask(AbstractNaviTask):
                 self.id,
             )
             await self.bot.punish.unjail(self.guild, self.member, self.reason)
+        elif self.action == PunishAction.RELIEVE_FOCUS:
+            logger.info(
+                "Relieving focus on '%s' (%d) to fulfill navi task %d",
+                self.member.name,
+                self.member.id,
+                self.id,
+            )
+            await self.bot.punish.unfocus(self.guild, self.member, self.reason)
 
     @class_property
     @classmethod
