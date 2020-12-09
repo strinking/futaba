@@ -88,7 +88,7 @@ class Prune(AbstractCog):
                     member,
                     prune_date,
                     has_roles={roles.guest},
-                    lacks_roles={roles.member, roles.mute, roles.jail},
+                    lacks_roles={roles.member, roles.mute, roles.jail, roles.nonpurge},
                 ),
                 ctx.guild.members,
             )
@@ -111,7 +111,7 @@ class Prune(AbstractCog):
                     member,
                     prune_date,
                     has_roles=(),
-                    lacks_roles={roles.member, roles.mute, roles.jail},
+                    lacks_roles={roles.member, roles.mute, roles.jail, roles.nonpurge},
                 ),
                 ctx.guild.members,
             )
