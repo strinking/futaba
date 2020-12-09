@@ -100,6 +100,7 @@ class SettingsModel:
             Column("mute_role_id", BigInteger, nullable=True),
             Column("jail_role_id", BigInteger, nullable=True),
             Column("focus_role_id", BigInteger, nullable=True),
+            Column("nonpurge_role_id", BigInteger, nullable=True),
             # Ensures special roles aren't assigned to @everyone
             CheckConstraint(
                 "member_role_id is NULL OR member_role_id != guild_id",
@@ -121,6 +122,10 @@ class SettingsModel:
                 "focus_role_id is NULL or focus_role_id != guild_id",
                 name="special_role_focus_not_everyone_check",
             ),
+            CheckConstraint(
+                "nonpurge_role_id is NULL or nonpurge_role_id != guild_id",
+                name="special_role_nonpurge_not_everyone_check",
+            ),
             # Ensures Guest and punishment roles aren't the same as the Member role
             CheckConstraint(
                 "guest_role_id is NULL OR guest_role_id != member_role_id",
@@ -137,6 +142,10 @@ class SettingsModel:
             CheckConstraint(
                 "focus_role_id is NULL OR focus_role_id != member_role_id",
                 name="special_role_focus_not_member_check",
+            ),
+            CheckConstraint(
+                "nonpurge_role_id is NULL OR nonpurge_role_id != member_role_id",
+                name="special_role_nonpurge_not_member_check",
             ),
         )
         self.tb_reapply_roles = Table(
@@ -355,6 +364,7 @@ class SettingsModel:
             mute_role_id=None,
             jail_role_id=None,
             focus_role_id=None,
+            nonpurge_role_id=None,
         )
         self.sql.execute(ins)
         self.special_roles_cache[guild] = SpecialRoleData(guild, None, None, None, None)
@@ -370,6 +380,7 @@ class SettingsModel:
                 self.tb_special_roles.c.mute_role_id,
                 self.tb_special_roles.c.jail_role_id,
                 self.tb_special_roles.c.focus_role_id,
+                self.tb_special_roles.c.nonpurge_role_id,
             ]
         ).where(self.tb_special_roles.c.guild_id == guild.id)
         result = self.sql.execute(sel)
@@ -378,9 +389,9 @@ class SettingsModel:
             self.add_special_roles(guild)
             return self.special_roles_cache[guild]
 
-        member_role_id, guest_role_id, mute_role_id, jail_role_id, focus_role_id = result.fetchone()
+        member_role_id, guest_role_id, mute_role_id, jail_role_id, focus_role_id, nonpurge_role_id = result.fetchone()
         roles = SpecialRoleData(
-            guild, member_role_id, guest_role_id, mute_role_id, jail_role_id, focus_role_id
+            guild, member_role_id, guest_role_id, mute_role_id, jail_role_id, focus_role_id, nonpurge_role_id
         )
         self.special_roles_cache[guild] = roles
         return roles
@@ -391,7 +402,7 @@ class SettingsModel:
 
         values = {}
         for attr, role in attrs.items():
-            assert attr in ("member", "guest", "mute", "jail", "focus"), "Unknown column"
+            assert attr in ("member", "guest", "mute", "jail", "focus", "nonpurge"), "Unknown column"
             values[f"{attr}_role_id"] = getattr(role, "id", None)
 
         upd = (
