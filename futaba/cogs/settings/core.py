@@ -409,6 +409,36 @@ class Settings(AbstractCog):
 
         await ctx.send(embed=embed)
         self.journal.send("roles/focus", ctx.guild, content, icon="settings", role=role)
+    
+    @commands.command(name="setnonpurge")
+    @commands.guild_only()
+    @permissions.check_mod()
+    async def set_nonpurge_role(self, ctx, *, role: RoleConv = None):
+        """ Set the nonpurge role for this guild. No argument to unset. """
+
+        logger.info(
+            "Setting nonpurge role for guild '%s' (%d) to '%s'",
+            ctx.guild.name,
+            ctx.guild.id,
+            role,
+        )
+
+        if role is not None:
+            await self.check_role(ctx, role)
+
+        with self.bot.sql.transaction():
+            self.bot.sql.settings.set_special_roles(ctx.guild, nonpurge=role)
+
+        embed = discord.Embed(colour=discord.Colour.green())
+        if role:
+            embed.description = f"Set nonpurge role to {role.mention}"
+            content = f"Set the nonpurge role to {role.mention}"
+        else:
+            embed.description = "Unset nonpurge role"
+            content = "Unset the nonpurge role"
+
+        await ctx.send(embed=embed)
+        self.journal.send("roles/nonpurge", ctx.guild, content, icon="settings", role=role)
 
     @commands.group(name="reapply", aliases=["reapp"])
     @commands.guild_only()
