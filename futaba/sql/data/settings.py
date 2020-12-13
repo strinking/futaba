@@ -54,10 +54,10 @@ class ReapplyRolesData:
 
 
 class SpecialRoleData:
-    __slots__ = ("guild", "member_role", "guest_role", "mute_role", "jail_role", "focus_role")
+    __slots__ = ("guild", "member_role", "guest_role", "mute_role", "jail_role", "focus_role", "nonpurge_role")
 
     def __init__(
-        self, guild, member_role_id, guest_role_id, mute_role_id, jail_role_id, focus_role_id
+        self, guild, member_role_id, guest_role_id, mute_role_id, jail_role_id, focus_role_id, nonpurge_role_id
     ):
         self.guild = guild
         self.member_role = self._get_role(member_role_id)
@@ -65,6 +65,7 @@ class SpecialRoleData:
         self.mute_role = self._get_role(mute_role_id)
         self.jail_role = self._get_role(jail_role_id)
         self.focus_role = self._get_role(focus_role_id)
+        self.nonpurge_role = self._get_role(nonpurge_role_id)
 
     def update(self, attrs):
         logger.debug("Updating special role storage: %s", attrs)
@@ -78,6 +79,8 @@ class SpecialRoleData:
             self.jail_role = attrs["jail"]
         if "focus" in attrs:
             self.focus_role = attrs["focus"]
+        if "nonpurge" in attrs:
+            self.nonpurge_role = attrs["nonpurge"]
 
     @property
     def member(self):
@@ -94,10 +97,14 @@ class SpecialRoleData:
     @property
     def jail(self):
         return self.jail_role
-    
+
     @property
     def focus(self):
         return self.focus_role
+
+    @property
+    def nonpurge(self):
+        return self.nonpurge_role
 
     def _get_role(self, id):
         if id is None:
@@ -111,6 +118,7 @@ class SpecialRoleData:
         yield self.mute_role
         yield self.jail_role
         yield self.focus_role
+        yield self.nonpurge_role
 
 
 class TrackingBlacklistData:
