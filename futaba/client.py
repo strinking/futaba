@@ -94,6 +94,7 @@ class Bot(commands.AutoShardedBot):
             description="futaba - A discord mod bot",
             max_messages=100_000,
             fetch_offline_members=True,
+            intents=discord.Intents.all(),
         )
 
         self.help_command = HelpCommand()
