@@ -341,7 +341,7 @@ class FilterModel:
 
         if not result.rowcount:
             self.add_settings(guild)
-            return self.settings_cache[guild]
+            return self.settings_cache[guild.id]
 
         bot_immune, manage_messages_immune, reupload = result.fetchone()
 
@@ -350,14 +350,14 @@ class FilterModel:
         storage.bot_immune = bot_immune
         storage.manage_messages_immune = manage_messages_immune
         storage.reupload = reupload
-        self.settings_cache[guild] = storage
+        self.settings_cache[guild.id] = storage
         return storage
 
     def get_settings(self, guild):
         logger.info(
             "Getting cached filter settings for guild '%s' (%d)", guild.name, guild.id
         )
-        return self.settings_cache[guild]
+        return self.settings_cache[guild.id]
 
     def add_settings(self, guild):
         logger.info("Adding filter settings for guild '%s' (%d)", guild.name, guild.id)
@@ -369,7 +369,7 @@ class FilterModel:
             reupload=storage.reupload,
         )
         self.sql.execute(ins)
-        self.settings_cache[guild] = storage
+        self.settings_cache[guild.id] = storage
 
     def set_reupload(self, guild, reupload):
         logger.info(
@@ -382,12 +382,12 @@ class FilterModel:
             .values(reupload=reupload)
         )
         self.sql.execute(upd)
-        self.settings_cache[guild].reupload = reupload
+        self.settings_cache[guild.id].reupload = reupload
 
     def set_bot_filter_immunity(
         self, guild, bot_immune=None, manage_messages_immune=None
     ):
-        storage = self.settings_cache[guild]
+        storage = self.settings_cache[guild.id]
         bot_immune = storage.updated("bot_immune", bot_immune)
         manage_messages_immune = storage.updated(
             "manage_messages_immune", manage_messages_immune
