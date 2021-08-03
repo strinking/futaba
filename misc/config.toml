@@ -4,50 +4,15 @@
 token = "your-bot-token-here"
 
 # List of owners by user ID
-owners = ["98633956773093376", "130012001236811776"]
+owners = ["130012001236811776", "145718212552687616"]
 
-# Default bot command prefix
+# Bot command prefix
 prefix = "!"
 
 # The tracebacks of any unexpected errors are uploaded to this file.
 # Set to "0" to disable
-error-channel-id = "488543452305555456"
-
-# Settings for optional cogs
-[cogs.example]
-enabled = true
-
-[cogs.statbot]
-enabled = false
-url = "postgres://statbot:passwordhere@localhost/statbot_ro"
-
-[moderation]
-# Maximum number of messages that may be specified
-# when doing a bulk message cleanup
-max-cleanup-messages = "500"
-
-# Cooldown after pinging a role in a channel, in seconds
-ping-cooldown = "3600"
-
-[delay]
-# Configuration for the delayed event queue
-
-# How many events are grouped in one "chunk"
-chunk-size = "10"
-
-# How many seconds of waiting should happen after each chunk
-sleep = "0.1"
-
-# Emojis to display for certain icons within the bot
-# Set to "0" to disable
-[emojis]
-anger = "496085813881470986"
-python = "490419105699069952"
-discordpy = "490419059964510210"
+error-channel-id = "0" 
 
 # Path to the RDBMS futaba will use
 [database]
 url = "postgres://futaba:passwordhere@localhost"
-
-[jwt]
-secret = "thesecretstring"

@@ -1,40 +1,34 @@
 # futaba
-![picture of futaba](images/futaba-portrait.png)
 
 A Discord bot for the [Programming server](https://discord.gg/010z0Kw1A9ql5c1Qe).
 
-Requires Python 3.6 or later. There is a sample configuration file at `misc/config.toml`.
+Requires Python 3.9 or later. There is a sample configuration file at `misc/config.toml`.
+
+## Building
+```
+$ docker build --tag futaba .
+```
 
 ## Running locally
 Setup:
 ```
-$ pip3 install --user -r requirements.txt
+$ docker create -v <log folder>:/logs -v <config folder>:/config --name futaba futaba <config file>
 ```
 
-To run:
+Running:
 ```
-$ python3 -m futaba <config.toml>
+$ docker start futaba
 ```
 
 ## Development
 More setup:
 ```
-$ pip3 install --user -r requirements-dev.txt
+$ pip3 install -r requirements.txt
+$ pip3 install -r requirements-dev.txt
 ```
 
 Formatting and linting code:
 ```
-$ black futaba
-$ pylint futaba
+$ black --line-length 120 futaba
+$ flake8 --max-line-length=120 futaba
 ```
-
-## Deployment
-You can have a production system, complete with a systemd service file, you can use the provided
-`deploy.sh` script. If there is a `futaba.service` file in the repository root, that service is installed, otherwise the one in `misc/` is used.
-
-Usage:
-```
-$ ./deploy.sh <config.toml>
-```
-
-Installs dependencies, installs the service and configuration files, then restarts the unit.
