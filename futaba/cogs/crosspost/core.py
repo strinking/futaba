@@ -68,23 +68,17 @@ class Crosspost(AbstractCog):
 
             if roles.jail_role is None:
                 logger.info(
-                    "Jailing user for cross-post, except there is no jail role configured!"
+                    "Jailing user for crosspost, except there is no jail role configured!"
                 )
-                content = f"Cannot jail {msg.author.mention} for cross-post violation because no jail role is set!"
+                content = f"Cannot jail {msg.author.mention} for crosspost violation because no jail role is set!"
                 self.journal.send("member/jail", msg.guild, content, icon="warning")
             else:
                 if not roles.jail_role in msg.author.roles:
-                    response = StringBuilder()
-                    response.writeln(
-                        f"The message you posted in {msg.channel.mention} has been reposted in multiple channels by you."
-                    )
-                    response.writeln(
-                        f"As such, you have been asssigned the `{roles.jail_role.name}` role, until a moderator clears you."
-                    )
+                    response = f"The message you posted in {msg.channel.mention} has been reposted in multiple channels by you.\n"
+                    response += f"As such, you have been asssigned the `{roles.jail_role.name}` role, until a moderator clears you."
 
-                    kwargs = { "content": str(response) }
-                    await msg.author.send(**kwargs)
-                    await self.bot.punish.jail(msg.guild, msg.author, "Jailed for cross-posting")
+                    await self.bot.punish.jail(msg.guild, msg.author, "Jailed for crossposting")
+                    await msg.author.send(content=response)
 
         for message in messages:
             await message.delete()
