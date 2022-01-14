@@ -13,12 +13,14 @@
 from .core import Miscellaneous
 from .debug import Debugging
 from .mentionable import Mentionable
+from .inspirobot import InspiroBot
 
 # Setup for when cog is loaded
 def setup(bot):
     setup_miscellaneous(bot)
     setup_debugging(bot)
     setup_mentionable(bot)
+    setup_inspirobot(bot)
 
 
 def setup_miscellaneous(bot):
@@ -38,11 +40,17 @@ def setup_mentionable(bot):
     bot.add_cog(cog)
 
 
+def setup_inspirobot(bot):
+    cog = InspiroBot(bot)
+    bot.add_cog(cog)
+
+
 # Remove all the cogs when cog is unloaded
 def teardown(bot):
     teardown_miscellaneous(bot)
     teardown_debugging(bot)
     teardown_mentionable(bot)
+    teardown_inspirobot(bot)
 
 
 def teardown_miscellaneous(bot):
@@ -55,3 +63,7 @@ def teardown_debugging(bot):
 
 def teardown_mentionable(bot):
     bot.remove_cog(Mentionable.__name__)
+
+
+def teardown_inspirobot(bot):
+    bot.remove_cog(InspiroBot.__name__)
