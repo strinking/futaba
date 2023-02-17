@@ -9,6 +9,9 @@ Requires Python 3.6 or later. There is a sample configuration file at `misc/conf
 Setup:
 ```
 $ pip3 install --user -r requirements.txt
+$ docker run -e POSTGRES_PASSWORD=password -p 5432:5432 postgres
+$ cp misc/config.toml config.toml
+# set database.url to "postgresql://postgres:password@localhost"
 ```
 
 To run:
