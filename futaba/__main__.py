@@ -77,15 +77,10 @@ if __name__ == "__main__":
         discord_logger.addHandler(log_handle)
 
     if args.stdout:
-        full_logger = logging.getLogger(__package__)
-        full_logger.setLevel(level=logging.DEBUG)
-        full_logger.addHandler(log_handle)
-
         log_stdout = logging.StreamHandler(sys.stdout)
         log_stdout.setFormatter(log_fmtr)
-        full_logger.addHandler(log_stdout)
-        if args.discord_log:
-            discord_logger.addHandler(log_stdout)
+        root_logger = logging.getLogger()
+        root_logger.addHandler(log_stdout)
 
     try:
         config = load_config(args.config_file)
