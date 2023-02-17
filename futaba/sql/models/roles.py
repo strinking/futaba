@@ -190,19 +190,6 @@ class RolesModel:
         # we get [0][0] because it's a tuple in a list and we only need the first one from each
         return discord.utils.get(guild.roles, id=result[0][0])
     
-    def get_original_from_pingable_role(self, role):
-        sel = select(
-            [
-                self.tb_pingable_role_channel.c.original_role_id
-            ]
-        ).where(self.tb_pingable_role_channel.c.role_id == role.id)
-        result = self.sql.execute(sel).fetchall()
-        if len(result) == 0:
-            return None
-        
-        return discord.utils.get(guild.roles, id=result[0][0])
-
-
     def get_channels_from_role(self, guild, role):
         if role is None:
             # need to return an iterable, not None.
