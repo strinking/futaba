@@ -1,0 +1,23 @@
+# https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: CI
+
+on:
+  push:
+    branches: '*'
+  pull_request:
+    branches: '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: set up python 3.x
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: install python packages
+      run: pip3 install --quiet --requirement requirements-dev.txt
+    - name: black
+      run: black --check futaba
