@@ -12,6 +12,7 @@
 
 from .core import Tracker, LISTENERS, get_removal_cause
 
+
 # Setup for when cog is loaded
 def setup(bot):
     setup_tracker(bot)

@@ -12,6 +12,7 @@
 
 from .core import Statbot
 
+
 # Setup for when cog is loaded
 def setup(bot):
     setup_statbot(bot)

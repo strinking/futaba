@@ -66,7 +66,7 @@ class Alias(AbstractCog):
         pass
 
     async def member_update(self, before, after):
-        """ Handles update of member information. """
+        """Handles update of member information."""
 
         changes = MemberChanges()
         timestamp = datetime.now()
@@ -140,7 +140,7 @@ class Alias(AbstractCog):
 
     @commands.command(name="aliases")
     async def aliases(self, ctx, *, user: UserConv):
-        """ Gets information about known aliases of the given user. """
+        """Gets information about known aliases of the given user."""
 
         logger.info(
             "Getting and printing alias information for some user '%s' (%d)",
@@ -208,7 +208,7 @@ class Alias(AbstractCog):
     @commands.group(name="alts", aliases=["alt", "alias"])
     @commands.guild_only()
     async def alts(self, ctx):
-        """ Manages the list of suspected alternate accounts. """
+        """Manages the list of suspected alternate accounts."""
 
         if ctx.invoked_subcommand is None:
             raise SendHelp()
@@ -217,7 +217,7 @@ class Alias(AbstractCog):
     @commands.guild_only()
     @permissions.check_mod()
     async def add_alt(self, ctx, first_user: UserConv, second_user: UserConv):
-        """ Add a suspected alternate account for a user. """
+        """Add a suspected alternate account for a user."""
 
         logger.info(
             "Adding suspected alternate account pair for '%s' (%d) and '%s' (%d)",
@@ -248,7 +248,7 @@ class Alias(AbstractCog):
     @commands.guild_only()
     @permissions.check_mod()
     async def del_alt_chain(self, ctx, user: UserConv):
-        """ Removes all suspected alternate accounts for a user. """
+        """Removes all suspected alternate accounts for a user."""
 
         with self.bot.sql.transaction():
             self.bot.sql.alias.all_delete_possible_alts(ctx.guild, user)

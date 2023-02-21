@@ -113,7 +113,7 @@ class Reloader(AbstractCog):
     @commands.command(name="load", aliases=["l"])
     @permissions.check_owner()
     async def load(self, ctx, cogname: str):
-        """ Loads the named cog. """
+        """Loads the named cog."""
 
         logger.info("Cog load requested: %s", cogname)
 
@@ -168,7 +168,7 @@ class Reloader(AbstractCog):
     @commands.command(name="unload", aliases=["ul"])
     @permissions.check_owner()
     async def unload(self, ctx, cogname: str):
-        """ Unloads the named cog. """
+        """Unloads the named cog."""
 
         logger.info("Cog unload requested: %s", cogname)
 
@@ -226,7 +226,7 @@ class Reloader(AbstractCog):
     @commands.command(name="reload", aliases=["rl"])
     @permissions.check_owner()
     async def reload(self, ctx, cogname: str):
-        """ Reloads the named cog. """
+        """Reloads the named cog."""
 
         logger.info("Cog reload requested: %s", cogname)
 
@@ -280,7 +280,7 @@ class Reloader(AbstractCog):
 
     @commands.command(name="listcogs", aliases=["cogs"])
     async def listcogs(self, ctx):
-        """ Lists all currently loaded cogs. """
+        """Lists all currently loaded cogs."""
 
         content = StringBuilder("```\n")
 

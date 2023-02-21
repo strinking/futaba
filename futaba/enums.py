@@ -70,7 +70,7 @@ class JoinAlertKey(Enum):
         elif self == JoinAlertKey.ID:
             try:
                 id = int(arg)
-                if id < 0 or id > 2 ** 63 - 1:
+                if id < 0 or id > 2**63 - 1:
                     raise ValueError()
             except ValueError:
                 # Raise with different message

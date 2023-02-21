@@ -12,6 +12,7 @@
 
 from .core import Settings
 
+
 # Setup for when cog is loaded
 def setup(bot):
     setup_settings(bot)

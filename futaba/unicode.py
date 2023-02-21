@@ -110,7 +110,7 @@ def normalize_caseless(s):
 
 
 def unicode_block(s):
-    """ Gets the name of the Unicode block that contains the given character. """
+    """Gets the name of the Unicode block that contains the given character."""
 
     codepoint = ord(s)
     index = bisect(UNICODE_BLOCK_STARTS, codepoint)

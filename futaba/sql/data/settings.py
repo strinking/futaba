@@ -54,10 +54,25 @@ class ReapplyRolesData:
 
 
 class SpecialRoleData:
-    __slots__ = ("guild", "member_role", "guest_role", "mute_role", "jail_role", "focus_role", "nonpurge_role")
+    __slots__ = (
+        "guild",
+        "member_role",
+        "guest_role",
+        "mute_role",
+        "jail_role",
+        "focus_role",
+        "nonpurge_role",
+    )
 
     def __init__(
-        self, guild, member_role_id, guest_role_id, mute_role_id, jail_role_id, focus_role_id, nonpurge_role_id
+        self,
+        guild,
+        member_role_id,
+        guest_role_id,
+        mute_role_id,
+        jail_role_id,
+        focus_role_id,
+        nonpurge_role_id,
     ):
         self.guild = guild
         self.member_role = self._get_role(member_role_id)

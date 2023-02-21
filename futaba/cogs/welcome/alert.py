@@ -94,7 +94,7 @@ class Alert(AbstractCog):
     @commands.guild_only()
     @permissions.check_mod()
     async def alert(self, ctx):
-        """ Manages the welcome cog for managing new users and roles. """
+        """Manages the welcome cog for managing new users and roles."""
 
         if ctx.invoked_subcommand is None:
             raise SendHelp()
@@ -102,7 +102,7 @@ class Alert(AbstractCog):
     @alert.command(name="show", aliases=["display", "list"])
     @commands.guild_only()
     async def alert_show(self, ctx):
-        """ Lists all join alerts for this guild. """
+        """Lists all join alerts for this guild."""
 
         logging.info(
             "Showing all join alerts for '%s' (%d)", ctx.guild.name, ctx.guild.id
@@ -226,7 +226,7 @@ class Alert(AbstractCog):
     @commands.guild_only()
     @permissions.check_mod()
     async def alert_remove(self, ctx, id: int):
-        """ Delete the join alert with the given attribute. """
+        """Delete the join alert with the given attribute."""
 
         logging.info(
             "Got request to delete join alert for '%s' (%d)",

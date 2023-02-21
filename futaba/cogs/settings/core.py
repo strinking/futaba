@@ -139,7 +139,7 @@ class Settings(AbstractCog):
             embed = discord.Embed(colour=discord.Colour.red())
             embed.description = "This value must be a positive, non-zero integer"
             raise CommandFailed(embed=embed)
-        elif count >= 2 ** 32 - 1:
+        elif count >= 2**32 - 1:
             # Over a sane upper limit
             embed = discord.Embed(colour=discord.Colour.red())
             embed.description = (
@@ -219,7 +219,7 @@ class Settings(AbstractCog):
     @commands.command(name="specroles", aliases=["sroles"])
     @commands.guild_only()
     async def special_roles(self, ctx):
-        """ Retrieves all configured roles for this guild. """
+        """Retrieves all configured roles for this guild."""
 
         logger.info(
             "Sending list of all configured roles for guild '%s' (%d)",
@@ -262,7 +262,7 @@ class Settings(AbstractCog):
     @commands.guild_only()
     @permissions.check_mod()
     async def set_member_role(self, ctx, *, role: RoleConv = None):
-        """ Set the member role for this guild. No argument to unset. """
+        """Set the member role for this guild. No argument to unset."""
 
         logger.info(
             "Setting member role for guild '%s' (%d) to '%s'",
@@ -294,7 +294,7 @@ class Settings(AbstractCog):
     @commands.guild_only()
     @permissions.check_mod()
     async def set_guest_role(self, ctx, *, role: RoleConv = None):
-        """ Set the guest role for this guild. No argument to unset. """
+        """Set the guest role for this guild. No argument to unset."""
 
         logger.info(
             "Setting guest role for guild '%s' (%d) to '%s'",
@@ -324,7 +324,7 @@ class Settings(AbstractCog):
     @commands.guild_only()
     @permissions.check_mod()
     async def set_mute_role(self, ctx, *, role: RoleConv = None):
-        """ Set the mute role for this guild. No argument to unset. """
+        """Set the mute role for this guild. No argument to unset."""
 
         logger.info(
             "Setting mute role for guild '%s' (%d) to '%s'",
@@ -354,7 +354,7 @@ class Settings(AbstractCog):
     @commands.guild_only()
     @permissions.check_mod()
     async def set_jail_role(self, ctx, *, role: RoleConv = None):
-        """ Set the mute role for this guild. No argument to unset. """
+        """Set the mute role for this guild. No argument to unset."""
 
         logger.info(
             "Setting mute role for guild '%s' (%d) to '%s'",
@@ -379,12 +379,12 @@ class Settings(AbstractCog):
 
         await ctx.send(embed=embed)
         self.journal.send("roles/jail", ctx.guild, content, icon="settings", role=role)
-    
+
     @commands.command(name="setfocus")
     @commands.guild_only()
     @permissions.check_mod()
     async def set_focus_role(self, ctx, *, role: RoleConv = None):
-        """ Set the focus role for this guild. No argument to unset. """
+        """Set the focus role for this guild. No argument to unset."""
 
         logger.info(
             "Setting focus role for guild '%s' (%d) to '%s'",
@@ -409,12 +409,12 @@ class Settings(AbstractCog):
 
         await ctx.send(embed=embed)
         self.journal.send("roles/focus", ctx.guild, content, icon="settings", role=role)
-    
+
     @commands.command(name="setnonpurge")
     @commands.guild_only()
     @permissions.check_mod()
     async def set_nonpurge_role(self, ctx, *, role: RoleConv = None):
-        """ Set the nonpurge role for this guild. No argument to unset. """
+        """Set the nonpurge role for this guild. No argument to unset."""
 
         logger.info(
             "Setting nonpurge role for guild '%s' (%d) to '%s'",
@@ -438,12 +438,14 @@ class Settings(AbstractCog):
             content = "Unset the nonpurge role"
 
         await ctx.send(embed=embed)
-        self.journal.send("roles/nonpurge", ctx.guild, content, icon="settings", role=role)
+        self.journal.send(
+            "roles/nonpurge", ctx.guild, content, icon="settings", role=role
+        )
 
     @commands.group(name="reapply", aliases=["reapp"])
     @commands.guild_only()
     async def reapply(self, ctx):
-        """ Manages settings related to automatic role reapplication. """
+        """Manages settings related to automatic role reapplication."""
 
         if ctx.invoked_subcommand is None:
             raise SendHelp()
@@ -668,7 +670,7 @@ class Settings(AbstractCog):
     @commands.group(name="trackerblacklist", aliases=["trackerbl", "trkbl"])
     @commands.guild_only()
     async def tracker_blacklist(self, ctx):
-        """ Manages tracker blacklist entries for this guild. """
+        """Manages tracker blacklist entries for this guild."""
 
         if ctx.invoked_subcommand is None:
             raise SendHelp()
@@ -679,7 +681,7 @@ class Settings(AbstractCog):
     async def tracker_blacklist_add(
         self, ctx, *, user_or_channel: Union[MemberConv, TextChannelConv]
     ):
-        """ Add a user or channel to the tracking blacklist. """
+        """Add a user or channel to the tracking blacklist."""
 
         logger.info(
             "Adding %s '%s' (%d) to the tracking blacklist for guild '%s' (%d)",
@@ -704,7 +706,7 @@ class Settings(AbstractCog):
     async def tracker_blacklist_remove(
         self, ctx, *, user_or_channel: Union[MemberConv, TextChannelConv]
     ):
-        """ Remove a user or channel from the tracking blacklist. """
+        """Remove a user or channel from the tracking blacklist."""
 
         logger.info(
             "Removing %s '%s' (%d) from the tracking blacklist for guild '%s' (%d)",
@@ -731,7 +733,7 @@ class Settings(AbstractCog):
     @commands.guild_only()
     @permissions.check_mod()
     async def tracker_blacklist_show(self, ctx):
-        """ Shows all blacklist entries for this guild.  """
+        """Shows all blacklist entries for this guild."""
 
         blacklist = self.bot.sql.settings.get_tracking_blacklist(ctx.guild)
 

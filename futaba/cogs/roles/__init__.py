@@ -12,6 +12,7 @@
 
 from .core import SelfAssignableRoles
 
+
 # Setup for when cog is loaded
 def setup(bot):
     setup_selfassignableroles(bot)

@@ -12,6 +12,7 @@
 
 from .core import Authentication
 
+
 # Setup for when cog is loaded
 def setup(bot):
     setup_auth(bot)

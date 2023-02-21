@@ -62,7 +62,7 @@ def get_unicode_url(emoji):
 
 
 class Info(AbstractCog):
-    """ Cog for informational commands. """
+    """Cog for informational commands."""
 
     def setup(self):
         pass
@@ -71,7 +71,7 @@ class Info(AbstractCog):
         name="about", aliases=["futaba", "aboutme", "bot", "botinfo", "uptime"]
     )
     async def about(self, ctx):
-        """ Prints information about the running bot. """
+        """Prints information about the running bot."""
 
         pyver = sys.version_info
         python_emoji = self.bot.get_emoji(self.bot.config.python_emoji_id) or ""
@@ -131,7 +131,7 @@ class Info(AbstractCog):
             embed.set_thumbnail(url=emoji.url)
             embed.add_field(name="Name", value=f"`{emoji.name}`")
             embed.add_field(
-                name="Guild", value=f"{emoji.guild.name} (`{emoji.guild.id}`)",
+                name="Guild", value=f"{emoji.guild.name} (`{emoji.guild.id}`)"
             )
             embed.add_field(name="ID", value=str(emoji.id))
             embed.add_field(name="Managed", value=lowerbool(emoji.managed))
@@ -452,7 +452,7 @@ class Info(AbstractCog):
     )
     @commands.guild_only()
     async def roles(self, ctx):
-        """ Lists all roles in the guild. """
+        """Lists all roles in the guild."""
 
         contents = []
         content = StringBuilder()
@@ -700,7 +700,7 @@ class Info(AbstractCog):
     @commands.command(name="channels", aliases=["chans", "listchannels", "listchans"])
     @commands.guild_only()
     async def channels(self, ctx):
-        """ Lists all channels in the guild. """
+        """Lists all channels in the guild."""
 
         def category(chan):
             if chan.category is None:
@@ -773,7 +773,7 @@ class Info(AbstractCog):
     @commands.command(name="ginfo", aliases=["guildinfo"])
     @commands.guild_only()
     async def ginfo(self, ctx):
-        """ Gets information about the current guild. """
+        """Gets information about the current guild."""
 
         embed = discord.Embed()
         embed.timestamp = ctx.guild.created_at

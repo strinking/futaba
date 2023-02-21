@@ -42,7 +42,7 @@ class Authentication(AbstractCog):
     @commands.command(name="jwt", aliases=["dauth", "mcauth"])
     @commands.guild_only()
     async def jwt(self, ctx):
-        """ Generates a Javascript Web Token for a user """
+        """Generates a Javascript Web Token for a user"""
 
         time_since_join = ctx.author.joined_at - datetime.utcfromtimestamp(0)
 

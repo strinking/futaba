@@ -12,6 +12,7 @@
 
 from .core import Pingable
 
+
 # Setup for when cog is loaded
 def setup(bot):
     setup_pingable(bot)

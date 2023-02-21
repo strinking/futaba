@@ -14,6 +14,7 @@ from .core import Miscellaneous
 from .debug import Debugging
 from .mentionable import Mentionable
 
+
 # Setup for when cog is loaded
 def setup(bot):
     setup_miscellaneous(bot)

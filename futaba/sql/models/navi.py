@@ -154,7 +154,7 @@ class NaviModel:
         result = self.sql.execute(sel)
 
         reminders = []
-        for (task_id, timestamp, parameters) in result.fetchall():
+        for task_id, timestamp, parameters in result.fetchall():
             message = parameters["metadata"]["message"]
             logger.debug(
                 "Got navi reminder %d: %s (message: %r)", task_id, timestamp, message

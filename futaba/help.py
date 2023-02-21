@@ -27,9 +27,7 @@ logger = logging.getLogger(__name__)
 
 class HelpCommand(commands.DefaultHelpCommand):
     def __init__(self):
-        super().__init__(
-            width=90, sort_commands=True, dm_help=True, indent=4,
-        )
+        super().__init__(width=90, sort_commands=True, dm_help=True, indent=4)
 
     async def on_help_command_error(self, ctx, error):
         async with ctx.bot.message_lock(ctx.message):
@@ -66,5 +64,5 @@ class HelpCommand(commands.DefaultHelpCommand):
         if not reported:
             logger.error("Unexpected error raised during help command", exc_info=error)
             await ctx.bot.report_other_exception(
-                ctx, error, "Unexpected error occurred during help command!",
+                ctx, error, "Unexpected error occurred during help command!"
             )

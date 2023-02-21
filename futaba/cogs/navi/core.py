@@ -53,7 +53,7 @@ class Navi(AbstractCog):
 
     @commands.command(name="remind", aliases=["reminder", "remindme", "alarm"])
     async def remind_me(self, ctx, when: str, *, message: str):
-        """ Request the bot remind you in the given time. """
+        """Request the bot remind you in the given time."""
 
         timestamp = dateparser.parse(when)
         now = datetime.now()
@@ -114,7 +114,7 @@ class Navi(AbstractCog):
         name="reminders", aliases=["reminds", "lreminder", "lremind", "alarms"]
     )
     async def remind_list(self, ctx):
-        """ Lists all reminders for the current user. """
+        """Lists all reminders for the current user."""
 
         reminders = self.bot.sql.navi.get_reminders(ctx.author)
         if reminders:

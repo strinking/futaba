@@ -14,6 +14,7 @@ from .alert import Alert
 from .core import Welcome
 from .prune import Prune
 
+
 # Setup for when cog is loaded
 def setup(bot):
     setup_alert(bot)

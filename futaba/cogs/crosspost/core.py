@@ -16,7 +16,7 @@ __all__ = ["Crosspost"]
 
 
 class Crosspost(AbstractCog):
-    __slots__ = ('history', 'journal')
+    __slots__ = ("history", "journal")
 
     def __init__(self, bot):
         super().__init__(bot)
@@ -49,20 +49,20 @@ class Crosspost(AbstractCog):
         message_checksum = crc32(message.content.encode("utf-8"))
         message_posts = author_history.get(message_checksum)
         if message_posts is None:
-            message_posts = { 'messages': [], 'channels': set() }
+            message_posts = {"messages": [], "channels": set()}
             author_history[message_checksum] = message_posts
 
-        message_posts['channels'].add(message.channel.id)
-        message_posts['messages'].append(message)
+        message_posts["channels"].add(message.channel.id)
+        message_posts["messages"].append(message)
 
-        if len(message_posts['channels']) >= 5:
-            await self.punish(message_posts['messages'])
+        if len(message_posts["channels"]) >= 5:
+            await self.punish(message_posts["messages"])
 
     async def check_message_edit(self, _, after):
         await self.check_message(after)
 
     async def punish(self, messages):
-        distinct_guild_messages = { msg.guild.id: msg for msg in messages }.values()
+        distinct_guild_messages = {msg.guild.id: msg for msg in messages}.values()
         for msg in distinct_guild_messages:
             roles = self.bot.sql.settings.get_special_roles(msg.guild)
 
@@ -77,7 +77,9 @@ class Crosspost(AbstractCog):
                     response = f"The message you posted in {msg.channel.mention} has been reposted in multiple channels by you.\n"
                     response += f"As such, you have been asssigned the `{roles.jail_role.name}` role, until a moderator clears you."
 
-                    await self.bot.punish.jail(msg.guild, msg.author, "Jailed for crossposting")
+                    await self.bot.punish.jail(
+                        msg.guild, msg.author, "Jailed for crossposting"
+                    )
                     await msg.author.send(content=response)
 
         for message in messages:
@@ -86,7 +88,7 @@ class Crosspost(AbstractCog):
 
 
 class LRUDict(OrderedDict):
-    'Limit size, evicting the least recently looked-up key when full'
+    "Limit size, evicting the least recently looked-up key when full"
 
     def __init__(self, maxlen=128, *args, **kwds):
         self.maxlen = maxlen

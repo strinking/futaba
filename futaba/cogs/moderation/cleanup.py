@@ -43,11 +43,11 @@ __all__ = ["Cleanup"]
 
 
 def is_discord_id(number):
-    return 10 ** 15 <= number < 10 ** 21
+    return 10**15 <= number < 10**21
 
 
 class _Counter:
-    """ Counter that escapes issues with local scoping by being modifiable in-place. """
+    """Counter that escapes issues with local scoping by being modifiable in-place."""
 
     __slots__ = ("value",)
 
@@ -62,7 +62,7 @@ class _Counter:
 
 
 class _Flag:
-    """ Mutable boolean value. See also _Counter. """
+    """Mutable boolean value. See also _Counter."""
 
     __slots__ = ("value",)
 
@@ -118,7 +118,7 @@ class Cleanup(AbstractCog):
     @commands.guild_only()
     @permissions.check_perm("manage_messages")
     async def cleanup(self, ctx, count: int, channel: discord.TextChannel = None):
-        """ Deletes the last <count> messages, not including this command. """
+        """Deletes the last <count> messages, not including this command."""
 
         await self.check_count(ctx, count)
 
@@ -154,7 +154,7 @@ class Cleanup(AbstractCog):
     async def cleanup_id(
         self, ctx, message_id: int, channel: discord.TextChannel = None
     ):
-        """ Deletes all messages from the passed message ID to the present. """
+        """Deletes all messages from the passed message ID to the present."""
 
         if channel is None:
             channel = ctx.channel
@@ -227,7 +227,7 @@ class Cleanup(AbstractCog):
     async def cleanup_user(
         self, ctx, user: discord.User, count: int, channel: discord.TextChannel = None
     ):
-        """ Deletes the last <count> messages created by the given user. """
+        """Deletes the last <count> messages created by the given user."""
 
         await self.check_count(ctx, count)
 
@@ -275,7 +275,7 @@ class Cleanup(AbstractCog):
     async def cleanup_text(
         self, ctx, text: str, count: int, channel: discord.TextChannel = None
     ):
-        """ Deletes the last <count> messages with the given text. """
+        """Deletes the last <count> messages with the given text."""
 
         await self.check_count(ctx, count)
 
@@ -320,7 +320,7 @@ class Cleanup(AbstractCog):
         )
 
     def add_deletion_code(self, guild, user):
-        """ Adds a deletion code to the temporary mapping for use. """
+        """Adds a deletion code to the temporary mapping for use."""
 
         code = "".join(random.choice(DELETION_CHARACTERS) for _ in range(8))
 
@@ -335,7 +335,7 @@ class Cleanup(AbstractCog):
     @commands.guild_only()
     @permissions.check_admin()
     async def cleanup_user_entirely(self, ctx, user: UserConv):
-        """ Setup command to delete all of a user's messages in all channels forever. """
+        """Setup command to delete all of a user's messages in all channels forever."""
 
         code = self.add_deletion_code(ctx.guild, user)
         embed = discord.Embed(colour=discord.Colour.dark_teal())
@@ -355,7 +355,7 @@ class Cleanup(AbstractCog):
     @commands.guild_only()
     @permissions.check_admin()
     async def cleanup_user_entirely_run(self, ctx, confirm: str, code: str):
-        """ Use !cleanupalltime instead. """
+        """Use !cleanupalltime instead."""
 
         # Validate it's for real
         if confirm != "-force":
@@ -475,7 +475,7 @@ class Cleanup(AbstractCog):
     @commands.guild_only()
     @permissions.check_admin()
     async def cleanup_user_cancel(self, ctx, code: str):
-        """ Cancels a deletion code. """
+        """Cancels a deletion code."""
 
         try:
             print(self.delete_codes, code)

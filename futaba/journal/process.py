@@ -20,7 +20,7 @@ __all__ = ["process_content"]
 
 
 def process_content(content, attributes):
-    """ Modifies the content based on the passed attributes. """
+    """Modifies the content based on the passed attributes."""
 
     # Add icon
     icon = attributes.get("icon", None)

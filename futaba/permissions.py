@@ -115,25 +115,25 @@ def elevated_role_embed(guild, role, level):
 
 
 def is_admin_perm(perm: discord.Permissions):
-    """ Used to check is user has the manage_guild permission """
+    """Used to check is user has the manage_guild permission"""
 
     return perm.manage_guild
 
 
 def is_mod_perm(perm: discord.Permissions):
-    """ Used to check is user has the manage_channels permission """
+    """Used to check is user has the manage_channels permission"""
 
     return perm.manage_channels
 
 
 def owner_perm(ctx: commands.Context):
-    """ Check if user is a owner of the bot from config """
+    """Check if user is a owner of the bot from config"""
 
     return ctx.author.id in ctx.bot.config.owner_ids
 
 
 def admin_perm(ctx: commands.Context):
-    """ Check if the given member is an admin. """
+    """Check if the given member is an admin."""
 
     if isinstance(ctx.channel, discord.abc.PrivateChannel):
         return False
@@ -142,7 +142,7 @@ def admin_perm(ctx: commands.Context):
 
 
 def mod_perm(ctx: commands.Context):
-    """ Check if the given member is a moderator. """
+    """Check if the given member is a moderator."""
 
     if isinstance(ctx.channel, discord.abc.PrivateChannel):
         return False
@@ -151,7 +151,7 @@ def mod_perm(ctx: commands.Context):
 
 
 def has_perm(ctx: commands.Context, name: str):
-    """ Check if the given member has the specified permission. """
+    """Check if the given member has the specified permission."""
 
     if isinstance(ctx.channel, discord.abc.PrivateChannel):
         return False
@@ -161,13 +161,13 @@ def has_perm(ctx: commands.Context, name: str):
 
 
 def check_owner():
-    """ Check if user is a owner """
+    """Check if user is a owner"""
 
     return commands.check(owner_perm)
 
 
 def check_admin():
-    """ Check if user is admin or higher """
+    """Check if user is admin or higher"""
 
     def checkperm(ctx):
         return owner_perm(ctx) or admin_perm(ctx)
@@ -176,7 +176,7 @@ def check_admin():
 
 
 def check_mod():
-    """ Check if user is moderator or higher """
+    """Check if user is moderator or higher"""
 
     def checkperm(ctx):
         return owner_perm(ctx) or admin_perm(ctx) or mod_perm(ctx)
@@ -185,7 +185,7 @@ def check_mod():
 
 
 def check_perm(name):
-    """ Check if user has the given permission """
+    """Check if user has the given permission"""
 
     perms = discord.Permissions()
     if not hasattr(perms, name):

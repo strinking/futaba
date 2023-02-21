@@ -12,6 +12,7 @@
 
 from .core import ExampleCog
 
+
 # Setup for when cog is loaded
 def setup(bot):
     setup_example(bot)

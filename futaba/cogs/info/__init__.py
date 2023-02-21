@@ -13,6 +13,7 @@
 from .alias import Alias
 from .core import Info
 
+
 # Setup for when cog is loaded
 def setup(bot):
     setup_info(bot)

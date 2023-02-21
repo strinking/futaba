@@ -84,7 +84,7 @@ class Moderation(AbstractCog):
     @commands.guild_only()
     @permissions.check_perm("manage_nicknames")
     async def nick(self, ctx, member: MemberConv, nick: str = None):
-        """ Changes or reset a member's nickname. """
+        """Changes or reset a member's nickname."""
 
         logger.info(
             "Setting the nickname of user '%s' (%d) to %r", member.name, member.id, nick
@@ -99,7 +99,7 @@ class Moderation(AbstractCog):
         )
 
     async def perform_mute(
-        self, ctx, member: MemberConv, minutes: int, reason: str = None,
+        self, ctx, member: MemberConv, minutes: int, reason: str = None
     ):
         logger.info(
             "Muting user '%s' (%d) for %d minutes", member.name, member.id, minutes
@@ -246,7 +246,7 @@ class Moderation(AbstractCog):
         """
 
         logger.info(
-            "Jailing user '%s' (%d) for %d minutes", member.name, member.id, minutes,
+            "Jailing user '%s' (%d) for %d minutes", member.name, member.id, minutes
         )
 
         await self.perform_jail(ctx, member, minutes, reason)
@@ -336,12 +336,12 @@ class Moderation(AbstractCog):
         await self.perform_unjail(ctx, member, 0, reason)
 
     @commands.command(
-        name="dunjail", aliases=["dundunce", "timeunjail", "timeundunce", "drelease"],
+        name="dunjail", aliases=["dundunce", "timeunjail", "timeundunce", "drelease"]
     )
     @commands.guild_only()
     @permissions.check_perm("manage_roles")
     async def dunjail(
-        self, ctx, member: MemberConv, minutes: int = 0, *, reason: str = None,
+        self, ctx, member: MemberConv, minutes: int = 0, *, reason: str = None
     ):
         """
         Removes a user from the jail in the given number of minutes.
@@ -350,7 +350,7 @@ class Moderation(AbstractCog):
         """
 
         logger.info(
-            "Un-jailing user '%s' (%d) in %d minutes", member.name, member.id, minutes,
+            "Un-jailing user '%s' (%d) in %d minutes", member.name, member.id, minutes
         )
 
         await self.perform_unjail(ctx, member, minutes, reason)

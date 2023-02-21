@@ -17,6 +17,7 @@ from .manage import add_filter, delete_filter, show_filter
 from .core import Filtering
 from .filter import Filter
 
+
 # Setup for when cog is loaded
 def setup(bot):
     setup_filtering(bot)

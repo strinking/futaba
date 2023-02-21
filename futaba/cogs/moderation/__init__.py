@@ -14,6 +14,7 @@ from .cleanup import Cleanup
 from .core import Moderation
 from .manual_mod_action_warn import ManualModActionWarn
 
+
 # Setup for when cog is loaded
 def setup(bot):
     setup_cleanup(bot)

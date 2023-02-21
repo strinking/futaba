@@ -48,7 +48,7 @@ class Miscellaneous(AbstractCog):
 
     @commands.command(name="ping")
     async def ping(self, ctx):
-        """ Determines the bot's current latency. """
+        """Determines the bot's current latency."""
 
         duration = datetime.now() - discord.utils.snowflake_time(ctx.message.id)
         ms = duration.microseconds / 1000
@@ -85,14 +85,14 @@ class Miscellaneous(AbstractCog):
 
     @commands.command(name="unicoderepr", aliases=["unicrepr", "urepr"])
     async def unicode_repr(self, ctx, *, text: str):
-        """ Outputs the Python representation of the given unicode string. """
+        """Outputs the Python representation of the given unicode string."""
 
         text_repr = unicode_repr(text)
         await ctx.send(content=f"`{text_repr}`")
 
     @commands.command(name="sha1sum", aliases=["sha1", "sha", "hashsum", "hash"])
     async def sha1sum(self, ctx, *urls: str):
-        """ Gives the SHA1 hashes of any files attached to the message. """
+        """Gives the SHA1 hashes of any files attached to the message."""
 
         # Check all URLs
         links = []

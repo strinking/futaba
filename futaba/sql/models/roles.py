@@ -82,7 +82,7 @@ class RolesModel:
             Column("guild_id", BigInteger, ForeignKey("guilds.guild_id")),
             Column("channel_id", BigInteger, primary_key=True),
             Column("role_id", BigInteger),
-            Column("original_role_id", BigInteger, nullable=True)
+            Column("original_role_id", BigInteger, nullable=True),
         )
         self.roles_cache = {}
         self.channels_cache = {}
@@ -149,14 +149,14 @@ class RolesModel:
         result = self.sql.execute(sel)
 
         channelroles = set()
-        for (channel_id, role_id) in result.fetchall():
+        for channel_id, role_id in result.fetchall():
             channel = discord.utils.get(guild.channels, id=channel_id)
             role = discord.utils.get(guild.roles, id=role_id)
             if role:
-                channelroles.add((channel, role))        
+                channelroles.add((channel, role))
             else:
                 self.remove_nonexistent_role_channel(guild, channel_id, role_id)
-                
+
         return channelroles
 
     def add_pingable_role_channel(self, guild, channel, role, original=None):
@@ -172,24 +172,25 @@ class RolesModel:
         assert guild == channel.guild
 
         ins = self.tb_pingable_role_channel.insert().values(
-            guild_id=guild.id, channel_id=channel.id, role_id=role.id, original_role_id=getattr(original, "id", None)
+            guild_id=guild.id,
+            channel_id=channel.id,
+            role_id=role.id,
+            original_role_id=getattr(original, "id", None),
         )
 
         self.sql.execute(ins)
 
     def get_pingable_role_from_original(self, guild, original_role):
-        sel = select(
-            [
-                self.tb_pingable_role_channel.c.role_id
-            ]
-        ).where(self.tb_pingable_role_channel.c.original_role_id == original_role.id)
+        sel = select([self.tb_pingable_role_channel.c.role_id]).where(
+            self.tb_pingable_role_channel.c.original_role_id == original_role.id
+        )
         result = self.sql.execute(sel).fetchall()
         if len(result) == 0:
             return None
 
         # we get [0][0] because it's a tuple in a list and we only need the first one from each
         return discord.utils.get(guild.roles, id=result[0][0])
-    
+
     def get_channels_from_role(self, guild, role):
         if role is None:
             # need to return an iterable, not None.

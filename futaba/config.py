@@ -23,6 +23,7 @@ from futaba.converters import ID_REGEX
 
 __all__ = ["Configuration", "load_config"]
 
+
 # Helper function to check that the value is greater than zero
 def _check_gtz(type):
     def wrapper(value):

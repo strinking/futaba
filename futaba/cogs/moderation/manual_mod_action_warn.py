@@ -158,7 +158,7 @@ class ManualModActionWarn(AbstractCog):
             special_roles.jail_role: ManualModActionType.SPECIAL_ROLE_JAIL,
         }
 
-        for (role, moderator) in manually_updated_roles:
+        for role, moderator in manually_updated_roles:
             action = special_role_name_action_map[role]
             await self.dispatch_manual_action_warning(
                 member.guild, action, moderator, member, role=role

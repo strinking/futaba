@@ -43,7 +43,7 @@ class Debugging(AbstractCog):
     @commands.command(name="queuesize", aliases=["qsize"], hidden=True)
     @permissions.check_admin()
     async def queue_size(self, ctx):
-        """ Displays how many journal events are in the delayed queue. """
+        """Displays how many journal events are in the delayed queue."""
 
         qsize = len(self.bot.queue)
         embed = discord.Embed(colour=discord.Colour.teal())
@@ -57,14 +57,14 @@ class Debugging(AbstractCog):
     @commands.command(name="testlong", aliases=["testwait"], hidden=True)
     @permissions.check_owner()
     async def test_long_command(self, ctx, delay: float = 4.0):
-        """ A command that is always successful, but takes a long time to finish. """
+        """A command that is always successful, but takes a long time to finish."""
 
         await asyncio.sleep(abs(delay))
 
     @commands.command(name="testerror", hidden=True)
     @permissions.check_owner()
     async def test_error(self, ctx):
-        """ Deliberately raises an exception to test the bot's error handling. """
+        """Deliberately raises an exception to test the bot's error handling."""
 
         self.journal.send(
             "error/runtime", ctx.guild, "Raising runtime error", icon="error"
@@ -86,7 +86,7 @@ class Debugging(AbstractCog):
     @commands.command(name="shutdown", aliases=["halt"], hidden=True)
     @permissions.check_owner()
     async def shutdown(self, ctx):
-        """ Shuts down the bot. Can only able be run by an owner. """
+        """Shuts down the bot. Can only able be run by an owner."""
 
         self.journal.send(
             "admin/shutdown", ctx.guild, "Shutting down bot", icon="shutdown"

@@ -74,7 +74,7 @@ class SelfAssignableRoles(AbstractCog):
     @commands.group(name="role", aliases=["sar"])
     @commands.guild_only()
     async def role(self, ctx):
-        """ Manages self-assignable roles for this guild. """
+        """Manages self-assignable roles for this guild."""
 
         if ctx.invoked_subcommand is None:
             raise SendHelp()
@@ -82,7 +82,7 @@ class SelfAssignableRoles(AbstractCog):
     @role.command(name="show", aliases=["display", "list", "lsar", "ls"])
     @commands.guild_only()
     async def role_show(self, ctx):
-        """ Shows all self-assignable roles. """
+        """Shows all self-assignable roles."""
 
         await self.check_channel(ctx)
 
@@ -112,7 +112,7 @@ class SelfAssignableRoles(AbstractCog):
     @role.command(name="pshow", aliases=["pdisplay", "plist", "plsar", "pls"])
     @commands.guild_only()
     async def pingable_show(self, ctx):
-        """ Shows all channels where a role is pingable. """
+        """Shows all channels where a role is pingable."""
         logger.info(
             "Displaying pingable channels and roles in guild '%s' (%d)",
             ctx.guild.name,
@@ -172,7 +172,7 @@ class SelfAssignableRoles(AbstractCog):
     @role.command(name="add", aliases=["join", "give", "set", "update"])
     @commands.guild_only()
     async def role_add(self, ctx, *roles: RoleConv):
-        """ Joins the given self-assignable roles. """
+        """Joins the given self-assignable roles."""
 
         if not roles:
             return
@@ -191,7 +191,7 @@ class SelfAssignableRoles(AbstractCog):
     )
     @commands.guild_only()
     async def role_remove(self, ctx, *roles: RoleConv):
-        """ Leaves the given self-assignable roles. """
+        """Leaves the given self-assignable roles."""
 
         if not roles:
             return
@@ -218,11 +218,15 @@ class SelfAssignableRoles(AbstractCog):
             role.name,
             ctx.guild.name,
             ctx.guild.id,
-            self.str_channels(channels)
+            self.str_channels(channels),
         )
 
-        helper_role = self.bot.sql.roles.get_pingable_role_from_original(ctx.guild, role)
-        unadded_channels = frozenset(channels) - frozenset(self.bot.sql.roles.get_channels_from_role(ctx.guild, helper_role))
+        helper_role = self.bot.sql.roles.get_pingable_role_from_original(
+            ctx.guild, role
+        )
+        unadded_channels = frozenset(channels) - frozenset(
+            self.bot.sql.roles.get_channels_from_role(ctx.guild, helper_role)
+        )
         if not unadded_channels:
             raise CommandFailed("No channels were affected")
         if not helper_role:
@@ -245,7 +249,9 @@ class SelfAssignableRoles(AbstractCog):
 
         if len(args) == 1:
             if args[0] == "-h":
-                helper_role = self.bot.sql.roles.get_pingable_role_from_original(ctx.guild, role)
+                helper_role = self.bot.sql.roles.get_pingable_role_from_original(
+                    ctx.guild, role
+                )
                 if not helper_role:
                     role = None
                 else:
@@ -263,7 +269,7 @@ class SelfAssignableRoles(AbstractCog):
     @commands.guild_only()
     @permissions.check_mod()
     async def role_joinable(self, ctx, *roles: RoleConv):
-        """ Allows a moderator to add roles to the self-assignable group. """
+        """Allows a moderator to add roles to the self-assignable group."""
 
         logger.info(
             "Adding joinable roles for guild '%s' (%d): [%s]",
@@ -322,7 +328,7 @@ class SelfAssignableRoles(AbstractCog):
     @commands.guild_only()
     @permissions.check_mod()
     async def role_unjoinable(self, ctx, *roles: RoleConv):
-        """ Allows a moderator to remove roles from the self-assignable group. """
+        """Allows a moderator to remove roles from the self-assignable group."""
 
         logger.info(
             "Removing joinable roles for guild '%s' (%d): [%s]",
@@ -357,7 +363,9 @@ class SelfAssignableRoles(AbstractCog):
     @role.command(name="pingable")
     @commands.guild_only()
     @permissions.check_mod()
-    async def role_pingable(self, ctx, role: RoleConv, *channels: TextChannelConv, original=None):
+    async def role_pingable(
+        self, ctx, role: RoleConv, *channels: TextChannelConv, original=None
+    ):
         logger.info(
             "Making role '%s' pingable in guild '%s' (%d), channel(s) [%s]",
             role.name,
@@ -479,7 +487,7 @@ class SelfAssignableRoles(AbstractCog):
     @commands.guild_only()
     @permissions.check_mod()
     async def channel_add(self, ctx, *channels: TextChannelConv):
-        """ Adds the channel(s) to the restricted role channel list. """
+        """Adds the channel(s) to the restricted role channel list."""
 
         logger.info(
             "Allowing channels to be used for role commands in guild '%s' (%d): [%s]",
@@ -513,7 +521,7 @@ class SelfAssignableRoles(AbstractCog):
     @commands.guild_only()
     @permissions.check_mod()
     async def channel_set(self, ctx, *channels: TextChannelConv):
-        """ Overwrites the channel(s) in the restricted role channel list to exactly this. """
+        """Overwrites the channel(s) in the restricted role channel list to exactly this."""
 
         logger.info(
             "Setting channels to be used for role commands in guild '%s' (%d): [%s]",
@@ -556,7 +564,7 @@ class SelfAssignableRoles(AbstractCog):
     @commands.guild_only()
     @permissions.check_mod()
     async def channel_delete(self, ctx, *channels: TextChannelConv):
-        """ Removes the channel(s) from the restricted role channel list. """
+        """Removes the channel(s) from the restricted role channel list."""
 
         logger.info(
             "Removing channels to be used for role commands in guild '%s' (%d): [%s]",
@@ -624,7 +632,7 @@ class SelfAssignableRoles(AbstractCog):
     @commands.guild_only()
     @permissions.check_mod()
     async def channel_show(self, ctx):
-        """ Lists all channels that are allowed to be used for role commands. """
+        """Lists all channels that are allowed to be used for role commands."""
 
         all_channels = self.bot.sql.roles.get_role_command_channels(ctx.guild)
         prefix = self.bot.prefix(ctx.guild)

@@ -12,6 +12,7 @@
 
 from .core import Journal
 
+
 # Setup for when cog is loaded
 def setup(bot):
     setup_journal(bot)

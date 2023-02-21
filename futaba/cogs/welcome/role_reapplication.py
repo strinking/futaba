@@ -111,7 +111,7 @@ class RoleReapplication(AbstractCog):
     @commands.guild_only()
     @commands.command(name="savedroles", aliases=["saveroles", "userroles", "uroles"])
     async def saved_roles(self, ctx, user: UserConv = None):
-        """ Returns all roles that would be reapplied when a given user rejoins. """
+        """Returns all roles that would be reapplied when a given user rejoins."""
 
         if user is None:
             member = ctx.author

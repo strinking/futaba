@@ -62,7 +62,7 @@ if __name__ == "__main__":
     # Set up logging
     log_fmtr = logging.Formatter(LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
     log_handle = logging.FileHandler(
-        filename=LOG_FILE, encoding="utf-8", mode=LOG_FILE_MODE,
+        filename=LOG_FILE, encoding="utf-8", mode=LOG_FILE_MODE
     )
     log_handle.setFormatter(log_fmtr)
 

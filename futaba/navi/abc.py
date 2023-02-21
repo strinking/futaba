@@ -94,7 +94,7 @@ class AbstractNaviTask:
             await self.execute()
 
     def remove_self(self):
-        """ This task has been fulfilled, removed it from the database to reduce clutter. """
+        """This task has been fulfilled, removed it from the database to reduce clutter."""
 
         logger.info("Removing self from navi task database table")
 

@@ -12,6 +12,7 @@
 
 from .core import Navi
 
+
 # Setup for when cog is loaded
 def setup(bot):
     setup_navi(bot)

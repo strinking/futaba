@@ -389,9 +389,22 @@ class SettingsModel:
             self.add_special_roles(guild)
             return self.special_roles_cache[guild]
 
-        member_role_id, guest_role_id, mute_role_id, jail_role_id, focus_role_id, nonpurge_role_id = result.fetchone()
+        (
+            member_role_id,
+            guest_role_id,
+            mute_role_id,
+            jail_role_id,
+            focus_role_id,
+            nonpurge_role_id,
+        ) = result.fetchone()
         roles = SpecialRoleData(
-            guild, member_role_id, guest_role_id, mute_role_id, jail_role_id, focus_role_id, nonpurge_role_id
+            guild,
+            member_role_id,
+            guest_role_id,
+            mute_role_id,
+            jail_role_id,
+            focus_role_id,
+            nonpurge_role_id,
         )
         self.special_roles_cache[guild] = roles
         return roles
@@ -402,7 +415,14 @@ class SettingsModel:
 
         values = {}
         for attr, role in attrs.items():
-            assert attr in ("member", "guest", "mute", "jail", "focus", "nonpurge"), "Unknown column"
+            assert attr in (
+                "member",
+                "guest",
+                "mute",
+                "jail",
+                "focus",
+                "nonpurge",
+            ), "Unknown column"
             values[f"{attr}_role_id"] = getattr(role, "id", None)
 
         upd = (

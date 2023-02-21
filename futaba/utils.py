@@ -64,7 +64,7 @@ URL_REGEX = re.compile(
 
 
 class Dummy:
-    """ Dummy class that can freely be assigned any fields or members. """
+    """Dummy class that can freely be assigned any fields or members."""
 
     # - pass -
 
@@ -127,7 +127,7 @@ def fancy_timedelta(delta):
 
 
 def async_partial(coro, *added_args, **added_kwargs):
-    """ Like functools.partial(), but for coroutines. """
+    """Like functools.partial(), but for coroutines."""
 
     async def wrapped(*args, **kwargs):
         return await coro(*added_args, *args, **added_kwargs, **kwargs)
@@ -136,7 +136,7 @@ def async_partial(coro, *added_args, **added_kwargs):
 
 
 def map_or(func, obj):
-    """ Applies func to obj if it is not None. """
+    """Applies func to obj if it is not None."""
 
     if obj is None:
         return obj
@@ -145,7 +145,7 @@ def map_or(func, obj):
 
 
 def if_not_null(obj, alt):
-    """ Returns 'obj' if it's not None, 'alt' otherwise. """
+    """Returns 'obj' if it's not None, 'alt' otherwise."""
 
     if obj is None:
         if callable(alt):
@@ -178,14 +178,14 @@ def first(iterable, default=None):
 
 
 def chunks(iterable, count, fillvalue=None):
-    """ Iterate over the iterable in 'count'-long chunks. """
+    """Iterate over the iterable in 'count'-long chunks."""
 
     args = [iter(iterable)] * count
     return zip_longest(*args, fillvalue=fillvalue)
 
 
 def partition_on(predicate, iterable, map_fn=None):
-    """ Partition an iterable into two lists on the return type of the predicate. """
+    """Partition an iterable into two lists on the return type of the predicate."""
 
     left, right = [], []
 
@@ -206,13 +206,13 @@ def partition_on(predicate, iterable, map_fn=None):
 
 
 def lowerbool(value):
-    """ Returns 'true' if the expression is true, and 'false' if not. """
+    """Returns 'true' if the expression is true, and 'false' if not."""
 
     return "true" if value else "false"
 
 
 def plural(num):
-    """ Gets the English plural ending for an ordinal number. """
+    """Gets the English plural ending for an ordinal number."""
 
     return "" if num == 1 else "s"
 

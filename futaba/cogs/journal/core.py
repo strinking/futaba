@@ -75,7 +75,7 @@ class Journal(AbstractCog):
 
     @commands.group(name="journal", aliases=["log"])
     async def log(self, ctx):
-        """ Configure channel output for bot journal events. """
+        """Configure channel output for bot journal events."""
 
         if ctx.invoked_subcommand is None:
             raise SendHelp()
@@ -318,7 +318,7 @@ class Journal(AbstractCog):
 
     @log.group(name="dm", aliases=["pm"])
     async def log_dm(self, ctx):
-        """ Configure direct messages for bot journal events. """
+        """Configure direct messages for bot journal events."""
 
         if ctx.invoked_subcommand is None:
             raise SendHelp()

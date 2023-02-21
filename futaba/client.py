@@ -113,7 +113,7 @@ class Bot(commands.AutoShardedBot):
 
     @property
     def uptime(self):
-        """ Gets the bot's uptime """
+        """Gets the bot's uptime"""
 
         return datetime.utcnow() - self.start_time
 
@@ -329,7 +329,7 @@ class Bot(commands.AutoShardedBot):
             )
 
         elif isinstance(
-            error, (commands.errors.BadArgument, commands.errors.BadUnionArgument),
+            error, (commands.errors.BadArgument, commands.errors.BadUnionArgument)
         ):
             # Tell the user they couldn't find what they were looking for
             logger.info("User specified argument that does not compute")
@@ -399,7 +399,7 @@ class Bot(commands.AutoShardedBot):
             else:
                 # Other exception, probably not meant to happen. Send it as an embed.
                 await self.report_other_exception(
-                    ctx, error, "Unexpected error occurred!",
+                    ctx, error, "Unexpected error occurred!"
                 )
 
         elif isinstance(error, commands.errors.ExpectedClosingQuoteError):
@@ -416,7 +416,7 @@ class Bot(commands.AutoShardedBot):
         else:
             logger.error("Unknown discord command error raised", exc_info=error)
             await self.report_other_exception(
-                ctx, error, "Unwrapped exception was raised from command!",
+                ctx, error, "Unwrapped exception was raised from command!"
             )
 
     async def report_other_exception(self, ctx, error, title):

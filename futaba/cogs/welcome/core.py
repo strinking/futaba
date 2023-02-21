@@ -166,7 +166,7 @@ class Welcome(AbstractCog):
             await member.add_roles(roles.guest, reason="New user joined")
 
     async def member_update(self, before, after):
-        for (member, time) in self.recently_saved_roles:
+        for member, time in self.recently_saved_roles:
             if member == after:
                 if datetime.now() - time < timedelta(microseconds=50000):
                     return
@@ -295,7 +295,7 @@ class Welcome(AbstractCog):
 
     @commands.group(name="welcome", aliases=["wlm"])
     async def welcome(self, ctx):
-        """ Manages the welcome cog for managing new users and roles. """
+        """Manages the welcome cog for managing new users and roles."""
 
         if ctx.invoked_subcommand is None:
             raise SendHelp()
@@ -303,7 +303,7 @@ class Welcome(AbstractCog):
     @welcome.command(name="getchan")
     @commands.guild_only()
     async def get_welcome_channel(self, ctx):
-        """ Gets the welcome channel. """
+        """Gets the welcome channel."""
 
         welcome = self.bot.sql.welcome.get_welcome(ctx.guild)
         if welcome.channel:
@@ -319,7 +319,7 @@ class Welcome(AbstractCog):
     @commands.guild_only()
     @permissions.check_admin()
     async def set_welcome_channel(self, ctx, channel: discord.TextChannel):
-        """ Sets the welcome channel. """
+        """Sets the welcome channel."""
 
         logger.info(
             "Setting welcome channel to #%s (%d) in guild '%s' (%d)",
@@ -348,7 +348,7 @@ class Welcome(AbstractCog):
     @commands.guild_only()
     @permissions.check_admin()
     async def unset_welcome_channel(self, ctx):
-        """ Unsets the welcome channel. """
+        """Unsets the welcome channel."""
 
         logger.info(
             "Unsetting the welcome channel in guild '%s' (%d)",
@@ -371,7 +371,7 @@ class Welcome(AbstractCog):
 
     @welcome.command(name="format")
     async def format(self, ctx):
-        """ Lists all parameters accepted when formatting welcome messages. """
+        """Lists all parameters accepted when formatting welcome messages."""
 
         logger.info(
             "Sending list of accepted format parameters to %s (%d)",
@@ -387,7 +387,7 @@ class Welcome(AbstractCog):
     @welcome.command(name="getmsg")
     @commands.guild_only()
     async def get_messages(self, ctx):
-        """ Retrieves all configured welcome messages for this guild. """
+        """Retrieves all configured welcome messages for this guild."""
 
         logger.info(
             "Sending list of all configured welcome messages for guild '%s' (%d)",
