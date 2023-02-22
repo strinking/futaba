@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 
 from discord import AuditLogAction
 
-from futaba.cogs.tracker import get_removal_cause
+from futaba.cogs.tracker.core import get_removal_cause
 from futaba.enums import ManualModActionType, MemberLeaveType
 from ..abc import AbstractCog
 

@@ -10,7 +10,7 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
-from .core import Tracker, LISTENERS, get_removal_cause
+from .core import Tracker, LISTENERS
 
 
 # Setup for when cog is loaded
