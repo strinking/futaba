@@ -10,25 +10,27 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+from discord.ext.commands.bot import Bot
+
 from .core import Tracker, LISTENERS
 
 
 # Setup for when cog is loaded
-def setup(bot):
-    setup_tracker(bot)
+async def setup(bot: Bot):
+    await setup_tracker(bot)
 
 
-def setup_tracker(bot):
+async def setup_tracker(bot: Bot):
     cog = Tracker(bot)
     for listener in LISTENERS:
         bot.add_listener(getattr(cog, listener), listener)
-    bot.add_cog(cog)
+    await bot.add_cog(cog)
 
 
 # Remove all the cogs when cog is unloaded
-def teardown(bot):
-    teardown_tracker(bot)
+async def teardown(bot: Bot):
+    await teardown_tracker(bot)
 
 
-def teardown_tracker(bot):
-    bot.remove_cog(Tracker.__name__)
+async def teardown_tracker(bot: Bot):
+    await bot.remove_cog(Tracker.__name__)

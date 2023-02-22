@@ -10,36 +10,38 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+from discord.ext.commands.bot import Bot
+
 from .alias import Alias
 from .core import Info
 
 
 # Setup for when cog is loaded
-def setup(bot):
-    setup_info(bot)
-    setup_alias(bot)
+async def setup(bot: Bot):
+    await setup_info(bot)
+    await setup_alias(bot)
 
 
-def setup_info(bot):
+async def setup_info(bot: Bot):
     cog = Info(bot)
-    bot.add_cog(cog)
+    await bot.add_cog(cog)
 
 
-def setup_alias(bot):
+async def setup_alias(bot: Bot):
     cog = Alias(bot)
     bot.add_listener(cog.member_update, "on_member_update")
-    bot.add_cog(cog)
+    await bot.add_cog(cog)
 
 
 # Remove all the cogs when cog is unloaded
-def teardown(bot):
-    teardown_info(bot)
-    teardown_alias(bot)
+async def teardown(bot: Bot):
+    await teardown_info(bot)
+    await teardown_alias(bot)
 
 
-def teardown_info(bot):
-    bot.remove_cog(Info.__name__)
+async def teardown_info(bot: Bot):
+    await bot.remove_cog(Info.__name__)
 
 
-def teardown_alias(bot):
-    bot.remove_cog(Alias.__name__)
+async def teardown_alias(bot: Bot):
+    await bot.remove_cog(Alias.__name__)

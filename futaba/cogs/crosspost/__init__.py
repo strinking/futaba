@@ -1,12 +1,14 @@
+from discord.ext.commands.bot import Bot
+
 from .core import Crosspost
 
 
 # Setup for when cog is loaded
-def setup(bot):
+async def setup(bot: Bot):
     cog = Crosspost(bot)
-    bot.add_cog(cog)
+    await bot.add_cog(cog)
 
 
 # Remove all the cogs when cog is unloaded
-def teardown(bot):
-    bot.remove_cog(Crosspost.__name__)
+async def teardown(bot: Bot):
+    await bot.remove_cog(Crosspost.__name__)

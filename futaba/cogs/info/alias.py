@@ -21,6 +21,7 @@ from io import BytesIO
 
 import discord
 from discord.ext import commands
+from discord.member import Member
 
 from futaba import permissions
 from futaba.converters import UserConv
@@ -65,7 +66,7 @@ class Alias(AbstractCog):
     def setup(self):
         pass
 
-    async def member_update(self, before, after):
+    async def member_update(self, before, after: Member):
         """Handles update of member information."""
 
         changes = MemberChanges()
@@ -78,7 +79,7 @@ class Alias(AbstractCog):
                 before.id,
                 after.avatar,
             )
-            changes.avatar_url = after.avatar_url
+            changes.avatar_url = after.avatar.url
 
         if before.name != after.name:
             logger.info(

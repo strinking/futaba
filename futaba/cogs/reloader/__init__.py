@@ -10,23 +10,25 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+from discord.ext.commands.bot import Bot
+
 from .core import Reloader
 
 
 # Setup for when cog is loaded
-def setup(bot):
-    setup_reloader(bot)
+async def setup(bot: Bot):
+    await setup_reloader(bot)
 
 
-def setup_reloader(bot):
+async def setup_reloader(bot: Bot):
     cog = Reloader(bot)
-    bot.add_cog(cog)
+    await bot.add_cog(cog)
 
 
 # Remove all the cogs when cog is unloaded
-def teardown(bot):
-    teardown_reloader(bot)
+async def teardown(bot: Bot):
+    await teardown_reloader(bot)
 
 
-def teardown_reloader(bot):
-    bot.remove_cog(Reloader.__name__)
+async def teardown_reloader(bot: Bot):
+    await bot.remove_cog(Reloader.__name__)

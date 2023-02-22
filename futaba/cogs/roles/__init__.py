@@ -10,23 +10,25 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+from discord.ext.commands.bot import Bot
+
 from .core import SelfAssignableRoles
 
 
 # Setup for when cog is loaded
-def setup(bot):
-    setup_selfassignableroles(bot)
+async def setup(bot: Bot):
+    await setup_selfassignableroles(bot)
 
 
-def setup_selfassignableroles(bot):
+async def setup_selfassignableroles(bot: Bot):
     cog = SelfAssignableRoles(bot)
-    bot.add_cog(cog)
+    await bot.add_cog(cog)
 
 
 # Remove all the cogs when cog is unloaded
-def teardown(bot):
-    teardown_selfassignableroles(bot)
+async def teardown(bot: Bot):
+    await teardown_selfassignableroles(bot)
 
 
-def teardown_selfassignableroles(bot):
-    bot.remove_cog(SelfAssignableRoles.__name__)
+async def teardown_selfassignableroles(bot: Bot):
+    await bot.remove_cog(SelfAssignableRoles.__name__)
