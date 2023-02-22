@@ -15,7 +15,7 @@ import logging
 import re
 
 import discord
-from discord.ext.commands import BadArgument, Converter
+from discord.ext.commands import BadArgument, Context, Converter
 
 from futaba.utils import first
 
@@ -32,7 +32,7 @@ JUMP_LINK_REGEX = re.compile(
 
 class MessageConv(Converter):
     @staticmethod
-    def get_channels_and_id(ctx, argument):
+    async def get_channels_and_id(ctx: Context, argument):
         # Checking if it's a dual ID
         match = DUAL_ID_REGEX.match(argument)
         if match is not None:
@@ -41,14 +41,19 @@ class MessageConv(Converter):
 
             channel = ctx.guild.get_channel(channel_id)
             if channel is None:
-                return BadArgument(f"No channel found in guild with ID {channel_id}")
+                channel = ctx.guild.get_thread(channel_id)
+                if channel is None:
+                    return BadArgument(
+                        f"No channel or thread found in guild with ID {channel_id}"
+                    )
 
             return [channel], message_id
 
         # Checking if it's an id
         match = ID_REGEX.match(argument)
         if match is not None:
-            return ctx.guild.text_channels, int(match[1])
+            threads = await ctx.guild.active_threads()
+            return ctx.guild.text_channels + threads, int(match[1])
 
         # Checking if it's a jump link
         match = JUMP_LINK_REGEX.match(argument)
@@ -84,7 +89,7 @@ class MessageConv(Converter):
         if ctx.guild is None:
             raise BadArgument("Refusing to find message because we are not in a guild")
 
-        channels, id = self.get_channels_and_id(ctx, argument)
+        channels, id = await self.get_channels_and_id(ctx, argument)
         results = await asyncio.gather(
             *[self.find_in_channel(channel, id) for channel in channels]
         )
