@@ -10,23 +10,25 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+from discord.ext.commands.bot import Bot
+
 from .core import Settings
 
 
 # Setup for when cog is loaded
-def setup(bot):
-    setup_settings(bot)
+async def setup(bot: Bot):
+    await setup_settings(bot)
 
 
-def setup_settings(bot):
+async def setup_settings(bot: Bot):
     cog = Settings(bot)
-    bot.add_cog(cog)
+    await bot.add_cog(cog)
 
 
 # Remove all the cogs when cog is unloaded
-def teardown(bot):
-    teardown_settings(bot)
+async def teardown(bot: Bot):
+    await teardown_settings(bot)
 
 
-def teardown_settings(bot):
-    bot.remove_cog(Settings.__name__)
+async def teardown_settings(bot: Bot):
+    await bot.remove_cog(Settings.__name__)

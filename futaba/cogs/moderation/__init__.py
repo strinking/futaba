@@ -10,49 +10,51 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+from discord.ext.commands.bot import Bot
+
 from .cleanup import Cleanup
 from .core import Moderation
 from .manual_mod_action_warn import ManualModActionWarn
 
 
 # Setup for when cog is loaded
-def setup(bot):
-    setup_cleanup(bot)
-    setup_moderation(bot)
-    setup_manualmodactionwarn(bot)
+async def setup(bot: Bot):
+    await setup_cleanup(bot)
+    await setup_moderation(bot)
+    await setup_manualmodactionwarn(bot)
 
 
-def setup_cleanup(bot):
+async def setup_cleanup(bot: Bot):
     cog = Cleanup(bot)
-    bot.add_cog(cog)
+    await bot.add_cog(cog)
 
 
-def setup_moderation(bot):
+async def setup_moderation(bot: Bot):
     cog = Moderation(bot)
-    bot.add_cog(cog)
+    await bot.add_cog(cog)
 
 
-def setup_manualmodactionwarn(bot):
+async def setup_manualmodactionwarn(bot: Bot):
     cog = ManualModActionWarn(bot)
     bot.add_listener(cog.member_update, "on_member_update")
     bot.add_listener(cog.member_remove, "on_member_remove")
-    bot.add_cog(cog)
+    await bot.add_cog(cog)
 
 
 # Remove all the cogs when cog is unloaded
-def teardown(bot):
-    teardown_cleanup(bot)
-    teardown_moderation(bot)
-    teardown_manualmodactionwarn(bot)
+async def teardown(bot: Bot):
+    await teardown_cleanup(bot)
+    await teardown_moderation(bot)
+    await teardown_manualmodactionwarn(bot)
 
 
-def teardown_cleanup(bot):
-    bot.remove_cog(Cleanup.__name__)
+async def teardown_cleanup(bot: Bot):
+    await bot.remove_cog(Cleanup.__name__)
 
 
-def teardown_moderation(bot):
-    bot.remove_cog(Moderation.__name__)
+async def teardown_moderation(bot: Bot):
+    await bot.remove_cog(Moderation.__name__)
 
 
-def teardown_manualmodactionwarn(bot):
-    bot.remove_cog(ManualModActionWarn.__name__)
+async def teardown_manualmodactionwarn(bot: Bot):
+    await bot.remove_cog(ManualModActionWarn.__name__)

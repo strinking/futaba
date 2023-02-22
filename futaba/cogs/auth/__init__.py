@@ -10,23 +10,25 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+from discord.ext.commands.bot import Bot
+
 from .core import Authentication
 
 
 # Setup for when cog is loaded
-def setup(bot):
-    setup_auth(bot)
+async def setup(bot: Bot):
+    await setup_auth(bot)
 
 
-def setup_auth(bot):
+async def setup_auth(bot: Bot):
     cog = Authentication(bot)
-    bot.add_cog(cog)
+    await bot.add_cog(cog)
 
 
 # Remove all the cogs when cog is unloaded
-def teardown(bot):
-    teardown_auth(bot)
+async def teardown(bot: Bot):
+    await teardown_auth(bot)
 
 
-def teardown_auth(bot):
-    bot.remove_cog(Authentication.__name__)
+async def teardown_auth(bot: Bot):
+    await bot.remove_cog(Authentication.__name__)

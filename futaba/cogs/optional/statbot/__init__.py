@@ -10,23 +10,25 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+from discord.ext.commands.bot import Bot
+
 from .core import Statbot
 
 
 # Setup for when cog is loaded
-def setup(bot):
-    setup_statbot(bot)
+async def setup(bot: Bot):
+    await setup_statbot(bot)
 
 
-def setup_statbot(bot):
+async def setup_statbot(bot: Bot):
     cog = Statbot(bot)
-    bot.add_cog(cog)
+    await bot.add_cog(cog)
 
 
 # Remove all the cogs when cog is unloaded
-def teardown(bot):
-    teardown_statbot(bot)
+async def teardown(bot: Bot):
+    await teardown_statbot(bot)
 
 
-def teardown_statbot(bot):
-    bot.remove_cog(Statbot.__name__)
+async def teardown_statbot(bot: Bot):
+    await bot.remove_cog(Statbot.__name__)

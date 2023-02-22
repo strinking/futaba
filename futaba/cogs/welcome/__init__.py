@@ -10,51 +10,53 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+from discord.ext.commands.bot import Bot
+
 from .alert import Alert
 from .core import Welcome
 from .prune import Prune
 
 
 # Setup for when cog is loaded
-def setup(bot):
-    setup_alert(bot)
-    setup_welcome(bot)
-    setup_prune(bot)
+async def setup(bot: Bot):
+    await setup_alert(bot)
+    await setup_welcome(bot)
+    await setup_prune(bot)
 
 
-def setup_alert(bot):
+async def setup_alert(bot: Bot):
     cog = Alert(bot)
     bot.add_listener(cog.member_join, "on_member_join")
-    bot.add_cog(cog)
+    await bot.add_cog(cog)
 
 
-def setup_welcome(bot):
+async def setup_welcome(bot: Bot):
     cog = Welcome(bot)
     bot.add_listener(cog.member_join, "on_member_join")
     bot.add_listener(cog.member_update, "on_member_update")
     bot.add_listener(cog.member_leave, "on_member_remove")
-    bot.add_cog(cog)
+    await bot.add_cog(cog)
 
 
-def setup_prune(bot):
+async def setup_prune(bot: Bot):
     cog = Prune(bot)
-    bot.add_cog(cog)
+    await bot.add_cog(cog)
 
 
 # Remove all the cogs when cog is unloaded
-def teardown(bot):
-    teardown_alert(bot)
-    teardown_welcome(bot)
-    teardown_prune(bot)
+async def teardown(bot: Bot):
+    await teardown_alert(bot)
+    await teardown_welcome(bot)
+    await teardown_prune(bot)
 
 
-def teardown_alert(bot):
-    bot.remove_cog(Alert.__name__)
+async def teardown_alert(bot: Bot):
+    await bot.remove_cog(Alert.__name__)
 
 
-def teardown_welcome(bot):
-    bot.remove_cog(Welcome.__name__)
+async def teardown_welcome(bot: Bot):
+    await bot.remove_cog(Welcome.__name__)
 
 
-def teardown_prune(bot):
-    bot.remove_cog(Prune.__name__)
+async def teardown_prune(bot: Bot):
+    await bot.remove_cog(Prune.__name__)

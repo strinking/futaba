@@ -10,22 +10,24 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+from discord.ext.commands.bot import Bot
+
 from .core import Pingable
 
 
 # Setup for when cog is loaded
-def setup(bot):
-    setup_pingable(bot)
+async def setup(bot: Bot):
+    await setup_pingable(bot)
 
 
-def setup_pingable(bot):
+async def setup_pingable(bot: Bot):
     cog = Pingable(bot)
-    bot.add_cog(cog)
+    await bot.add_cog(cog)
 
 
-def teardown(bot):
-    teardown_pingable(bot)
+async def teardown(bot: Bot):
+    await teardown_pingable(bot)
 
 
-def teardown_pingable(bot):
-    bot.remove_cog(Pingable.__name__)
+async def teardown_pingable(bot: Bot):
+    await bot.remove_cog(Pingable.__name__)

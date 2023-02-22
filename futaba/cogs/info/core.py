@@ -23,6 +23,7 @@ from itertools import chain, islice
 
 import discord
 from discord.ext import commands
+from discord.ext.commands.context import Context
 
 from futaba import __version__
 from futaba.converters import (
@@ -78,7 +79,7 @@ class Info(AbstractCog):
         discord_py_emoji = self.bot.get_emoji(self.bot.config.discord_py_emoji_id) or ""
 
         embed = discord.Embed()
-        embed.set_thumbnail(url=self.bot.user.avatar_url)
+        embed.set_thumbnail(url=self.bot.user.avatar.url)
         embed.set_author(name=f"Futaba v{__version__} [{GIT_HASH}]")
         embed.add_field(name="Running for", value=fancy_timedelta(self.bot.uptime))
         embed.add_field(
@@ -220,7 +221,7 @@ class Info(AbstractCog):
 
             await ctx.send(embed=embed)
 
-    async def get_user(self, ctx, name):
+    async def get_user(self, ctx: Context, name) -> discord.User:
         if name is None:
             return ctx.author
         else:
@@ -235,7 +236,7 @@ class Info(AbstractCog):
                 raise CommandFailed(embed=embed)
 
     @commands.command(name="avatar", aliases=["profilepic"])
-    async def avatar(self, ctx, *, name: str = None):
+    async def avatar(self, ctx: Context, *, name: str = None):
         """
         Displays the given user's avatar and its URL.
         If no argument is passed, the caller is checked instead.
@@ -246,8 +247,8 @@ class Info(AbstractCog):
 
         embed = discord.Embed(colour=discord.Colour.dark_teal())
         embed.set_author(name=user_discrim(user))
-        embed.set_image(url=user.avatar_url)
-        await ctx.send(content=user.avatar_url, embed=embed)
+        embed.set_image(url=user.avatar.url)
+        await ctx.send(content=user.avatar.url, embed=embed)
 
     @commands.command(
         name="uinfo", aliases=["user", "userinfo", "member", "memberinfo"]
@@ -276,7 +277,7 @@ class Info(AbstractCog):
         embed = discord.Embed()
         embed.timestamp = user.created_at
         embed.set_author(name=user_discrim(user))
-        embed.set_thumbnail(url=user.avatar_url)
+        embed.set_thumbnail(url=user.avatar.url)
 
         # User colour
         if hasattr(user, "colour"):
@@ -493,7 +494,7 @@ class Info(AbstractCog):
             messages = islice(messages, 0, 3)
             await ctx.send(content="Too many messages requested, stopping at 3...")
 
-        def make_embed(message):
+        def make_embed(message: discord.Message):
             embed = discord.Embed(colour=message.author.colour)
             embed.description = message.content or None
             embed.timestamp = message.created_at
@@ -501,7 +502,7 @@ class Info(AbstractCog):
             embed.set_author(
                 name=f"{message.author.name}#{message.author.discriminator}"
             )
-            embed.set_thumbnail(url=message.author.avatar_url)
+            embed.set_thumbnail(url=message.author.avatar.url)
             embed.add_field(name="Sent by", value=message.author.mention)
 
             if ctx.guild is not None:
@@ -772,13 +773,13 @@ class Info(AbstractCog):
 
     @commands.command(name="ginfo", aliases=["guildinfo"])
     @commands.guild_only()
-    async def ginfo(self, ctx):
+    async def ginfo(self, ctx: Context):
         """Gets information about the current guild."""
 
         embed = discord.Embed()
         embed.timestamp = ctx.guild.created_at
         embed.set_author(name=ctx.guild.name)
-        embed.set_thumbnail(url=ctx.guild.icon_url)
+        embed.set_thumbnail(url=ctx.guild.icon.url)
 
         descr = StringBuilder()
         descr.writeln(f"\N{MAN} **Members:** {len(ctx.guild.members):,}")

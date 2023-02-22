@@ -10,23 +10,25 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+from discord.ext.commands.bot import Bot
+
 from .core import ExampleCog
 
 
 # Setup for when cog is loaded
-def setup(bot):
-    setup_example(bot)
+async def setup(bot: Bot):
+    await setup_example(bot)
 
 
-def setup_example(bot):
+async def setup_example(bot: Bot):
     cog = ExampleCog(bot)
-    bot.add_cog(cog)
+    await bot.add_cog(cog)
 
 
 # Remove all the cogs when cog is unloaded
-def teardown(bot):
-    teardown_example(bot)
+async def teardown(bot: Bot):
+    await teardown_example(bot)
 
 
-def teardown_example(bot):
-    bot.remove_cog(ExampleCog.__name__)
+async def teardown_example(bot: Bot):
+    await bot.remove_cog(ExampleCog.__name__)

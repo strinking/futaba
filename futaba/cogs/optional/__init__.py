@@ -15,7 +15,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def setup(bot):
+async def setup(bot):
     for cog_name, options in bot.config.optional_cogs.items():
         enabled = options["enabled"]
         logger.info(
@@ -23,4 +23,4 @@ def setup(bot):
         )
 
         if enabled:
-            bot.reloader_cog.load_cog(f"optional.{cog_name}")
+            await bot.reloader_cog.load_cog(f"optional.{cog_name}")
