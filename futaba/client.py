@@ -144,13 +144,13 @@ class Bot(commands.AutoShardedBot):
                 self.error_channel = channel
 
         # Setup mandatory cogs
-        self.add_cog(Journal(self))
+        await self.add_cog(Journal(self))
         logger.info("Loaded mandatory cog: Journal")
 
-        self.add_cog(Navi(self))
+        await self.add_cog(Navi(self))
         logger.info("Loaded mandatory cog: Navi")
 
-        self.add_cog(Reloader(self))
+        await self.add_cog(Reloader(self))
         logger.info("Loaded mandatory cog: Reloader")
 
         def _cog_ok(cog):
@@ -171,10 +171,8 @@ class Bot(commands.AutoShardedBot):
         # Load cogs
         for file in files:
             try:
-                self.load_extension(f"futaba.cogs.{file}")
+                await self.load_extension(f"futaba.cogs.{file}")
             except Exception as error:
-                # Something made the loading fail
-                # So log it with reason and tell user to check it
                 logger.error("Load failed: %s", file, exc_info=error)
                 sys.exit(1)
             else:
@@ -268,7 +266,7 @@ class Bot(commands.AutoShardedBot):
             if message not in self.completed_commands:
                 await Reactions.WAITING.add(message)
 
-    async def on_command_completion(self, ctx):
+    async def on_command_completion(self, ctx: commands.Context):
         """
         Handles successful commands.
         Adds the success reaction and removes all others.

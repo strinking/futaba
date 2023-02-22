@@ -15,12 +15,13 @@
 from abc import abstractmethod
 
 from discord.ext import commands
+from discord.ext.commands.bot import Bot
 
 
 class AbstractCog(commands.Cog):
     __slots__ = ("bot",)
 
-    def __init__(self, bot):
+    def __init__(self, bot: Bot):
         self.bot = bot
 
     @abstractmethod

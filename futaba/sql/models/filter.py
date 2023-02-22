@@ -100,7 +100,7 @@ class FilterModel:
 
         register_hook("on_guild_join", self.add_settings)
 
-    def get_filters(self, location):
+    def get_filters(self, location) -> dict:
         logger.debug(
             "Getting filters for location '%s' (%d)", location.name, location.id
         )
