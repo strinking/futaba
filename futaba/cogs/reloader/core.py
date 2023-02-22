@@ -21,6 +21,7 @@ from collections import defaultdict
 
 import discord
 from discord.ext import commands
+from discord.ext.commands.bot import Bot
 from tree_format import format_tree
 
 from futaba import permissions
@@ -40,15 +41,16 @@ class Reloader(AbstractCog):
 
     MANDATORY_COGS = ("journal", "navi", "reloader")
 
-    def __init__(self, bot):
+    def __init__(self, bot: Bot):
         super().__init__(bot)
+        self.bot: Bot
         bot.reloader_cog = self
         self.journal = bot.get_broadcaster("/cog")
 
     def setup(self):
         pass
 
-    def load_cog(self, input_cogname, check_missing=True):
+    async def load_cog(self, input_cogname, check_missing=True):
         fixed_cogname = input_cogname
         if not input_cogname.startswith(COGS_DIR):
             fixed_cogname = f"{COGS_DIR}{input_cogname}"
@@ -60,26 +62,24 @@ class Reloader(AbstractCog):
                         importlib.import_module(f"{ext_name}.{cogname}"),
                         f"setup_{cogname.lower()}",
                     )
-                    setup_function(self.bot)
-                except (AttributeError, ModuleNotFoundError) as error:
+                    await setup_function(self.bot)
+                except (AttributeError, ModuleNotFoundError):
                     setup_function = getattr(
                         importlib.import_module(f"{ext_name}"),
                         f"setup_{cogname.lower()}",
                     )
-                    setup_function(self.bot)
-            except (AttributeError, ModuleNotFoundError) as error:
+                    await setup_function(self.bot)
+            except (AttributeError, ModuleNotFoundError):
                 raise KeyError(
                     f"Failed to load submodule {cogname} of module {ext_name}."
                 )
-            except Exception as error:
-                raise error
         else:
             if check_missing:
                 if importlib.util.find_spec(fixed_cogname) is None:
                     raise KeyError(f"No such cog: {fixed_cogname}")
-            self.bot.load_extension(fixed_cogname)
+            await self.bot.load_extension(fixed_cogname)
 
-    def unload_cog(self, input_cogname, check_missing=True):
+    async def unload_cog(self, input_cogname, check_missing=True):
         fixed_cogname = input_cogname
         if not input_cogname.startswith(COGS_DIR):
             fixed_cogname = f"{COGS_DIR}{input_cogname}"
@@ -91,24 +91,22 @@ class Reloader(AbstractCog):
                         importlib.import_module(f"{ext_name}.{cogname}"),
                         f"teardown_{cogname.lower()}",
                     )
-                    teardown_function(self.bot)
-                except (AttributeError, ModuleNotFoundError) as error:
+                    await teardown_function(self.bot)
+                except (AttributeError, ModuleNotFoundError):
                     teardown_function = getattr(
                         importlib.import_module(f"{ext_name}"),
                         f"teardown_{cogname.lower()}",
                     )
                     teardown_function(self.bot)
-            except (AttributeError, ModuleNotFoundError) as error:
+            except (AttributeError, ModuleNotFoundError):
                 raise KeyError(
                     f"Failed to unload submodule {cogname} of module {ext_name}. (Is it already unloaded?)"
                 )
-            except Exception as error:
-                raise error
         else:
             if check_missing:
                 if importlib.util.find_spec(fixed_cogname) is None:
                     raise KeyError(f"No such cog: {fixed_cogname}")
-            self.bot.unload_extension(fixed_cogname)
+            await self.bot.unload_extension(fixed_cogname)
 
     @commands.command(name="load", aliases=["l"])
     @permissions.check_owner()
@@ -135,7 +133,7 @@ class Reloader(AbstractCog):
             raise CommandFailed(embed=embed)
 
         try:
-            self.load_cog(cogname)
+            await self.load_cog(cogname)
         except Exception as error:
             logger.error("Loading cog %s failed", cogname, exc_info=error)
             embed = discord.Embed(
@@ -190,7 +188,7 @@ class Reloader(AbstractCog):
             raise CommandFailed(embed=embed)
 
         try:
-            self.unload_cog(cogname)
+            await self.unload_cog(cogname)
         except Exception as error:
             logger.error("Unloading cog %s failed", cogname, exc_info=error)
             if isinstance(error, KeyError):
@@ -248,8 +246,8 @@ class Reloader(AbstractCog):
             raise CommandFailed(embed=embed)
 
         try:
-            self.unload_cog(cogname, check_missing=False)
-            self.load_cog(cogname, check_missing=False)
+            await self.unload_cog(cogname, check_missing=False)
+            await self.load_cog(cogname, check_missing=False)
         except Exception as error:
             logger.error("Reloading cog %s failed", cogname, exc_info=error)
             embed = discord.Embed(

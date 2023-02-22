@@ -20,6 +20,7 @@ from collections import deque, namedtuple
 from datetime import datetime, timedelta
 
 import discord
+from discord.message import Message
 from discord import AuditLogAction
 
 from futaba.enums import MemberLeaveType
@@ -137,10 +138,10 @@ class Tracker(AbstractCog):
             self.bot.remove_listener(getattr(self, listener), listener)
 
     @staticmethod
-    def build_embed(message):
+    def build_embed(message: Message):
         embed = discord.Embed(description=message.content)
         embed.set_author(
-            name=message.author.display_name, icon_url=message.author.avatar_url
+            name=message.author.display_name, icon_url=message.author.avatar.url
         )
         embed.timestamp = message.edited_at or message.created_at
 
@@ -154,7 +155,7 @@ class Tracker(AbstractCog):
 
         return embed
 
-    async def on_message(self, message):
+    async def on_message(self, message: Message):
         if message in self.new_messages:
             return
         else:

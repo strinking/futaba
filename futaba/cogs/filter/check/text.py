@@ -12,10 +12,13 @@
 
 import asyncio
 import logging
-from collections import namedtuple
+import typing
 
 import discord
+from discord.message import Message
+from discord.ext.commands.bot import Bot
 
+from futaba.cogs.journal.core import Journal
 from futaba.enums import FilterType, LocationType
 from futaba.str_builder import StringBuilder
 from futaba.utils import escape_backticks
@@ -25,18 +28,15 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["FoundTextViolation", "check_text_filter"]
 
-FoundTextViolation = namedtuple(
-    "FoundTextViolation",
-    (
-        "bot",
-        "journal",
-        "message",
-        "content",
-        "location_type",
-        "filter_type",
-        "filter_text",
-    ),
-)
+
+class FoundTextViolation(typing.NamedTuple):
+    bot: Bot
+    journal: Journal
+    message: Message
+    content: str
+    location_type: LocationType
+    filter_type: FilterType
+    filter_text: str
 
 
 async def check_text_filter(cog, message):
@@ -81,7 +81,7 @@ async def check_text_filter(cog, message):
         await found_text_violation(triggered, roles)
 
 
-async def found_text_violation(triggered, roles):
+async def found_text_violation(triggered: FoundTextViolation, roles):
     """
     Processes a violation of the text filter. This coroutine is responsible
     for actual enforcement, based on the filter_type.
@@ -138,7 +138,7 @@ async def found_text_violation(triggered, roles):
         embed = discord.Embed(description=content)
         embed.timestamp = discord.utils.snowflake_time(message.id)
         embed.set_author(
-            name=message.author.display_name, icon_url=message.author.avatar_url
+            name=message.author.display_name, icon_url=message.author.avatar.url
         )
         to_send = f"The content of the deleted message {embed_caveat} is:"
         await message.author.send(content=to_send, embed=embed)

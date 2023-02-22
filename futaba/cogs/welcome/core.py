@@ -93,7 +93,9 @@ class Welcome(AbstractCog):
         self.recently_saved_roles = deque(maxlen=5)
 
         self.add_listener()
-        bot.add_cog(self.roles)
+
+    async def cog_load(self):
+        await self.bot.add_cog(self.roles)
 
     def setup(self):
         for guild in self.bot.guilds:
