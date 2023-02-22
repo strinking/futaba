@@ -367,7 +367,9 @@ class SettingsModel:
             nonpurge_role_id=None,
         )
         self.sql.execute(ins)
-        self.special_roles_cache[guild] = SpecialRoleData(guild, None, None, None, None)
+        self.special_roles_cache[guild] = SpecialRoleData(
+            guild, None, None, None, None, None, None
+        )
 
     def get_special_roles(self, guild):
         if guild in self.special_roles_cache:
