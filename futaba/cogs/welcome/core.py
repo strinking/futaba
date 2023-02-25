@@ -214,7 +214,7 @@ class Welcome(AbstractCog):
             # Not the welcome channel, ignore
             raise InvalidCommandContext()
 
-        if ctx.author.permissions_in(ctx.channel).manage_messages:
+        if ctx.channel.permissions_for(ctx.author).manage_messages:
             # Not a guest, ignore
             raise InvalidCommandContext()
 
@@ -243,7 +243,7 @@ class Welcome(AbstractCog):
             # Not the welcome channel, ignore
             raise InvalidCommandContext()
 
-        if ctx.author.permissions_in(ctx.channel).manage_messages:
+        if ctx.channel.permissions_for(ctx.author).manage_messages:
             # Not a guest, ignore
             raise InvalidCommandContext()
 
