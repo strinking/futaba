@@ -97,7 +97,7 @@ def fancy_timedelta(delta):
     """
 
     if isinstance(delta, datetime):
-        delta = abs(datetime.now() - delta)
+        delta = abs(datetime.now(delta.tzinfo) - delta)
 
     result = StringBuilder(sep=" ")
     years, days = divmod(delta.days, 365)
