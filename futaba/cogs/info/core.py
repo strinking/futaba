@@ -805,7 +805,7 @@ class Info(AbstractCog):
             if member.bot:
                 bots += 1
 
-            perms = member.permissions_in(ctx.channel)
+            perms = ctx.channel.permissions_for(member)
             if perms.administrator:
                 admins += 1
             elif perms.manage_messages:
