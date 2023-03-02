@@ -24,7 +24,7 @@ from ..abc import AbstractCog
 
 logger = logging.getLogger(__name__)
 
-__all__ = "ManualModActionWarn"
+__all__ = ["ManualModActionWarn"]
 
 
 manual_mod_action_command_map = {
