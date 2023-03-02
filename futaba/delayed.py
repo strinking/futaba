@@ -20,6 +20,7 @@ import asyncio
 import inspect
 import itertools
 import logging
+import typing
 
 logger = logging.getLogger(__name__)
 
@@ -29,16 +30,19 @@ class DelayedQueue:
 
     def __init__(self, config):
         self.config = config
-        self.queue = asyncio.Queue()
+        # queue must be created in the event loop
+        self.queue: asyncio.Queue[typing.Coroutine] = None
 
-    def start(self, eventloop):
+    def start(self, eventloop: asyncio.AbstractEventLoop):
         eventloop.create_task(self.main_loop())
 
-    def push(self, coro):
+    def push(self, coro: typing.Coroutine):
         assert inspect.iscoroutine(coro)
         self.queue.put_nowait(coro)
 
     async def main_loop(self):
+        self.queue = asyncio.Queue()
+
         for i in itertools.count():
             coro = await self.queue.get()
 

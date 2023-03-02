@@ -10,13 +10,19 @@
 # WITHOUT ANY WARRANTY. See the LICENSE file for more details.
 #
 
+from __future__ import annotations
+
 import asyncio
 import logging
 from collections import defaultdict, deque
 from itertools import chain
 from pathlib import PurePath
+import typing
 
 from .process import process_content
+
+if typing.TYPE_CHECKING:
+    from futaba.client import Bot
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +39,7 @@ def attrs_match(obj, attrs):
 class Router:
     __slots__ = ("bot", "paths", "queue", "history")
 
-    def __init__(self, bot):
+    def __init__(self, bot: Bot):
         self.bot = bot
         self.paths = defaultdict(list)
         self.queue = asyncio.Queue()

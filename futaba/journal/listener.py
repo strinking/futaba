@@ -14,13 +14,15 @@ import logging
 from abc import abstractmethod
 from pathlib import PurePath
 
+from futaba.journal.router import Router
+
 logger = logging.getLogger(__name__)
 
 __all__ = ["Listener"]
 
 
 class Listener:
-    def __init__(self, router, path, recursive=True):
+    def __init__(self, router: Router, path, recursive=True):
         self.router = router
         self.path = PurePath(path)
         self.recursive = recursive

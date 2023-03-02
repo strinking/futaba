@@ -24,6 +24,7 @@ import discord
 from discord.ext import commands
 
 from futaba import permissions
+from futaba.client import Bot
 from futaba.exceptions import CommandFailed, InvalidCommandContext, SendHelp
 from futaba.journal import ModerationListener
 from futaba.utils import plural, user_discrim
@@ -112,7 +113,9 @@ class Welcome(AbstractCog):
         router.register(ModerationListener(router, self.bot))
 
     @staticmethod
-    def send_welcome_message(bot, member, fmt_message, channel):
+    def send_welcome_message(
+        bot: Bot, member, fmt_message, channel: discord.TextChannel
+    ):
         ctx = FakeContext(author=member, channel=channel, guild=member.guild)
         content = format_message(fmt_message, ctx)
         coro = channel.send(content=content)
