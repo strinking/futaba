@@ -14,7 +14,7 @@
 Cog to warn when a mod action is done manually, instead of through the bot.
 """
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from discord import AuditLogAction
 
@@ -173,7 +173,7 @@ class ManualModActionWarn(AbstractCog):
         if not self.bot.sql.settings.get_warn_manual_mod_action(member.guild):
             return
 
-        leave_reason = await get_removal_cause(member, datetime.now())
+        leave_reason = await get_removal_cause(member, datetime.now(timezone.utc))
 
         if leave_reason.type not in (MemberLeaveType.KICKED, MemberLeaveType.BANNED):
             return

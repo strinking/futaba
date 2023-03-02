@@ -17,7 +17,7 @@ Cog for journaling live API events such as username changes, users joining and l
 import asyncio
 import logging
 from collections import deque, namedtuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import discord
 from discord.message import Message
@@ -56,7 +56,7 @@ LISTENERS = (
 )
 
 
-async def get_removal_cause(member, timestamp):
+async def get_removal_cause(member: discord.Member, timestamp: datetime):
     async for entry in member.guild.audit_logs(limit=20):
         if abs(timestamp - entry.created_at) < timedelta(seconds=3):
             if entry.action == AuditLogAction.kick:
@@ -123,7 +123,7 @@ class Tracker(AbstractCog):
         self.edited_messages = deque(maxlen=20)
         self.deleted_messages = deque(maxlen=20)
         self.members_joined = deque(maxlen=20)
-        self.members_left = deque(maxlen=20)
+        self.members_left: deque[discord.Member] = deque(maxlen=20)
         self.reactions = deque(maxlen=20)
 
     def setup(self):
@@ -140,8 +140,9 @@ class Tracker(AbstractCog):
     @staticmethod
     def build_embed(message: Message):
         embed = discord.Embed(description=message.content)
+        avatar = message.author.avatar
         embed.set_author(
-            name=message.author.display_name, icon_url=message.author.avatar.url
+            name=message.author.display_name, icon_url=avatar and avatar.url
         )
         embed.timestamp = message.edited_at or message.created_at
 
@@ -295,7 +296,7 @@ class Tracker(AbstractCog):
         )
 
         # Wait for a bit so we can catch the audit log entry
-        timestamp = datetime.now()
+        timestamp = datetime.now(timezone.utc)
         await asyncio.sleep(1)
         cause = await get_removal_cause(message, timestamp)
 
@@ -522,7 +523,7 @@ class Tracker(AbstractCog):
             "member/join", member.guild, content, icon="join", member=member
         )
 
-    async def on_member_remove(self, member):
+    async def on_member_remove(self, member: discord.Member):
         if member in self.members_left:
             return
         else:
@@ -548,7 +549,7 @@ class Tracker(AbstractCog):
         )
 
         # Wait for a bit so we can catch the audit log entry
-        timestamp = datetime.now()
+        timestamp = datetime.now(timezone.utc)
         await asyncio.sleep(2)
         cause = await get_removal_cause(member, timestamp)
 
