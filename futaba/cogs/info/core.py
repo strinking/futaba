@@ -502,7 +502,8 @@ class Info(AbstractCog):
             embed.set_author(
                 name=f"{message.author.name}#{message.author.discriminator}"
             )
-            embed.set_thumbnail(url=message.author.avatar.url)
+            avatar = message.author.avatar
+            embed.set_thumbnail(url=avatar and avatar.url)
             embed.add_field(name="Sent by", value=message.author.mention)
 
             if ctx.guild is not None:
