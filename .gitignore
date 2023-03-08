@@ -1,9 +1,7 @@
-# Ignore virtual environments
-venv/
-env/
+# Created by virtualenvs.in-project setting in poetry.toml
+/.venv/
 
 # Ignore editor files
-.vscode/
 .*.swp
 .vs/
 *.sln
@@ -16,7 +14,6 @@ env/
 
 # Artifacts
 __pycache__
-*.py[cdo]
 unidata-blocks.txt
 
 # Logging

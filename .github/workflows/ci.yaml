@@ -18,6 +18,6 @@ jobs:
       with:
         python-version: '3.x'
     - name: install python packages
-      run: pip3 install --quiet --requirement requirements-dev.txt
+      run: pip3 install --quiet poetry && poetry install --with dev --no-interaction
     - name: black
-      run: black --check futaba
+      run: poetry run black --check futaba

@@ -8,7 +8,8 @@ Requires Python 3.6 or later. There is a sample configuration file at `misc/conf
 ## Running locally
 Setup:
 ```
-$ pip3 install --user -r requirements.txt
+$ pip3 install poetry
+$ poetry install
 $ docker run -e POSTGRES_PASSWORD=password -p 5432:5432 postgres
 $ cp misc/config.toml config.toml
 # set database.url to "postgresql://postgres:password@localhost"
@@ -22,7 +23,7 @@ $ python3 -m futaba <config.toml>
 ## Development
 More setup:
 ```
-$ pip3 install --user -r requirements-dev.txt
+$ poetry install --with dev
 ```
 
 Formatting and linting code:
@@ -32,7 +33,7 @@ $ pylint futaba
 ```
 
 ## Deployment
-You can have a production system, complete with a systemd service file, you can use the provided
+You can have a production system, complete with a systemd service file, by running the provided
 `deploy.sh` script. If there is a `futaba.service` file in the repository root, that service is installed, otherwise the one in `misc/` is used.
 
 Usage:

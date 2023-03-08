@@ -5,8 +5,8 @@ After=network.target
 [Service]
 Type=simple
 User=futaba
-ExecStart=/usr/bin/python3.7 -m futaba config.toml
-WorkingDirectory=/home/futaba/repo
+ExecStart=/home/futaba/python3 -m futaba --no-stdout config.toml
+WorkingDirectory=/home/futaba/repo/.venv/bin/python3
 Restart=always
 RestartSec=600
 
