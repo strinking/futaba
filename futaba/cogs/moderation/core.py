@@ -273,7 +273,9 @@ class Moderation(AbstractCog):
                 ctx, member, minutes, PunishAction.RELIEVE_FOCUS, reason
             )
 
-    @commands.command(name="focus", aliases=["selfgaol", "selfdunce", "selfjail"])
+    @commands.command(
+        name="focus", aliases=["selfgaol", "selfdunce", "selfjail"], enabled=False
+    )
     @commands.guild_only()
     async def focus(self, ctx, minutes: int):
         """

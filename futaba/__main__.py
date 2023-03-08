@@ -24,7 +24,7 @@ from toml import TomlDecodeError
 from futaba import client
 from futaba.config import load_config
 
-LOG_FILE = "futaba.log"
+LOG_FILE = "/dev/null"
 LOG_FILE_MODE = "w"
 LOG_FORMAT = "[%(levelname)s] %(asctime)s %(name)s: %(message)s"
 LOG_DATE_FORMAT = "[%Y/%m/%d %H:%M:%S]"
