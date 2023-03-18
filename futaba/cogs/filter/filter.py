@@ -137,10 +137,20 @@ class Filter:
                     # (IN, [ (LITERAL, ord) ... ])
                     # sets cannot be nested, need to insert confusables in place
                     confusable_literals = []
-                    for literal in token_value:
-                        confusable_literals += Filter.generate_confusable_literals(
-                            chr(literal[1])
-                        )
+                    for set_token in token_value:
+                        if set_token[0] == sre_parse.RANGE:
+                            # (RANGE, (LOWER_BOUND, UPPER_BOUND)), e.g. a-z in [a-z]
+                            lower_bound = set_token[1][0]
+                            upper_bound = set_token[1][1]
+                            for ord_value in range(lower_bound, upper_bound + 1):
+                                confusable_literals += (
+                                    Filter.generate_confusable_literals(chr(ord_value))
+                                )
+                        else:
+                            # Must be LITERAL
+                            confusable_literals += Filter.generate_confusable_literals(
+                                chr(set_token[1])
+                            )
                     token_value += confusable_literals
                 if token_name == sre_parse.LITERAL:
                     # (LITERAL, ord), replace with set
