@@ -1,5 +1,3 @@
-# https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
-
 name: CI
 
 on:
@@ -12,12 +10,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: set up python 3.x
-      uses: actions/setup-python@v2
+    - uses: actions/checkout@v4
+    - run: pipx install poetry # https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#caching-packages
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.x'
+        cache: poetry
     - name: install python packages
-      run: pip3 install --quiet poetry && poetry install --with dev --no-interaction
+      run: poetry install --with dev --no-interaction
     - name: black
       run: poetry run black --check futaba
