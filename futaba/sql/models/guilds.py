@@ -86,7 +86,7 @@ class GuildsModel:
         sel = select([self.tb_guilds.c.guild_id])
         result = self.sql.execute(sel)
 
-        return (guild_id for guild_id, in result.fetchall())
+        return (guild_id for (guild_id,) in result.fetchall())
 
     @staticmethod
     def _get_guild(bot, guild_id):

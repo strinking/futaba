@@ -260,7 +260,9 @@ class FilterModel:
             self.tb_filter_immune_users.c.guild_id == guild.id
         )
         result = self.sql.execute(sel)
-        self.immune_users_cache[guild].update(user_id for user_id, in result.fetchall())
+        self.immune_users_cache[guild].update(
+            user_id for (user_id,) in result.fetchall()
+        )
         return self.immune_users_cache[guild]
 
     def get_filter_immune_users(self, guild):

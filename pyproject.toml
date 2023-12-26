@@ -21,7 +21,7 @@ tree-format = ">=0.1.2"
 python-jose = ">=3.2.0"
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.1.0"
+ruff = "^0.1.9"
 pylint = ">=2.5"
 
 [build-system]

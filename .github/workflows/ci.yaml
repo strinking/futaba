@@ -18,5 +18,4 @@ jobs:
         cache: poetry
     - name: install python packages
       run: poetry install --with dev --no-interaction
-    - name: black
-      run: poetry run black --check futaba
+    - run: poetry run ruff format --check futaba
