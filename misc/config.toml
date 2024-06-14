@@ -21,6 +21,12 @@ enabled = true
 enabled = false
 url = "postgresql://statbot:passwordhere@localhost/statbot_ro"
 
+[cogs.simplewriter]
+enabled = false
+# The ID of the text channel to enforce the simplewriter vocabulary in
+# Set to "0" to implicitly disable simplewriter
+channel-id = "0"
+
 [moderation]
 # Maximum number of messages that may be specified
 # when doing a bulk message cleanup
