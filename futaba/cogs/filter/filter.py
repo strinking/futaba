@@ -104,31 +104,63 @@ class Filter:
         return str(pattern)
 
     @staticmethod
+    def generate_confusable_literals(confusable: chr) -> list:
+        # Generates list of confusable homoglyphs LITERALs based on input
+        # character, includes input character
+
+        groups = confusables.is_confusable(confusable, greedy=True)
+
+        confusable_literals = [(sre_parse.LITERAL, ord(confusable))]
+
+        if not groups:
+            return confusable_literals
+
+        # Append confusables to list as LITERALs
+        for homoglyph in groups[0]["homoglyphs"]:
+            confusable_literals += [
+                (re.sre_parse.LITERAL, ord(char)) for char in homoglyph["c"]
+            ]
+
+        return confusable_literals
+
+    @staticmethod
     def convert_raw_regex_ast(regex_ast: Iterable):
         for index, value in enumerate(regex_ast):
-            # Parse lexemes for LITERALs
             if isinstance(value, tuple):
-                lexeme_tuple = value
-                if lexeme_tuple[0] == sre_parse.LITERAL:
-                    # LITERAL found, check if it's a confusable homoglyph...
-                    groups = confusables.is_confusable(
-                        chr(lexeme_tuple[1]), greedy=True
+                # (TOKEN_NAME, TOKEN_VALUE) likely
+                (
+                    token_name,
+                    token_value,
+                    *_,
+                ) = value
+                if token_name == sre_parse.IN:
+                    # (IN, [ (LITERAL, ord) ... ])
+                    # sets cannot be nested, need to insert confusables in place
+                    confusable_literals = []
+                    for set_token in token_value:
+                        if set_token[0] == sre_parse.RANGE:
+                            # (RANGE, (LOWER_BOUND, UPPER_BOUND)), e.g. a-z in [a-z]
+                            lower_bound = set_token[1][0]
+                            upper_bound = set_token[1][1]
+                            for ord_value in range(lower_bound, upper_bound + 1):
+                                confusable_literals += (
+                                    Filter.generate_confusable_literals(chr(ord_value))
+                                )
+                        else:
+                            # Must be LITERAL
+                            confusable_literals += Filter.generate_confusable_literals(
+                                chr(set_token[1])
+                            )
+                    token_value += confusable_literals
+                if token_name == sre_parse.LITERAL:
+                    # (LITERAL, ord), replace with set
+                    confusable_literals = Filter.generate_confusable_literals(
+                        chr(token_value)
                     )
-                    if not groups:
-                        continue
-                    # Convert group into list of confusable LITERALs
-                    group = groups[0]  # one char, so only one group
-                    confusable_literals = [lexeme_tuple]
-                    for homoglyph in group["homoglyphs"]:
-                        confusable_literals += [
-                            (sre_parse.LITERAL, ord(char)) for char in homoglyph["c"]
-                        ]
-                    in_lexeme_tuple = (sre_parse.IN, confusable_literals)
-
-                    # Overwrite this lexeme
-                    regex_ast[index] = in_lexeme_tuple
+                    regex_ast[index] = (sre_parse.IN, confusable_literals)
                 else:
-                    # More possible lexemes, recurse and overwrite...
+                    # Miscellaneous token, might contain more tokens
+                    # Recurse and overwrite...
                     regex_ast[index] = tuple(Filter.convert_raw_regex_ast(list(value)))
             elif isinstance(value, sre_parse.SubPattern):
                 regex_ast[index] = Filter.convert_raw_regex_ast(value)
